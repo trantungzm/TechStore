@@ -1,0 +1,267 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+img{
+    display: block;
+}
+.hanghai{
+    background: linear-gradient(135deg, #6492ff, #b82def);
+}
+.hanghai p{
+    margin-top: 10px;
+    margin-left: 5px;
+}
+.hanghai input{
+    margin-top: 5px;
+    border-radius: 60px;
+    margin-left: 90px;
+}
+.haimot{
+    display: flex;
+}
+.haimot a{
+    text-decoration: none;
+    margin-left: 20px;
+    margin-top: 10px;
+    color: black;
+}
+.haimot p{
+    font-size: 20px;
+}
+.haihai a{
+    text-decoration: none;
+    font-size: 19px;
+    font-weight: bold;
+    color: black;
+    margin-right: 50px;
+}
+.haihai{
+    margin-top: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.bamot{
+    display: flex;
+    justify-content: center;
+}
+
+
+
+
+.qc{
+    border: 1px solid rgb(0, 0, 0);
+    border-radius: 10px;
+
+}
+.bahai{
+    display: flex;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+.bahai a{
+    text-decoration: none;
+    color: black;
+    font-size: 30px;
+}
+.bahai input{
+    border: 2px solid black ;
+    border-radius: 10px;
+    height: 30px;
+    width: 90px;
+}
+#hba{
+    margin-right: 300px;
+    font-size: 30px;
+}
+.baba {
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    background-color: #232846;
+    margin: 0px 40px;
+}
+
+.baba a{
+    border: 1px solid black;
+    text-decoration: none;
+    color: white;
+
+}
+.baba p{
+    display: flex;
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 13px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+
+}
+.khunglon{
+    display: flex;
+}
+.babon{
+    background-color: #B2B6D8;
+    margin: 0px 40px;
+    display: flex;
+    gap: 20px;
+    text-align: center;
+    justify-content: center;
+    flex: 4;
+}
+    .khungdọcmột{
+    }
+        .khungmột{
+    background-color: #6F78B7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+        }
+            .kmột {
+            margin: 0px 4px;
+            }
+            .kmột a{
+            text-decoration: none;
+            color: azure;
+            }
+.khungmột:hover {
+    background-color: #7185f8;
+    transform: scale(1.05);
+    transition: 0.2s;
+    border-radius: 3px;
+}
+
+        .khunghai{
+    background-color: #6F78B7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+        }
+            .khai{
+            margin: 0px 4px;
+            }
+            .khai a{
+            text-decoration: none;
+            color: azure;
+            }
+.khunghai:hover {
+    background-color: #7185f8;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+        .khungba{
+    background-color: #6F78B7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+        }
+            .kba{
+            margin: 0px 4px;
+            }
+            .kba a{
+            text-decoration: none;
+            color: azure;
+            }
+.khungba:hover {
+    background-color: #7185f8;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+.khungbốn{
+    background-color: #6F78B7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.kbốn{
+    margin-top: 7px;
+    margin-bottom: 7px;
+}
+            .kbốn a{
+            text-decoration: none;
+            color: azure;
+            }
+.khungbốn:hover {
+    background-color: #7185f8;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+
+
+
+.khungnăm{
+    background-color: #6F78B7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.knăm{
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+            .knăm a{
+            text-decoration: none;
+            color: azure;
+            }
+.khungnăm:hover {
+    background-color: #7185f8;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+
+
+.khungsáu{
+    background-color: #6F78B7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.ksáu{
+    margin-top: 7px;
+    margin-bottom: 7px;
+}
+            .ksáu a{
+            text-decoration: none;
+            color: azure;
+            }
+.khungsáu:hover {
+    background-color: #7185f8;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+.quảngcáo{
+    flex: 1;
+}
+
+.quảngcáo img{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 20px;
+}
+
+.xemthemsp {
+    margin: 20px auto;        /* auto = căn giữa */
+    padding: 10px 30px;       /* làm nút gọn */
+    border: 3px solid black;
+    border-radius: 30px;      /* bo tròn đẹp hơn */
+    width: fit-content;       /* co theo nội dung */
+    background-color: #ebe85a;
+    text-align: center;
+    cursor: pointer;
+}
+.xemthemsp:hover {
+    background-color: #fff200;
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+.xemthemsp p{
+    font-weight: bold;
+
+}
+
+
+
