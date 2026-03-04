@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>shopbinh</title>
+
+    
+</head>
+<link rel="stylesheet" href="5.cart.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<body>
+<div class="giohang">
+    <h2 id="tiêuđề">Giỏ hàng của bạn</h2>
+
+    <div id="cart-items"></div>
+    <button onclick="goHome()">Quay lại trang chủ</button>
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+<script>
+function goHome() {
+    window.location.href = "5.html";
+}
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let cartDiv = document.getElementById("cart-items");
+
+if (cart.length === 0) {
+    cartDiv.innerHTML = "<p>Giỏ hàng trống</p>";
+} else {
+    cart.forEach(item => {
+        cartDiv.innerHTML += `
+            <p>${item.name} - ${item.price}đ</p>
+        `;
+    });
+}
+</script>
+</body>
