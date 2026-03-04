@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đăng ký</title>
+    <link rel="stylesheet" href="5.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="form-box">
+
+        <h2>Đăng ký tài khoản</h2>
+
+        <label>Tên đăng nhập</label>
+        <input type="text" id="newUser">
+
+        <label>Mật khẩu</label>
+        <input type="password" id="newPass">
+
+        <button onclick="register()">Đăng ký</button>
+
+        <p>
+            <a href="5.login.html">← Quay lại đăng nhập</a>
+        </p>
+
+    </div>
+</div>
+
+<script>
+function register() {
+    let user = document.getElementById("newUser").value;
+    let pass = document.getElementById("newPass").value;
+
+    if(user === "" || pass === ""){
+        alert("Vui lòng nhập đầy đủ thông tin!");
+        return;
+    }
+
+    localStorage.setItem("username", user);
+    localStorage.setItem("password", pass);
+
+    alert("Đăng ký thành công!");
+    window.location.href = "5.login.html";
+}
+</script>
+
+</body>
+</html>
