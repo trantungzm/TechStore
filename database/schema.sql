@@ -213,7 +213,92 @@ CREATE TABLE logs (
   user_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- =========================
+-- SPECIFICATIONS (Thông số động)
+-- =========================
+CREATE TABLE specifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL
+);
 
+CREATE TABLE product_specifications (
+  product_id INT,
+  spec_id INT,
+  value VARCHAR(255),
+  PRIMARY KEY (product_id, spec_id),
+  FOREIGN KEY (product_id) REFERENCES products(id),
+  FOREIGN KEY (spec_id) REFERENCES specifications(id)
+);
+
+-- =========================
+-- SERIAL / IMEI MANAGEMENT
+-- =========================
+CREATE TABLE product_serials (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id INT,
+  serial_number VARCHAR(100) UNIQUE,
+  status VARCHAR(50) DEFAULT 'in_stock',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- =========================
+-- WARRANTY SYSTEM
+-- =========================
+CREATE TABLE warranties (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  serial_number VARCHAR(100),
+  user_id INT,
+  start_date DATE,
+  end_date DATE,
+  status VARCHAR(50) DEFAULT 'active',
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- =========================
+-- SUPPORT TICKETS
+-- =========================
+CREATE TABLE tickets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  subject VARCHAR(255),
+  message TEXT,
+  status VARCHAR(50) DEFAULT 'open',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- =========================
+-- INSTALLMENT (TRẢ GÓP)
+-- =========================
+CREATE TABLE installments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT,
+  months INT,
+  monthly_payment DECIMAL(10,2),
+  interest_rate DECIMAL(5,2),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+-- =========================
+-- RELATED PRODUCTS (Cross-sell)
+-- =========================
+CREATE TABLE related_products (
+  product_id INT,
+  related_product_id INT,
+  PRIMARY KEY (product_id, related_product_id),
+  FOREIGN KEY (product_id) REFERENCES products(id),
+  FOREIGN KEY (related_product_id) REFERENCES products(id)
+);
+
+-- =========================
+-- INDEX (TỐI ƯU THÊM)
+-- =========================
+CREATE INDEX idx_spec_product ON product_specifications(product_id);
+CREATE INDEX idx_serial_product ON product_serials(product_id);
+CREATE INDEX idx_warranty_serial ON warranties(serial_number);
+CREATE INDEX idx_ticket_user ON tickets(user_id);
 -- =========================
 -- INDEX (TỐI ƯU)
 -- =========================
