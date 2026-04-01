@@ -24,7 +24,7 @@ INSERT INTO categories (name)
 VALUES 
 ('Phone'),
 ('Laptop'),
-('Accessory');
+('Accessory');   
 
 -- =========================
 -- PRODUCTS
@@ -162,4 +162,27 @@ VALUES
 ('login',2),
 ('add_to_cart',2),
 ('order',3);
+
+-- =========================
+-- SERIAL / WARRANTY / SUPPORT / INSTALLMENT
+-- =========================
+INSERT INTO product_serials (product_id, serial_number, status)
+VALUES
+(1, 'IP15-001', 'in_stock'),
+(3, 'MBP-002', 'in_stock');
+
+INSERT INTO warranties (serial_number, user_id, start_date, end_date, status)
+VALUES
+('IP15-001', 2, '2026-01-01', '2027-01-01', 'active'),
+('MBP-002', 3, '2025-10-01', '2026-10-01', 'active');
+
+INSERT INTO tickets (user_id, subject, message, status)
+VALUES
+(2, 'Bao hanh iPhone', 'Can kiem tra serial IP15-001', 'open'),
+(3, 'Don hang giao tre', 'Don #2 giao cham hon du kien', 'processing');
+
+INSERT INTO installments (order_id, months, monthly_payment, interest_rate)
+VALUES
+(1, 6, 4500000, 1.20),
+(2, 12, 2300000, 1.80);
 

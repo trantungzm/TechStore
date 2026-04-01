@@ -9,10 +9,10 @@ USE techstore;
 -- =========================
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255),
-  email VARCHAR(255) UNIQUE,
-  password VARCHAR(255),
-  phone VARCHAR(20),
+  name VARCHAR(25),
+  email VARCHAR(50) UNIQUE,
+  password VARCHAR(50),
+  phone VARCHAR(10),
   role ENUM('user','admin') DEFAULT 'user',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -37,12 +37,12 @@ CREATE TABLE user_sessions (
 -- =========================
 CREATE TABLE categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255)
+  name VARCHAR(15)
 );
 
 CREATE TABLE products (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255),
+  name VARCHAR(50),
   price DECIMAL(10,2),
   description TEXT,
   category_id INT,
@@ -61,7 +61,7 @@ CREATE TABLE product_images (
 CREATE TABLE product_variants (
   id INT AUTO_INCREMENT PRIMARY KEY,
   product_id INT,
-  variant_name VARCHAR(255),
+  variant_name VARCHAR(50),
   price DECIMAL(10,2),
   stock INT,
   FOREIGN KEY (product_id) REFERENCES products(id)
@@ -69,7 +69,7 @@ CREATE TABLE product_variants (
 
 CREATE TABLE product_tags (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100)
+  name VARCHAR(50)
 );
 
 CREATE TABLE product_tag_map (
@@ -107,7 +107,7 @@ CREATE TABLE orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
   total_price DECIMAL(10,2),
-  status VARCHAR(50),
+  status VARCHAR(15),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -125,7 +125,7 @@ CREATE TABLE order_items (
 CREATE TABLE order_status_history (
   id INT AUTO_INCREMENT PRIMARY KEY,
   order_id INT,
-  status VARCHAR(50),
+  status VARCHAR(15),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (order_id) REFERENCES orders(id)
 );
@@ -138,15 +138,15 @@ CREATE TABLE payments (
   order_id INT,
   payment_method VARCHAR(50),
   amount DECIMAL(10,2),
-  status VARCHAR(50),
+  status VARCHAR(15),
   FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
 CREATE TABLE transactions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   payment_id INT,
-  transaction_code VARCHAR(255),
-  status VARCHAR(50),
+  transaction_code VARCHAR(25),
+  status VARCHAR(15),
   FOREIGN KEY (payment_id) REFERENCES payments(id)
 );
 
@@ -176,7 +176,7 @@ CREATE TABLE review_images (
 -- =========================
 CREATE TABLE coupons (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  code VARCHAR(50),
+  code VARCHAR(20),
   discount DECIMAL(10,2),
   expired_at DATETIME
 );
@@ -218,13 +218,13 @@ CREATE TABLE logs (
 -- =========================
 CREATE TABLE specifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE product_specifications (
   product_id INT,
   spec_id INT,
-  value VARCHAR(255),
+  value VARCHAR(20),
   PRIMARY KEY (product_id, spec_id),
   FOREIGN KEY (product_id) REFERENCES products(id),
   FOREIGN KEY (spec_id) REFERENCES specifications(id)
@@ -236,8 +236,8 @@ CREATE TABLE product_specifications (
 CREATE TABLE product_serials (
   id INT AUTO_INCREMENT PRIMARY KEY,
   product_id INT,
-  serial_number VARCHAR(100) UNIQUE,
-  status VARCHAR(50) DEFAULT 'in_stock',
+  serial_number VARCHAR(20) UNIQUE,
+  status VARCHAR(15) DEFAULT 'in_stock',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
@@ -247,11 +247,11 @@ CREATE TABLE product_serials (
 -- =========================
 CREATE TABLE warranties (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  serial_number VARCHAR(100),
+  serial_number VARCHAR(20),
   user_id INT,
   start_date DATE,
   end_date DATE,
-  status VARCHAR(50) DEFAULT 'active',
+  status VARCHAR(15) DEFAULT 'active',
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -261,9 +261,9 @@ CREATE TABLE warranties (
 CREATE TABLE tickets (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
-  subject VARCHAR(255),
+  subject VARCHAR(50),
   message TEXT,
-  status VARCHAR(50) DEFAULT 'open',
+  status VARCHAR(15) DEFAULT 'open',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );

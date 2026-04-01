@@ -29,3 +29,17 @@ services:
       - "5000:5000"
     depends_on:
       - database
+
+  frontend:
+    platform: linux/amd64
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: techstore-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_TARGET: http://backend:5000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
