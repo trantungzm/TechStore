@@ -1,12 +1,13 @@
-# Node.js
-node_modules/
-
-# .NET / Visual Studio
-bin/
-obj/
+# .NET
+[Bb]in/
+[Oo]bj/
 .vs/
-*.user
-*.suo
 
-# Environment files
-.env
+# Node/React
+node_modules/
+dist/
+build/
+
+# OS rác
+.DS_Store
+Thumbs.db

@@ -84,7 +84,8 @@ const Checkout = () => {
                 setTimeout(() => navigate('/orders'), 2500);
             }
         } catch (requestError) {
-            setError(requestError.response?.data?.message || 'Unable to place order.');
+            const data = requestError.response?.data;
+            setError(data?.message || data?.detail || data?.title || 'Unable to place order.');
         } finally {
             setLoading(false);
         }

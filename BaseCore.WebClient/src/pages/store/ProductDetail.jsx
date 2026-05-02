@@ -55,7 +55,8 @@ const ProductDetail = () => {
                     localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(next));
                 }
             } catch (e) {
-                setError(e.response?.data?.message || t('Unable to load product.'));
+                const data = e.response?.data;
+                setError(data?.message || data?.detail || data?.title || t('Unable to load product.'));
                 setProduct(null);
             } finally {
                 setLoading(false);

@@ -89,7 +89,8 @@ const Categories = () => {
             setPage(1);
             loadCategories();
         } catch (error) {
-            setError(error.response?.data?.message || 'Operation failed');
+            const data = error.response?.data;
+            setError(data?.message || data?.detail || data?.title || 'Operation failed');
         }
     };
 

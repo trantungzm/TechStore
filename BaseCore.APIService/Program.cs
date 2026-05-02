@@ -141,7 +141,7 @@ app.UseExceptionHandler(errorApp =>
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
 
-        var problem = new ProblemDetails
+        var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
         {
             Status = statusCode,
             Title = statusCode == StatusCodes.Status400BadRequest ? "Bad Request" : "Server Error",

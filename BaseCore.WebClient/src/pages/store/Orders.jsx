@@ -21,7 +21,8 @@ const Orders = () => {
             const response = await orderApi.getMyOrders();
             setOrders(response.data || []);
         } catch (requestError) {
-            setError(requestError.response?.data?.message || 'Không tải được danh sách đơn hàng.');
+            const data = requestError.response?.data;
+            setError(data?.message || data?.detail || data?.title || 'Không tải được danh sách đơn hàng.');
         } finally {
             setLoading(false);
         }

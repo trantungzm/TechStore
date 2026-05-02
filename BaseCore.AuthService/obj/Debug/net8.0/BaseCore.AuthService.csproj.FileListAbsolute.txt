@@ -873,11 +873,8 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\BaseCore.AuthService.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\BaseCore.AuthService.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\AutoMapper.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\AWSSDK.Core.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\AWSSDK.SecurityToken.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Azure.Core.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Azure.Identity.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\DnsClient.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Humanizer.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
@@ -904,17 +901,10 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\MongoDB.Bson.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\MongoDB.Driver.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\MongoDB.Driver.Core.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\MongoDB.Libmongocrypt.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Mono.TextTemplating.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\MySqlConnector.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Newtonsoft.Json.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Pipelines.Sockets.Unofficial.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Pomelo.EntityFrameworkCore.MySql.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Quartz.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\SharpCompress.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Snappier.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\StackExchange.Redis.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
@@ -933,7 +923,6 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\System.Security.Permissions.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\System.Windows.Extensions.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\ZstdSharp.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\cs\Microsoft.CodeAnalysis.resources.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\de\Microsoft.CodeAnalysis.resources.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\es\Microsoft.CodeAnalysis.resources.dll
@@ -993,9 +982,6 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\linux\native\libmongocrypt.so
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\osx\native\libmongocrypt.dylib
-D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\win\native\mongocrypt.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
@@ -1028,3 +1014,6 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\BaseCore.AuthService.genruntimeconfig.cache
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\ref\BaseCore.AuthService.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\obj\Debug\net8.0\BaseCore.AuthService.sourcelink.json
+D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\FluentValidation.dll
+D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\FluentValidation.AspNetCore.dll
+D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.AuthService\bin\Debug\net8.0\FluentValidation.DependencyInjectionExtensions.dll

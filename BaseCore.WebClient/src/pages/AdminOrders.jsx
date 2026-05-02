@@ -207,7 +207,8 @@ const AdminOrders = () => {
                     });
                 }
             } catch (error) {
-                alert(error.response?.data?.message || 'Không thể cập nhật trạng thái do lỗi logic backend.');
+                const data = error.response?.data;
+                alert(data?.message || data?.detail || data?.title || 'Không thể cập nhật trạng thái do lỗi logic backend.');
             } finally {
                 setProcessingActionId(null);
             }

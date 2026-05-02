@@ -36,7 +36,8 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true, user: userData };
         } catch (error) {
-            const message = error.response?.data?.message || 'Login failed';
+            const data = error.response?.data;
+            const message = data?.message || data?.detail || data?.title || 'Login failed';
             return { success: false, message };
         }
     };
@@ -46,7 +47,8 @@ export const AuthProvider = ({ children }) => {
             const response = await authApi.register(data);
             return { success: true, data: response.data };
         } catch (error) {
-            const message = error.response?.data?.message || 'Registration failed';
+            const data = error.response?.data;
+            const message = data?.message || data?.detail || data?.title || 'Registration failed';
             return { success: false, message };
         }
     };

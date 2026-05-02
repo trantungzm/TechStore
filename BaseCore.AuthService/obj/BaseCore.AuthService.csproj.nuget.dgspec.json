@@ -63,6 +63,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "FluentValidation.AspNetCore": {
+              "target": "Package",
+              "version": "[11.3.1, )"
+            },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
@@ -161,7 +165,7 @@
               "target": "Package",
               "version": "[8.0.0, )"
             },
-            "MongoDB.Driver": {
+            "MongoDB.Bson": {
               "target": "Package",
               "version": "[2.23.1, )"
             },
@@ -248,7 +252,7 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "MongoDB.Driver": {
+            "MongoDB.Bson": {
               "target": "Package",
               "version": "[2.23.1, )"
             },
@@ -420,10 +424,6 @@
               "target": "Package",
               "version": "[8.0.0, )"
             },
-            "MongoDB.Driver": {
-              "target": "Package",
-              "version": "[2.23.1, )"
-            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.4, )"
@@ -526,17 +526,9 @@
               "target": "Package",
               "version": "[8.0.8, )"
             },
-            "MongoDB.Driver": {
-              "target": "Package",
-              "version": "[2.23.1, )"
-            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.4, )"
-            },
-            "Pomelo.EntityFrameworkCore.MySql": {
-              "target": "Package",
-              "version": "[8.0.0, )"
             }
           },
           "imports": [
@@ -618,10 +610,6 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "MongoDB.Driver": {
-              "target": "Package",
-              "version": "[2.23.1, )"
-            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.4, )"
