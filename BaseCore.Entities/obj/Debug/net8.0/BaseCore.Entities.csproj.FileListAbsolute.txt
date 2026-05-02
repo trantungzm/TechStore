@@ -100,3 +100,4 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\refint\BaseCore.Entities.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\ref\BaseCore.Entities.dll
+D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.sourcelink.json

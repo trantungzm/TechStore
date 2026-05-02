@@ -136,3 +136,4 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.genruntimeconfig.cache
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\ref\BaseCore.Repository.dll
+D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.sourcelink.json

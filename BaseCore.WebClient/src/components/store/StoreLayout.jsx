@@ -8,9 +8,10 @@ import { formatCurrency, t } from '../../utils/store';
 import ElectroAssets from './ElectroAssets';
 
 const StoreLayout = ({ children }) => {
-    const [megaOpen, setMegaOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState(null);
     const [keyword, setKeyword] = useState('');
+    const [megaOpen, setMegaOpen] = useState(false);
+    const [showSpinner, setShowSpinner] = useState(true);
     const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD');
     const [language, setLanguage] = useState(localStorage.getItem('language') || 'English');
     const [toastState, setToastState] = useState(null);
@@ -20,8 +21,22 @@ const StoreLayout = ({ children }) => {
     const { compareCount } = useCompare();
     const navigate = useNavigate();
     const location = useLocation();
-
     const dashboardLabel = user?.name || user?.username || 'My Dashboard';
+
+    useEffect(() => {
+        const hide = () => setShowSpinner(false);
+        if (document.readyState === 'complete') {
+            hide();
+            return undefined;
+        }
+        window.addEventListener('load', hide, { once: true });
+        const fallbackTimer = window.setTimeout(hide, 800);
+        return () => {
+            window.removeEventListener('load', hide);
+            window.clearTimeout(fallbackTimer);
+        };
+    }, []);
+
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -33,6 +48,15 @@ const StoreLayout = ({ children }) => {
         const params = new URLSearchParams();
         if (keyword.trim()) params.set('keyword', keyword.trim());
         navigate(`/shop${params.toString() ? `?${params.toString()}` : ''}`);
+    };
+
+    const navigateToCategory = (categoryId) => {
+        const params = new URLSearchParams();
+        if (categoryId != null && String(categoryId).trim()) {
+            params.set('categoryId', String(categoryId).trim());
+        }
+        navigate(`/shop${params.toString() ? `?${params.toString()}` : ''}`);
+        setMegaOpen(false);
     };
 
     const handleLogout = () => {
@@ -97,11 +121,13 @@ const StoreLayout = ({ children }) => {
 .electro-main-nav .navbar-nav .nav-link.active::after{content:'';position:absolute;left:1.1rem;right:1.1rem;bottom:.35rem;height:2px;background:#6c757d;border-radius:2px}
 `}</style>
 
-            <div id="spinner" className="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
-                <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
-                    <span className="sr-only">Loading...</span>
+            {showSpinner && (
+                <div id="spinner" className="bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+                    <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
+                        <span className="sr-only">Loading...</span>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <header className="electro-sticky-header">
                 <div className="container-fluid px-5 d-none border-bottom d-lg-block">
@@ -260,63 +286,47 @@ const StoreLayout = ({ children }) => {
                         <div className="collapse navbar-collapse" id="storeMainNav">
                             <div className="navbar-nav mx-auto">
                                 <NavLink to="/" end className="nav-item nav-link">{t('Home')}</NavLink>
-                               <div
-    className="nav-item position-static"
-    onMouseEnter={() => setMegaOpen(true)}
-    onMouseLeave={() => setMegaOpen(false)}
->
-    <NavLink to="/shop" end className="nav-link" style={{ cursor: 'pointer' }}>
-         {t('Shop')}
-    </NavLink>
+                                <div
+                                    className="nav-item position-static"
+                                    onMouseEnter={() => setMegaOpen(true)}
+                                    onMouseLeave={() => setMegaOpen(false)}
+                                >
+                                    <NavLink to="/shop" className="nav-link" style={{ cursor: 'pointer' }}>
+                                        {t('Shop')}
+                                    </NavLink>
 
-    {megaOpen && (
-        <div className="mega-menu shadow">
-            <div className="container">
-                <div className="row">
+                                    {megaOpen && (
+                                        <div className="mega-menu shadow">
+                                            <div className="container">
+                                                <div className="row">
+                                                    <div className="col-md-3">
+                                                        <h6><i className="fas fa-layer-group me-2"></i>{t('Category')}</h6>
+                                                        <button type="button" className="btn btn-link p-0 d-block text-start" onClick={() => navigateToCategory(1)}>
+                                                            <i className="fas fa-mobile-alt me-2"></i> Smartphone
+                                                        </button>
+                                                        <button type="button" className="btn btn-link p-0 d-block text-start" onClick={() => navigateToCategory(2)}>
+                                                            <i className="fas fa-laptop me-2"></i> Laptop
+                                                        </button>
+                                                    </div>
 
-                    <div className="col-md-3">
-                        <h6><i className="fas fa-layer-group me-2"></i>Category</h6>
-                        <Link to="/shop?category=smartphone">
-                            <i className="fas fa-mobile-alt me-2"></i> Smartphone
-                        </Link>
-                        <Link to="/shop?category=laptop">
-                            <i className="fas fa-laptop me-2"></i> Laptop
-                        </Link>
-                        <Link to="/shop?category=tablet">
-                            <i className="fas fa-tablet-alt me-2"></i> Tablet
-                        </Link>
-                    </div>
+                                                    <div className="col-md-3">
+                                                        <h6><i className="fas fa-headphones me-2"></i>Accessories</h6>
+                                                        <button type="button" className="btn btn-link p-0 d-block text-start" onClick={() => navigateToCategory(3)}>
+                                                            <i className="fas fa-plug me-2"></i> Accessories
+                                                        </button>
+                                                    </div>
 
-                    <div className="col-md-3">
-                        <h6><i className="fas fa-headphones me-2"></i>Accessories</h6>
-                        <Link to="/shop?category=accessories">
-                            <i className="fas fa-plug me-2"></i> Accessories
-                        </Link>
-                        <Link to="/shop?category=audio">
-                            <i className="fas fa-headphones-alt me-2"></i> Audio
-                        </Link>
-                        <Link to="/shop?category=smartwatch">
-                            <i className="fas fa-clock me-2"></i> Smartwatch
-                        </Link>
-                    </div>
-
-                    <div className="col-md-3">
-                        <h6><i className="fas fa-gamepad me-2"></i>Entertainment</h6>
-                        <Link to="/shop?category=gaming">
-                            <i className="fas fa-gamepad me-2"></i> Gaming
-                        </Link>
-                        <Link to="/shop?category=camera">
-                            <i className="fas fa-camera me-2"></i> Camera
-                        </Link>
-                    </div>
-
-                   
-
-                </div>
-            </div>
-        </div>
-    )}
-</div>
+                                                    <div className="col-md-3">
+                                                        <h6><i className="fas fa-gamepad me-2"></i>Entertainment</h6>
+                                                        <button type="button" className="btn btn-link p-0 d-block text-start" onClick={() => navigateToCategory(4)}>
+                                                            <i className="fas fa-gamepad me-2"></i> Gaming
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 <NavLink to="/contact" className="nav-item nav-link">{t('Contact')}</NavLink>
                             </div>
                         </div>

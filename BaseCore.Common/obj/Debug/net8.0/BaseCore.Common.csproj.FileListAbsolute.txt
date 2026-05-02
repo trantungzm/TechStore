@@ -70,3 +70,4 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\refint\BaseCore.Common.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\ref\BaseCore.Common.dll
+D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.sourcelink.json
