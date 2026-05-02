@@ -9,9 +9,9 @@ namespace BaseCore.Repository
     /// Entity Framework Core DbContext for SQL Server
     /// Used for teaching EF Core concepts (Bài 10)
     /// </summary>
-    public class MySqlDbContext : DbContext
+    public class AppDbContext : DbContext
     {
-        public MySqlDbContext(DbContextOptions<MySqlDbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 

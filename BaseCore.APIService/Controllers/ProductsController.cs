@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BaseCore.Entities;
-using BaseCore.Repository.EFCore;
+using BaseCore.DTO.Store;
+using BaseCore.Services;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -13,13 +13,11 @@ namespace BaseCore.APIService.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductRepositoryEF _productRepository;
-        private readonly ICategoryRepositoryEF _categoryRepository;
+        private readonly IProductService _productService;
 
-        public ProductsController(IProductRepositoryEF productRepository, ICategoryRepositoryEF categoryRepository)
+        public ProductsController(IProductService productService)
         {
-            _productRepository = productRepository;
-            _categoryRepository = categoryRepository;
+            _productService = productService;
         }
 
         /// <summary>
@@ -32,7 +30,7 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, page, pageSize);
+            var (products, totalCount) = await _productService.SearchAsync(keyword, categoryId, page, pageSize);
 
             return Ok(new
             {
@@ -50,7 +48,7 @@ namespace BaseCore.APIService.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
                 return NotFound(new { message = "Product not found" });
 
@@ -64,22 +62,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
-            // Validate category exists
-            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
-            if (category == null)
-                return BadRequest(new { message = "Category not found" });
-
-            var product = new Product
-            {
-                Name = dto.Name,
-                Price = dto.Price,
-                Stock = dto.Stock,
-                CategoryId = dto.CategoryId,
-                Description = dto.Description,
-                ImageUrl = dto.ImageUrl ?? ""
-            };
-
-            await _productRepository.AddAsync(product);
+            var product = await _productService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
         }
 
@@ -90,18 +73,8 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
         {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
-                return NotFound(new { message = "Product not found" });
-
-            product.Name = dto.Name ?? product.Name;
-            product.Price = dto.Price ?? product.Price;
-            product.Stock = dto.Stock ?? product.Stock;
-            product.CategoryId = dto.CategoryId ?? product.CategoryId;
-            product.Description = dto.Description ?? product.Description;
-            product.ImageUrl = dto.ImageUrl ?? product.ImageUrl;
-
-            await _productRepository.UpdateAsync(product);
+            var product = await _productService.UpdateAsync(id, dto);
+            if (product == null) return NotFound(new { message = "Product not found" });
             return Ok(product);
         }
 
@@ -112,11 +85,8 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
-                return NotFound(new { message = "Product not found" });
-
-            await _productRepository.DeleteAsync(product);
+            var deleted = await _productService.DeleteAsync(id);
+            if (!deleted) return NotFound(new { message = "Product not found" });
             return Ok(new { message = "Product deleted successfully" });
         }
 
@@ -126,29 +96,8 @@ namespace BaseCore.APIService.Controllers
         [HttpGet("category/{categoryId}")]
         public async Task<IActionResult> GetByCategory(int categoryId)
         {
-            var products = await _productRepository.GetByCategoryAsync(categoryId);
+            var (products, _) = await _productService.SearchAsync(null, categoryId, 1, 500);
             return Ok(products);
         }
-    }
-
-    // DTOs
-    public class ProductCreateDto
-    {
-        public string Name { get; set; } = "";
-        public decimal Price { get; set; }
-        public int Stock { get; set; }
-        public int CategoryId { get; set; }
-        public string? Description { get; set; }
-        public string? ImageUrl { get; set; }
-    }
-
-    public class ProductUpdateDto
-    {
-        public string? Name { get; set; }
-        public decimal? Price { get; set; }
-        public int? Stock { get; set; }
-        public int? CategoryId { get; set; }
-        public string? Description { get; set; }
-        public string? ImageUrl { get; set; }
     }
 }

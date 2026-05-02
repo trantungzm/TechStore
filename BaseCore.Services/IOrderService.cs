@@ -1,4 +1,5 @@
 using BaseCore.Entities;
+using BaseCore.DTO.Store;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,8 +7,11 @@ namespace BaseCore.Services
 {
     public interface IOrderService
     {
-        Task<Order> CreateOrderAsync(Order order);
         Task<List<Order>> GetOrdersByUserIdAsync(System.Guid userId);
-        Task<Order> GetOrderByIdAsync(int id);
+        Task<List<Order>> GetAllOrdersAsync();
+        Task<(Order Order, List<OrderDetail> Details)?> GetOrderWithDetailsAsync(int id);
+        Task<(Order Order, List<OrderDetail> Details)> CreateOrderAsync(System.Guid userId, CreateOrderDto dto);
+        Task<Order?> UpdateStatusAsync(int id, string status);
+        Task<(Order Order, List<OrderDetail> Details)?> CancelOrderAsync(int id, string? reason);
     }
 }

@@ -20,9 +20,9 @@ namespace BaseCore.Repository.Authen
 
     public class UserRepository : IUserRepository
     {
-        private readonly MySqlDbContext _context;
+        private readonly AppDbContext _context;
 
-        public UserRepository(MySqlDbContext context)
+        public UserRepository(AppDbContext context)
         {
             _context = context;
         }

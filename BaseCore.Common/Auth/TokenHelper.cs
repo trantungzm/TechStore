@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -59,6 +59,11 @@ namespace BaseCore.Common
 
         public static string GenerateToken(string secretKey, int minuteExpireTime, string userId, string userName, string roles)
         {
+            return GenerateToken(secretKey, minuteExpireTime, userId, userName, roles, null, null);
+        }
+
+        public static string GenerateToken(string secretKey, int minuteExpireTime, string userId, string userName, string roles, string? issuer, string? audience)
+        {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(secretKey);
 
@@ -71,6 +76,8 @@ namespace BaseCore.Common
                     new Claim(ClaimTypes.Role, roles)
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(minuteExpireTime),
+                Issuer = string.IsNullOrWhiteSpace(issuer) ? null : issuer,
+                Audience = string.IsNullOrWhiteSpace(audience) ? null : audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 

@@ -13,7 +13,7 @@ namespace BaseCore.Repository.EFCore
 
     public class CategoryRepositoryEF : Repository<Category>, ICategoryRepositoryEF
     {
-        public CategoryRepositoryEF(MySqlDbContext context) : base(context)
+        public CategoryRepositoryEF(AppDbContext context) : base(context)
         {
         }
 

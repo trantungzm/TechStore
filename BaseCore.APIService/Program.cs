@@ -3,9 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using BaseCore.APIService.Demo;
+using BaseCore.APIService.Validators;
 using BaseCore.Repository;
 using BaseCore.Repository.EFCore;
+using BaseCore.Services;
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +23,8 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CategoryUpsertDtoValidator>();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -52,12 +58,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        var origin = builder.Configuration["Cors:WithOrigin"];
+        if (builder.Environment.IsDevelopment() || string.IsNullOrWhiteSpace(origin))
+        {
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            return;
+        }
+
+        policy.WithOrigins(origin).AllowAnyMethod().AllowAnyHeader();
     });
 });
 
@@ -70,10 +82,14 @@ if (useDemoMode)
     builder.Services.AddSingleton<ICategoryRepositoryEF, DemoCategoryRepository>();
     builder.Services.AddSingleton<IOrderRepositoryEF, DemoOrderRepository>();
     builder.Services.AddSingleton<IOrderDetailRepositoryEF, DemoOrderDetailRepository>();
+
+    builder.Services.AddSingleton<IProductService, ProductService>();
+    builder.Services.AddSingleton<ICategoryService, CategoryService>();
+    builder.Services.AddSingleton<IOrderService, OrderService>();
 }
 else
 {
-    builder.Services.AddDbContext<MySqlDbContext>(options =>
+    builder.Services.AddDbContext<AppDbContext>(options =>
     {
         options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectedDb"));
     });
@@ -82,10 +98,16 @@ else
     builder.Services.AddScoped<ICategoryRepositoryEF, CategoryRepositoryEF>();
     builder.Services.AddScoped<IOrderRepositoryEF, OrderRepositoryEF>();
     builder.Services.AddScoped<IOrderDetailRepositoryEF, OrderDetailRepositoryEF>();
+
+    builder.Services.AddScoped<IProductService, ProductService>();
+    builder.Services.AddScoped<ICategoryService, CategoryService>();
+    builder.Services.AddScoped<IOrderService, OrderService>();
 }
 
 // JWT Authentication
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "YourSecretKeyForAuthenticationShouldBeLongEnough");
+var issuer = builder.Configuration["Jwt:Issuer"];
+var audience = builder.Configuration["Jwt:Audience"];
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -99,18 +121,44 @@ builder.Services.AddAuthentication(x =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false
+        ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
+        ValidIssuer = issuer,
+        ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+        ValidAudience = audience
     };
 });
 
 var app = builder.Build();
 
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        var exception = feature?.Error;
+        var statusCode = exception is InvalidOperationException ? StatusCodes.Status400BadRequest : StatusCodes.Status500InternalServerError;
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+
+        var problem = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = statusCode == StatusCodes.Status400BadRequest ? "Bad Request" : "Server Error",
+            Detail = exception?.Message,
+            Instance = feature?.Path
+        };
+        problem.Extensions["traceId"] = context.TraceIdentifier;
+
+        await context.Response.WriteAsJsonAsync(problem);
+    });
+});
+
 // Auto migrate database when not in demo mode
 if (!useDemoMode)
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<MySqlDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     
     // Create database and apply migrations
     db.Database.Migrate();
@@ -128,7 +176,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

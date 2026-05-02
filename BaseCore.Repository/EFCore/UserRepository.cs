@@ -14,7 +14,7 @@ namespace BaseCore.Repository.EFCore
 
     public class UserRepositoryEF : Repository<User>, IUserRepositoryEF
     {
-        public UserRepositoryEF(MySqlDbContext context) : base(context)
+        public UserRepositoryEF(AppDbContext context) : base(context)
         {
         }
 

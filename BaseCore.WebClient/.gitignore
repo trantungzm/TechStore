@@ -1,0 +1,12 @@
+# Node.js
+node_modules/
+
+# .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Environment files
+.env

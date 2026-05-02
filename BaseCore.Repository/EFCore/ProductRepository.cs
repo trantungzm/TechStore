@@ -14,7 +14,7 @@ namespace BaseCore.Repository.EFCore
 
     public class ProductRepositoryEF : Repository<Product>, IProductRepositoryEF
     {
-        public ProductRepositoryEF(MySqlDbContext context) : base(context)
+        public ProductRepositoryEF(AppDbContext context) : base(context)
         {
         }
 

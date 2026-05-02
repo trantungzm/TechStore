@@ -1,110 +1,113 @@
-using MongoDB.Driver;
+using BaseCore.DTO.Store;
 using BaseCore.Entities;
-using BaseCore.Repository;
+using BaseCore.Repository.EFCore;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BaseCore.Services
 {
     public class ProductService : IProductService
     {
-        private readonly MongoDbContext _context;
+        private readonly IProductRepositoryEF _productRepository;
+        private readonly ICategoryRepositoryEF _categoryRepository;
 
-        public ProductService(MongoDbContext context)
+        public ProductService(IProductRepositoryEF productRepository, ICategoryRepositoryEF categoryRepository)
         {
-            _context = context;
+            _productRepository = productRepository;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<List<Product>> GetAllProductsAsync()
         {
-            var products = await _context.Products.Find(_ => true).ToListAsync();
-
-            // Load categories for each product
-            foreach (var product in products)
+            var products = await _productRepository.GetAllAsync();
+            var list = products.ToList();
+            foreach (var product in list)
             {
-                product.Category = await _context.Categories
-                    .Find(c => c.Id == product.CategoryId)
-                    .FirstOrDefaultAsync();
+                product.Category = await _categoryRepository.GetByIdAsync(product.CategoryId);
             }
-
-            return products;
+            return list;
         }
 
-        public async Task<Product> GetProductByIdAsync(int id)
+        public async Task<Product?> GetProductByIdAsync(int id)
         {
-            var product = await _context.Products
-                .Find(p => p.Id == id)
-                .FirstOrDefaultAsync();
+            var product = await _productRepository.GetByIdAsync(id);
 
             if (product != null)
             {
-                product.Category = await _context.Categories
-                    .Find(c => c.Id == product.CategoryId)
-                    .FirstOrDefaultAsync();
+                product.Category = await _categoryRepository.GetByIdAsync(product.CategoryId);
             }
 
             return product;
         }
 
-        public async Task<Product> CreateProductAsync(Product product)
+        public async Task<Product> CreateAsync(ProductCreateDto dto)
         {
-            // Get next ID
-            var maxProduct = await _context.Products
-                .Find(_ => true)
-                .SortByDescending(p => p.Id)
-                .FirstOrDefaultAsync();
-            product.Id = (maxProduct?.Id ?? 0) + 1;
+            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
+            if (category == null)
+            {
+                throw new InvalidOperationException("Category not found");
+            }
 
-            await _context.Products.InsertOneAsync(product);
+            var product = new Product
+            {
+                Name = dto.Name,
+                Price = dto.Price,
+                Stock = dto.Stock,
+                CategoryId = dto.CategoryId,
+                Description = dto.Description,
+                ImageUrl = dto.ImageUrl ?? string.Empty,
+                Category = category
+            };
+
+            return await _productRepository.AddAsync(product);
+        }
+
+        public async Task<Product?> UpdateAsync(int id, ProductUpdateDto dto)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+            {
+                return null;
+            }
+
+            if (dto.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(dto.CategoryId.Value);
+                if (category == null)
+                {
+                    throw new InvalidOperationException("Category not found");
+                }
+                product.CategoryId = dto.CategoryId.Value;
+                product.Category = category;
+            }
+
+            product.Name = dto.Name ?? product.Name;
+            product.Price = dto.Price ?? product.Price;
+            product.Stock = dto.Stock ?? product.Stock;
+            product.Description = dto.Description ?? product.Description;
+            product.ImageUrl = dto.ImageUrl ?? product.ImageUrl;
+
+            await _productRepository.UpdateAsync(product);
             return product;
         }
 
-        public async Task UpdateProductAsync(Product product)
+        public async Task<bool> DeleteAsync(int id)
         {
-            await _context.Products.ReplaceOneAsync(p => p.Id == product.Id, product);
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+            {
+                return false;
+            }
+
+            await _productRepository.DeleteAsync(product);
+            return true;
         }
 
-        public async Task DeleteProductAsync(int id)
+        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize)
         {
-            await _context.Products.DeleteOneAsync(p => p.Id == id);
-        }
-
-        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string keyword, int? categoryId, int page, int pageSize)
-        {
-            var filterBuilder = Builders<Product>.Filter;
-            var filter = filterBuilder.Empty;
-
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                var keywordFilter = filterBuilder.Or(
-                    filterBuilder.Regex(p => p.Name, new MongoDB.Bson.BsonRegularExpression(keyword, "i")),
-                    filterBuilder.Regex(p => p.Description, new MongoDB.Bson.BsonRegularExpression(keyword, "i"))
-                );
-                filter = filterBuilder.And(filter, keywordFilter);
-            }
-
-            if (categoryId.HasValue)
-            {
-                filter = filterBuilder.And(filter, filterBuilder.Eq(p => p.CategoryId, categoryId.Value));
-            }
-
-            var totalCount = (int)await _context.Products.CountDocumentsAsync(filter);
-
-            var products = await _context.Products
-                .Find(filter)
-                .SortByDescending(p => p.Id)
-                .Skip((page - 1) * pageSize)
-                .Limit(pageSize)
-                .ToListAsync();
-
-            // Load categories
-            foreach (var product in products)
-            {
-                product.Category = await _context.Categories
-                    .Find(c => c.Id == product.CategoryId)
-                    .FirstOrDefaultAsync();
-            }
-
+            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, page, pageSize);
             return (products, totalCount);
         }
     }

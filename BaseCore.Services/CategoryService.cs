@@ -1,51 +1,68 @@
-using MongoDB.Driver;
+using BaseCore.DTO.Store;
 using BaseCore.Entities;
-using BaseCore.Repository;
+using BaseCore.Repository.EFCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BaseCore.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly MongoDbContext _context;
+        private readonly ICategoryRepositoryEF _categoryRepository;
 
-        public CategoryService(MongoDbContext context)
+        public CategoryService(ICategoryRepositoryEF categoryRepository)
         {
-            _context = context;
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<List<Category>> GetAllAsync()
         {
-            return await _context.Categories.Find(_ => true).ToListAsync();
+            var categories = await _categoryRepository.GetAllAsync();
+            return categories.ToList();
         }
 
-        public async Task<Category> GetByIdAsync(int id)
+        public async Task<Category?> GetByIdAsync(int id)
         {
-            return await _context.Categories.Find(c => c.Id == id).FirstOrDefaultAsync();
+            return await _categoryRepository.GetByIdAsync(id);
         }
 
-        public async Task<Category> CreateAsync(Category category)
+        public Task<Category> CreateAsync(CategoryUpsertDto dto)
         {
-            // Get next ID
-            var maxCategory = await _context.Categories
-                .Find(_ => true)
-                .SortByDescending(c => c.Id)
-                .FirstOrDefaultAsync();
-            category.Id = (maxCategory?.Id ?? 0) + 1;
+            var category = new Category
+            {
+                Name = dto.Name,
+                Description = dto.Description ?? string.Empty
+            };
+            return _categoryRepository.AddAsync(category);
+        }
 
-            await _context.Categories.InsertOneAsync(category);
+        public async Task<Category?> UpdateAsync(int id, CategoryUpsertDto dto)
+        {
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                return null;
+            }
+
+            category.Name = dto.Name ?? category.Name;
+            category.Description = dto.Description ?? category.Description;
+            await _categoryRepository.UpdateAsync(category);
             return category;
         }
 
-        public async Task UpdateAsync(Category category)
+        public async Task<bool> DeleteAsync(int id)
         {
-            await _context.Categories.ReplaceOneAsync(c => c.Id == category.Id, category);
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                return false;
+            }
+
+            await _categoryRepository.DeleteAsync(category);
+            return true;
         }
 
-        public async Task DeleteAsync(int id)
-        {
-            await _context.Categories.DeleteOneAsync(c => c.Id == id);
-        }
+        public Task<Category?> GetByNameAsync(string name) => _categoryRepository.GetByNameAsync(name);
     }
 }

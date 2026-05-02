@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BaseCore.Entities;
-using BaseCore.Repository.EFCore;
+using BaseCore.DTO.Store;
+using BaseCore.Services;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -13,11 +13,11 @@ namespace BaseCore.APIService.Controllers
     [ApiController]
     public class CategoriesController : ControllerBase
     {
-        private readonly ICategoryRepositoryEF _categoryRepository;
+        private readonly ICategoryService _categoryService;
 
-        public CategoriesController(ICategoryRepositoryEF categoryRepository)
+        public CategoriesController(ICategoryService categoryService)
         {
-            _categoryRepository = categoryRepository;
+            _categoryService = categoryService;
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace BaseCore.APIService.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var categories = await _categoryRepository.GetAllAsync();
+            var categories = await _categoryService.GetAllAsync();
             return Ok(categories);
         }
 
@@ -36,7 +36,7 @@ namespace BaseCore.APIService.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var category = await _categoryRepository.GetByIdAsync(id);
+            var category = await _categoryService.GetByIdAsync(id);
             if (category == null)
                 return NotFound(new { message = "Category not found" });
 
@@ -48,19 +48,12 @@ namespace BaseCore.APIService.Controllers
         /// </summary>
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] CategoryDto dto)
+        public async Task<IActionResult> Create([FromBody] CategoryUpsertDto dto)
         {
-            var existing = await _categoryRepository.GetByNameAsync(dto.Name);
+            var existing = await _categoryService.GetByNameAsync(dto.Name);
             if (existing != null)
                 return BadRequest(new { message = "Category name already exists" });
-
-            var category = new Category
-            {
-                Name = dto.Name,
-                Description = dto.Description ?? ""
-            };
-
-            await _categoryRepository.AddAsync(category);
+            var category = await _categoryService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
         }
 
@@ -69,16 +62,10 @@ namespace BaseCore.APIService.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> Update(int id, [FromBody] CategoryDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] CategoryUpsertDto dto)
         {
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
-                return NotFound(new { message = "Category not found" });
-
-            category.Name = dto.Name ?? category.Name;
-            category.Description = dto.Description ?? category.Description;
-
-            await _categoryRepository.UpdateAsync(category);
+            var category = await _categoryService.UpdateAsync(id, dto);
+            if (category == null) return NotFound(new { message = "Category not found" });
             return Ok(category);
         }
 
@@ -89,18 +76,9 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Delete(int id)
         {
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
-                return NotFound(new { message = "Category not found" });
-
-            await _categoryRepository.DeleteAsync(category);
+            var deleted = await _categoryService.DeleteAsync(id);
+            if (!deleted) return NotFound(new { message = "Category not found" });
             return Ok(new { message = "Category deleted successfully" });
         }
-    }
-
-    public class CategoryDto
-    {
-        public string Name { get; set; } = "";
-        public string? Description { get; set; }
     }
 }

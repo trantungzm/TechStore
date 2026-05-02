@@ -14,7 +14,7 @@ namespace BaseCore.Repository.EFCore
 
     public class OrderRepositoryEF : Repository<Order>, IOrderRepositoryEF
     {
-        public OrderRepositoryEF(MySqlDbContext context) : base(context)
+        public OrderRepositoryEF(AppDbContext context) : base(context)
         {
         }
 
@@ -43,7 +43,7 @@ namespace BaseCore.Repository.EFCore
 
     public class OrderDetailRepositoryEF : Repository<OrderDetail>, IOrderDetailRepositoryEF
     {
-        public OrderDetailRepositoryEF(MySqlDbContext context) : base(context)
+        public OrderDetailRepositoryEF(AppDbContext context) : base(context)
         {
         }
 

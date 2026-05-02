@@ -25,14 +25,18 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 
-// CORS Configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        var origin = builder.Configuration["Cors:WithOrigin"];
+        if (builder.Environment.IsDevelopment() || string.IsNullOrWhiteSpace(origin))
+        {
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            return;
+        }
+
+        policy.WithOrigins(origin).AllowAnyMethod().AllowAnyHeader();
     });
 });
 
@@ -79,7 +83,7 @@ else
 {
     var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Server=localhost;Database=BaseCoreSales;Trusted_Connection=true;";
-    builder.Services.AddDbContext<MySqlDbContext>(options =>
+    builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(sqlConnectionString));
 
     builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -90,6 +94,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 // JWT Authentication Key
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "YourSecretKeyForAuthenticationShouldBeLongEnough");
+var issuer = builder.Configuration["Jwt:Issuer"];
+var audience = builder.Configuration["Jwt:Audience"];
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -103,8 +109,10 @@ builder.Services.AddAuthentication(x =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false
+        ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
+        ValidIssuer = issuer,
+        ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+        ValidAudience = audience
     };
 });
 
@@ -114,7 +122,7 @@ var app = builder.Build();
 if (!useDemoMode)
 {
     using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<MySqlDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
     await dbContext.SeedDataAsync();
 }
@@ -126,7 +134,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
