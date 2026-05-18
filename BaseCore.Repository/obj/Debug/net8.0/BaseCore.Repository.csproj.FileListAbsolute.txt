@@ -137,3 +137,27 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.genruntimeconfig.cache
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\ref\BaseCore.Repository.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Repository.deps.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Repository.runtimeconfig.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Repository.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Repository.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Common.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.DTO.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Entities.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Libs.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Common.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.DTO.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Entities.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\bin\Debug\net8.0\BaseCore.Libs.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.csproj.AssemblyReference.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.GeneratedMSBuildEditorConfig.editorconfig
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.AssemblyInfoInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.AssemblyInfo.cs
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.csproj.CoreCompileInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.92782631.Up2Date
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\refint\BaseCore.Repository.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\BaseCore.Repository.genruntimeconfig.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Repository\obj\Debug\net8.0\ref\BaseCore.Repository.dll

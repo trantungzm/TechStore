@@ -1,14 +1,97 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { categoryApi, productApi } from '../../services/api';
-import ProductCard from '../../components/store/ProductCard';
+import { productApi } from '../../services/api';
+import { useCart } from '../../contexts/CartContext';
+import AllProductItemsCarousel from '../../components/store/AllProductItemsCarousel';
+import OurProductsSection from '../../components/store/OurProductsSection';
+import ProductMiniCard from '../../components/store/ProductMiniCard';
 import { setPageMeta, t } from '../../utils/store';
+import { fadeInLeft, fadeInRight, fadeInUp, motionTransition, motionViewport } from '../../utils/motionVariants';
+
+const demoProducts = [
+    { id: 201, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 15, badge: 'New', tab: 'New Arrivals', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-3.png' },
+    { id: 202, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 12, badge: 'Sale', tab: 'Top Selling', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-1.png' },
+    { id: 203, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 9, tab: 'Featured', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-2.png' },
+    { id: 204, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 20, badge: 'New', tab: 'New Arrivals', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-4.png' },
+    { id: 205, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 8, badge: 'Sale', tab: 'Top Selling', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-5.png' },
+    { id: 206, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 18, tab: 'Featured', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-11.png' },
+    { id: 207, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 14, badge: 'New', tab: 'New Arrivals', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-7.png' },
+    { id: 208, name: 'Apple iPad Mini G2356', price: 26250000, oldPrice: 31250000, stock: 11, badge: 'Sale', tab: 'Top Selling', category: { name: 'SmartPhone' }, categoryId: 1, imageUrl: '/electro/img/product-8.png' },
+];
+
+const normalizeHomeProduct = (product, index) => ({
+    ...product,
+    oldPrice: product.oldPrice || Math.round(Number(product.price || 26250000) * 1.19),
+    badge: product.badge || (index % 3 === 0 ? 'New' : index % 3 === 1 ? 'Sale' : ''),
+    tab: product.tab || productTags[index % productTags.length],
+    category: product.category || { name: 'SmartPhone' },
+    imageUrl: product.imageUrl || `/electro/img/product-${(index % 8) + 1}.png`,
+});
+
+const productTags = ['New Arrivals', 'Top Selling', 'Featured'];
+
+const getImmediateProducts = () => {
+    try {
+        return productApi.getLocalCatalog?.() || [];
+    } catch {
+        return [];
+    }
+};
+
+const getFeaturedProducts = (products) => products.slice(0, 6);
+
+const getBestsellerProducts = (products) => {
+    const bestsellerProducts = products.slice(6, 12);
+    return bestsellerProducts.length ? bestsellerProducts : products.slice(0, 6);
+};
+
+const serviceItems = [
+    { icon: 'fa fa-sync-alt', title: t('Free Return'), text: t('30 days money back guarantee!') },
+    { icon: 'fab fa-telegram-plane', title: t('Free Shipping'), text: t('Free shipping on all order') },
+    { icon: 'fas fa-life-ring', title: t('Support 24/7'), text: t('We support online 24 hrs a day') },
+    { icon: 'fas fa-credit-card', title: t('Receive Gift Card'), text: t('Recieve gift all over oder $50') },
+    { icon: 'fas fa-lock', title: t('Secure Payment'), text: t('We Value Your Security') },
+    { icon: 'fas fa-blog', title: t('Online Service'), text: t('Free return products in 30 days') },
+];
+
+const offerCards = [
+    {
+        title: t('Smart Camera'),
+        subtitle: 'Tìm camera tốt nhất dành cho bạn!',
+        discount: '40%',
+        imageUrl: '/electro/img/product-5.png',
+        borderDark: true,
+    },
+    {
+        title: t('Smart Watch'),
+        subtitle: 'Tìm đồng hồ tốt nhất dành cho bạn!',
+        discount: '20%',
+        imageUrl: '/electro/img/product-6.png',
+        borderDark: false,
+    },
+];
 
 const Home = () => {
-    const [categories, setCategories] = useState([]);
-    const [featuredProducts, setFeaturedProducts] = useState([]);
-    const [bestsellerProducts, setBestsellerProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [featuredProducts, setFeaturedProducts] = useState(() => getFeaturedProducts(getImmediateProducts()));
+    const [bestsellerProducts, setBestsellerProducts] = useState(() => getBestsellerProducts(getImmediateProducts()));
+    const [loading, setLoading] = useState(false);
+    const { addItem } = useCart();
+
+    const miniProducts = useMemo(() => {
+        const productMap = new Map();
+        [...bestsellerProducts, ...featuredProducts, ...demoProducts].forEach((product) => {
+            if (!productMap.has(product.id)) {
+                productMap.set(product.id, product);
+            }
+        });
+
+        return Array.from(productMap.values()).slice(0, 8).map(normalizeHomeProduct);
+    }, [bestsellerProducts, featuredProducts]);
+
+    const handleAddToCart = (product) => {
+        addItem(product, 1);
+    };
 
     useEffect(() => {
         setPageMeta({
@@ -17,22 +100,11 @@ const Home = () => {
         });
         const loadData = async () => {
             try {
-                const [categoriesResponse, productsResponse] = await Promise.all([
-                    categoryApi.getAll(),
-                    productApi.getAll({ page: 1, pageSize: 12 }),
-                ]);
-
-                const cats = categoriesResponse.data || [];
+                const productsResponse = await productApi.getAll({ page: 1, pageSize: 12 });
                 const prods = productsResponse.data?.items || [];
                 
-                const catsWithCount = cats.map(c => ({
-                    ...c,
-                    productCount: prods.filter(p => p.categoryId === c.id).length
-                }));
-                
-                setCategories(catsWithCount);
-                setFeaturedProducts(prods.slice(0, 6));
-                setBestsellerProducts(prods.slice(6, 12).length ? prods.slice(6, 12) : prods.slice(0, 6));
+                setFeaturedProducts(getFeaturedProducts(prods));
+                setBestsellerProducts(getBestsellerProducts(prods));
             } catch (error) {
                 console.error('Failed to load store home data', error);
             } finally {
@@ -48,7 +120,7 @@ const Home = () => {
             <div className="container-fluid carousel bg-light px-0">
                 <div className="row g-0 justify-content-end">
                     <div className="col-12 col-lg-7 col-xl-9">
-                        <div id="headerCarousel" className="carousel slide" data-ride="carousel">
+                        <div id="headerCarousel" className="carousel slide" data-bs-ride="carousel">
                             <div className="carousel-inner bg-light py-5">
                                 <div className="carousel-item active">
                                     <div className="row g-0 align-items-center">
@@ -77,11 +149,11 @@ const Home = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button className="carousel-control-prev" type="button" data-target="#headerCarousel" data-slide="prev">
+                            <button className="carousel-control-prev" type="button" data-bs-target="#headerCarousel" data-bs-slide="prev">
                                 <span className="carousel-control-prev-icon" aria-hidden="true" style={{ filter: 'invert(1)' }}></span>
                                 <span className="visually-hidden">Previous</span>
                             </button>
-                            <button className="carousel-control-next" type="button" data-target="#headerCarousel" data-slide="next">
+                            <button className="carousel-control-next" type="button" data-bs-target="#headerCarousel" data-bs-slide="next">
                                 <span className="carousel-control-next-icon" aria-hidden="true" style={{ filter: 'invert(1)' }}></span>
                                 <span className="visually-hidden">Next</span>
                             </button>
@@ -91,12 +163,12 @@ const Home = () => {
                         <div className="carousel-header-banner h-100">
                             <img src="/electro/img/header-img.jpg" className="img-fluid w-100 h-100" style={{ objectFit: 'cover' }} alt="Banner" />
                             <div className="carousel-banner-offer">
-                                <p className="bg-primary text-white rounded fs-5 py-2 px-4 mb-0 me-3">Save $48.00</p>
+                                <p className="bg-primary text-white rounded fs-5 py-2 px-4 mb-0 me-3">Giảm $48.00</p>
                                 <p className="text-primary fs-5 fw-bold mb-0">{t('Special Offer')}</p>
                             </div>
                             <div className="carousel-banner">
                                 <div className="carousel-banner-content text-center p-4">
-                                    <Link to="/shop?categoryId=5" className="d-block mb-2 text-white">SmartPhone / Tablet</Link>
+                                    <Link to="/shop?categoryId=5" className="d-block mb-2 text-white">Điện thoại / Máy tính bảng</Link>
                                     <span className="d-block text-white fs-3">Apple iPad Mini <br /> G2356</span>
                                     <del className="me-2 text-white fs-5">$1,250.00</del>
                                     <span className="text-primary fs-5">$1,050.00</span>
@@ -108,172 +180,122 @@ const Home = () => {
                 </div>
             </div>
 
-            <div className="container-fluid px-0">
-                <div className="row g-0">
-                    <div className="col-6 col-md-4 col-lg-2 border-start border-end wow fadeInUp" data-wow-delay="0.1s">
-                        <div className="p-4">
-                            <div className="d-inline-flex align-items-center">
-                                <i className="fa fa-sync-alt fa-2x text-primary"></i>
-                                <div className="ms-4">
-                                            <h6 className="text-uppercase mb-2">{t('Free Return')}</h6>
-                                            <p className="mb-0">{t('30 days money back guarantee!')}</p>
+            <motion.div className="container-fluid px-0" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={motionViewport} transition={motionTransition}>
+                <div className="row g-0 electro-service-strip">
+                    {serviceItems.map((item, index) => (
+                        <motion.div
+                            key={item.title}
+                            className="col-6 col-md-4 col-lg-2 border-start border-end"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={motionViewport}
+                            transition={{ ...motionTransition, delay: index * 0.04 }}
+                        >
+                            <div className="electro-service-item">
+                                <i className={`${item.icon} fa-2x text-primary`}></i>
+                                <div>
+                                    <h6 className="text-uppercase mb-2">{item.title}</h6>
+                                    <p className="mb-0">{item.text}</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div className="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.2s">
-                        <div className="p-4">
-                            <div className="d-flex align-items-center">
-                                <i className="fab fa-telegram-plane fa-2x text-primary"></i>
-                                <div className="ms-4">
-                                            <h6 className="text-uppercase mb-2">{t('Free Shipping')}</h6>
-                                            <p className="mb-0">{t('Free shipping on all order')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.3s">
-                        <div className="p-4">
-                            <div className="d-flex align-items-center">
-                                <i className="fas fa-life-ring fa-2x text-primary"></i>
-                                <div className="ms-4">
-                                            <h6 className="text-uppercase mb-2">{t('Support 24/7')}</h6>
-                                            <p className="mb-0">{t('We support online 24 hrs a day')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.4s">
-                        <div className="p-4">
-                            <div className="d-flex align-items-center">
-                                <i className="fas fa-credit-card fa-2x text-primary"></i>
-                                <div className="ms-4">
-                                            <h6 className="text-uppercase mb-2">{t('Receive Gift Card')}</h6>
-                                            <p className="mb-0">{t('Recieve gift all over oder $50')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.5s">
-                        <div className="p-4">
-                            <div className="d-flex align-items-center">
-                                <i className="fas fa-lock fa-2x text-primary"></i>
-                                <div className="ms-4">
-                                            <h6 className="text-uppercase mb-2">{t('Secure Payment')}</h6>
-                                            <p className="mb-0">{t('We Value Your Security')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.6s">
-                        <div className="p-4">
-                            <div className="d-flex align-items-center">
-                                <i className="fas fa-blog fa-2x text-primary"></i>
-                                <div className="ms-4">
-                                            <h6 className="text-uppercase mb-2">{t('Online Service')}</h6>
-                                            <p className="mb-0">{t('Free return products in 30 days')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    ))}
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="container-fluid bg-light py-5">
+            <motion.div className="container-fluid electro-offer-band py-5" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={motionViewport} transition={motionTransition}>
                 <div className="container">
-                    <div className="row g-4">
-                        <div className="col-lg-6 wow fadeInLeft" data-wow-delay="0.2s">
-                            <Link to="/shop" className="d-flex align-items-center justify-content-between border bg-white rounded p-4">
-                                <div>
-                                    <p className="text-muted mb-3">Find The Best Camera for You!</p>
-                                    <h3 className="text-primary">Smart Camera</h3>
-                                    <h1 className="display-3 text-secondary mb-0">40% <span className="text-primary fw-normal">Off</span></h1>
-                                </div>
-                                <img src="/electro/img/product-1.png" className="img-fluid" alt="Product" />
-                            </Link>
-                        </div>
-                        <div className="col-lg-6 wow fadeInRight" data-wow-delay="0.2s">
-                            <Link to="/shop" className="d-flex align-items-center justify-content-between border bg-white rounded p-4">
-                                <div>
-                                    <p className="text-muted mb-3">Find The Best Camera for You!</p>
-                                    <h3 className="text-primary">SmartPhone</h3>
-                                    <h1 className="display-3 text-secondary mb-0">30% <span className="text-primary fw-normal">Off</span></h1>
-                                </div>
-                                <img src="/electro/img/product-2.png" className="img-fluid" alt="Product" />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="container-fluid py-5" id="featured-products">
-                <div className="container pb-5">
-                    <div className="row g-4">
-                        <div className="col-12 wow fadeInUp" data-wow-delay="0.1s">
-                            <div className="text-center mx-auto" style={{ maxWidth: 700 }}>
-                                <h4 className="text-primary">Featured Products</h4>
-                                <h1 className="display-5 mb-4">Our Products</h1>
-                            </div>
-                        </div>
-                        {loading ? (
-                            <div className="col-12 text-center py-5">
-                                <div className="spinner-border text-primary"></div>
-                            </div>
-                        ) : featuredProducts.map((product, index) => (
-                            <div key={product.id} className="col-md-6 col-lg-6 col-xl-4 wow fadeInUp" data-wow-delay={`${0.1 + (index % 3) * 0.2}s`}>
-                                <ProductCard product={product} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="container-fluid py-5">
-                <div className="container pb-5">
-                    <div className="row g-4">
-                        <div className="col-12 wow fadeInUp" data-wow-delay="0.1s">
-                            <div className="text-center mx-auto" style={{ maxWidth: 700 }}>
-                                <h4 className="text-primary">Shop By Category</h4>
-                                <h1 className="display-5 mb-4">Top Categories</h1>
-                            </div>
-                        </div>
-                        {categories.slice(0, 8).map((category, index) => (
-                            <div key={category.id} className="col-md-6 col-lg-4 col-xl-3 wow fadeInUp" data-wow-delay={`${0.1 + (index % 4) * 0.2}s`}>
-                                <Link to={`/shop?categoryId=${category.id}`} className="d-flex align-items-center justify-content-between border rounded p-4 h-100 position-relative">
+                    <div className="row g-4 justify-content-center">
+                        {offerCards.map((offer, index) => (
+                            <motion.div
+                                key={offer.title}
+                                className="col-lg-6"
+                                variants={index === 0 ? fadeInLeft : fadeInRight}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={motionViewport}
+                                transition={{ ...motionTransition, delay: index * 0.08 }}
+                            >
+                                <Link to="/shop" className={`electro-offer-tile ${offer.borderDark ? 'is-highlighted' : ''}`}>
                                     <div>
-                                        <h5 className="text-primary mb-2">{category.name}</h5>
-                                        <span className="text-muted">{category.description || 'Electro'}</span>
+                                        <p>{offer.subtitle}</p>
+                                        <h3>{offer.title}</h3>
+                                        <h2><span>{offer.discount}</span> Giảm</h2>
                                     </div>
-                                    <img src={`/electro/img/product-${(index % 8) + 3}.png`} className="img-fluid electro-category-thumb" alt={category.name} />
-                                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
-                                        {category.productCount || 0}
-                                    </span>
+                                    <img src={offer.imageUrl} alt={offer.title} />
                                 </Link>
-                            </div>
+                            </motion.div>
                         ))}
+                    </div>
+                </div>
+            </motion.div>
+
+            <OurProductsSection products={miniProducts} loading={loading} onAddToCart={handleAddToCart} />
+
+            <div className="container-fluid py-5">
+                <div className="container">
+                    <div className="row g-4 electro-mini-products-grid">
+                        <motion.div className="col-lg-6" variants={fadeInLeft} initial="hidden" whileInView="visible" viewport={motionViewport} transition={motionTransition}>
+                            <Link to="/shop">
+                                <div className="electro-template-banner">
+                                    <img src="/electro/img/product-banner.jpg" className="img-fluid w-100 rounded" alt="EOS Rebel T7i Kit" />
+                                    <div className="electro-template-banner-overlay light">
+                                        <h3>EOS Rebel <br /><span>T7i Kit</span></h3>
+                                        <p>$899.99</p>
+                                        <span className="btn btn-primary rounded-pill py-2 px-4">{t('Shop Now')}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        </motion.div>
+                        <motion.div className="col-lg-6" variants={fadeInRight} initial="hidden" whileInView="visible" viewport={motionViewport} transition={{ ...motionTransition, delay: 0.08 }}>
+                            <Link to="/shop">
+                                <div className="electro-template-banner text-center">
+                                    <img src="/electro/img/product-banner-2.jpg" className="img-fluid w-100 rounded" alt="Sale headphones" />
+                                    <div className="electro-template-banner-overlay sale">
+                                        <h2>GIẢM GIÁ</h2>
+                                        <h4>Giảm đến 50%</h4>
+                                        <span className="btn btn-secondary rounded-pill py-2 px-4">{t('Shop Now')}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        </motion.div>
                     </div>
                 </div>
             </div>
 
-            <div className="container-fluid py-5">
-                <div className="container pb-5">
-                    <div className="row g-4">
-                        <div className="col-12 wow fadeInUp" data-wow-delay="0.1s">
-                            <div className="text-center mx-auto" style={{ maxWidth: 700 }}>
-                                <h4 className="text-primary">Bestseller Products</h4>
-                                <h1 className="display-5 mb-4">Most Popular</h1>
-                            </div>
+            <motion.div className="container-fluid pt-5 electro-all-products-section" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={motionViewport} transition={motionTransition}>
+                <AllProductItemsCarousel products={miniProducts} onAddToCart={handleAddToCart} />
+            </motion.div>
+
+            <motion.div className="container-fluid pt-0 pb-5 electro-bestseller-section" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={motionViewport} transition={motionTransition}>
+                <div className="container pb-4">
+                    <div className="d-flex align-items-end justify-content-between gap-3 mb-4">
+                        <div>
+                            <h4 className="electro-kicker mb-2">{t('Bestseller Products')}</h4>
+                            <h1 className="display-5 fw-bold mb-0">{t('Bestseller Products')}</h1>
                         </div>
-                        {bestsellerProducts.map((product, index) => (
-                            <div key={product.id} className="col-md-6 col-lg-6 col-xl-4 wow fadeInUp" data-wow-delay={`${0.1 + (index % 3) * 0.2}s`}>
-                                <ProductCard product={product} />
-                            </div>
+                    </div>
+                    <div className="row g-4 electro-bestseller-grid">
+                        {miniProducts.slice(0, 6).map((product, index) => (
+                            <motion.div
+                                key={product.id}
+                                className="col-md-6 col-xl-4"
+                                variants={fadeInUp}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={motionViewport}
+                                transition={{ ...motionTransition, delay: (index % 3) * 0.06 }}
+                            >
+                                <ProductMiniCard product={product} onAddToCart={handleAddToCart} />
+                            </motion.div>
                         ))}
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
 
 export default Home;
+

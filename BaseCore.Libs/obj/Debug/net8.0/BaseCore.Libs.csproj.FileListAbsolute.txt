@@ -113,3 +113,23 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Libs\obj\Debug\net8.0\ref\BaseCore.Libs.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Libs.deps.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Libs.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Libs.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Common.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.DTO.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Entities.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Entities.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.Common.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\bin\Debug\net8.0\BaseCore.DTO.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.csproj.AssemblyReference.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.GeneratedMSBuildEditorConfig.editorconfig
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.AssemblyInfoInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.AssemblyInfo.cs
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.csproj.CoreCompileInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.063C3EEA.Up2Date
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\refint\BaseCore.Libs.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\BaseCore.Libs.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Libs\obj\Debug\net8.0\ref\BaseCore.Libs.dll

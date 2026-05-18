@@ -937,23 +937,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\TRAN TUNG\\.nuget\\packages\\": {},
+    "C:\\Users\\LUONG\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
+      "projectUniqueName": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
       "projectName": "BaseCore.ApiGateway",
-      "projectPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
-      "packagesPath": "C:\\Users\\TRAN TUNG\\.nuget\\packages\\",
-      "outputPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.ApiGateway\\obj\\",
+      "projectPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.ApiGateway\\BaseCore.ApiGateway.csproj",
+      "packagesPath": "C:\\Users\\LUONG\\.nuget\\packages\\",
+      "outputPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.ApiGateway\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\TRAN TUNG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\LUONG\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -1018,7 +1018,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using BaseCore.APIService;
 using BaseCore.DTO.Store;
 using BaseCore.Services;
 
@@ -27,14 +28,40 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetAll(
             [FromQuery] string? keyword,
             [FromQuery] int? categoryId,
+            [FromQuery] string? categorySlug,
+            [FromQuery] string? brand,
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            [FromQuery] bool? inStock,
+            [FromQuery] bool? isFeatured,
+            [FromQuery] bool? isBestSeller,
+            [FromQuery] bool? isNewArrival,
+            [FromQuery] bool? isDiscounted,
+            [FromQuery] string? sortBy,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var (products, totalCount) = await _productService.SearchAsync(keyword, categoryId, page, pageSize);
+            var (products, totalCount) = await _productService.SearchAsync(new ProductSearchDto
+            {
+                Keyword = keyword,
+                CategoryId = categoryId,
+                CategorySlug = categorySlug,
+                Brand = brand,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                InStock = inStock,
+                IsFeatured = isFeatured,
+                IsBestSeller = isBestSeller,
+                IsNewArrival = isNewArrival,
+                IsDiscounted = isDiscounted,
+                SortBy = sortBy,
+                Page = page,
+                PageSize = pageSize
+            });
 
             return Ok(new
             {
-                items = products,
+                items = products.Select(StoreDtoMapper.ToListDto),
                 totalCount,
                 page,
                 pageSize,
@@ -52,7 +79,7 @@ namespace BaseCore.APIService.Controllers
             if (product == null)
                 return NotFound(new { message = "Product not found" });
 
-            return Ok(product);
+            return Ok(StoreDtoMapper.ToDetailDto(product));
         }
 
         /// <summary>
@@ -63,7 +90,7 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
             var product = await _productService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
+            return CreatedAtAction(nameof(GetById), new { id = product.Id }, StoreDtoMapper.ToDetailDto(product));
         }
 
         /// <summary>
@@ -75,7 +102,7 @@ namespace BaseCore.APIService.Controllers
         {
             var product = await _productService.UpdateAsync(id, dto);
             if (product == null) return NotFound(new { message = "Product not found" });
-            return Ok(product);
+            return Ok(StoreDtoMapper.ToDetailDto(product));
         }
 
         /// <summary>
@@ -97,7 +124,7 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetByCategory(int categoryId)
         {
             var (products, _) = await _productService.SearchAsync(null, categoryId, 1, 500);
-            return Ok(products);
+            return Ok(products.Select(StoreDtoMapper.ToListDto));
         }
     }
 }

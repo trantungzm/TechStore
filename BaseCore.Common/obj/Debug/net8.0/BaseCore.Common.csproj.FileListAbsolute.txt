@@ -71,3 +71,16 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\ref\BaseCore.Common.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\bin\Debug\net8.0\BaseCore.Common.deps.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\bin\Debug\net8.0\BaseCore.Common.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\bin\Debug\net8.0\BaseCore.Common.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.csproj.AssemblyReference.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.GeneratedMSBuildEditorConfig.editorconfig
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.AssemblyInfoInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.AssemblyInfo.cs
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.csproj.CoreCompileInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\refint\BaseCore.Common.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\BaseCore.Common.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Common\obj\Debug\net8.0\ref\BaseCore.Common.dll

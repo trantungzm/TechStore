@@ -1,69 +1,115 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
-import { useWishlist } from '../../contexts/WishlistContext';
 import { useCompare } from '../../contexts/CompareContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 import { formatCurrency, resolveProductImage, t } from '../../utils/store';
+import coupons from '../../data/coupons';
+import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
+import { actionRevealVariant, cardHoverVariant, imageHoverVariant } from '../../utils/motionVariants';
 
-const ProductCard = ({ product }) => {
+const Rating = ({ className = '' }) => (
+    <div className={`electro-rating ${className}`} aria-label="5 star rating">
+        <i className="fas fa-star"></i>
+        <i className="fas fa-star"></i>
+        <i className="fas fa-star"></i>
+        <i className="fas fa-star"></i>
+        <i className="fas fa-star"></i>
+    </div>
+);
+
+const ProductCard = ({ product, onAddToCart }) => {
+    const [isHovered, setIsHovered] = useState(false);
     const { addItem } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { toggleCompare, isInCompare } = useCompare();
+    const badge = product.badge || '';
+    const oldPrice = product.oldPrice || Math.round(Number(product.price || 0) * 1.19);
+    const hasCoupon = getAvailableCouponsForProduct(product, coupons).length > 0;
+    const handleAdd = () => (onAddToCart ? onAddToCart(product) : addItem(product, 1));
 
     return (
-        <div className="products-mini-item border h-100">
-            <div className="row g-0">
-                <div className="col-5">
-                    <div className="products-mini-img border-end h-100">
-                        <img src={resolveProductImage(product)} className="img-fluid w-100 h-100 electro-product-fit" alt={product.name} />
-                        <div className="products-mini-icon rounded-circle bg-primary">
-                            <Link to={`/product/${product.id}`}><i className="fa fa-eye fa-1x text-white"></i></Link>
+        <motion.div
+            className="electro-product-card electro-home-product-card h-100"
+            whileHover={cardHoverVariant}
+            onHoverStart={() => setIsHovered(true)}
+            onHoverEnd={() => setIsHovered(false)}
+        >
+            {badge && <span className={`electro-product-badge-effect ${badge === 'Sale' ? 'sale' : ''}`}>{t(badge)}</span>}
+            {hasCoupon && <span className="badge bg-primary position-absolute top-0 end-0 m-2" style={{ zIndex: 3 }}>Có mã giảm</span>}
+            <Link to={`/product/${product.id}`} className="electro-product-image electro-home-product-image">
+                <motion.img
+                    src={resolveProductImage(product)}
+                    alt={product.name}
+                    variants={imageHoverVariant}
+                    animate={isHovered ? 'hover' : 'rest'}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                />
+                <AnimatePresence>
+                    {isHovered && (
+                        <motion.span
+                            className="electro-product-eye"
+                            initial={{ opacity: 0, scale: 0.82 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.82 }}
+                            transition={{ duration: 0.3, ease: 'easeOut' }}
+                        >
+                            <i className="fa fa-eye"></i>
+                        </motion.span>
+                    )}
+                </AnimatePresence>
+            </Link>
+            <div className="electro-home-product-body">
+                <Link to={`/shop?categoryId=${product.categoryId || ''}`} className="electro-home-category">
+                    {t(product.category?.name || 'SmartPhone')}
+                </Link>
+                <Link to={`/product/${product.id}`} className="electro-home-product-title">{product.name}</Link>
+                <div className="electro-home-price">
+                    <del>{formatCurrency(oldPrice)}</del>
+                    <span>{formatCurrency(product.price)}</span>
+                </div>
+            </div>
+            <AnimatePresence>
+                {isHovered && (
+                    <motion.div
+                        className="electro-product-actions electro-product-actions-desktop"
+                        variants={actionRevealVariant}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                        <button type="button" className="electro-add-cart-btn" disabled={product.stock <= 0} onClick={handleAdd}>
+                            <i className="fas fa-shopping-cart me-2"></i>{t('Add To Cart')}
+                        </button>
+                        <div className="electro-product-actions-row">
+                            <Rating />
+                            <div className="electro-product-action-icons">
+                                <button type="button" aria-label={t('Compare')} onClick={() => toggleCompare(product)}>
+                                    <i className={`fas fa-random ${isInCompare(product.id) ? 'text-secondary' : ''}`}></i>
+                                </button>
+                                <button type="button" aria-label={t('Wishlist')} onClick={() => toggleWishlist(product)}>
+                                    <i className={`fas fa-heart ${isInWishlist(product.id) ? 'text-secondary' : ''}`}></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div className="col-7">
-                    <div className="products-mini-content p-3">
-                        <Link to={`/shop?categoryId=${product.categoryId}`} className="d-block mb-2 text-muted">
-                            {t(product.category?.name || 'Electronics')}
-                        </Link>
-                        <Link to={`/product/${product.id}`} className="d-block h4 text-dark mb-1">
-                            {product.name}
-                        </Link>
-                        <span className="text-primary fs-5">{formatCurrency(product.price)}</span>
-                    </div>
-                </div>
-            </div>
-            <div className="products-mini-add border p-3 d-flex justify-content-between align-items-center">
-                <button
-                    type="button"
-                    className="btn btn-primary border-secondary rounded-pill py-2 px-3"
-                    disabled={product.stock <= 0}
-                    onClick={() => addItem(product, 1)}
-                >
-                    <i className="fas fa-shopping-cart me-2"></i> {t('Add To Cart')}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <div className="electro-product-actions electro-product-actions-mobile">
+                <button type="button" className="electro-add-cart-btn" disabled={product.stock <= 0} onClick={handleAdd}>
+                    <i className="fas fa-shopping-cart me-2"></i>{t('Add To Cart')}
                 </button>
-                <div className="d-flex">
-                    <button 
-                        className={`btn btn-link p-0 text-primary d-flex align-items-center justify-content-center me-2`}
-                        onClick={() => toggleCompare(product)}
-                        title={t('Compare')}
-                    >
-                        <span className={`rounded-circle btn-sm-square border ${isInCompare(product.id) ? 'bg-primary text-white' : ''}`}>
-                            <i className="fas fa-exchange-alt"></i>
-                        </span>
-                    </button>
-                    <button 
-                        className={`btn btn-link p-0 text-primary d-flex align-items-center justify-content-center m-0`}
-                        onClick={() => toggleWishlist(product)}
-                        title={t('Wishlist')}
-                    >
-                        <span className={`rounded-circle btn-sm-square border ${isInWishlist(product.id) ? 'bg-primary text-white' : ''}`}>
-                            <i className="fas fa-heart"></i>
-                        </span>
-                    </button>
+                <div className="electro-product-actions-row">
+                    <Rating />
+                    <div className="electro-product-action-icons">
+                        <button type="button" aria-label={t('Compare')} onClick={() => toggleCompare(product)}><i className="fas fa-random"></i></button>
+                        <button type="button" aria-label={t('Wishlist')} onClick={() => toggleWishlist(product)}><i className="fas fa-heart"></i></button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

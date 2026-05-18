@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { userApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import AdminFilterDropdown from '../components/AdminFilterDropdown';
 
 const Users = () => {
+    const { isAdmin } = useAuth();
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
+    const [roleFilter, setRoleFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [positionFilter, setPositionFilter] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
+    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({
@@ -18,6 +26,7 @@ const Users = () => {
         email: '',
         phone: '',
         position: '',
+        role: 'User',
         userType: 0,
         isActive: true,
     });
@@ -25,15 +34,21 @@ const Users = () => {
 
     useEffect(() => {
         loadUsers();
-    }, [page, keyword]);
+    }, []);
+
+    useEffect(() => {
+        applyFilters();
+    }, [users, keyword, roleFilter, statusFilter, positionFilter, page]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [keyword, roleFilter, statusFilter, positionFilter]);
 
     const loadUsers = async () => {
         setLoading(true);
         try {
-            const response = await userApi.getAll({ keyword, page, pageSize });
+            const response = await userApi.getAll({ page: 1, pageSize: 500 });
             setUsers(response.data.data || []);
-            setTotalPages(response.data.totalPages || 0);
-            setTotalCount(response.data.totalCount || 0);
         } catch (error) {
             console.error('Failed to load users:', error);
         } finally {
@@ -41,15 +56,40 @@ const Users = () => {
         }
     };
 
+    const applyFilters = () => {
+        let result = [...users];
+        const normalizedKeyword = keyword.trim().toLowerCase();
+
+        if (normalizedKeyword) {
+            result = result.filter((user) =>
+                [user.username, user.name, user.email, user.phone, user.position]
+                    .some((value) => (value || '').toLowerCase().includes(normalizedKeyword))
+            );
+        }
+        if (roleFilter !== '') {
+            result = result.filter((user) => String(user.role || '') === roleFilter);
+        }
+        if (statusFilter !== '') {
+            result = result.filter((user) => String(user.isActive) === statusFilter);
+        }
+        if (positionFilter.trim()) {
+            result = result.filter((user) => (user.position || '').toLowerCase().includes(positionFilter.trim().toLowerCase()));
+        }
+
+        setTotalCount(result.length);
+        setTotalPages(Math.ceil(result.length / pageSize) || 1);
+        setFilteredUsers(result.slice((page - 1) * pageSize, page * pageSize));
+    };
+
     const handleSearch = (e) => {
         e.preventDefault();
         setPage(1);
-        loadUsers();
     };
 
     const openModal = (user = null) => {
         if (user) {
             setEditingUser(user);
+            const role = String(user.role || '').trim() || (user.userType === 1 ? 'Admin' : 'User');
             setFormData({
                 username: user.username,
                 password: '',
@@ -57,7 +97,8 @@ const Users = () => {
                 email: user.email || '',
                 phone: user.phone || '',
                 position: user.position || '',
-                userType: user.userType || 0,
+                role,
+                userType: role === 'Admin' ? 1 : 0,
                 isActive: user.isActive,
             });
         } else {
@@ -69,6 +110,7 @@ const Users = () => {
                 email: '',
                 phone: '',
                 position: '',
+                role: 'User',
                 userType: 0,
                 isActive: true,
             });
@@ -94,7 +136,8 @@ const Users = () => {
                     email: formData.email,
                     phone: formData.phone,
                     position: formData.position,
-                    userType: parseInt(formData.userType),
+                    role: formData.role,
+                    userType: formData.role === 'Admin' ? 1 : 0,
                     isActive: formData.isActive,
                 };
                 if (formData.password) {
@@ -113,7 +156,8 @@ const Users = () => {
                     email: formData.email,
                     phone: formData.phone,
                     position: formData.position,
-                    userType: parseInt(formData.userType),
+                    role: formData.role,
+                    userType: formData.role === 'Admin' ? 1 : 0,
                 });
             }
 
@@ -148,136 +192,209 @@ const Users = () => {
         return pages;
     };
 
-    return (
-        <div className="content-wrapper">
-            <div className="content-header">
-                <div className="container-fluid">
-                    <div className="row mb-2">
-                        <div className="col-sm-6">
-                            <h1 className="m-0">Users Management</h1>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    const activeFilterCount =
+        (keyword.trim() ? 1 : 0) +
+        (roleFilter ? 1 : 0) +
+        (statusFilter ? 1 : 0) +
+        (positionFilter.trim() ? 1 : 0);
 
-            <section className="content">
-                <div className="container-fluid">
-                    <div className="card">
-                        <div className="card-header">
-                            <div className="row">
-                                <div className="col-md-6">
-                                    <form onSubmit={handleSearch} className="form-inline">
+    return (
+        <>
+            <div className="card mb-3">
+                <div className="card-header">
+                    <div className="row">
+                        <div className="col-md-8 d-flex align-items-center">
+                            <h3 className="card-title mb-0 mr-2">Users</h3>
+                            <AdminFilterDropdown
+                                open={isFilterMenuOpen}
+                                onOpenChange={setIsFilterMenuOpen}
+                                label="Filters"
+                                activeCount={activeFilterCount}
+                            >
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        setPage(1);
+                                        setIsFilterMenuOpen(false);
+                                    }}
+                                >
+                                    <div className="form-group">
+                                        <label>Search</label>
                                         <input
                                             type="text"
-                                            className="form-control mr-2"
-                                            placeholder="Search by name, email, phone..."
+                                            className="form-control"
+                                            placeholder="Name, email, phone..."
                                             value={keyword}
                                             onChange={(e) => setKeyword(e.target.value)}
                                         />
-                                        <button type="submit" className="btn btn-primary">
-                                            <i className="fas fa-search"></i> Search
-                                        </button>
-                                    </form>
-                                </div>
-                                <div className="col-md-6 text-right">
-                                    <button className="btn btn-success" onClick={() => openModal()}>
-                                        <i className="fas fa-plus"></i> Add User
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="card-body">
-                            {loading ? (
-                                <div className="text-center py-5">
-                                    <div className="spinner-border text-primary"></div>
-                                </div>
-                            ) : (
-                                <>
-                                    <table className="table table-bordered table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Username</th>
-                                                <th>Name</th>
-                                                <th>Email</th>
-                                                <th>Phone</th>
-                                                <th>Role</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {users.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan="7" className="text-center">
-                                                        No users found
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                users.map(user => (
-                                                    <tr key={user.id}>
-                                                        <td>{user.username}</td>
-                                                        <td>{user.name}</td>
-                                                        <td>{user.email}</td>
-                                                        <td>{user.phone}</td>
-                                                        <td>
-                                                            <span className={`badge ${user.userType === 1 ? 'badge-danger' : 'badge-info'}`}>
-                                                                {user.userType === 1 ? 'Admin' : 'User'}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className={`badge ${user.isActive ? 'badge-success' : 'badge-secondary'}`}>
-                                                                {user.isActive ? 'Active' : 'Inactive'}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <button
-                                                                className="btn btn-sm btn-info mr-1"
-                                                                onClick={() => openModal(user)}
-                                                            >
-                                                                <i className="fas fa-edit"></i>
-                                                            </button>
-                                                            <button
-                                                                className="btn btn-sm btn-danger"
-                                                                onClick={() => handleDelete(user.id)}
-                                                            >
-                                                                <i className="fas fa-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
-
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <span>Total: {totalCount} users</span>
-                                        <nav>
-                                            <ul className="pagination mb-0">
-                                                <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                                    <button className="page-link" onClick={() => setPage(page - 1)}>
-                                                        Previous
-                                                    </button>
-                                                </li>
-                                                {renderPagination()}
-                                                <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
-                                                    <button className="page-link" onClick={() => setPage(page + 1)}>
-                                                        Next
-                                                    </button>
-                                                </li>
-                                            </ul>
-                                        </nav>
                                     </div>
-                                </>
+                                    <div className="form-group">
+                                        <label>Role</label>
+                                        <select className="form-control" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                                            <option value="">All</option>
+                                            <option value="Admin">Admin</option>
+                                            <option value="Warehouse">Warehouse</option>
+                                            <option value="Technical">Technical</option>
+                                            <option value="Warranty">Warranty</option>
+                                            <option value="User">User</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Status</label>
+                                        <select className="form-control" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                                            <option value="">All</option>
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Position</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={positionFilter}
+                                            onChange={(e) => setPositionFilter(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="d-flex justify-content-end" style={{ gap: 8 }}>
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-secondary"
+                                            onClick={() => {
+                                                setKeyword('');
+                                                setRoleFilter('');
+                                                setStatusFilter('');
+                                                setPositionFilter('');
+                                            }}
+                                        >
+                                            Reset
+                                        </button>
+                                        <button type="submit" className="btn btn-primary">
+                                            Apply
+                                        </button>
+                                    </div>
+                                </form>
+                            </AdminFilterDropdown>
+                            <span className="text-muted ml-3">Total: <strong>{totalCount}</strong></span>
+                        </div>
+                        <div className="col-md-4 text-right">
+                            {isAdmin() && (
+                                <button className="btn btn-success" onClick={() => openModal()}>
+                                    <i className="fas fa-plus"></i> Add User
+                                </button>
                             )}
                         </div>
                     </div>
                 </div>
-            </section>
+                <div className="card-body">
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <div className="spinner-border text-primary"></div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="table-responsive">
+                                <table className="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ width: '160px' }}>Username</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th style={{ width: '160px' }}>Phone</th>
+                                            <th style={{ width: '120px' }}>Role</th>
+                                            <th style={{ width: '120px' }}>Status</th>
+                                            <th style={{ width: '140px' }}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredUsers.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" className="text-center">
+                                                    No users found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredUsers.map(user => (
+                                                <tr key={user.id}>
+                                                    <td>{user.username}</td>
+                                                    <td>{user.name}</td>
+                                                    <td>{user.email}</td>
+                                                    <td>{user.phone}</td>
+                                                    <td>
+                                                        <span
+                                                            className={`badge ${
+                                                                user.role === 'Admin'
+                                                                    ? 'badge-danger'
+                                                                    : user.role === 'Warehouse'
+                                                                        ? 'badge-info'
+                                                                        : user.role === 'Technical'
+                                                                            ? 'badge-primary'
+                                                                            : user.role === 'Warranty'
+                                                                                ? 'badge-warning'
+                                                                                : 'badge-secondary'
+                                                            }`}
+                                                        >
+                                                            {user.role || (user.userType === 1 ? 'Admin' : 'User')}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`badge ${user.isActive ? 'badge-success' : 'badge-secondary'}`}>
+                                                            {user.isActive ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {isAdmin() ? (
+                                                            <>
+                                                                <button
+                                                                    className="btn btn-sm btn-info mr-1"
+                                                                    onClick={() => openModal(user)}
+                                                                >
+                                                                    <i className="fas fa-edit"></i>
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-sm btn-danger"
+                                                                    onClick={() => handleDelete(user.id)}
+                                                                >
+                                                                    <i className="fas fa-trash"></i>
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-muted">-</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
-            {/* Modal */}
+                            <div className="d-flex justify-content-between align-items-center">
+                                <span className="text-muted">Total: <strong>{totalCount}</strong> users</span>
+                                <nav>
+                                    <ul className="pagination mb-0">
+                                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                            <button className="page-link" onClick={() => setPage(page - 1)}>
+                                                Previous
+                                            </button>
+                                        </li>
+                                        {renderPagination()}
+                                        <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
+                                            <button className="page-link" onClick={() => setPage(page + 1)}>
+                                                Next
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
             {showModal && (
                 <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-                    <div className="modal-dialog">
+                    <div className="modal-dialog modal-dialog-scrollable modal-lg" style={{ maxWidth: 720 }}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">
@@ -288,7 +405,7 @@ const Users = () => {
                                 </button>
                             </div>
                             <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
+                                <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
                                     {error && <div className="alert alert-danger">{error}</div>}
                                     <div className="form-group">
                                         <label>Username</label>
@@ -351,11 +468,17 @@ const Users = () => {
                                         <label>Role</label>
                                         <select
                                             className="form-control"
-                                            value={formData.userType}
-                                            onChange={(e) => setFormData({ ...formData, userType: e.target.value })}
+                                            value={formData.role}
+                                            onChange={(e) => {
+                                                const role = e.target.value;
+                                                setFormData({ ...formData, role, userType: role === 'Admin' ? 1 : 0 });
+                                            }}
                                         >
-                                            <option value="0">User</option>
-                                            <option value="1">Admin</option>
+                                            <option value="User">User</option>
+                                            <option value="Warehouse">Warehouse</option>
+                                            <option value="Technical">Technical</option>
+                                            <option value="Warranty">Warranty</option>
+                                            <option value="Admin">Admin</option>
                                         </select>
                                     </div>
                                     {editingUser && (
@@ -387,7 +510,7 @@ const Users = () => {
                 </div>
             )}
             {showModal && <div className="modal-backdrop fade show"></div>}
-        </div>
+        </>
     );
 };
 

@@ -12,12 +12,21 @@ import Products from './pages/Products';
 import Users from './pages/Users';
 import Categories from './pages/Categories';
 import AdminOrders from './pages/AdminOrders';
+import AdminInventory from './pages/AdminInventory';
+import AdminTickets from './pages/AdminTickets';
+import AdminRepairs from './pages/AdminRepairs';
 import StoreLayout from './components/store/StoreLayout';
+import ScrollToTop from './components/store/ScrollToTop';
 import Home from './pages/store/Home';
 import Shop from './pages/store/Shop';
+import Single from './pages/store/Single';
+import Bestseller from './pages/store/Bestseller';
+import Promotion from './pages/store/Promotion';
+import Warranty from './pages/store/Warranty';
 import Cart from './pages/store/Cart';
 import Checkout from './pages/store/Checkout';
 import Contact from './pages/store/Contact';
+import NotFound from './pages/store/NotFound';
 import Orders from './pages/store/Orders';
 import Wishlist from './pages/store/Wishlist';
 import Compare from './pages/store/Compare';
@@ -68,10 +77,66 @@ function AppRoutes() {
                 }
             />
             <Route
+                path="/home"
+                element={
+                    <StoreLayout>
+                        <Home />
+                    </StoreLayout>
+                }
+            />
+            <Route
                 path="/shop"
                 element={
                     <StoreLayout>
                         <Shop />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/single"
+                element={
+                    <StoreLayout>
+                        <Single />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/bestseller"
+                element={
+                    <StoreLayout>
+                        <Bestseller />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/new-arrivals"
+                element={
+                    <StoreLayout>
+                        <Bestseller />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/promotion"
+                element={
+                    <StoreLayout>
+                        <Promotion />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/warranty"
+                element={
+                    <StoreLayout>
+                        <Warranty />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/bao-hanh"
+                element={
+                    <StoreLayout>
+                        <Warranty />
                     </StoreLayout>
                 }
             />
@@ -118,11 +183,17 @@ function AppRoutes() {
             <Route
                 path="/checkout"
                 element={
-                    <ProtectedRoute>
-                        <StoreLayout>
-                            <Checkout />
-                        </StoreLayout>
-                    </ProtectedRoute>
+                    <StoreLayout>
+                        <Checkout />
+                    </StoreLayout>
+                }
+            />
+            <Route
+                path="/404"
+                element={
+                    <StoreLayout>
+                        <NotFound />
+                    </StoreLayout>
                 }
             />
             <Route
@@ -138,7 +209,7 @@ function AppRoutes() {
             <Route
                 path="/admin"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical', 'Warranty', 'StockManager']}>
                         <MainLayout>
                             <Dashboard />
                         </MainLayout>
@@ -148,7 +219,7 @@ function AppRoutes() {
             <Route
                 path="/admin/products"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical', 'StockManager']}>
                         <MainLayout>
                             <Products />
                         </MainLayout>
@@ -158,7 +229,7 @@ function AppRoutes() {
             <Route
                 path="/admin/categories"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={['Admin']}>
                         <MainLayout>
                             <Categories />
                         </MainLayout>
@@ -168,7 +239,7 @@ function AppRoutes() {
             <Route
                 path="/admin/users"
                 element={
-                    <ProtectedRoute adminOnly={true}>
+                    <ProtectedRoute allowedRoles={['Admin']}>
                         <MainLayout>
                             <Users />
                         </MainLayout>
@@ -178,9 +249,39 @@ function AppRoutes() {
             <Route
                 path="/admin/orders"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'StockManager']}>
                         <MainLayout>
                             <AdminOrders />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/inventory"
+                element={
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'StockManager']}>
+                        <MainLayout>
+                            <AdminInventory />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/tickets"
+                element={
+                    <ProtectedRoute allowedRoles={['Admin', 'Technical', 'Warranty']}>
+                        <MainLayout>
+                            <AdminTickets />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/repairs"
+                element={
+                    <ProtectedRoute allowedRoles={['Admin', 'Warranty']}>
+                        <MainLayout>
+                            <AdminRepairs />
                         </MainLayout>
                     </ProtectedRoute>
                 }
@@ -189,7 +290,14 @@ function AppRoutes() {
             <Route path="/categories" element={<LegacyAdminRedirect to="/admin/categories" />} />
             <Route path="/users" element={<LegacyAdminRedirect to="/admin/users" />} />
             <Route path="/admin/login" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route
+                path="*"
+                element={
+                    <StoreLayout>
+                        <NotFound />
+                    </StoreLayout>
+                }
+            />
         </Routes>
     );
 }
@@ -197,6 +305,7 @@ function AppRoutes() {
 function App() {
     return (
         <Router>
+            <ScrollToTop />
             <AuthProvider>
                 <WishlistProvider>
                     <CompareProvider>

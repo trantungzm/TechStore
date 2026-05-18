@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getPostLoginPath, t } from '../utils/store';
-import StoreLayout from '../components/store/StoreLayout';
+import AuthLayout from '../components/layout/AuthLayout';
 
 const LoginContent = () => {
     const [username, setUsername] = useState('');
@@ -20,6 +20,7 @@ const LoginContent = () => {
     const [registerSuccess, setRegisterSuccess] = useState('');
     const [registerLoading, setRegisterLoading] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(true);
+    const [isLeaving, setIsLeaving] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { login, register } = useAuth();
@@ -33,7 +34,11 @@ const LoginContent = () => {
 
         if (result.success) {
             const requestedPath = location.state?.from?.pathname;
-            navigate(getPostLoginPath(result.user, requestedPath), { replace: true });
+            setIsLeaving(true);
+            window.setTimeout(() => {
+                navigate(getPostLoginPath(result.user, requestedPath), { replace: true });
+            }, 240);
+            return;
         } else {
             setError(result.message);
         }
@@ -66,23 +71,34 @@ const LoginContent = () => {
     };
 
     return (
-        <StoreLayout>
-            <div className="store-login-shell">
-                <div className="container py-5">
-                    <div className="text-center mb-4">
-                        <Link to="/" className="store-brand">Electro</Link>
-                        <p className="text-muted mb-0">{t('Log in to get the best web experience.')}</p>
-                    </div>
-                    <div className="row justify-content-center">
+        <AuthLayout>
+            <div className={`auth-login-shell ${isLeaving ? 'is-leaving' : ''}`}>
+                <div className="auth-login-panel">
+                    <aside className="auth-login-branding">
+                        <Link to="/" className="auth-login-logo">CNTHHT Store</Link>
+                        <h1>Mua sắm công nghệ dễ dàng hơn</h1>
+                        <p>Đăng nhập để theo dõi đơn hàng, lưu phiếu giảm giá và quản lý bảo hành sản phẩm.</p>
+                        <div className="auth-login-benefits">
+                            <span><i className="fas fa-check"></i>Theo dõi đơn hàng nhanh chóng</span>
+                            <span><i className="fas fa-check"></i>Lưu và sử dụng phiếu giảm giá</span>
+                            <span><i className="fas fa-check"></i>Quản lý sản phẩm yêu thích</span>
+                            <span><i className="fas fa-check"></i>Tra cứu bảo hành dễ dàng</span>
+                        </div>
+                    </aside>
+                    <section className="auth-login-form-wrap">
+                        <Link to="/" className="auth-back-link">
+                            <i className="fas fa-arrow-left"></i>
+                            Quay về trang chủ
+                        </Link>
                     {isLoginMode ? (
-                        <div className="col-lg-5 mb-4">
-                            <div className="card shadow-sm border-0 h-100">
-                                <div className="card-body p-4">
-                                    <h4 className="mb-3">{t('Log In')}</h4>
-                                    <p className="text-muted"></p>
+                        <div className="auth-login-card">
+                                    <div className="auth-login-heading">
+                                        <h2>Đăng nhập</h2>
+                                        <p>Chào mừng bạn quay lại CNTHHT Store</p>
+                                    </div>
 
                                     {error && (
-                                        <div className="alert alert-danger alert-dismissible">
+                                        <div className="alert alert-danger alert-dismissible auth-login-alert">
                                             <button type="button" className="close" onClick={() => setError('')}>
                                                 &times;
                                             </button>
@@ -90,12 +106,14 @@ const LoginContent = () => {
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleSubmit}>
-                                        <div className="input-group mb-3">
+                                    <form onSubmit={handleSubmit} className="auth-login-form">
+                                        <label>
+                                            Email hoặc số điện thoại
+                                        <div className="input-group">
                                             <input
                                                 type="text"
                                                 className="form-control"
-                                                placeholder={t('Username')}
+                                                placeholder="Email hoặc số điện thoại"
                                                 value={username}
                                                 onChange={(e) => setUsername(e.target.value)}
                                                 required
@@ -106,11 +124,14 @@ const LoginContent = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="input-group mb-3">
+                                        </label>
+                                        <label>
+                                            Mật khẩu
+                                        <div className="input-group">
                                             <input
                                                 type="password"
                                                 className="form-control"
-                                                placeholder={t('Password')}
+                                                placeholder="Mật khẩu"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
@@ -121,58 +142,63 @@ const LoginContent = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <Link to="/" className="text-muted">{t('Back to Shop')}</Link>
+                                        </label>
+                                        <div className="auth-login-options">
+                                            <label className="auth-remember">
+                                                <input type="checkbox" />
+                                                <span>Ghi nhớ đăng nhập</span>
+                                            </label>
+                                            <button type="button" className="auth-forgot-link">Quên mật khẩu?</button>
+                                        </div>
                                             <button
                                                 type="submit"
-                                                className="btn btn-primary"
+                                                className="btn btn-primary auth-submit-btn"
                                                 disabled={loading}
                                             >
-                                                {loading ? (
-                                                    <span className="spinner-border spinner-border-sm"></span>
-                                                ) : t('Sign In')}
+                                                {isLeaving ? 'Đang chuyển...' : loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                                             </button>
-                                        </div>
-                                        <div className="text-center mt-4">
-                                            <span className="text-muted">{t("Don't have an account?")} </span>
+                                        <div className="auth-switch-text">
+                                            <span>Chưa có tài khoản? </span>
                                             <button 
                                                 type="button" 
-                                                className="btn btn-link p-0 text-primary" 
+                                                className="btn btn-link p-0 text-primary auth-inline-action"
                                                 onClick={() => setIsLoginMode(false)}
                                             >
-                                                {t('Register here')}
+                                                Đăng ký ngay
                                             </button>
                                         </div>
                                     </form>
-                                </div>
-                            </div>
                         </div>
                     ) : (
-                        <div className="col-lg-5 mb-4">
-                            <div className="card shadow-sm border-0 h-100">
-                                <div className="card-body p-4">
-                                    <h4 className="mb-3">{t('Create User Account')}</h4>
-                                    <p className="text-muted"></p>
+                        <div className="auth-login-card">
+                                    <div className="auth-login-heading">
+                                        <h2>Đăng ký tài khoản</h2>
+                                        <p>Tạo tài khoản CNTHHT Store để mua sắm thuận tiện hơn</p>
+                                    </div>
 
                                     {registerError && <div className="alert alert-danger">{registerError}</div>}
                                     {registerSuccess && <div className="alert alert-success">{registerSuccess}</div>}
 
-                                    <form onSubmit={handleRegister}>
+                                    <form onSubmit={handleRegister} className="auth-login-form" autoComplete="off">
                                         <div className="form-group">
-                                            <label>{t('Username')}</label>
+                                            <label>Tên đăng nhập</label>
                                             <input
                                                 type="text"
                                                 className="form-control"
+                                                name="register-username"
+                                                autoComplete="off"
                                                 value={registerData.username}
                                                 onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
                                                 required
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label>{t('Password')}</label>
+                                            <label>Mật khẩu</label>
                                             <input
                                                 type="password"
                                                 className="form-control"
+                                                name="register-password"
+                                                autoComplete="new-password"
                                                 value={registerData.password}
                                                 onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                                                 required
@@ -180,61 +206,64 @@ const LoginContent = () => {
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label>{t('Full Name')}</label>
+                                            <label>Họ và tên</label>
                                             <input
                                                 type="text"
                                                 className="form-control"
+                                                name="register-full-name"
+                                                autoComplete="name"
                                                 value={registerData.name}
                                                 onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label>{t('Email')}</label>
+                                            <label>Email</label>
                                             <input
                                                 type="email"
                                                 className="form-control"
+                                                name="register-email"
+                                                autoComplete="email"
                                                 value={registerData.email}
                                                 onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                                             />
                                         </div>
                                         <div className="form-group mb-4">
-                                            <label>{t('Phone')}</label>
+                                            <label>Số điện thoại</label>
                                             <input
                                                 type="text"
                                                 className="form-control"
+                                                name="register-phone"
+                                                autoComplete="tel"
                                                 value={registerData.phone}
                                                 onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
                                             />
                                         </div>
-                                        <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <Link to="/" className="text-muted">{t('Back to Shop')}</Link>
+                                        <div className="auth-register-actions">
                                             <button
                                                 type="submit"
-                                                className="btn btn-outline-primary"
+                                                className="btn btn-primary auth-submit-btn"
                                                 disabled={registerLoading}
                                             >
-                                                {registerLoading ? t('Loading...') : t('Create Account')}
+                                                {registerLoading ? 'Đang tạo tài khoản...' : 'Đăng ký ngay'}
                                             </button>
                                         </div>
-                                        <div className="text-center mt-4">
-                                            <span className="text-muted">{t('Already have an account?')} </span>
+                                        <div className="auth-switch-text">
+                                            <span>Đã có tài khoản? </span>
                                             <button 
                                                 type="button" 
-                                                className="btn btn-link p-0 text-primary" 
+                                                className="btn btn-link p-0 text-primary auth-inline-action"
                                                 onClick={() => setIsLoginMode(true)}
                                             >
-                                                {t('Login here')}
+                                                Đăng nhập
                                             </button>
                                         </div>
                                     </form>
-                                </div>
-                            </div>
                         </div>
                     )}
-                    </div>
+                    </section>
                 </div>
             </div>
-        </StoreLayout>
+        </AuthLayout>
     );
 };
 

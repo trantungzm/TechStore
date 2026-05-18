@@ -63,12 +63,19 @@ export const AuthProvider = ({ children }) => {
         return user?.role === 'Admin';
     };
 
+    const hasRole = (roles = []) => {
+        if (!user?.role) return false;
+        if (!Array.isArray(roles) || roles.length === 0) return true;
+        return roles.includes(user.role);
+    };
+
     const value = {
         user,
         login,
         register,
         logout,
         isAdmin,
+        hasRole,
         isAuthenticated: !!user,
         loading,
     };

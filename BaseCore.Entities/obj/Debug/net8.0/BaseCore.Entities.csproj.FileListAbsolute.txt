@@ -101,3 +101,21 @@ D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCo
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.pdb
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\ref\BaseCore.Entities.dll
 D:\tailieu\Tài liệu học năm 3 kì 2\Công nghệ web\FW\FW\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.Entities.deps.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.Entities.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.Entities.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.Common.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.DTO.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.Common.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\bin\Debug\net8.0\BaseCore.DTO.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.csproj.AssemblyReference.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.GeneratedMSBuildEditorConfig.editorconfig
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.AssemblyInfoInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.AssemblyInfo.cs
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.csproj.CoreCompileInputs.cache
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.sourcelink.json
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.E7D3D7DB.Up2Date
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\refint\BaseCore.Entities.dll
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\BaseCore.Entities.pdb
+D:\nam3\Ki2\CNTHTT\BaseCoreAnhTung\BaseCore\BaseCore.Entities\obj\Debug\net8.0\ref\BaseCore.Entities.dll

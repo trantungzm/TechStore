@@ -1,6 +1,8 @@
 using System.Linq.Expressions;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
+using BaseCore.DTO.Store;
+using BaseCore.DTO.Inventory;
 
 namespace BaseCore.APIService.Demo
 {
@@ -96,8 +98,20 @@ namespace BaseCore.APIService.Demo
 
         public override Task<Product?> GetByIdAsync(object id)
         {
+            return GetDetailAsync(Convert.ToInt32(id));
+        }
+
+        public Task<Product?> GetDetailAsync(int id)
+        {
             var product = Store.Products.FirstOrDefault(x => x.Id == Convert.ToInt32(id));
-            if (product != null) product.Category = Store.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
+            if (product != null)
+            {
+                product.Category = Store.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
+                product.Images = Store.ProductImages.Where(x => x.ProductId == product.Id).OrderBy(x => x.SortOrder).ToList();
+                product.Variants = Store.ProductVariants.Where(x => x.ProductId == product.Id).ToList();
+                product.SpecValues = Store.ProductSpecValues.Where(x => x.ProductId == product.Id).ToList();
+                product.Recommendations = Store.ProductRecommendations.Where(x => x.ProductId == product.Id).ToList();
+            }
             return Task.FromResult(product);
         }
 
@@ -122,24 +136,55 @@ namespace BaseCore.APIService.Demo
 
         public Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize)
         {
+            return SearchAsync(new BaseCore.DTO.Store.ProductSearchDto
+            {
+                Keyword = keyword,
+                CategoryId = categoryId,
+                Page = page,
+                PageSize = pageSize
+            });
+        }
+
+        public Task<(List<Product> Products, int TotalCount)> SearchAsync(BaseCore.DTO.Store.ProductSearchDto search)
+        {
             IEnumerable<Product> query = Store.Products;
 
-            if (!string.IsNullOrWhiteSpace(keyword))
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
             {
-                var lowered = keyword.ToLower();
+                var lowered = search.Keyword.ToLower();
                 query = query.Where(p => p.Name.ToLower().Contains(lowered) || (p.Description ?? string.Empty).ToLower().Contains(lowered));
             }
 
-            if (categoryId.HasValue && categoryId.Value > 0)
+            if (search.CategoryId.HasValue && search.CategoryId.Value > 0)
             {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
+                query = query.Where(p => p.CategoryId == search.CategoryId.Value);
             }
+
+            if (!string.IsNullOrWhiteSpace(search.Brand))
+            {
+                query = query.Where(p => string.Equals(p.Brand, search.Brand, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (search.MinPrice.HasValue) query = query.Where(p => p.Price >= search.MinPrice.Value);
+            if (search.MaxPrice.HasValue) query = query.Where(p => p.Price <= search.MaxPrice.Value);
+            if (search.InStock == true) query = query.Where(p => p.Stock > 0);
+            if (search.IsFeatured.HasValue) query = query.Where(p => p.IsFeatured == search.IsFeatured.Value);
+            if (search.IsBestSeller.HasValue) query = query.Where(p => p.IsBestSeller == search.IsBestSeller.Value);
+            if (search.IsNewArrival.HasValue) query = query.Where(p => p.IsNewArrival == search.IsNewArrival.Value);
+            if (search.IsDiscounted.HasValue) query = query.Where(p => p.IsDiscounted == search.IsDiscounted.Value);
+
+            query = (search.SortBy ?? string.Empty).ToLower() switch
+            {
+                "priceasc" or "price_asc" => query.OrderBy(p => p.Price),
+                "pricedesc" or "price_desc" => query.OrderByDescending(p => p.Price),
+                "newest" => query.OrderByDescending(p => p.CreatedAt),
+                _ => query.OrderByDescending(p => p.Id)
+            };
 
             var totalCount = query.Count();
             var items = query
-                .OrderByDescending(p => p.Id)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100))
+                .Take(Math.Clamp(search.PageSize, 1, 100))
                 .ToList();
 
             foreach (var product in items)
@@ -166,6 +211,44 @@ namespace BaseCore.APIService.Demo
 
         public Task<Order?> GetWithDetailsAsync(int orderId) =>
             Task.FromResult(Store.Orders.FirstOrDefault(x => x.Id == orderId));
+
+        public Task<(List<Order> Orders, int TotalCount)> SearchAsync(OrderSearchDto search)
+        {
+            var query = Store.Orders.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                var keyword = search.Keyword.Trim().ToLower();
+                query = query.Where(o =>
+                    (o.OrderCode ?? "").ToLower().Contains(keyword) ||
+                    (o.CustomerName ?? "").ToLower().Contains(keyword) ||
+                    (o.CustomerPhone ?? "").ToLower().Contains(keyword) ||
+                    (o.CustomerEmail ?? "").ToLower().Contains(keyword));
+            }
+            if (!string.IsNullOrWhiteSpace(search.Status))
+                query = query.Where(o => string.Equals(o.Status, search.Status, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(search.PaymentStatus))
+                query = query.Where(o => string.Equals(o.PaymentStatus, search.PaymentStatus, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(search.PaymentMethod))
+                query = query.Where(o => string.Equals(o.PaymentMethod, search.PaymentMethod, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(search.CustomerPhone))
+                query = query.Where(o => (o.CustomerPhone ?? "").Contains(search.CustomerPhone));
+            if (search.FromDate.HasValue) query = query.Where(o => o.OrderDate >= search.FromDate.Value);
+            if (search.ToDate.HasValue) query = query.Where(o => o.OrderDate <= search.ToDate.Value);
+
+            query = (search.SortBy ?? "newest").ToLower() switch
+            {
+                "oldest" => query.OrderBy(o => o.OrderDate),
+                "totaldesc" or "total_desc" => query.OrderByDescending(o => o.TotalAmount),
+                "totalasc" or "total_asc" => query.OrderBy(o => o.TotalAmount),
+                _ => query.OrderByDescending(o => o.OrderDate),
+            };
+
+            var total = query.Count();
+            var items = query.Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100))
+                .Take(Math.Clamp(search.PageSize, 1, 100))
+                .ToList();
+            return Task.FromResult((items, total));
+        }
     }
 
     public class DemoOrderDetailRepository : DemoRepositoryBase<OrderDetail>, IOrderDetailRepositoryEF
@@ -187,5 +270,214 @@ namespace BaseCore.APIService.Demo
             }
             return Task.FromResult(details);
         }
+    }
+
+    public class DemoOrderTimelineRepository : DemoRepositoryBase<OrderTimeline>, IOrderTimelineRepositoryEF
+    {
+        public DemoOrderTimelineRepository(DemoStore store) : base(store, store.OrderTimelines) { }
+        protected override bool MatchId(OrderTimeline entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(OrderTimeline entity)
+        {
+            if (entity.Id == 0) entity.Id = Store.NextOrderTimelineId;
+        }
+
+        public Task<List<OrderTimeline>> GetByOrderAsync(int orderId) =>
+            Task.FromResult(Store.OrderTimelines.Where(x => x.OrderId == orderId).OrderBy(x => x.CreatedAt).ThenBy(x => x.Id).ToList());
+    }
+
+    public class DemoOrderCancellationRepository : DemoRepositoryBase<OrderCancellation>, IOrderCancellationRepositoryEF
+    {
+        public DemoOrderCancellationRepository(DemoStore store) : base(store, store.OrderCancellations) { }
+        protected override bool MatchId(OrderCancellation entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(OrderCancellation entity)
+        {
+            if (entity.Id == 0) entity.Id = Store.NextOrderCancellationId;
+        }
+
+        public Task<OrderCancellation?> GetPendingByOrderAsync(int orderId) =>
+            Task.FromResult(Store.OrderCancellations.Where(x => x.OrderId == orderId && x.Status == "Pending").OrderByDescending(x => x.RequestedAt).FirstOrDefault());
+
+        public Task<List<OrderCancellation>> GetByOrderAsync(int orderId) =>
+            Task.FromResult(Store.OrderCancellations.Where(x => x.OrderId == orderId).OrderByDescending(x => x.RequestedAt).ToList());
+    }
+
+    public class DemoWarehouseRepository : DemoRepositoryBase<Warehouse>, IWarehouseRepositoryEF
+    {
+        public DemoWarehouseRepository(DemoStore store) : base(store, store.Warehouses) { }
+        protected override bool MatchId(Warehouse entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(Warehouse entity) { if (entity.Id == 0) entity.Id = Store.NextWarehouseId; }
+        public Task<Warehouse?> GetDefaultAsync() => Task.FromResult(Store.Warehouses.OrderBy(x => x.Id).FirstOrDefault(x => x.IsActive));
+    }
+
+    public class DemoStockItemRepository : DemoRepositoryBase<StockItem>, IStockItemRepositoryEF
+    {
+        public DemoStockItemRepository(DemoStore store) : base(store, store.StockItems) { }
+        protected override bool MatchId(StockItem entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(StockItem entity) { if (entity.Id == 0) entity.Id = Store.NextStockItemId; }
+        public Task<StockItem?> GetDetailAsync(int id) => Task.FromResult(Attach(Store.StockItems.FirstOrDefault(x => x.Id == id)));
+        public Task<StockItem?> GetBySerialAsync(string serialOrImei) => Task.FromResult(Attach(Store.StockItems.FirstOrDefault(x => x.SerialOrImei == serialOrImei.Trim())));
+        public Task<List<StockItem>> GetByIdsAsync(List<int> ids) => Task.FromResult(Store.StockItems.Where(x => ids.Contains(x.Id)).Select(Attach).Where(x => x != null).Cast<StockItem>().ToList());
+        public Task<bool> AnySerialAsync(string serialOrImei) => Task.FromResult(Store.StockItems.Any(x => x.SerialOrImei == serialOrImei.Trim()));
+
+        public Task<(List<StockItem> Items, int TotalCount)> SearchAsync(InventorySearchDto search)
+        {
+            var query = Store.StockItems.Select(Attach).Where(x => x != null).Cast<StockItem>().AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                var keyword = search.Keyword.Trim().ToLower();
+                query = query.Where(x => (x.Product?.Name ?? "").ToLower().Contains(keyword) || (x.Sku ?? "").ToLower().Contains(keyword) || x.SerialOrImei.ToLower().Contains(keyword) || (x.SupplierName ?? "").ToLower().Contains(keyword));
+            }
+            if (search.ProductId.HasValue) query = query.Where(x => x.ProductId == search.ProductId);
+            if (search.VariantId.HasValue) query = query.Where(x => x.VariantId == search.VariantId);
+            if (search.CategoryId.HasValue) query = query.Where(x => x.Product?.CategoryId == search.CategoryId);
+            if (!string.IsNullOrWhiteSpace(search.Status)) query = query.Where(x => string.Equals(x.Status, search.Status, StringComparison.OrdinalIgnoreCase));
+            if (search.WarehouseId.HasValue) query = query.Where(x => x.WarehouseId == search.WarehouseId);
+            if (!string.IsNullOrWhiteSpace(search.SerialOrImei)) query = query.Where(x => x.SerialOrImei.Contains(search.SerialOrImei.Trim()));
+            if (search.FromDate.HasValue) query = query.Where(x => x.ReceivedAt >= search.FromDate);
+            if (search.ToDate.HasValue) query = query.Where(x => x.ReceivedAt <= search.ToDate);
+            query = (search.SortBy ?? "newest").ToLower() switch
+            {
+                "oldest" => query.OrderBy(x => x.ReceivedAt),
+                "productname" or "product_name" => query.OrderBy(x => x.Product?.Name),
+                "status" => query.OrderBy(x => x.Status),
+                _ => query.OrderByDescending(x => x.ReceivedAt)
+            };
+            var total = query.Count();
+            var items = query.Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100)).Take(Math.Clamp(search.PageSize, 1, 100)).ToList();
+            return Task.FromResult((items, total));
+        }
+
+        public Task<(List<StockItem> Items, int TotalCount)> GetAgedAsync(AgedStockSearchDto search)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-Math.Max(0, search.MinDays));
+            var query = Store.StockItems.Select(Attach).Where(x => x != null && x.Status == "InStock" && x.ReceivedAt <= cutoff).Cast<StockItem>();
+            if (search.CategoryId.HasValue) query = query.Where(x => x.Product?.CategoryId == search.CategoryId);
+            if (search.WarehouseId.HasValue) query = query.Where(x => x.WarehouseId == search.WarehouseId);
+            var total = query.Count();
+            var items = query.OrderBy(x => x.ReceivedAt).Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100)).Take(Math.Clamp(search.PageSize, 1, 100)).ToList();
+            return Task.FromResult((items, total));
+        }
+
+        private StockItem? Attach(StockItem? item)
+        {
+            if (item == null) return null;
+            item.Product = Store.Products.FirstOrDefault(x => x.Id == item.ProductId);
+            item.Variant = Store.ProductVariants.FirstOrDefault(x => x.Id == item.VariantId);
+            item.Warehouse = Store.Warehouses.FirstOrDefault(x => x.Id == item.WarehouseId);
+            item.Order = Store.Orders.FirstOrDefault(x => x.Id == item.OrderId);
+            return item;
+        }
+    }
+
+    public class DemoGoodsReceiptRepository : DemoRepositoryBase<GoodsReceipt>, IGoodsReceiptRepositoryEF
+    {
+        public DemoGoodsReceiptRepository(DemoStore store) : base(store, store.GoodsReceipts) { }
+        protected override bool MatchId(GoodsReceipt entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(GoodsReceipt entity) { if (entity.Id == 0) entity.Id = Store.NextGoodsReceiptId; }
+        public Task<GoodsReceipt?> GetDetailAsync(int id) => Task.FromResult(Attach(Store.GoodsReceipts.FirstOrDefault(x => x.Id == id)));
+
+        public Task<(List<GoodsReceipt> Items, int TotalCount)> SearchAsync(InventorySearchDto search)
+        {
+            var query = Store.GoodsReceipts.Select(Attach).Where(x => x != null).Cast<GoodsReceipt>().AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                var keyword = search.Keyword.Trim().ToLower();
+                query = query.Where(x => x.ReceiptCode.ToLower().Contains(keyword) || x.SupplierName.ToLower().Contains(keyword));
+            }
+            if (search.WarehouseId.HasValue) query = query.Where(x => x.WarehouseId == search.WarehouseId);
+            var total = query.Count();
+            var items = query.OrderByDescending(x => x.ReceivedAt).Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100)).Take(Math.Clamp(search.PageSize, 1, 100)).ToList();
+            return Task.FromResult((items, total));
+        }
+
+        private GoodsReceipt? Attach(GoodsReceipt? receipt)
+        {
+            if (receipt == null) return null;
+            receipt.Warehouse = Store.Warehouses.FirstOrDefault(x => x.Id == receipt.WarehouseId);
+            receipt.Lines = Store.GoodsReceiptLines.Where(x => x.GoodsReceiptId == receipt.Id).ToList();
+            foreach (var line in receipt.Lines)
+            {
+                line.Product = Store.Products.FirstOrDefault(x => x.Id == line.ProductId);
+                line.Variant = Store.ProductVariants.FirstOrDefault(x => x.Id == line.VariantId);
+                line.Serials = Store.GoodsReceiptSerials.Where(x => x.GoodsReceiptLineId == line.Id).ToList();
+            }
+            return receipt;
+        }
+    }
+
+    public class DemoGoodsReceiptLineRepository : DemoRepositoryBase<GoodsReceiptLine>, IGoodsReceiptLineRepositoryEF
+    {
+        public DemoGoodsReceiptLineRepository(DemoStore store) : base(store, store.GoodsReceiptLines) { }
+        protected override bool MatchId(GoodsReceiptLine entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(GoodsReceiptLine entity) { if (entity.Id == 0) entity.Id = Store.NextGoodsReceiptLineId; }
+    }
+
+    public class DemoGoodsReceiptSerialRepository : DemoRepositoryBase<GoodsReceiptSerial>, IGoodsReceiptSerialRepositoryEF
+    {
+        public DemoGoodsReceiptSerialRepository(DemoStore store) : base(store, store.GoodsReceiptSerials) { }
+        protected override bool MatchId(GoodsReceiptSerial entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(GoodsReceiptSerial entity) { if (entity.Id == 0) entity.Id = Store.NextGoodsReceiptSerialId; }
+    }
+
+    public class DemoStockMovementRepository : DemoRepositoryBase<StockMovement>, IStockMovementRepositoryEF
+    {
+        public DemoStockMovementRepository(DemoStore store) : base(store, store.StockMovements) { }
+        protected override bool MatchId(StockMovement entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(StockMovement entity) { if (entity.Id == 0) entity.Id = Store.NextStockMovementId; }
+        public Task<(List<StockMovement> Items, int TotalCount)> SearchAsync(InventorySearchDto search)
+        {
+            var query = Store.StockMovements.AsEnumerable();
+            if (search.ProductId.HasValue) query = query.Where(x => x.ProductId == search.ProductId);
+            if (search.VariantId.HasValue) query = query.Where(x => x.VariantId == search.VariantId);
+            if (search.WarehouseId.HasValue) query = query.Where(x => x.WarehouseId == search.WarehouseId);
+            var total = query.Count();
+            var items = query.OrderByDescending(x => x.CreatedAt).Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100)).Take(Math.Clamp(search.PageSize, 1, 100)).ToList();
+            foreach (var item in items)
+            {
+                item.Product = Store.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                item.Variant = Store.ProductVariants.FirstOrDefault(x => x.Id == item.VariantId);
+                item.Warehouse = Store.Warehouses.FirstOrDefault(x => x.Id == item.WarehouseId);
+            }
+            return Task.FromResult((items, total));
+        }
+    }
+
+    public class DemoInventoryReturnRepository : DemoRepositoryBase<InventoryReturn>, IInventoryReturnRepositoryEF
+    {
+        public DemoInventoryReturnRepository(DemoStore store) : base(store, store.InventoryReturns) { }
+        protected override bool MatchId(InventoryReturn entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(InventoryReturn entity) { if (entity.Id == 0) entity.Id = Store.NextInventoryReturnId; }
+        public Task<InventoryReturn?> GetDetailAsync(int id) => Task.FromResult(Attach(Store.InventoryReturns.FirstOrDefault(x => x.Id == id)));
+
+        public Task<(List<InventoryReturn> Items, int TotalCount)> SearchAsync(InventoryReturnSearchDto search)
+        {
+            var query = Store.InventoryReturns.Select(Attach).Where(x => x != null).Cast<InventoryReturn>().AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(search.Status)) query = query.Where(x => string.Equals(x.Status, search.Status, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                var keyword = search.Keyword.Trim().ToLower();
+                query = query.Where(x => x.ReturnCode.ToLower().Contains(keyword) || (x.SerialOrImei ?? "").ToLower().Contains(keyword) || (x.CustomerName ?? "").ToLower().Contains(keyword));
+            }
+            var total = query.Count();
+            var items = query.OrderByDescending(x => x.CreatedAt).Skip((Math.Max(1, search.Page) - 1) * Math.Clamp(search.PageSize, 1, 100)).Take(Math.Clamp(search.PageSize, 1, 100)).ToList();
+            return Task.FromResult((items, total));
+        }
+
+        private InventoryReturn? Attach(InventoryReturn? item)
+        {
+            if (item == null) return null;
+            item.Product = Store.Products.FirstOrDefault(x => x.Id == item.ProductId);
+            item.Variant = Store.ProductVariants.FirstOrDefault(x => x.Id == item.VariantId);
+            item.StockItem = Store.StockItems.FirstOrDefault(x => x.Id == item.StockItemId);
+            return item;
+        }
+    }
+
+    public class DemoOrderDetailStockItemRepository : DemoRepositoryBase<OrderDetailStockItem>, IOrderDetailStockItemRepositoryEF
+    {
+        public DemoOrderDetailStockItemRepository(DemoStore store) : base(store, store.OrderDetailStockItems) { }
+        protected override bool MatchId(OrderDetailStockItem entity, object id) => entity.Id == Convert.ToInt32(id);
+        protected override void SetIdIfNeeded(OrderDetailStockItem entity) { if (entity.Id == 0) entity.Id = Store.NextOrderDetailStockItemId; }
+        public Task<bool> AnyByStockItemAsync(int stockItemId) => Task.FromResult(Store.OrderDetailStockItems.Any(x => x.StockItemId == stockItemId));
     }
 }

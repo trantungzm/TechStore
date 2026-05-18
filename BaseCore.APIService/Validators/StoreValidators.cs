@@ -54,6 +54,22 @@ namespace BaseCore.APIService.Validators
             RuleFor(x => x.Items).NotNull().NotEmpty();
             RuleForEach(x => x.Items).SetValidator(new OrderItemDtoValidator());
             RuleFor(x => x.ShippingAddress).MaximumLength(500);
+            RuleFor(x => x.CustomerName).NotEmpty().MaximumLength(160);
+            RuleFor(x => x.CustomerPhone).NotEmpty().MinimumLength(9).MaximumLength(30);
+            RuleFor(x => x.CustomerEmail).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.CustomerEmail));
+            RuleFor(x => x.PaymentMethod).NotEmpty().MaximumLength(40);
+            RuleFor(x => x.ShippingMethod).NotEmpty().MaximumLength(40);
+            When(x => string.Equals(x.ShippingMethod, "Delivery", StringComparison.OrdinalIgnoreCase), () =>
+            {
+                RuleFor(x => x.Province).NotEmpty();
+                RuleFor(x => x.District).NotEmpty();
+                RuleFor(x => x.Ward).NotEmpty();
+                RuleFor(x => x.AddressDetail).NotEmpty();
+            });
+            When(x => string.Equals(x.ShippingMethod, "StorePickup", StringComparison.OrdinalIgnoreCase), () =>
+            {
+                RuleFor(x => x.StorePickupLocation).NotEmpty();
+            });
         }
     }
 
@@ -65,4 +81,3 @@ namespace BaseCore.APIService.Validators
         }
     }
 }
-

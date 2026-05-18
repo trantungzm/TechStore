@@ -82,10 +82,21 @@ if (useDemoMode)
     builder.Services.AddSingleton<ICategoryRepositoryEF, DemoCategoryRepository>();
     builder.Services.AddSingleton<IOrderRepositoryEF, DemoOrderRepository>();
     builder.Services.AddSingleton<IOrderDetailRepositoryEF, DemoOrderDetailRepository>();
+    builder.Services.AddSingleton<IOrderTimelineRepositoryEF, DemoOrderTimelineRepository>();
+    builder.Services.AddSingleton<IOrderCancellationRepositoryEF, DemoOrderCancellationRepository>();
+    builder.Services.AddSingleton<IWarehouseRepositoryEF, DemoWarehouseRepository>();
+    builder.Services.AddSingleton<IStockItemRepositoryEF, DemoStockItemRepository>();
+    builder.Services.AddSingleton<IGoodsReceiptRepositoryEF, DemoGoodsReceiptRepository>();
+    builder.Services.AddSingleton<IGoodsReceiptLineRepositoryEF, DemoGoodsReceiptLineRepository>();
+    builder.Services.AddSingleton<IGoodsReceiptSerialRepositoryEF, DemoGoodsReceiptSerialRepository>();
+    builder.Services.AddSingleton<IStockMovementRepositoryEF, DemoStockMovementRepository>();
+    builder.Services.AddSingleton<IInventoryReturnRepositoryEF, DemoInventoryReturnRepository>();
+    builder.Services.AddSingleton<IOrderDetailStockItemRepositoryEF, DemoOrderDetailStockItemRepository>();
 
     builder.Services.AddSingleton<IProductService, ProductService>();
     builder.Services.AddSingleton<ICategoryService, CategoryService>();
     builder.Services.AddSingleton<IOrderService, OrderService>();
+    builder.Services.AddSingleton<IInventoryService, InventoryService>();
 }
 else
 {
@@ -98,10 +109,40 @@ else
     builder.Services.AddScoped<ICategoryRepositoryEF, CategoryRepositoryEF>();
     builder.Services.AddScoped<IOrderRepositoryEF, OrderRepositoryEF>();
     builder.Services.AddScoped<IOrderDetailRepositoryEF, OrderDetailRepositoryEF>();
+    builder.Services.AddScoped<IOrderTimelineRepositoryEF, OrderTimelineRepositoryEF>();
+    builder.Services.AddScoped<IOrderCancellationRepositoryEF, OrderCancellationRepositoryEF>();
+    builder.Services.AddScoped<IWarehouseRepositoryEF, WarehouseRepositoryEF>();
+    builder.Services.AddScoped<IStockItemRepositoryEF, StockItemRepositoryEF>();
+    builder.Services.AddScoped<IGoodsReceiptRepositoryEF, GoodsReceiptRepositoryEF>();
+    builder.Services.AddScoped<IGoodsReceiptLineRepositoryEF, GoodsReceiptLineRepositoryEF>();
+    builder.Services.AddScoped<IGoodsReceiptSerialRepositoryEF, GoodsReceiptSerialRepositoryEF>();
+    builder.Services.AddScoped<IStockMovementRepositoryEF, StockMovementRepositoryEF>();
+    builder.Services.AddScoped<IInventoryReturnRepositoryEF, InventoryReturnRepositoryEF>();
+    builder.Services.AddScoped<IOrderDetailStockItemRepositoryEF, OrderDetailStockItemRepositoryEF>();
+    builder.Services.AddScoped<IWarrantyRecordRepositoryEF, WarrantyRecordRepositoryEF>();
+    builder.Services.AddScoped<IWarrantyClaimRepositoryEF, WarrantyClaimRepositoryEF>();
+    builder.Services.AddScoped<IWarrantyClaimUpdateRepositoryEF, WarrantyClaimUpdateRepositoryEF>();
+    builder.Services.AddScoped<IRepairCaseRepositoryEF, RepairCaseRepositoryEF>();
+    builder.Services.AddScoped<IRepairUpdateRepositoryEF, RepairUpdateRepositoryEF>();
+    builder.Services.AddScoped<ISupportTicketRepositoryEF, SupportTicketRepositoryEF>();
+    builder.Services.AddScoped<ISupportTicketUpdateRepositoryEF, SupportTicketUpdateRepositoryEF>();
+    builder.Services.AddScoped<INotificationRepositoryEF, NotificationRepositoryEF>();
+    builder.Services.AddScoped<IAttachmentRepositoryEF, AttachmentRepositoryEF>();
+    builder.Services.AddScoped<ICouponRepositoryEF, CouponRepositoryEF>();
+    builder.Services.AddScoped<ICouponScopeRepositoryEF, CouponScopeRepositoryEF>();
+    builder.Services.AddScoped<IUserCouponRepositoryEF, UserCouponRepositoryEF>();
+    builder.Services.AddScoped<IOrderCouponRepositoryEF, OrderCouponRepositoryEF>();
+    builder.Services.AddScoped<IVoucherSpinRepositoryEF, VoucherSpinRepositoryEF>();
 
     builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddScoped<ICategoryService, CategoryService>();
+    builder.Services.AddScoped<INotificationService, NotificationService>();
+    builder.Services.AddScoped<IWarrantyService, WarrantyService>();
+    builder.Services.AddScoped<IRepairService, RepairService>();
+    builder.Services.AddScoped<ITicketService, TicketService>();
+    builder.Services.AddScoped<ICouponService, CouponService>();
     builder.Services.AddScoped<IOrderService, OrderService>();
+    builder.Services.AddScoped<IInventoryService, InventoryService>();
 }
 
 // JWT Authentication
@@ -177,10 +218,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("CorsPolicy");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 Console.WriteLine($"BaseCore API Service running on port 5001 - DemoMode: {useDemoMode}");
-Console.WriteLine("Endpoints: /api/products, /api/categories, /api/orders");
+Console.WriteLine("Endpoints: /api/products, /api/categories, /api/orders, /api/inventory, /api/warranty, /api/repairs, /api/tickets, /api/notifications, /api/coupons, /api/specs, /api/uploads, /api/recommendations");
 app.Run();

@@ -54,12 +54,49 @@ namespace BaseCore.Services
             {
                 Name = dto.Name,
                 Price = dto.Price,
+                OriginalPrice = dto.OriginalPrice,
                 Stock = dto.Stock,
                 CategoryId = dto.CategoryId,
+                Slug = string.IsNullOrWhiteSpace(dto.Slug) ? ToSlug(dto.Name) : dto.Slug,
+                Sku = dto.Sku,
+                Brand = dto.Brand,
                 Description = dto.Description,
+                LongDescription = dto.LongDescription,
                 ImageUrl = dto.ImageUrl ?? string.Empty,
+                IsActive = dto.IsActive,
+                IsFeatured = dto.IsFeatured,
+                IsBestSeller = dto.IsBestSeller,
+                IsNewArrival = dto.IsNewArrival,
+                IsDiscounted = dto.IsDiscounted,
+                RequiresSerialTracking = dto.RequiresSerialTracking,
+                WarrantyMonths = dto.WarrantyMonths <= 0 ? 12 : dto.WarrantyMonths,
+                CreatedAt = DateTime.UtcNow,
                 Category = category
             };
+
+            product.Images = dto.Images.Select((image, index) => new ProductImage
+            {
+                ImageUrl = image.ImageUrl,
+                AltText = image.AltText,
+                SortOrder = image.SortOrder == 0 ? index : image.SortOrder,
+                IsPrimary = image.IsPrimary
+            }).ToList();
+
+            product.Variants = dto.Variants.Select(variant => new ProductVariant
+            {
+                VariantName = variant.VariantName,
+                ColorName = variant.ColorName,
+                ColorCode = variant.ColorCode,
+                Storage = variant.Storage,
+                Ram = variant.Ram,
+                Price = variant.Price,
+                OriginalPrice = variant.OriginalPrice,
+                Stock = variant.Stock,
+                Sku = variant.Sku,
+                ImageUrl = variant.ImageUrl,
+                IsActive = variant.IsActive,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
 
             return await _productRepository.AddAsync(product);
         }
@@ -84,10 +121,59 @@ namespace BaseCore.Services
             }
 
             product.Name = dto.Name ?? product.Name;
+            product.Slug = dto.Slug ?? product.Slug ?? ToSlug(product.Name);
+            product.Sku = dto.Sku ?? product.Sku;
             product.Price = dto.Price ?? product.Price;
+            product.OriginalPrice = dto.OriginalPrice ?? product.OriginalPrice;
             product.Stock = dto.Stock ?? product.Stock;
+            product.Brand = dto.Brand ?? product.Brand;
             product.Description = dto.Description ?? product.Description;
+            product.LongDescription = dto.LongDescription ?? product.LongDescription;
             product.ImageUrl = dto.ImageUrl ?? product.ImageUrl;
+            product.IsActive = dto.IsActive ?? product.IsActive;
+            product.IsFeatured = dto.IsFeatured ?? product.IsFeatured;
+            product.IsBestSeller = dto.IsBestSeller ?? product.IsBestSeller;
+            product.IsNewArrival = dto.IsNewArrival ?? product.IsNewArrival;
+            product.IsDiscounted = dto.IsDiscounted ?? product.IsDiscounted;
+            product.RequiresSerialTracking = dto.RequiresSerialTracking ?? product.RequiresSerialTracking;
+            product.WarrantyMonths = dto.WarrantyMonths ?? product.WarrantyMonths;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            if (dto.Images != null)
+            {
+                product.Images.Clear();
+                product.Images.AddRange(dto.Images.Select((image, index) => new ProductImage
+                {
+                    ProductId = product.Id,
+                    ImageUrl = image.ImageUrl,
+                    AltText = image.AltText,
+                    SortOrder = image.SortOrder == 0 ? index : image.SortOrder,
+                    IsPrimary = image.IsPrimary,
+                    CreatedAt = image.CreatedAt == default ? DateTime.UtcNow : image.CreatedAt
+                }));
+            }
+
+            if (dto.Variants != null)
+            {
+                product.Variants.Clear();
+                product.Variants.AddRange(dto.Variants.Select(variant => new ProductVariant
+                {
+                    ProductId = product.Id,
+                    VariantName = variant.VariantName,
+                    ColorName = variant.ColorName,
+                    ColorCode = variant.ColorCode,
+                    Storage = variant.Storage,
+                    Ram = variant.Ram,
+                    Price = variant.Price,
+                    OriginalPrice = variant.OriginalPrice,
+                    Stock = variant.Stock,
+                    Sku = variant.Sku,
+                    ImageUrl = variant.ImageUrl,
+                    IsActive = variant.IsActive,
+                    CreatedAt = variant.CreatedAt == default ? DateTime.UtcNow : variant.CreatedAt,
+                    UpdatedAt = DateTime.UtcNow
+                }));
+            }
 
             await _productRepository.UpdateAsync(product);
             return product;
@@ -109,6 +195,20 @@ namespace BaseCore.Services
         {
             var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, page, pageSize);
             return (products, totalCount);
+        }
+
+        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(ProductSearchDto search)
+        {
+            return await _productRepository.SearchAsync(search);
+        }
+
+        private static string ToSlug(string value)
+        {
+            var normalized = value.Trim().ToLowerInvariant();
+            var chars = normalized.Select(ch => char.IsLetterOrDigit(ch) ? ch : '-').ToArray();
+            var slug = new string(chars);
+            while (slug.Contains("--")) slug = slug.Replace("--", "-");
+            return slug.Trim('-');
         }
     }
 }

@@ -2,8 +2,8 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
-    const { isAuthenticated, isAdmin, loading } = useAuth();
+const ProtectedRoute = ({ children, adminOnly = false, allowedRoles = null }) => {
+    const { isAuthenticated, isAdmin, hasRole, loading } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -21,6 +21,10 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     }
 
     if (adminOnly && !isAdmin()) {
+        return <Navigate to="/" replace />;
+    }
+
+    if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !hasRole(allowedRoles)) {
         return <Navigate to="/" replace />;
     }
 

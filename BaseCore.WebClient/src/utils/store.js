@@ -1,7 +1,6 @@
 export const formatCurrency = (value) => {
-    const currency = localStorage.getItem('currency') || 'USD';
-    const lang = localStorage.getItem('language') || 'English';
-    const locale = lang === 'Vietnamese' ? 'vi-VN' : 'en-US';
+    const currency = localStorage.getItem('currency') || 'VND';
+    const locale = 'vi-VN';
     const rawVnd = Number(value || 0);
     if (currency === 'USD') {
         const rate = Number(localStorage.getItem('usdRateVnd') || 25000);
@@ -279,9 +278,168 @@ const dictionary = {
     }
 };
 
+const storefrontVi = {
+    'Help': 'Trợ giúp',
+    'Support': 'Hỗ trợ',
+    'Contact': 'Liên hệ',
+    'Call Us:': 'Gọi cho chúng tôi:',
+    'Menu': 'Danh mục',
+    'My Dashboard': 'Bảng điều khiển',
+    'Login': 'Đăng nhập',
+    'Order History': 'Lịch sử đơn hàng',
+    'My Cart': 'Giỏ hàng của tôi',
+    'My Card': 'Giỏ hàng của tôi',
+    'Admin Panel': 'Trang quản trị',
+    'Log Out': 'Đăng xuất',
+    'Search Looking For?': 'Bạn đang tìm gì?',
+    'All Category': 'Tất cả danh mục',
+    'All Categories': 'Tất cả danh mục',
+    'Home': 'Trang chủ',
+    'Shop': 'Cửa hàng',
+    'Shop Page': 'Cửa hàng',
+    'Single Page': 'Chi tiết sản phẩm',
+    'Pages': 'Trang',
+    'Bestseller': 'Bán chạy',
+    'Promotion': 'Khuyến mãi',
+    'Promotions': 'Khuyến mãi',
+    'Cart Page': 'Giỏ hàng',
+    'Shop Cart': 'Giỏ hàng',
+    'Checkout': 'Thanh toán',
+    'Cheackout': 'Thanh toán',
+    '404 Page': 'Trang lỗi 404',
+    'Contact Us': 'Liên hệ',
+    'Get in touch': 'Liên hệ với chúng tôi',
+    'We are here for you!': 'Chúng tôi luôn sẵn sàng hỗ trợ bạn!',
+    "Let's Connect": 'Kết nối với chúng tôi',
+    'Send Your Message': 'Gửi tin nhắn',
+    'Your Name': 'Tên của bạn',
+    'Your Email': 'Email của bạn',
+    'Your Phone': 'Số điện thoại',
+    'Your Project': 'Dự án của bạn',
+    'Subject': 'Chủ đề',
+    'Message': 'Nội dung',
+    'Send Message': 'Gửi tin nhắn',
+    'Wishlist': 'Yêu thích',
+    'Notifications': 'Thông báo',
+    'Account Settings': 'Cài đặt tài khoản',
+    'My Account': 'Tài khoản của tôi',
+    'Products Categories': 'Danh mục sản phẩm',
+    'Price': 'Giá',
+    'Select By Color': 'Chọn theo màu',
+    'Additional Products': 'Sản phẩm bổ sung',
+    'Featured products': 'Sản phẩm nổi bật',
+    'View More': 'Xem thêm',
+    'Vew More': 'Xem thêm',
+    'PRODUCT TAGS': 'THẺ SẢN PHẨM',
+    'Sort By': 'Sắp xếp',
+    'Sort By:': 'Sắp xếp:',
+    'Default': 'Sắp xếp mặc định',
+    'Default Sorting': 'Sắp xếp mặc định',
+    'Popularity': 'Phổ biến',
+    'Newness': 'Mới nhất',
+    'Average Rating': 'Đánh giá trung bình',
+    'Low to high': 'Giá thấp đến cao',
+    'High to low': 'Giá cao đến thấp',
+    'Price: Low to High': 'Giá thấp đến cao',
+    'Price: High to Low': 'Giá cao đến thấp',
+    'keywords': 'Từ khóa',
+    'Shop Now': 'Mua ngay',
+    'Add To Cart': 'Thêm vào giỏ hàng',
+    'New': 'Mới',
+    'Sale': 'Giảm giá',
+    'Free Return': 'Đổi trả miễn phí',
+    '30 days money back guarantee!': 'Cam kết hoàn tiền trong 30 ngày!',
+    'Free Shipping': 'Miễn phí vận chuyển',
+    'Free shipping on all order': 'Miễn phí vận chuyển cho mọi đơn hàng',
+    'Support 24/7': 'Hỗ trợ 24/7',
+    'We support online 24 hrs a day': 'Hỗ trợ trực tuyến 24 giờ mỗi ngày',
+    'Receive Gift Card': 'Nhận thẻ quà tặng',
+    'Recieve gift all over oder $50': 'Nhận quà cho đơn hàng trên $50',
+    'Secure Payment': 'Thanh toán an toàn',
+    'We Value Your Security': 'Chúng tôi coi trọng bảo mật của bạn',
+    'Online Service': 'Dịch vụ trực tuyến',
+    'Free return products in 30 days': 'Đổi trả sản phẩm miễn phí trong 30 ngày',
+    'Special Offer': 'Ưu đãi đặc biệt',
+    'Terms and Condition Apply': 'Áp dụng điều khoản & điều kiện',
+    'Save Up To A $400': 'Giảm đến $400',
+    'Save Up To A $200': 'Giảm đến $200',
+    'On Selected Laptops & Desktop Or Smartphone': 'Cho laptop, máy bàn hoặc điện thoại được chọn',
+    'Shop Laptops': 'Mua laptop',
+    'Shop Smartphones': 'Mua điện thoại',
+    'Bestseller Products': 'Sản phẩm bán chạy',
+    'Most Popular Items': 'Sản phẩm phổ biến nhất',
+    'Our Products': 'Sản phẩm của chúng tôi',
+    'All Products': 'Tất cả sản phẩm',
+    'New Arrivals': 'Hàng mới về',
+    'Featured': 'Nổi bật',
+    'Top Selling': 'Bán chạy nhất',
+    'All Product Items': 'Tất cả sản phẩm',
+    'Products': 'Sản phẩm',
+    'Address': 'Địa chỉ',
+    'Mail Us': 'Email',
+    'Telephone': 'Điện thoại',
+    'Newsletter': 'Bản tin',
+    'Customer Service': 'Dịch vụ khách hàng',
+    'Returns': 'Đổi trả',
+    'Site Map': 'Sơ đồ trang',
+    'Testimonials': 'Đánh giá khách hàng',
+    'Information': 'Thông tin',
+    'About Us': 'Về chúng tôi',
+    'Delivery infomation': 'Thông tin giao hàng',
+    'Privacy Policy': 'Chính sách bảo mật',
+    'Terms & Conditions': 'Điều khoản & điều kiện',
+    'Warranty': 'Bảo hành',
+    'FAQ': 'Câu hỏi thường gặp',
+    'Seller Login': 'Đăng nhập người bán',
+    'Extras': 'Khác',
+    'Brands': 'Thương hiệu',
+    'Gift Vouchers': 'Phiếu quà tặng',
+    'Affiliates': 'Đối tác',
+    'Track Your Order': 'Theo dõi đơn hàng',
+    'SignUp': 'Đăng ký',
+    'Enter your email': 'Nhập email của bạn',
+    'Accessories': 'Phụ kiện',
+    'Electronics & Computer': 'Điện tử & Máy tính',
+    'Laptops & Desktops': 'Laptop & Máy bàn',
+    'Mobiles & Tablets': 'Điện thoại & Máy tính bảng',
+    'SmartPhone & Smart TV': 'Điện thoại & Smart TV',
+    'SmartPhone': 'Điện thoại thông minh',
+    'Smartphone': 'Điện thoại thông minh',
+    'Smart Camera': 'Camera thông minh',
+    'Smart Watch': 'Đồng hồ thông minh',
+    'Smart Whatch': 'Đồng hồ thông minh',
+    'Smartwatch': 'Đồng hồ thông minh',
+    'Camera': 'Camera',
+    'Audio': 'Âm thanh',
+    'Gaming': 'Gaming',
+    'Tablet': 'Máy tính bảng',
+    'Category 1': 'Danh mục 1',
+    'Category 2': 'Danh mục 2',
+    'Category 3': 'Danh mục 3',
+    'Category 4': 'Danh mục 4',
+    'Product Details': 'Chi tiết sản phẩm',
+    'Available': 'Số lượng',
+    'In Stock': 'Còn hàng',
+    'Out of Stock': 'Hết hàng',
+    'No description': 'Chưa có mô tả',
+    'No products found': 'Không tìm thấy sản phẩm.',
+    'Cart is empty.': 'Giỏ hàng đang trống.',
+    'Go to shop': 'Tới cửa hàng',
+    'Continue Shopping': 'Tiếp tục mua sắm',
+    'Back to Shop': 'Trở về cửa hàng',
+    'Name': 'Tên',
+    'Model': 'Mẫu',
+    'Quantity': 'Số lượng',
+    'Total': 'Tổng',
+    'Description': 'Mô tả',
+    'Compare': 'So sánh',
+    'Remove': 'Xóa',
+    'Action': 'Hành động',
+};
+
 export const t = (key) => {
     const lang = localStorage.getItem('language') || 'English';
-    return dictionary[lang]?.[key] || key;
+    return storefrontVi[key] || dictionary[lang]?.[key] || key;
 };
 
 export const resolveProductImage = (product) => {
@@ -299,6 +457,7 @@ export const resolveProductImage = (product) => {
 
 export const getPostLoginPath = (user, requestedPath) => {
     const isAdmin = user?.role === 'Admin';
+    const isStaff = ['Warehouse', 'Technical', 'Warranty', 'StockManager'].includes(user?.role);
 
     if (requestedPath) {
         if (requestedPath.startsWith('/admin') && !isAdmin) {
@@ -307,7 +466,7 @@ export const getPostLoginPath = (user, requestedPath) => {
         return requestedPath;
     }
 
-    return isAdmin ? '/admin' : '/orders';
+    return isAdmin || isStaff ? '/admin' : '/';
 };
 
 export const setMetaDescription = (description) => {

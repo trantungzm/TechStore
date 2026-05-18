@@ -3268,23 +3268,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\TRAN TUNG\\.nuget\\packages\\": {},
+    "C:\\Users\\LUONG\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj",
+      "projectUniqueName": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj",
       "projectName": "BaseCore.Services",
-      "projectPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj",
-      "packagesPath": "C:\\Users\\TRAN TUNG\\.nuget\\packages\\",
-      "outputPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Services\\obj\\",
+      "projectPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Services\\BaseCore.Services.csproj",
+      "packagesPath": "C:\\Users\\LUONG\\.nuget\\packages\\",
+      "outputPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Services\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\TRAN TUNG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\LUONG\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3299,17 +3299,17 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj": {
-              "projectPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj"
+            "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj": {
+              "projectPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Common\\BaseCore.Common.csproj"
             },
-            "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.DTO\\BaseCore.DTO.csproj": {
-              "projectPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.DTO\\BaseCore.DTO.csproj"
+            "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.DTO\\BaseCore.DTO.csproj": {
+              "projectPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.DTO\\BaseCore.DTO.csproj"
             },
-            "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj": {
-              "projectPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj"
+            "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj": {
+              "projectPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Entities\\BaseCore.Entities.csproj"
             },
-            "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj": {
-              "projectPath": "D:\\tailieu\\Tài liệu học năm 3 kì 2\\Công nghệ web\\FW\\FW\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj"
+            "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj": {
+              "projectPath": "D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore\\BaseCore.Repository\\BaseCore.Repository.csproj"
             }
           }
         }
@@ -3359,7 +3359,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

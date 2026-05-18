@@ -1,160 +1,400 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { orderApi, userApi } from '../services/api';
-import { formatCurrency } from '../utils/store';
+import { formatCurrency, resolveProductImage, t } from '../utils/store';
+
+const STATUSES = ['Pending', 'Confirmed', 'Processing', 'Shipping', 'Completed', 'CancelRequested', 'Cancelled', 'CancelRejected'];
+const PAYMENT_STATUSES = ['Unpaid', 'Paid', 'Refunded', 'Failed', 'Cancelled'];
+const PAYMENT_METHODS = ['COD', 'BankTransfer', 'Momo', 'ShopeePay', 'ApplePay', 'StorePayment'];
+
+const STATUS_LABELS = {
+    Pending: 'Chờ xác nhận',
+    Confirmed: 'Đã xác nhận',
+    Processing: 'Đang chuẩn bị',
+    Shipping: 'Đang giao',
+    Completed: 'Hoàn tất',
+    CancelRequested: 'Yêu cầu hủy',
+    Cancelled: 'Đã hủy',
+    CancelRejected: 'Từ chối hủy',
+};
+
+const PAYMENT_STATUS_LABELS = {
+    Unpaid: 'Chưa thanh toán',
+    Paid: 'Đã thanh toán',
+    Refunded: 'Đã hoàn tiền',
+    Failed: 'Thanh toán lỗi',
+    Cancelled: 'Đã hủy',
+};
+
+const PAYMENT_METHOD_LABELS = {
+    COD: 'Thanh toán khi nhận hàng',
+    cod: 'Thanh toán khi nhận hàng',
+    BankTransfer: 'Chuyển khoản',
+    bank: 'Chuyển khoản',
+    Momo: 'Momo',
+    ShopeePay: 'ShopeePay',
+    ApplePay: 'Apple Pay',
+    StorePayment: 'Thanh toán tại cửa hàng',
+};
+
+const statusText = (value) => STATUS_LABELS[value] || value || 'Không rõ';
+const paymentStatusText = (value) => PAYMENT_STATUS_LABELS[value] || value || 'Không rõ';
+const paymentMethodText = (value) => PAYMENT_METHOD_LABELS[value] || value || 'Không rõ';
 
 const AdminOrders = () => {
     const [orders, setOrders] = useState([]);
+    const [users, setUsers] = useState({});
     const [loading, setLoading] = useState(true);
-    const [keyword, setKeyword] = useState('');
-    const [searchUsername, setSearchUsername] = useState('');
+    const [error, setError] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(0);
-    const [totalCount, setTotalCount] = useState(0);
+    const [filters, setFilters] = useState({
+        orderKeyword: '',
+        customerKeyword: '',
+        status: '',
+        paymentStatus: '',
+        paymentMethod: '',
+        dateFrom: '',
+        dateTo: '',
+        amountMin: '',
+        amountMax: '',
+        sortOrder: 'date_desc',
+    });
     const [orderDetails, setOrderDetails] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [editingOrderId, setEditingOrderId] = useState(null);
-    const [newStatus, setNewStatus] = useState('');
-    const [users, setUsers] = useState({});
-    const [error, setError] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
-    const [sortOrder, setSortOrder] = useState('date_desc');
     const [processingActionId, setProcessingActionId] = useState(null);
+    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+    const filterMenuRef = useRef(null);
+    const filterButtonRef = useRef(null);
+    const [actionDialog, setActionDialog] = useState({
+        isOpen: false,
+        orderId: null,
+        title: '',
+        confirmText: '',
+        buttonClass: 'btn-primary',
+        mode: 'status',
+        payload: {},
+        note: '',
+    });
+    const locale = (localStorage.getItem('language') || 'English') === 'Vietnamese' ? 'vi-VN' : 'en-US';
+    const dash = '—';
+    const userByEmail = useMemo(() => {
+        const map = {};
+        const seen = new Set();
+        Object.values(users).forEach((user) => {
+            if (!user || seen.has(user.id)) return;
+            seen.add(user.id);
+            const email = String(user.email || '').trim().toLowerCase();
+            if (email) map[email] = user;
+        });
+        return map;
+    }, [users]);
 
-    const statuses = ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Completed', 'Cancelled', 'Cancel Requested', 'Cancelled & Refunded'];
+    const displayText = (value) => {
+        if (value === null || value === undefined) return dash;
+        const text = String(value).trim();
+        return text ? text : dash;
+    };
+
+    const getShortId = (value) => {
+        if (value === null || value === undefined) return '';
+        const text = String(value);
+        return text.length > 10 ? text.slice(0, 8) : text;
+    };
+
+    const getInitials = (value) => {
+        const text = String(value || '').trim();
+        if (!text) return '?';
+        const parts = text.split(/\s+/).filter(Boolean);
+        const first = (parts[0] || '').slice(0, 1).toUpperCase();
+        const last = (parts.length > 1 ? parts[parts.length - 1] : '').slice(0, 1).toUpperCase();
+        return (first + last) || '?';
+    };
+
+    const getAvatarColor = (seed) => {
+        const text = String(seed || '');
+        let hash = 0;
+        for (let i = 0; i < text.length; i++) {
+            hash = ((hash << 5) - hash) + text.charCodeAt(i);
+            hash |= 0;
+        }
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue} 70% 40%)`;
+    };
+
+    const getUserRecord = (orderOrUserId) => {
+        const isOrder = typeof orderOrUserId === 'object' && orderOrUserId !== null;
+        const userId = isOrder ? orderOrUserId?.userId : orderOrUserId;
+        const direct = users[userId] || users[String(userId)];
+        if (direct) return direct;
+        if (isOrder) {
+            const email = String(orderOrUserId?.customerEmail || '').trim().toLowerCase();
+            if (email && userByEmail[email]) return userByEmail[email];
+        }
+        return undefined;
+    };
+
+    const getUserDisplayName = (order) => {
+        const user = getUserRecord(order);
+        return order?.customerName || user?.name || user?.username || `${t('User')} #${getShortId(order?.userId)}`.trim();
+    };
+
+    const getUserEmail = (order) => {
+        const user = getUserRecord(order);
+        return order?.customerEmail || user?.email || '';
+    };
+
+    const getUserPhone = (order) => {
+        const user = getUserRecord(order);
+        return order?.customerPhone || user?.phone || '';
+    };
+
+    const computePaymentStatus = (order) => {
+        const method = order?.paymentMethod || 'COD';
+        const status = order?.status || '';
+        const explicit = order?.paymentStatus;
+        if (explicit && explicit !== 'Unpaid') return explicit;
+
+        if (status === 'Cancelled') {
+            return method === 'COD' || method === 'cod' ? 'Cancelled' : 'Refunded';
+        }
+        if (method !== 'COD' && method !== 'cod') {
+            return 'Paid';
+        }
+        if (status === 'Completed') return 'Paid';
+        return explicit || 'Unpaid';
+    };
+
+    const buildTimeline = (order) => {
+        const timeline = Array.isArray(order?.timeline) ? order.timeline : [];
+        if (timeline.length > 0) {
+            return timeline.map((step) => ({
+                status: step.status,
+                timestamp: step.createdAt || step.timestamp,
+                by: step.createdByUserId || step.by || 'Hệ thống',
+                note: step.note || step.title || '',
+            }));
+        }
+
+        const createdAt = order?.orderDate ? new Date(order.orderDate).toISOString() : new Date().toISOString();
+        const updatedAt = order?.updatedAt ? new Date(order.updatedAt).toISOString() : createdAt;
+        const updatedBy = order?.updatedBy || 'System';
+        const createdBy = order?.customerEmail || order?.customerName || order?.userId || 'customer';
+
+        const steps = [
+            { status: 'Created', timestamp: createdAt, by: createdBy, note: t('Order created') },
+        ];
+
+        if (order?.status) {
+            steps.push({ status: order.status, timestamp: updatedAt, by: updatedBy, note: t('Latest status') });
+        }
+
+        return steps;
+    };
 
     useEffect(() => {
-        loadOrders();
-        loadUsers();
-    }, [page, keyword, searchUsername, filterStatus, sortOrder]);
+        const onMouseDown = (e) => {
+            const menuEl = filterMenuRef.current;
+            const buttonEl = filterButtonRef.current;
+            if (!menuEl || !buttonEl) return;
+            if (menuEl.contains(e.target) || buttonEl.contains(e.target)) return;
+            setIsFilterMenuOpen(false);
+        };
+        document.addEventListener('mousedown', onMouseDown);
+        return () => document.removeEventListener('mousedown', onMouseDown);
+    }, []);
 
-    const loadUsers = async () => {
-        try {
-            const response = await userApi.getAll({ page: 1, pageSize: 100 });
-            const usersMap = {};
-            (response.data.data || []).forEach(user => {
-                usersMap[user.id] = user;
-            });
-            setUsers(usersMap);
-        } catch (error) {
-            console.error('Failed to load users:', error);
+    useEffect(() => {
+        const bootstrap = async () => {
+            setLoading(true);
+            try {
+                const [ordersRes, usersRes] = await Promise.all([
+                    orderApi.getAll(),
+                    userApi.getAll({ page: 1, pageSize: 500 }),
+                ]);
+
+                const usersMap = {};
+                (usersRes.data?.data || []).forEach((user) => {
+                    usersMap[user.id] = user;
+                    usersMap[String(user.id)] = user;
+                });
+
+                setUsers(usersMap);
+                setOrders(ordersRes.data || []);
+                setError('');
+            } catch (err) {
+                console.error('Failed to load orders:', err);
+                setError(t('Unable to load admin orders.'));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        bootstrap();
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const refresh = async () => {
+            try {
+                const response = await orderApi.getAll();
+                if (!cancelled) setOrders(response.data || []);
+            } catch {}
+        };
+        const onUpdated = () => refresh();
+        const onStorage = (e) => {
+            if (e.key === 'basecore_admin_orders_updated_at') {
+                refresh();
+            }
+        };
+        window.addEventListener('basecore:admin-orders-updated', onUpdated);
+        window.addEventListener('storage', onStorage);
+        return () => {
+            cancelled = true;
+            window.removeEventListener('basecore:admin-orders-updated', onUpdated);
+            window.removeEventListener('storage', onStorage);
+        };
+    }, []);
+
+    const refreshOrders = async () => {
+        const response = await orderApi.getAll();
+        setOrders(response.data || []);
+    };
+
+    const getStatusBadgeClass = (status) => {
+        if (!status) return 'badge-secondary';
+        if (status === 'Completed') return 'badge-success';
+        if (status === 'Shipping') return 'badge-primary';
+        if (status === 'Confirmed' || status === 'Processing') return 'badge-warning';
+        if (status.includes('Cancel')) return 'badge-danger';
+        return 'badge-secondary';
+    };
+
+    const getPaymentBadgeClass = (status) => {
+        switch (status) {
+            case 'Paid':
+                return 'badge-success';
+            case 'Refunded':
+                return 'badge-warning';
+            case 'Cancelled':
+                return 'badge-danger';
+            default:
+                return 'badge-secondary';
         }
     };
 
-    const loadOrders = async () => {
-        setLoading(true);
-        try {
-            const response = await orderApi.getAll();
-            let filteredOrders = response.data || [];
+    const activeFilterCount = useMemo(() => {
+        const keys = ['status', 'paymentStatus', 'paymentMethod', 'dateFrom', 'dateTo', 'amountMin', 'amountMax'];
+        return keys.reduce((count, key) => count + (filters[key] ? 1 : 0), 0);
+    }, [filters]);
 
-            // Filter by keyword (search in order id)
-            if (keyword) {
-                filteredOrders = filteredOrders.filter(order => {
-                    const orderId = order.id?.toString().includes(keyword);
-                    return orderId;
-                });
+    const filteredOrders = useMemo(() => {
+        const orderKeyword = filters.orderKeyword.trim().toLowerCase();
+        const customerKeyword = filters.customerKeyword.trim().toLowerCase();
+        const amountMin = filters.amountMin ? Number(filters.amountMin) : null;
+        const amountMax = filters.amountMax ? Number(filters.amountMax) : null;
+
+        let result = orders.filter((order) => {
+            const matchesOrderKeyword = !orderKeyword || String(order.id).includes(orderKeyword);
+            const customerFields = [
+                order.customerName,
+                order.customerPhone,
+                order.customerEmail,
+                getUserDisplayName(order),
+                getUserEmail(order),
+                getUserPhone(order),
+            ].join(' ').toLowerCase();
+            const matchesCustomerKeyword = !customerKeyword || customerFields.includes(customerKeyword);
+            const matchesStatus = !filters.status || order.status === filters.status;
+            const matchesPaymentStatus = !filters.paymentStatus || computePaymentStatus(order) === filters.paymentStatus;
+            const matchesPaymentMethod = !filters.paymentMethod || (order.paymentMethod || 'cod') === filters.paymentMethod;
+            const orderDate = new Date(order.orderDate);
+            const matchesDateFrom = !filters.dateFrom || orderDate >= new Date(`${filters.dateFrom}T00:00:00`);
+            const matchesDateTo = !filters.dateTo || orderDate <= new Date(`${filters.dateTo}T23:59:59`);
+            const matchesAmountMin = amountMin === null || Number(order.totalAmount || 0) >= amountMin;
+            const matchesAmountMax = amountMax === null || Number(order.totalAmount || 0) <= amountMax;
+
+            return (
+                matchesOrderKeyword &&
+                matchesCustomerKeyword &&
+                matchesStatus &&
+                matchesPaymentStatus &&
+                matchesPaymentMethod &&
+                matchesDateFrom &&
+                matchesDateTo &&
+                matchesAmountMin &&
+                matchesAmountMax
+            );
+        });
+
+        result = result.slice().sort((a, b) => {
+            switch (filters.sortOrder) {
+                case 'date_asc':
+                    return new Date(a.orderDate) - new Date(b.orderDate);
+                case 'amount_desc':
+                    return Number(b.totalAmount || 0) - Number(a.totalAmount || 0);
+                case 'amount_asc':
+                    return Number(a.totalAmount || 0) - Number(b.totalAmount || 0);
+                case 'status':
+                    return String(a.status || '').localeCompare(String(b.status || ''));
+                case 'date_desc':
+                default:
+                    return new Date(b.orderDate) - new Date(a.orderDate);
             }
+        });
 
-            // Filter by username
-            if (searchUsername) {
-                filteredOrders = filteredOrders.filter(order => {
-                    const user = users[order.userId];
-                    const username = user?.username || '';
-                    const userName = user?.name || '';
-                    return username.toLowerCase().includes(searchUsername.toLowerCase()) || 
-                           userName.toLowerCase().includes(searchUsername.toLowerCase());
-                });
-            }
+        return result;
+    }, [filters, orders, users]);
 
-            // Filter by status
-            if (filterStatus) {
-                filteredOrders = filteredOrders.filter(order => order.status === filterStatus);
-            }
+    const totalPages = Math.ceil(filteredOrders.length / pageSize) || 1;
+    const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
 
-            // Sorting
-            filteredOrders.sort((a, b) => {
-                if (sortOrder === 'date_desc') return new Date(b.orderDate) - new Date(a.orderDate);
-                if (sortOrder === 'date_asc') return new Date(a.orderDate) - new Date(b.orderDate);
-                if (sortOrder === 'amount_desc') return b.totalAmount - a.totalAmount;
-                if (sortOrder === 'amount_asc') return a.totalAmount - b.totalAmount;
-                return 0;
-            });
+    const summary = useMemo(() => {
+        const totalRevenue = orders
+            .filter((order) => order.status === 'Completed')
+            .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+        return {
+            total: orders.length,
+            waitingReview: orders.filter((order) => order.status === 'CancelRequested').length,
+            unpaid: orders.filter((order) => computePaymentStatus(order) === 'Unpaid').length,
+            completedRevenue: totalRevenue,
+        };
+    }, [orders]);
 
-            // Pagination
-            const startIndex = (page - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
-
-            setTotalCount(filteredOrders.length);
-            setTotalPages(Math.ceil(filteredOrders.length / pageSize));
-            setOrders(paginatedOrders);
-        } catch (error) {
-            console.error('Failed to load orders:', error);
-            setError('Failed to load orders');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
+    useEffect(() => {
         setPage(1);
-    };
+    }, [filters]);
 
     const handleViewDetails = async (orderId) => {
         try {
             const response = await orderApi.getById(orderId);
-            if (!response.data || !response.data.order) {
-                throw new Error('Dữ liệu đơn hàng trống');
+            const data = response.data;
+            const normalized = data?.order
+                ? data
+                : {
+                    order: data?.data?.order || data,
+                    details: data?.data?.details || data?.details || data?.items || data?.Items || [],
+                };
+            if (!normalized?.order) {
+                throw new Error('Empty order details');
             }
-            setOrderDetails(response.data);
+            if (!Array.isArray(normalized.details)) {
+                normalized.details = normalized.order?.items || normalized.order?.Items || [];
+            }
+            setOrderDetails(normalized);
             setShowDetailModal(true);
-        } catch (error) {
-            console.error('Error loading details:', error);
-            
-            const basicOrder = orders.find(o => o.id === orderId);
-            if (basicOrder) {
+        } catch (err) {
+            console.error('Failed to load order detail:', err);
+            const basic = orders.find((o) => o.id === orderId);
+            if (basic) {
                 setOrderDetails({
-                    order: basicOrder,
-                    details: [{
-                        id: 'mock-detail-1',
-                        productId: 'N/A (API Error)',
-                        quantity: 1,
-                        unitPrice: basicOrder.totalAmount,
-                        totalPrice: basicOrder.totalAmount
-                    }]
+                    order: basic,
+                    details: [],
                 });
                 setShowDetailModal(true);
+                setError('');
             } else {
-                alert('Failed to load order details');
+                setError(t('Unable to load order details.'));
             }
-        }
-    };
-
-    const handleStatusChange = (orderId, currentStatus) => {
-        setEditingOrderId(orderId);
-        setNewStatus(currentStatus);
-        setShowStatusModal(true);
-    };
-
-    const handleUpdateStatus = async () => {
-        try {
-            await orderApi.updateStatus(editingOrderId, { status: newStatus });
-            setShowStatusModal(false);
-            loadOrders();
-            
-            // Mô phỏng việc gửi email thông báo trạng thái
-            alert(`[System Mock] Email notification has been sent to the user regarding order #${editingOrderId} new status: ${newStatus}`);
-            
-            if (orderDetails && orderDetails.order.id === editingOrderId) {
-                setOrderDetails({
-                    ...orderDetails,
-                    order: { ...orderDetails.order, status: newStatus }
-                });
-            }
-        } catch (error) {
-            alert('Failed to update order status');
         }
     };
 
@@ -163,9 +403,182 @@ const AdminOrders = () => {
         setOrderDetails(null);
     };
 
+    const openActionDialog = (config) => {
+        setActionDialog({
+            isOpen: true,
+            note: '',
+            buttonClass: 'btn-primary',
+            ...config,
+        });
+    };
+
+    const closeActionDialog = () => {
+        setActionDialog({
+            isOpen: false,
+            orderId: null,
+            title: '',
+            confirmText: '',
+            buttonClass: 'btn-primary',
+            mode: 'status',
+            payload: {},
+            note: '',
+        });
+    };
+
+    const submitAction = async () => {
+        if (!actionDialog.orderId) return;
+        setProcessingActionId(actionDialog.orderId);
+        try {
+            if (actionDialog.mode === 'review-cancel') {
+                await orderApi.reviewCancellation(actionDialog.orderId, {
+                    approved: actionDialog.payload.approved,
+                    adminNote: actionDialog.note,
+                });
+            } else {
+                await orderApi.updateStatus(actionDialog.orderId, {
+                    ...actionDialog.payload,
+                    note: actionDialog.note,
+                });
+            }
+
+            await refreshOrders();
+            if (showDetailModal && orderDetails?.order?.id === actionDialog.orderId) {
+                const refreshed = await orderApi.getById(actionDialog.orderId);
+                setOrderDetails(refreshed.data);
+            }
+            closeActionDialog();
+            setError('');
+        } catch (err) {
+            const data = err.response?.data;
+            setError(data?.message || data?.detail || data?.title || t('Unable to update order.'));
+        } finally {
+            setProcessingActionId(null);
+        }
+    };
+
+    const getQuickActions = (order) => {
+        const actions = [
+            {
+                key: 'detail',
+                label: t('Details'),
+                icon: 'eye',
+                className: 'btn-info',
+                onClick: () => handleViewDetails(order.id),
+            },
+        ];
+
+        if (order.status === 'Pending') {
+            actions.push({
+                key: 'confirm',
+                label: t('Confirm'),
+                icon: 'check',
+                className: 'btn-success',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `${t('Confirm order')} #${order.id}`,
+                    confirmText: t('Confirm order'),
+                    buttonClass: 'btn-success',
+                    payload: { status: 'Confirmed' },
+                }),
+            });
+        }
+        if (order.status === 'Confirmed') {
+            actions.push({
+                key: 'process',
+                label: t('Start processing'),
+                icon: 'boxes',
+                className: 'btn-primary',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `${t('Move order to Processing')} #${order.id}`,
+                    confirmText: t('Start processing'),
+                    buttonClass: 'btn-primary',
+                    payload: { status: 'Processing' },
+                }),
+            });
+        }
+        if (order.status === 'Processing') {
+            actions.push({
+                key: 'ship',
+                label: 'Chuyển sang đang giao',
+                icon: 'truck',
+                className: 'btn-primary',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `Chuyển đơn #${order.id} sang đang giao`,
+                    confirmText: 'Xác nhận đang giao',
+                    buttonClass: 'btn-primary',
+                    payload: { status: 'Shipping' },
+                }),
+            });
+        }
+        if (order.status === 'Shipping') {
+            actions.push({
+                key: 'complete',
+                label: t('Complete'),
+                icon: 'flag-checkered',
+                className: 'btn-success',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `${t('Complete order')} #${order.id}`,
+                    confirmText: t('Complete order'),
+                    buttonClass: 'btn-success',
+                    payload: { status: 'Completed' },
+                }),
+            });
+        }
+        if (order.status === 'CancelRequested') {
+            actions.push({
+                key: 'approve-cancel',
+                label: t('Approve cancellation'),
+                icon: 'ban',
+                className: 'btn-danger',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `${t('Review cancellation request for order')} #${order.id}`,
+                    confirmText: t('Approve cancellation'),
+                    buttonClass: 'btn-danger',
+                    mode: 'review-cancel',
+                    payload: { approved: true },
+                }),
+            });
+            actions.push({
+                key: 'reject-cancel',
+                label: t('Reject cancellation'),
+                icon: 'undo',
+                className: 'btn-warning',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `${t('Review cancellation request for order')} #${order.id}`,
+                    confirmText: t('Reject cancellation'),
+                    buttonClass: 'btn-warning',
+                    mode: 'review-cancel',
+                    payload: { approved: false },
+                }),
+            });
+        }
+        if (!['Completed', 'Cancelled', 'CancelRequested', 'CancelRejected'].includes(order.status)) {
+            actions.push({
+                key: 'cancel',
+                label: t('Cancel'),
+                icon: 'times',
+                className: 'btn-outline-danger',
+                onClick: () => openActionDialog({
+                    orderId: order.id,
+                    title: `${t('Cancel order')} #${order.id}`,
+                    confirmText: t('Cancel order'),
+                    buttonClass: 'btn-danger',
+                    payload: { status: 'Cancelled', restockItems: true },
+                }),
+            });
+        }
+
+        return actions;
+    };
+
     const renderPagination = () => {
         const pages = [];
-        for (let i = 1; i <= totalPages; i++) {
+        for (let i = 1; i <= totalPages; i += 1) {
             pages.push(
                 <li key={i} className={`page-item ${page === i ? 'active' : ''}`}>
                     <button className="page-link" onClick={() => setPage(i)}>{i}</button>
@@ -175,376 +588,493 @@ const AdminOrders = () => {
         return pages;
     };
 
-    const getStatusBadgeClass = (status) => {
-        if (!status) return 'badge-secondary';
-        if (status.includes('Cancel')) return 'badge-danger';
-        switch (status) {
-            case 'Completed':
-                return 'badge-success'; // Green
-            case 'Shipped':
-            case 'Shipping':
-                return 'badge-primary'; // Blue
-            case 'Confirmed':
-            case 'Processing':
-                return 'badge-warning'; // Yellow
-            case 'Pending':
-            default:
-                return 'badge-secondary'; // Gray
-        }
-    };
-
-    const handleQuickAction = async (orderId, newStatus) => {
-        if (window.confirm(`Xác nhận chuyển trạng thái đơn hàng #${orderId} sang ${newStatus}?`)) {
-            setProcessingActionId(orderId);
-            try {
-                const response = await orderApi.updateStatus(orderId, { status: newStatus });
-                loadOrders();
-                
-                if (orderDetails && orderDetails.order.id === orderId) {
-                    setOrderDetails({
-                        ...orderDetails,
-                        order: response.data
-                    });
-                }
-            } catch (error) {
-                const data = error.response?.data;
-                alert(data?.message || data?.detail || data?.title || 'Không thể cập nhật trạng thái do lỗi logic backend.');
-            } finally {
-                setProcessingActionId(null);
-            }
-        }
-    };
-
-    const getUserName = (userId) => {
-        return users[userId]?.name || users[userId]?.username || `User ${userId}`;
-    };
-
     return (
-        <div className="content-wrapper">
-            <div className="content-header">
-                <div className="container-fluid">
-                    <div className="row mb-2">
-                        <div className="col-sm-6">
-                            <h1 className="m-0">Orders Management</h1>
+        <>
+            <div className="row">
+                <div className="col-lg-3 col-6">
+                    <div className="small-box bg-info">
+                        <div className="inner">
+                            <h3>{summary.total}</h3>
+                            <p>{t('Total orders')}</p>
                         </div>
+                        <div className="icon"><i className="fas fa-file-invoice"></i></div>
+                    </div>
+                </div>
+                <div className="col-lg-3 col-6">
+                    <div className="small-box bg-warning">
+                        <div className="inner">
+                            <h3>{summary.waitingReview}</h3>
+                            <p>{t('Pending cancellation review')}</p>
+                        </div>
+                        <div className="icon"><i className="fas fa-exclamation-circle"></i></div>
+                    </div>
+                </div>
+                <div className="col-lg-3 col-6">
+                    <div className="small-box bg-success">
+                        <div className="inner">
+                            <h3>{formatCurrency(summary.completedRevenue)}</h3>
+                            <p>{t('Completed revenue')}</p>
+                        </div>
+                        <div className="icon"><i className="fas fa-money-bill-wave"></i></div>
+                    </div>
+                </div>
+                <div className="col-lg-3 col-6">
+                    <div className="small-box bg-danger">
+                        <div className="inner">
+                            <h3>{summary.unpaid}</h3>
+                            <p>{t('Unpaid orders')}</p>
+                        </div>
+                        <div className="icon"><i className="fas fa-wallet"></i></div>
                     </div>
                 </div>
             </div>
 
-            <section className="content">
-                <div className="container-fluid">
-                    <div className="card">
-                        <div className="card-header">
-                            <div className="row">
-                                <div className="col-md-3">
-                                    <form onSubmit={handleSearch} className="form-inline w-100">
-                                        <input
-                                            type="text"
-                                            className="form-control w-100"
-                                            placeholder="Search order ID..."
-                                            value={keyword}
-                                            onChange={(e) => setKeyword(e.target.value)}
-                                        />
-                                    </form>
-                                </div>
-                                <div className="col-md-3">
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Search by username..."
-                                        value={searchUsername}
-                                        onChange={(e) => {
-                                            setSearchUsername(e.target.value);
-                                            setPage(1);
-                                        }}
-                                    />
-                                </div>
-                                <div className="col-md-2">
-                                    <select
-                                        className="form-control"
-                                        value={filterStatus}
-                                        onChange={(e) => {
-                                            setFilterStatus(e.target.value);
-                                            setPage(1);
-                                        }}
-                                    >
-                                        <option value="">All Status</option>
-                                        {statuses.map(status => (
-                                            <option key={status} value={status}>{status}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-md-2">
-                                    <select
-                                        className="form-control"
-                                        value={sortOrder}
-                                        onChange={(e) => {
-                                            setSortOrder(e.target.value);
-                                            setPage(1);
-                                        }}
-                                    >
-                                        <option value="date_desc">Newest First</option>
-                                        <option value="date_asc">Oldest First</option>
-                                        <option value="amount_desc">Highest Amount</option>
-                                        <option value="amount_asc">Lowest Amount</option>
-                                    </select>
-                                </div>
-                                <div className="col-md-2 text-right">
-                                    <span className="text-muted">
-                                        Total: <strong>{totalCount}</strong> | Page {page}/{totalPages}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="card-body">
-                            {error && <div className="alert alert-danger">{error}</div>}
-                            {loading ? (
-                                <div className="text-center py-5">
-                                    <div className="spinner-border text-primary"></div>
-                                </div>
-                            ) : orders.length === 0 ? (
-                                <div className="alert alert-light border">No orders found.</div>
-                            ) : (
-                                <>
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>#Order ID</th>
-                                                    <th>Customer</th>
-                                                    <th>Order Date</th>
-                                                    <th>Total Amount</th>
-                                                    <th>Status</th>
-                                                    <th>Address</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {orders.map((order) => (
-                                                    <tr key={order.id}>
-                                                        <td>
-                                                            <strong>#{order.id}</strong>
-                                                        </td>
-                                                        <td>
-                                                            {getUserName(order.userId)}
-                                                        </td>
-                                                        <td>
-                                                            {new Date(order.orderDate).toLocaleString('vi-VN')}
-                                                        </td>
-                                                        <td>
-                                                            <strong>{formatCurrency(order.totalAmount)}</strong>
-                                                        </td>
-                                                        <td>
-                                                            <span className={`badge ${getStatusBadgeClass(order.status)}`}>
-                                                                {order.status}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                            {order.shippingAddress ? order.shippingAddress.split(',')[0] : 'No address'}
-                                                        </td>
-                                                        <td>
-                                                            <div className="btn-group">
-                                                                <button
-                                                                    className="btn btn-sm btn-info"
-                                                                    onClick={() => handleViewDetails(order.id)}
-                                                                    title="View details"
-                                                                >
-                                                                    <i className="fas fa-eye"></i>
-                                                                </button>
-                                                                
-                                                                {/* Quick Action Buttons Workflow */}
-                                                                {order.status === 'Pending' && (
-                                                                    <button className="btn btn-sm btn-success" onClick={() => handleQuickAction(order.id, 'Confirmed')} disabled={processingActionId === order.id} title="Confirm Order">
-                                                                        {processingActionId === order.id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
-                                                                    </button>
-                                                                )}
-                                                                {order.status === 'Confirmed' && (
-                                                                    <button className="btn btn-sm btn-primary" onClick={() => handleQuickAction(order.id, 'Shipped')} disabled={processingActionId === order.id} title="Ship Order">
-                                                                        {processingActionId === order.id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-truck"></i>}
-                                                                    </button>
-                                                                )}
-                                                                {order.status === 'Shipped' && (
-                                                                    <button className="btn btn-sm btn-success" onClick={() => handleQuickAction(order.id, 'Completed')} disabled={processingActionId === order.id} title="Complete Order">
-                                                                        {processingActionId === order.id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-flag-checkered"></i>}
-                                                                    </button>
-                                                                )}
-                                                                {!order.status.includes('Cancel') && order.status !== 'Completed' && (
-                                                                    <button className="btn btn-sm btn-danger" onClick={() => handleQuickAction(order.id, 'Cancelled')} disabled={processingActionId === order.id} title="Cancel Order">
-                                                                        {processingActionId === order.id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-times"></i>}
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+            <div className="card mb-3">
+                <div className="card-header">
+                    <h3 className="card-title mb-0">{t('Order filters')}</h3>
+                </div>
+                <div className="card-body">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            setPage(1);
+                        }}
+                    >
+                        <div className="d-flex flex-wrap align-items-center" style={{ gap: '10px' }}>
+                            <input
+                                type="text"
+                                className="form-control"
+                                style={{ minWidth: '140px', width: '160px' }}
+                                placeholder={t('e.g. 1001')}
+                                value={filters.orderKeyword}
+                                onChange={(e) => setFilters((prev) => ({ ...prev, orderKeyword: e.target.value }))}
+                            />
+                            <input
+                                type="text"
+                                className="form-control"
+                                style={{ minWidth: '240px', flex: '1 1 320px' }}
+                                placeholder={t('Name, email, phone')}
+                                value={filters.customerKeyword}
+                                onChange={(e) => setFilters((prev) => ({ ...prev, customerKeyword: e.target.value }))}
+                            />
 
-                                    {totalPages > 1 && (
-                                        <div className="card-footer">
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <div className="text-muted">
-                                                    Showing {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, totalCount)} of {totalCount} orders
-                                                </div>
-                                                <nav>
-                                                    <ul className="pagination m-0">
-                                                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
-                                                            <button 
-                                                                className="page-link" 
-                                                                onClick={() => setPage(page - 1)}
-                                                                disabled={page === 1}
-                                                            >
-                                                                Previous
-                                                            </button>
-                                                        </li>
-                                                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                                            if (totalPages <= 5) return i + 1;
-                                                            if (i < 2) return i + 1;
-                                                            if (i >= 3 && page <= i + 1) return page + (i - 2);
-                                                            if (page > totalPages - 3) return totalPages - 4 + i;
-                                                            return null;
-                                                        }).filter(Boolean).map(pageNum => (
-                                                            <li key={pageNum} className={`page-item ${page === pageNum ? 'active' : ''}`}>
-                                                                <button 
-                                                                    className="page-link" 
-                                                                    onClick={() => setPage(pageNum)}
-                                                                >
-                                                                    {pageNum}
-                                                                </button>
-                                                            </li>
-                                                        ))}
-                                                        <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
-                                                            <button 
-                                                                className="page-link" 
-                                                                onClick={() => setPage(page + 1)}
-                                                                disabled={page === totalPages}
-                                                            >
-                                                                Next
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </nav>
+                            <div className="position-relative">
+                                <button
+                                    ref={filterButtonRef}
+                                    type="button"
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => setIsFilterMenuOpen((v) => !v)}
+                                >
+                                    <i className="fas fa-sliders-h mr-1"></i>
+                                    {t('Filters')}
+                                    {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                                </button>
+
+                                {isFilterMenuOpen && (
+                                    <div
+                                        ref={filterMenuRef}
+                                        className="border bg-white rounded shadow p-3"
+                                        style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 20, width: '360px' }}
+                                    >
+                                        <div className="form-row">
+                                            <div className="col-6 mb-2">
+                                                <label className="small text-muted mb-1">{t('Order status')}</label>
+                                                <select
+                                                    className="form-control"
+                                                    value={filters.status}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
+                                                >
+                                                    <option value="">{t('All')}</option>
+                                                    {STATUSES.map((status) => (
+                                                        <option key={status} value={status}>{statusText(status)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="col-6 mb-2">
+                                                <label className="small text-muted mb-1">{t('Payment status')}</label>
+                                                <select
+                                                    className="form-control"
+                                                    value={filters.paymentStatus}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, paymentStatus: e.target.value }))}
+                                                >
+                                                    <option value="">{t('All')}</option>
+                                                    {PAYMENT_STATUSES.map((status) => (
+                                                        <option key={status} value={status}>{paymentStatusText(status)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="col-12 mb-2">
+                                                <label className="small text-muted mb-1">{t('Payment method')}</label>
+                                                <select
+                                                    className="form-control"
+                                                    value={filters.paymentMethod}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                                                >
+                                                    <option value="">{t('All')}</option>
+                                                    {PAYMENT_METHODS.map((method) => (
+                                                        <option key={method} value={method}>{paymentMethodText(method)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="col-6 mb-2">
+                                                <label className="small text-muted mb-1">{t('From date')}</label>
+                                                <input
+                                                    type="date"
+                                                    className="form-control"
+                                                    value={filters.dateFrom}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="col-6 mb-2">
+                                                <label className="small text-muted mb-1">{t('To date')}</label>
+                                                <input
+                                                    type="date"
+                                                    className="form-control"
+                                                    value={filters.dateTo}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                                                />
+                                            </div>
+
+                                            <div className="col-6 mb-2">
+                                                <label className="small text-muted mb-1">{t('Min amount')}</label>
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={filters.amountMin}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, amountMin: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="col-6 mb-2">
+                                                <label className="small text-muted mb-1">{t('Max amount')}</label>
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={filters.amountMax}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, amountMax: e.target.value }))}
+                                                />
+                                            </div>
+
+                                            <div className="col-12 mb-3">
+                                                <label className="small text-muted mb-1">{t('Sort')}</label>
+                                                <select
+                                                    className="form-control"
+                                                    value={filters.sortOrder}
+                                                    onChange={(e) => setFilters((prev) => ({ ...prev, sortOrder: e.target.value }))}
+                                                >
+                                                    <option value="date_desc">{t('Newest')}</option>
+                                                    <option value="date_asc">{t('Oldest')}</option>
+                                                    <option value="amount_desc">{t('Highest amount')}</option>
+                                                    <option value="amount_asc">{t('Lowest amount')}</option>
+                                                    <option value="status">{t('By status')}</option>
+                                                </select>
                                             </div>
                                         </div>
-                                    )}
-                                </>
-                            )}
+
+                                        <div className="d-flex justify-content-between">
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-secondary"
+                                                onClick={() => {
+                                                    setFilters({
+                                                        orderKeyword: '',
+                                                        customerKeyword: '',
+                                                        status: '',
+                                                        paymentStatus: '',
+                                                        paymentMethod: '',
+                                                        dateFrom: '',
+                                                        dateTo: '',
+                                                        amountMin: '',
+                                                        amountMax: '',
+                                                        sortOrder: 'date_desc',
+                                                    });
+                                                }}
+                                            >
+                                                <i className="fas fa-sync-alt mr-1"></i> {t('Reset filters')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-dark"
+                                                onClick={() => setIsFilterMenuOpen(false)}
+                                            >
+                                                {t('Close')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button type="submit" className="btn btn-primary">
+                                <i className="fas fa-search mr-1"></i> {t('Search')}
+                            </button>
                         </div>
+                    </form>
+                </div>
+            </div>
+
+            <div className="card mb-3">
+                <div className="card-header">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <h3 className="card-title mb-0">{t('Orders list')}</h3>
+                        <span className="text-muted">{t('Results')}: <strong>{filteredOrders.length}</strong></span>
                     </div>
                 </div>
-            </section>
+                <div className="card-body">
+                    {error && <div className="alert alert-danger">{error}</div>}
+                    {summary.waitingReview > 0 && (
+                        <div className="alert alert-warning d-flex align-items-center justify-content-between">
+                            <div>
+                                <i className="fas fa-exclamation-triangle mr-2"></i>
+                                {t('You have cancellation requests pending review.')}{' '}
+                                <strong>{summary.waitingReview}</strong>
+                            </div>
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-dark"
+                                onClick={() => setFilters((prev) => ({ ...prev, status: 'CancelRequested' }))}
+                            >
+                                {t('View requests')}
+                            </button>
+                        </div>
+                    )}
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <div className="spinner-border text-primary"></div>
+                        </div>
+                    ) : paginatedOrders.length === 0 ? (
+                        <div className="alert alert-light border mb-0">{t('No orders match the current filters.')}</div>
+                    ) : (
+                        <>
+                            <div className="table-responsive">
+                                <table className="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ width: '110px' }}>{t('Order ID')}</th>
+                                            <th>{t('Customer')}</th>
+                                            <th style={{ width: '170px' }}>{t('Created at')}</th>
+                                            <th style={{ width: '140px' }}>{t('Payment')}</th>
+                                            <th style={{ width: '150px' }}>{t('Amount')}</th>
+                                            <th style={{ width: '150px' }}>{t('Status')}</th>
+                                            <th>{t('Address')}</th>
+                                            <th style={{ width: '220px' }}>{t('Actions')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {paginatedOrders.map((order) => (
+                                            <tr key={order.id} className={order.status === 'CancelRequested' ? 'table-warning' : ''}>
+                                                <td><strong>#{order.id}</strong></td>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div
+                                                            className="rounded-circle text-white d-flex align-items-center justify-content-center mr-2"
+                                                            style={{
+                                                                width: '34px',
+                                                                height: '34px',
+                                                                background: getAvatarColor(order.userId),
+                                                                fontSize: '12px',
+                                                                fontWeight: 700,
+                                                                flex: '0 0 auto',
+                                                            }}
+                                                            title={getUserDisplayName(order)}
+                                                        >
+                                                            {getInitials(getUserDisplayName(order))}
+                                                        </div>
+                                                        <div>
+                                                            <div><strong>{getUserDisplayName(order)}</strong></div>
+                                                            <div className="small text-muted">{displayText(getUserPhone(order) || getUserEmail(order))}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{new Date(order.orderDate).toLocaleString(locale)}</td>
+                                                <td>
+                                                    <div className="small">{paymentMethodText(order.paymentMethod)}</div>
+                                                    <span className={`badge ${getPaymentBadgeClass(computePaymentStatus(order))}`}>
+                                                        {paymentStatusText(computePaymentStatus(order))}
+                                                    </span>
+                                                </td>
+                                                <td><strong>{formatCurrency(order.totalAmount)}</strong></td>
+                                                <td>
+                                                    <span className={`badge ${getStatusBadgeClass(order.status)}`}>
+                                                        {statusText(order.status)}
+                                                    </span>
+                                                </td>
+                                                <td style={{ maxWidth: '240px' }}>
+                                                    <span className="text-truncate d-inline-block" style={{ maxWidth: '220px' }}>
+                                                        {displayText(order.shippingAddress || order.deliveryAddress || t('No address'))}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="btn-group btn-group-sm flex-wrap">
+                                                        {getQuickActions(order).map((action) => (
+                                                            <button
+                                                                key={action.key}
+                                                                className={`btn ${action.className}`}
+                                                                onClick={action.onClick}
+                                                                disabled={processingActionId === order.id}
+                                                                title={action.label}
+                                                            >
+                                                                {processingActionId === order.id && action.key !== 'detail'
+                                                                    ? <i className="fas fa-spinner fa-spin"></i>
+                                                                    : <i className={`fas fa-${action.icon}`}></i>}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
 
-            {/* Order Details Modal */}
-            {showDetailModal && (
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div className="text-muted">
+                                    {t('Showing')} {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, filteredOrders.length)} / {filteredOrders.length}
+                                </div>
+                                <nav>
+                                    <ul className="pagination mb-0">
+                                        <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                                            <button className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>Trước</button>
+                                        </li>
+                                        {renderPagination()}
+                                        <li className={`page-item ${page === totalPages ? 'disabled' : ''}`}>
+                                            <button className="page-link" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Sau</button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {showDetailModal && orderDetails && (
                 <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-lg">
+                    <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Order Details - #{orderDetails?.order?.id}</h5>
-                                <button
-                                    type="button"
-                                    className="close"
-                                    onClick={closeDetailModal}
-                                >
+                                <h5 className="modal-title">{t('Order details')} #{orderDetails.order.id}</h5>
+                                <button type="button" className="close" onClick={closeDetailModal}>
                                     <span>&times;</span>
                                 </button>
                             </div>
                             <div className="modal-body">
-                                {orderDetails && (
-                                    <>
-                                        <div className="row mb-3">
-                                            <div className="col-md-4">
-                                                <h6 className="text-primary border-bottom pb-2"><strong><i className="fas fa-info-circle mr-2"></i>Order Info</strong></h6>
-                                                <p className="mb-1"><strong>Order ID:</strong> #{orderDetails.order.id}</p>
-                                                <p className="mb-1"><strong>Date:</strong> {new Date(orderDetails.order.orderDate).toLocaleString('vi-VN')}</p>
-                                                <p className="mb-1"><strong>Status:</strong> <span className={`badge ${getStatusBadgeClass(orderDetails.order.status)}`}>{orderDetails.order.status}</span></p>
-                                                
-                                                {orderDetails.order.updatedBy && (
-                                                    <div className="mt-2 text-muted" style={{ fontSize: '0.8rem' }}>
-                                                        <i className="fas fa-history mr-1"></i>
-                                                        Last updated by: <strong>{orderDetails.order.updatedBy}</strong>
-                                                        <br/>
-                                                        at {new Date(orderDetails.order.updatedAt).toLocaleString('vi-VN')}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="col-md-4">
-                                                <h6 className="text-primary border-bottom pb-2"><strong><i className="fas fa-user mr-2"></i>Customer Info</strong></h6>
-                                                <p className="mb-1"><strong>Name:</strong> {orderDetails.order.customerName || getUserName(orderDetails.order.userId)}</p>
-                                                <p className="mb-1"><strong>Phone:</strong> {orderDetails.order.customerPhone || 'N/A'}</p>
-                                                <p className="mb-1"><strong>Email:</strong> {orderDetails.order.customerEmail || 'N/A'}</p>
-                                                <p className="mb-1 mt-2 text-muted small border-top pt-1">
-                                                    <i className="fas fa-map-marker-alt mr-1"></i> {orderDetails.order.shippingAddress}
-                                                </p>
-                                            </div>
-                                            <div className="col-md-4">
-                                                <h6 className="text-primary border-bottom pb-2"><strong><i className="fas fa-credit-card mr-2"></i>Payment Info</strong></h6>
-                                                <p className="mb-1">
-                                                    <strong>Method:</strong> {orderDetails.order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online / Bank Transfer'}
-                                                </p>
-                                                <p className="mb-1">
-                                                    <strong>Payment Status:</strong> 
-                                                    <span className={`badge ml-1 ${
-                                                        orderDetails.order.paymentStatus === 'Paid' ? 'badge-success' :
-                                                        orderDetails.order.paymentStatus === 'Refunded' ? 'badge-warning' :
-                                                        orderDetails.order.paymentStatus === 'Cancelled' ? 'badge-danger' :
-                                                        'badge-secondary'
-                                                    }`}>
-                                                        {orderDetails.order.paymentStatus || 'Unpaid'}
-                                                    </span>
-                                                </p>
-                                                {orderDetails.order.transactionId && (
-                                                    <p className="mb-1 text-muted small"><strong>TXN:</strong> {orderDetails.order.transactionId}</p>
-                                                )}
-                                                
-                                                {orderDetails.order.status.includes('Cancel') && orderDetails.order.cancelReason && (
-                                                    <div className="alert alert-danger p-2 mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
-                                                        <strong>Cancel Reason:</strong> {orderDetails.order.cancelReason}
-                                                    </div>
-                                                )}
-                                            </div>
+                                {orderDetails.order.status === 'CancelRequested' && (
+                                    <div className="alert alert-warning">
+                                        <i className="fas fa-bell mr-2"></i>
+                                        {t('Customer requested cancellation. Admin review is required.')}
+                                    </div>
+                                )}
+                                <div className="row">
+                                    <div className="col-md-4">
+                                        <div className="border rounded p-3 h-100">
+                                            <h6 className="text-primary"><i className="fas fa-file-invoice mr-2"></i>{t('Order info')}</h6>
+                                            <p className="mb-1"><strong>{t('Order ID')}:</strong> #{orderDetails.order.id}</p>
+                                            <p className="mb-1"><strong>{t('Created at')}:</strong> {new Date(orderDetails.order.orderDate).toLocaleString(locale)}</p>
+                                            <p className="mb-1">
+                                                <strong>{t('Status')}:</strong>{' '}
+                                                <span className={`badge ${getStatusBadgeClass(orderDetails.order.status)}`}>{statusText(orderDetails.order.status)}</span>
+                                            </p>
+                                            <p className="mb-1"><strong>{t('Updated by')}:</strong> {displayText(orderDetails.order.updatedBy || 'System')}</p>
+                                            <p className="mb-0"><strong>{t('Updated at')}:</strong> {new Date(orderDetails.order.updatedAt || orderDetails.order.orderDate).toLocaleString(locale)}</p>
                                         </div>
-
-                                        {orderDetails.order.timeline && orderDetails.order.timeline.length > 0 && (
-                                            <>
-                                                <h6 className="text-primary border-bottom pb-2 mt-4"><strong><i className="fas fa-stream mr-2"></i>Order Timeline</strong></h6>
-                                                <div className="timeline-horizontal d-flex flex-wrap mb-4">
-                                                    {orderDetails.order.timeline.map((step, idx) => (
-                                                        <div key={idx} className="mr-3 mb-2 p-2 border rounded bg-light" style={{ minWidth: '150px' }}>
-                                                            <div className={`badge ${getStatusBadgeClass(step.status)} mb-1`}>{step.status}</div>
-                                                            <div className="small text-muted">{new Date(step.timestamp).toLocaleString('vi-VN')}</div>
-                                                            {step.note && <div className="small" style={{ fontSize: '0.75rem' }}>{step.note}</div>}
-                                                        </div>
-                                                    ))}
+                                    </div>
+                                    <div className="col-md-4">
+                                        <div className="border rounded p-3 h-100">
+                                            <h6 className="text-primary"><i className="fas fa-user mr-2"></i>{t('Customer')}</h6>
+                                            <div className="d-flex align-items-center mb-2">
+                                                <div
+                                                    className="rounded-circle text-white d-flex align-items-center justify-content-center mr-2"
+                                                    style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        background: getAvatarColor(orderDetails.order.userId),
+                                                        fontSize: '13px',
+                                                        fontWeight: 700,
+                                                        flex: '0 0 auto',
+                                                    }}
+                                                >
+                                                    {getInitials(getUserDisplayName(orderDetails.order))}
                                                 </div>
-                                            </>
-                                        )}
+                                                <div className="text-truncate" style={{ maxWidth: '240px' }}>
+                                                    <div className="font-weight-bold">{getUserDisplayName(orderDetails.order)}</div>
+                                                    <div className="small text-muted">{displayText(getUserEmail(orderDetails.order))}</div>
+                                                </div>
+                                            </div>
+                                            <p className="mb-1"><strong>{t('Phone')}:</strong> {displayText(getUserPhone(orderDetails.order))}</p>
+                                            <p className="mb-0"><strong>{t('Shipping address')}:</strong> {displayText(orderDetails.order.shippingAddress || orderDetails.order.deliveryAddress)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <div className="border rounded p-3 h-100">
+                                            <h6 className="text-primary"><i className="fas fa-credit-card mr-2"></i>{t('Payment')}</h6>
+                                            <p className="mb-1"><strong>{t('Payment method')}:</strong> {paymentMethodText(orderDetails.order.paymentMethod)}</p>
+                                            <p className="mb-1">
+                                                <strong>{t('Payment status')}:</strong>{' '}
+                                                <span className={`badge ${getPaymentBadgeClass(computePaymentStatus(orderDetails.order))}`}>
+                                                    {paymentStatusText(computePaymentStatus(orderDetails.order))}
+                                                </span>
+                                            </p>
+                                            <p className="mb-1"><strong>{t('Amount')}:</strong> {formatCurrency(orderDetails.order.totalAmount)}</p>
+                                            <p className="mb-0"><strong>{t('Transaction ID')}:</strong> {displayText(orderDetails.order.transactionId)}</p>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                        <h6 className="text-primary border-bottom pb-2 mt-4"><strong><i className="fas fa-box-open mr-2"></i>Order Items</strong></h6>
+                                {orderDetails.order.cancelReason && (
+                                    <div className="alert alert-danger mt-3 mb-0">
+                                        <strong>{t('Cancellation reason')}:</strong> {orderDetails.order.cancelReason}
+                                    </div>
+                                )}
+
+                                {buildTimeline(orderDetails.order).length > 0 && (
+                                    <div className="mt-4">
+                                        <h6 className="text-primary mb-3"><i className="fas fa-stream mr-2"></i>{t('Order timeline')}</h6>
+                                        <div className="row">
+                                            {buildTimeline(orderDetails.order).map((step, index) => (
+                                                <div className="col-md-4 mb-3" key={`${step.status}-${index}`}>
+                                                    <div className="border rounded p-3 h-100 bg-light">
+                                                        <div className={`badge ${getStatusBadgeClass(step.status)} mb-2`}>{statusText(step.status)}</div>
+                                                        <div className="small text-muted mb-1">{new Date(step.timestamp).toLocaleString(locale)}</div>
+                                                        <div className="small mb-1"><strong>{t('By')}:</strong> {step.by || 'System'}</div>
+                                                        <div className="small">{step.note || t('No notes.')}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-4">
+                                    <h6 className="text-primary mb-3"><i className="fas fa-box-open mr-2"></i>{t('Order items')}</h6>
+                                    {(orderDetails.details || []).length === 0 ? (
+                                        <div className="alert alert-light border mb-0">
+                                            {t('Order items are not available for this order.')}
+                                        </div>
+                                    ) : (
                                         <div className="table-responsive">
-                                            <table className="table table-sm table-striped align-middle">
+                                            <table className="table table-sm table-striped table-bordered">
                                                 <thead className="thead-light">
                                                     <tr>
-                                                        <th>Product</th>
-                                                        <th className="text-center">Quantity</th>
-                                                        <th className="text-right">Unit Price</th>
-                                                        <th className="text-right">Total</th>
+                                                        <th>{t('Product')}</th>
+                                                        <th className="text-center">{t('Quantity')}</th>
+                                                        <th className="text-right">{t('Unit price')}</th>
+                                                        <th className="text-right">{t('Total')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {(orderDetails.details || []).map((item, idx) => (
-                                                        <tr key={idx}>
+                                                    {(orderDetails.details || []).map((item) => (
+                                                        <tr key={item.id}>
                                                             <td>
                                                                 <div className="d-flex align-items-center">
-                                                                    {item.product?.imageUrl ? (
-                                                                        <img src={item.product.imageUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover' }} className="rounded mr-2 border" />
-                                                                    ) : (
-                                                                        <div style={{ width: '40px', height: '40px', backgroundColor: '#e9ecef' }} className="rounded mr-2 border d-flex align-items-center justify-content-center">
-                                                                            <i className="fas fa-image text-muted"></i>
-                                                                        </div>
-                                                                    )}
-                                                                    {item.product?.name || `Product #${item.productId}`}
+                                                                    <img
+                                                                        src={resolveProductImage(item.product || { id: item.productId, imageUrl: item.productImage || item.product?.imageUrl || '' })}
+                                                                        alt=""
+                                                                        style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                                                        className="rounded border mr-2"
+                                                                    />
+                                                                    <div className="text-truncate" style={{ maxWidth: '420px' }}>
+                                                                        {item.productName || item.product?.name || `${t('Product')} #${item.productId}`}
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                             <td className="text-center">{item.quantity}</td>
@@ -553,115 +1083,55 @@ const AdminOrders = () => {
                                                         </tr>
                                                     ))}
                                                 </tbody>
-                                                <tfoot>
-                                                    <tr>
-                                                        <th colSpan="3" className="text-right">Subtotal:</th>
-                                                        <th className="text-right">{formatCurrency(orderDetails.order.totalAmount)}</th>
-                                                    </tr>
-                                                    <tr>
-                                                        <th colSpan="3" className="text-right">Shipping Fee:</th>
-                                                        <th className="text-right text-success">Free Shipping</th>
-                                                    </tr>
-                                                    <tr>
-                                                        <th colSpan="3" className="text-right h5">Grand Total:</th>
-                                                        <th className="text-right h5 text-primary">{formatCurrency(orderDetails.order.totalAmount)}</th>
-                                                    </tr>
-                                                </tfoot>
                                             </table>
                                         </div>
-                                    </>
-                                )}
+                                    )}
+                                </div>
                             </div>
-                            <div className="modal-footer bg-light">
+                            <div className="modal-footer">
                                 <button className="btn btn-outline-secondary mr-auto" onClick={() => window.print()}>
-                                    <i className="fas fa-print mr-1"></i> Print Invoice
+                                    <i className="fas fa-print mr-1"></i> {t('Print')}
                                 </button>
-                                
-                                {orderDetails?.order?.status === 'Cancel Requested' && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-danger mr-auto"
-                                        onClick={async () => {
-                                            try {
-                                                await orderApi.updateStatus(orderDetails.order.id, { status: 'Cancelled & Refunded' });
-                                                alert('Order Cancelled and Refund Processed.');
-                                                setOrderDetails({
-                                                    ...orderDetails,
-                                                    order: { ...orderDetails.order, status: 'Cancelled & Refunded' }
-                                                });
-                                                loadOrders();
-                                            } catch(err) {
-                                                alert('Failed to process refund');
-                                            }
-                                        }}
-                                    >
-                                        Approve Cancel & Refund
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={closeDetailModal}
-                                >
-                                    Close
-                                </button>
+                                <button type="button" className="btn btn-secondary" onClick={closeDetailModal}>{t('Close')}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Status Change Modal */}
-            {showStatusModal && (
+            {actionDialog.isOpen && (
                 <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Update Order Status</h5>
-                                <button
-                                    type="button"
-                                    className="close"
-                                    onClick={() => setShowStatusModal(false)}
-                                >
+                                <h5 className="modal-title">{actionDialog.title}</h5>
+                                <button type="button" className="close" onClick={closeActionDialog}>
                                     <span>&times;</span>
                                 </button>
                             </div>
                             <div className="modal-body">
-                                <div className="form-group">
-                                    <label htmlFor="statusSelect"><strong>Select New Status</strong></label>
-                                    <select
-                                        id="statusSelect"
+                                <div className="form-group mb-0">
+                                    <label>{t('Admin note')}</label>
+                                    <textarea
                                         className="form-control"
-                                        value={newStatus}
-                                        onChange={(e) => setNewStatus(e.target.value)}
-                                    >
-                                        {statuses.map(status => (
-                                            <option key={status} value={status}>{status}</option>
-                                        ))}
-                                    </select>
+                                        rows="4"
+                                        placeholder={t('Add a note for the order timeline...')}
+                                        value={actionDialog.note}
+                                        onChange={(e) => setActionDialog((prev) => ({ ...prev, note: e.target.value }))}
+                                    />
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => setShowStatusModal(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={handleUpdateStatus}
-                                >
-                                    Update Status
+                                <button type="button" className="btn btn-secondary" onClick={closeActionDialog}>{t('Close')}</button>
+                                <button type="button" className={`btn ${actionDialog.buttonClass}`} onClick={submitAction}>
+                                    {actionDialog.confirmText}
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 
