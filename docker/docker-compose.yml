@@ -1,0 +1,45 @@
+services:
+  database:
+    platform: linux/amd64
+    image: mysql:8
+    container_name: techstore-database
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Trantung09112005@
+      MYSQL_DATABASE: techstore
+    ports:
+      - "3307:3306"
+    volumes:
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../database/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+
+  backend:
+    platform: linux/amd64
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: techstore-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: database
+      DB_USER: root
+      DB_PASSWORD: Trantung09112005@
+      DB_NAME: techstore
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+
+  frontend:
+    platform: linux/amd64
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: techstore-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_TARGET: http://backend:5000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
