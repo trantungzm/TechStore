@@ -1,0 +1,14 @@
+services:
+  database:
+    platform: linux/amd64
+    image: mysql:8
+    container_name: techstore-database
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Trantung09112005@
+      MYSQL_DATABASE: techstore
+    ports:
+      - "3307:3306"
+    volumes:
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../database/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
