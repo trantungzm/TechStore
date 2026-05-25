@@ -58,7 +58,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> GetAllOrders([FromQuery] OrderSearchDto search)
         {
             var result = await _orderService.GetAllOrdersAsync(search);
@@ -75,7 +75,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
         {
             var order = await _orderService.UpdateStatusAsync(id, dto, CurrentUserId());

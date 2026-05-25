@@ -216,6 +216,12 @@ namespace BaseCore.Repository.EFCore
             }
             if (search.FromDate.HasValue) query = query.Where(x => x.ReceivedAt >= search.FromDate.Value);
             if (search.ToDate.HasValue) query = query.Where(x => x.ReceivedAt <= search.ToDate.Value);
+            var minDays = search.MinDays.GetValueOrDefault();
+            if (minDays > 0)
+            {
+                var cutoff = DateTime.UtcNow.AddDays(-minDays);
+                query = query.Where(x => x.Status == "InStock" && x.ReceivedAt <= cutoff);
+            }
             return query;
         }
 

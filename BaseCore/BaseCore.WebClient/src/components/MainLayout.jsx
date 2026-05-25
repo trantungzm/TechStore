@@ -50,6 +50,9 @@ const MainLayout = ({ children }) => {
     const role = user?.role || '';
     const canManageStock = ['Admin', 'Warehouse'].includes(role);
     const canManageReturns = ['Admin', 'Technical'].includes(role);
+    const canViewOrders = ['Admin', 'Warehouse'].includes(role);
+    const shouldLoadOrderNotification = adminAccess &&
+        (location.pathname === '/admin' || location.pathname.startsWith('/admin/orders'));
 
     const groups = adminAccess
         ? [
@@ -73,6 +76,9 @@ const MainLayout = ({ children }) => {
                 if (item.to === '/admin/inventory/returns') return canManageReturns;
                 if (item.to === '/admin/inventory/serials') return canManageStock || canManageReturns;
                 if (item.to === '/admin/suppliers') return canManageStock;
+                if (item.to === '/admin/orders') return canViewOrders;
+                if (item.to === '/admin/categories') return adminAccess;
+                if (item.to === '/admin/coupons') return adminAccess;
                 return true;
             }),
         }))
@@ -109,10 +115,10 @@ const MainLayout = ({ children }) => {
         let cancelled = false;
 
         const loadOrderNotification = async () => {
-            if (!adminAccess) return;
+            if (!shouldLoadOrderNotification) return;
 
             try {
-                const response = await orderApi.getAll();
+                const response = await orderApi.getAll({ page: 1, pageSize: 1, sortBy: 'newest' });
                 const latestTime = (response.data || []).reduce((latest, order) => {
                     const time = new Date(order.orderDate || order.createdAt || order.updatedAt || 0).getTime();
                     return Number.isFinite(time) ? Math.max(latest, time) : latest;
@@ -135,6 +141,11 @@ const MainLayout = ({ children }) => {
             }
         };
 
+        if (!shouldLoadOrderNotification) {
+            setHasNewOrderNotification(false);
+            return undefined;
+        }
+
         loadOrderNotification();
         const intervalId = window.setInterval(loadOrderNotification, 30000);
 
@@ -142,7 +153,7 @@ const MainLayout = ({ children }) => {
             cancelled = true;
             window.clearInterval(intervalId);
         };
-    }, [adminAccess]);
+    }, [shouldLoadOrderNotification]);
 
     useEffect(() => {
         if (location.pathname === '/admin/orders' && latestOrderTime) {

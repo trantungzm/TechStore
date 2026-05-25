@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { categoryApi } from '../services/api';
+import { categoryApi, specApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const inputClass = 'rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
@@ -24,12 +24,20 @@ const Categories = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
     const [showModal, setShowModal] = useState(false);
+    const [showSpecModal, setShowSpecModal] = useState(false);
+    const [showSpecEditor, setShowSpecEditor] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
     });
     const [error, setError] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [specDefinitions, setSpecDefinitions] = useState([]);
+    const [specLoading, setSpecLoading] = useState(false);
+    const [specForm, setSpecForm] = useState({ id: null, name: '', code: '', options: [] });
+    const [optionInputs, setOptionInputs] = useState({});
+    const [optionDefinition, setOptionDefinition] = useState(null);
     const { isAdmin } = useAuth();
 
     useEffect(() => {
@@ -40,7 +48,7 @@ const Categories = () => {
         setLoading(true);
         try {
             const response = await categoryApi.getAll();
-            const allCategories = response.data || [];
+            const allCategories = (response.data || []).filter(isVisibleAdminCategory);
             const total = allCategories.length;
             const totalPagesCount = Math.ceil(total / pageSize) || 1;
             const startIndex = (page - 1) * pageSize;
@@ -80,6 +88,20 @@ const Categories = () => {
         setError('');
     };
 
+    const closeSpecModal = () => {
+        setShowSpecModal(false);
+        setShowSpecEditor(false);
+        setSelectedCategory(null);
+        setSpecDefinitions([]);
+        setOptionDefinition(null);
+        resetSpecForm();
+    };
+
+    const closeSpecEditor = () => {
+        setShowSpecEditor(false);
+        resetSpecForm();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -113,6 +135,120 @@ const Categories = () => {
         } catch (err) {
             alert('Không thể xóa danh mục. Danh mục có thể đang chứa sản phẩm.');
         }
+    };
+
+    const resetSpecForm = () => setSpecForm({ id: null, name: '', code: '', options: [] });
+
+    const loadCategorySpecs = async (category, activeDefinitionId = null) => {
+        setSelectedCategory(category);
+        resetSpecForm();
+        setSpecLoading(true);
+        try {
+            const response = await specApi.getDefinitions(category.id);
+            const definitions = Array.isArray(response.data) ? response.data : [];
+            setSpecDefinitions(definitions);
+            if (activeDefinitionId) {
+                setOptionDefinition(definitions.find((definition) => definition.id === activeDefinitionId) || null);
+            }
+        } catch (err) {
+            console.error('Khong the tai thong so danh muc:', err);
+            setSpecDefinitions([]);
+        } finally {
+            setSpecLoading(false);
+        }
+    };
+
+    const openSpecModal = async (category) => {
+        setShowSpecModal(true);
+        setShowSpecEditor(false);
+        await loadCategorySpecs(category);
+    };
+
+    const openCreateSpecEditor = () => {
+        resetSpecForm();
+        setShowSpecEditor(true);
+    };
+
+    const openOptionModal = (definition) => setOptionDefinition(definition);
+    const closeOptionModal = () => setOptionDefinition(null);
+
+    const submitSpec = async (event) => {
+        event.preventDefault();
+        if (!selectedCategory) return;
+        const options = (specForm.options || [])
+            .map((option, index) => ({
+                ...option,
+                value: String(option.value || '').trim(),
+                displayOrder: Number(option.displayOrder || index + 1),
+                isActive: option.isActive !== false,
+            }))
+            .filter((option) => option.value);
+        const payload = { id: specForm.id || 0, name: specForm.name, code: specForm.code, categoryId: selectedCategory.id, dataType: 'select', options };
+        if (specForm.id) await specApi.updateDefinition(specForm.id, payload);
+        else await specApi.createDefinition(payload);
+        await loadCategorySpecs(selectedCategory);
+        setShowSpecEditor(false);
+    };
+
+    const editSpec = (definition) => {
+        setSpecForm({
+            id: definition.id,
+            name: definition.name || '',
+            code: definition.code || '',
+            options: (definition.options || []).map((option, index) => ({
+                id: option.id,
+                specDefinitionId: definition.id,
+                value: option.value || '',
+                displayOrder: option.displayOrder || index + 1,
+                isActive: option.isActive !== false,
+            })),
+        });
+        setShowSpecEditor(true);
+    };
+
+    const addSpecFormOption = () => {
+        setSpecForm((current) => ({
+            ...current,
+            options: [
+                ...(current.options || []),
+                { id: 0, specDefinitionId: current.id || 0, value: '', displayOrder: (current.options || []).length + 1, isActive: true },
+            ],
+        }));
+    };
+
+    const updateSpecFormOption = (index, changes) => {
+        setSpecForm((current) => ({
+            ...current,
+            options: (current.options || []).map((option, optionIndex) => optionIndex === index ? { ...option, ...changes } : option),
+        }));
+    };
+
+    const removeSpecFormOption = (index) => {
+        setSpecForm((current) => ({
+            ...current,
+            options: (current.options || [])
+                .filter((_, optionIndex) => optionIndex !== index)
+                .map((option, optionIndex) => ({ ...option, displayOrder: optionIndex + 1 })),
+        }));
+    };
+
+    const deleteSpec = async (definition) => {
+        if (!window.confirm('Xoa hoac tat thong so nay?')) return;
+        await specApi.deleteDefinition(definition.id);
+        await loadCategorySpecs(selectedCategory);
+    };
+
+    const addOption = async (definition) => {
+        const value = String(optionInputs[definition.id] || '').trim();
+        if (!value) return;
+        await specApi.createOption({ specDefinitionId: definition.id, value, displayOrder: (definition.options || []).length + 1, isActive: true });
+        setOptionInputs({ ...optionInputs, [definition.id]: '' });
+        await loadCategorySpecs(selectedCategory, definition.id);
+    };
+
+    const deleteOption = async (option) => {
+        await specApi.deleteOption(option.id);
+        await loadCategorySpecs(selectedCategory, option.specDefinitionId);
     };
 
     return (
@@ -155,7 +291,7 @@ const Categories = () => {
                         <div className="py-12 text-center text-sm font-medium text-admin-muted">Đang tải danh mục...</div>
                     ) : (
                         <div className="overflow-x-auto rounded-md border border-slate-200">
-                            <table className="min-w-[760px] table-fixed divide-y divide-slate-200 text-sm">
+                            <table className="min-w-[900px] table-fixed divide-y divide-slate-200 text-sm">
                                 <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
                                     <tr>
                                         <th className="w-[90px] px-4 py-3">ID</th>
@@ -177,6 +313,13 @@ const Categories = () => {
                                             {isAdmin() && (
                                                 <td className="px-4 py-3">
                                                     <div className="flex justify-end gap-2">
+                                                        <button
+                                                            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                                            onClick={() => openSpecModal(category)}
+                                                        >
+                                                            <i className="fas fa-sliders-h"></i>
+                                                            Bo thong so
+                                                        </button>
                                                         <button className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-admin-brand text-white hover:bg-orange-600" onClick={() => openModal(category)}>
                                                             <i className="fas fa-edit"></i>
                                                         </button>
@@ -241,6 +384,184 @@ const Categories = () => {
                             <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
                                 <button type="button" className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={closeModal}>Hủy</button>
                                 <button type="submit" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">{editingCategory ? 'Cập nhật' : 'Tạo mới'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showSpecModal && selectedCategory && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+                    <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-md bg-white shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                            <div>
+                                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-admin-muted">Bo thong so theo danh muc</p>
+                                <h3 className="mb-0 text-lg font-bold text-admin-ink">{selectedCategory.name}</h3>
+                            </div>
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" onClick={closeSpecModal}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="max-h-[calc(92vh-74px)] overflow-y-auto p-5">
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <div className="text-sm text-admin-muted">{specDefinitions.length} thong so trong danh muc nay</div>
+                                <button type="button" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600" onClick={openCreateSpecEditor}>
+                                    Them thong so moi
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto rounded-md border border-slate-200">
+                                {specLoading ? (
+                                    <div className="p-6 text-sm text-admin-muted">Dang tai thong so...</div>
+                                ) : specDefinitions.length === 0 ? (
+                                    <div className="p-8 text-center">
+                                        <div className="mb-2 text-base font-bold text-admin-ink">Danh muc nay chua co thong so</div>
+                                        <p className="mb-0 text-sm text-admin-muted">Bam "Them thong so moi" de tao thong so dau tien.</p>
+                                    </div>
+                                ) : (
+                                    <table className="min-w-[900px] divide-y divide-slate-200 text-sm">
+                                        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-admin-muted">
+                                            <tr>
+                                                <th className="w-[280px] px-4 py-3">Thong so</th>
+                                                <th className="px-4 py-3">Options</th>
+                                                <th className="w-[120px] px-4 py-3 text-right">Thao tac</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {specDefinitions.map((definition) => (
+                                                <tr key={definition.id}>
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-semibold text-admin-ink">{definition.name}</div>
+                                                        <div className="text-xs text-admin-muted">{definition.code}</div>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-xs font-semibold text-admin-muted">{(definition.options || []).length} option</span>
+                                                            <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold hover:bg-slate-50" onClick={() => openOptionModal(definition)}>
+                                                                Xem option
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex justify-end gap-2">
+                                                            <button type="button" className="rounded-md bg-admin-brand px-3 py-2 text-white" onClick={() => editSpec(definition)}><i className="fas fa-edit"></i></button>
+                                                            <button type="button" className="rounded-md bg-rose-600 px-3 py-2 text-white" onClick={() => deleteSpec(definition)}><i className="fas fa-trash"></i></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {optionDefinition && (
+                <div className="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/60 p-4">
+                    <div className="max-h-[86vh] w-full max-w-2xl overflow-hidden rounded-md bg-white shadow-2xl">
+                        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+                            <div>
+                                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-admin-muted">Danh sach option</p>
+                                <h3 className="mb-0 text-lg font-bold text-admin-ink">{optionDefinition.name}</h3>
+                                <p className="mb-0 mt-1 text-xs text-admin-muted">{optionDefinition.code}</p>
+                            </div>
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" onClick={closeOptionModal}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="max-h-[calc(86vh-150px)] overflow-y-auto p-5">
+                            {(optionDefinition.options || []).length === 0 ? (
+                                <div className="rounded-md border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-admin-muted">
+                                    Thong so nay chua co option.
+                                </div>
+                            ) : (
+                                <div className="overflow-hidden rounded-md border border-slate-200">
+                                    <table className="w-full divide-y divide-slate-200 text-sm">
+                                        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-admin-muted">
+                                            <tr>
+                                                <th className="px-4 py-3">Gia tri</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {(optionDefinition.options || []).map((option) => (
+                                                <tr key={option.id}>
+                                                    <td className="px-4 py-3 font-medium text-admin-ink">{option.value}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showSpecEditor && selectedCategory && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4">
+                    <div className="max-h-[90vh] w-full max-w-xl overflow-hidden rounded-md bg-white shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                            <div>
+                                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-admin-muted">Bo thong so</p>
+                                <h3 className="mb-0 text-lg font-bold text-admin-ink">{specForm.id ? 'Sua thong so' : 'Them thong so moi'}</h3>
+                            </div>
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" onClick={closeSpecEditor}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <form onSubmit={submitSpec}>
+                            <div className="max-h-[calc(90vh-140px)] overflow-y-auto p-5">
+                                <div className="mb-4 rounded-md bg-slate-50 px-4 py-3 text-sm text-admin-muted">
+                                    Danh muc: <span className="font-semibold text-admin-ink">{selectedCategory.name}</span>
+                                </div>
+                                <div className="grid gap-4">
+                                    <label>
+                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Ten thong so</span>
+                                        <input className={`${inputClass} w-full`} value={specForm.name} onChange={(e) => setSpecForm({ ...specForm, name: e.target.value })} required />
+                                    </label>
+                                    <label>
+                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Code</span>
+                                        <input className={`${inputClass} w-full`} value={specForm.code} onChange={(e) => setSpecForm({ ...specForm, code: e.target.value })} required />
+                                    </label>
+                                    <div className="rounded-md border border-slate-200">
+                                        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
+                                            <div>
+                                                <div className="text-sm font-semibold text-admin-ink">Gia tri lua chon</div>
+                                                <div className="text-xs text-admin-muted">Danh sach gia tri cho thong so nay.</div>
+                                            </div>
+                                            <button type="button" className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50" onClick={addSpecFormOption}>
+                                                Them option
+                                            </button>
+                                        </div>
+                                        <div className="grid gap-2 p-3">
+                                            {(specForm.options || []).length === 0 ? (
+                                                <div className="rounded-md border border-dashed border-slate-200 px-3 py-4 text-center text-sm text-admin-muted">
+                                                    Chua co option. Bam "Them option" de them gia tri cho thong so nay.
+                                                </div>
+                                            ) : (
+                                                (specForm.options || []).map((option, index) => (
+                                                    <div key={`${option.id || 'new'}-${index}`} className="grid gap-2 rounded-md border border-slate-200 p-2 sm:grid-cols-[1fr_auto] sm:items-center">
+                                                        <input
+                                                            className={`${inputClass} w-full`}
+                                                            value={option.value || ''}
+                                                            onChange={(e) => updateSpecFormOption(index, { value: e.target.value })}
+                                                            placeholder="Gia tri option"
+                                                        />
+                                                        <button type="button" className="rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700" onClick={() => removeSpecFormOption(index)}>
+                                                            Xoa
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+                                <button type="button" className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={closeSpecEditor}>Huy</button>
+                                <button type="submit" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">{specForm.id ? 'Cap nhat' : 'Them thong so'}</button>
                             </div>
                         </form>
                     </div>

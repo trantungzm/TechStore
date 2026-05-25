@@ -121,18 +121,25 @@ namespace BaseCore.APIService
             Name = definition.Name,
             Code = definition.Code,
             DataType = definition.DataType,
-            Unit = definition.Unit,
-            SortOrder = definition.SortOrder,
-            IsComparable = definition.IsComparable,
-            IsFilterable = definition.IsFilterable,
-            IsRequired = definition.IsRequired,
             CreatedAt = definition.CreatedAt,
-            UpdatedAt = definition.UpdatedAt
+            UpdatedAt = definition.UpdatedAt,
+            Options = (definition.Options ?? new()).OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id).Select(ToSpecOptionDto).ToList()
+        };
+
+        public static SpecOptionDto ToSpecOptionDto(SpecOption option) => new()
+        {
+            Id = option.Id,
+            SpecDefinitionId = option.SpecDefinitionId,
+            Value = option.Value,
+            DisplayOrder = option.DisplayOrder,
+            IsActive = option.IsActive,
+            CreatedAt = option.CreatedAt,
+            UpdatedAt = option.UpdatedAt
         };
 
         public static ProductSpecValueDto ToSpecValueDto(ProductSpecValue spec)
         {
-            object? value = spec.ValueText;
+            object? value = spec.SpecOption?.Value ?? spec.ValueText;
             if (spec.ValueNumber.HasValue) value = spec.ValueNumber.Value;
             if (spec.ValueBool.HasValue) value = spec.ValueBool.Value;
 
@@ -141,10 +148,13 @@ namespace BaseCore.APIService
                 Id = spec.Id,
                 ProductId = spec.ProductId,
                 SpecDefinitionId = spec.SpecDefinitionId,
+                SpecOptionId = spec.SpecOptionId,
                 Name = spec.SpecDefinition?.Name,
                 Code = spec.SpecDefinition?.Code,
                 DataType = spec.SpecDefinition?.DataType,
+                InputType = spec.SpecDefinition == null ? null : (string.IsNullOrWhiteSpace(spec.SpecDefinition.InputType) ? spec.SpecDefinition.DataType : spec.SpecDefinition.InputType),
                 Unit = spec.SpecDefinition?.Unit,
+                OptionValue = spec.SpecOption?.Value,
                 ValueText = spec.ValueText,
                 ValueNumber = spec.ValueNumber,
                 ValueBool = spec.ValueBool,

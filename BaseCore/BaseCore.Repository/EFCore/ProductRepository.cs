@@ -124,6 +124,8 @@ namespace BaseCore.Repository.EFCore
                 .Include(p => p.Variants)
                 .Include(p => p.SpecValues)
                     .ThenInclude(v => v.SpecDefinition)
+                .Include(p => p.SpecValues)
+                    .ThenInclude(v => v.SpecOption)
                 .Include(p => p.Recommendations)
                     .ThenInclude(r => r.RecommendedProduct)
                         .ThenInclude(rp => rp.Category)

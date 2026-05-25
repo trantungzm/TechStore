@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { categoryApi, productApi } from '../../services/api';
@@ -15,7 +15,7 @@ const PRICE_STEP = 500000;
 
 const formatVnd = (value) => {
     const amount = Number(value || 0);
-    return `${new Intl.NumberFormat('vi-VN').format(Number.isFinite(amount) ? amount : 0)}đ`;
+    return `${new Intl.NumberFormat('vi-VN').format(Number.isFinite(amount) ? amount : 0)}Ä‘`;
 };
 
 const parsePriceParam = (value, fallback) => {
@@ -26,8 +26,8 @@ const parsePriceParam = (value, fallback) => {
 const slugifyCategory = (value = '') => String(value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .replace(/Ä‘/g, 'd')
+    .replace(/Ä/g, 'D')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
@@ -62,7 +62,7 @@ const normalizeCategorySlug = (value = '') => {
 const categorySlugMap = {
     Smartphone: 'phone',
     'SmartPhone': 'phone',
-    'Điện thoại': 'phone',
+    'Äiá»‡n thoáº¡i': 'phone',
     'Dien thoai': 'phone',
     'Mobiles & Tablets': 'phone',
     Laptop: 'laptop',
@@ -71,10 +71,10 @@ const categorySlugMap = {
     Tablet: 'tablet',
     Smartwatch: 'watch',
     'Smart Watch': 'watch',
-    'Đồng hồ thông minh': 'watch',
+    'Äá»“ng há»“ thÃ´ng minh': 'watch',
     'Dong ho thong minh': 'watch',
     Camera: 'camera',
-    'Máy ảnh': 'camera',
+    'MÃ¡y áº£nh': 'camera',
     'May anh': 'camera',
     Audio: 'headphone',
     'Tai nghe': 'headphone',
@@ -90,14 +90,14 @@ const categoryIdSlugMap = {
 };
 
 const categoryDescriptionMap = {
-    phone: 'Lựa chọn điện thoại theo hãng, nhu cầu sử dụng và mức giá phù hợp',
-    laptop: 'Lựa chọn laptop theo hãng, nhu cầu sử dụng, cấu hình và mức giá phù hợp',
-    tablet: 'Lựa chọn tablet theo hãng, nhu cầu sử dụng, cấu hình và mức giá phù hợp',
-    accessory: 'Tìm phụ kiện công nghệ hữu ích cho thiết bị và góc làm việc của bạn',
-    gaming: 'Thiết bị cho game thủ với hiệu năng cao và thiết kế chuyên game',
-    watch: 'Lựa chọn đồng hồ thông minh theo thương hiệu, tính năng và nhu cầu sử dụng',
-    camera: 'Lựa chọn máy ảnh theo thương hiệu, chụp hình và quay video',
-    headphone: 'Lựa chọn tai nghe theo thương hiệu, nhu cầu sử dụng và công nghệ âm thanh',
+    phone: 'Lá»±a chá»n Ä‘iá»‡n thoáº¡i theo hÃ£ng, nhu cáº§u sá»­ dá»¥ng vÃ  má»©c giÃ¡ phÃ¹ há»£p',
+    laptop: 'Lá»±a chá»n laptop theo hÃ£ng, nhu cáº§u sá»­ dá»¥ng, cáº¥u hÃ¬nh vÃ  má»©c giÃ¡ phÃ¹ há»£p',
+    tablet: 'Lá»±a chá»n tablet theo hÃ£ng, nhu cáº§u sá»­ dá»¥ng, cáº¥u hÃ¬nh vÃ  má»©c giÃ¡ phÃ¹ há»£p',
+    accessory: 'TÃ¬m phá»¥ kiá»‡n cÃ´ng nghá»‡ há»¯u Ã­ch cho thiáº¿t bá»‹ vÃ  gÃ³c lÃ m viá»‡c cá»§a báº¡n',
+    gaming: 'Thiáº¿t bá»‹ cho game thá»§ vá»›i hiá»‡u nÄƒng cao vÃ  thiáº¿t káº¿ chuyÃªn game',
+    watch: 'Lá»±a chá»n Ä‘á»“ng há»“ thÃ´ng minh theo thÆ°Æ¡ng hiá»‡u, tÃ­nh nÄƒng vÃ  nhu cáº§u sá»­ dá»¥ng',
+    camera: 'Lá»±a chá»n mÃ¡y áº£nh theo thÆ°Æ¡ng hiá»‡u, chá»¥p hÃ¬nh vÃ  quay video',
+    headphone: 'Lá»±a chá»n tai nghe theo thÆ°Æ¡ng hiá»‡u, nhu cáº§u sá»­ dá»¥ng vÃ  cÃ´ng nghá»‡ Ã¢m thanh',
 };
 
 const safeParseJson = (value, fallback) => {
@@ -119,43 +119,37 @@ const normalizeRecentProduct = (product) => {
     };
 };
 
-const productTags = ['Mới', 'thương hiệu', 'đen', 'trắng', 'máy tính bảng', 'điện thoại', 'máy ảnh', 'drone', 'tivi', 'giảm giá'];
+const productTags = ['Má»›i', 'thÆ°Æ¡ng hiá»‡u', 'Ä‘en', 'tráº¯ng', 'mÃ¡y tÃ­nh báº£ng', 'Ä‘iá»‡n thoáº¡i', 'mÃ¡y áº£nh', 'drone', 'tivi', 'giáº£m giÃ¡'];
 const commonPriceOptions = [
-    { label: 'Tất cả', min: null, max: null },
-    { label: 'Dưới 5 triệu', min: 0, max: 5000000 },
-    { label: '5 - 10 triệu', min: 5000000, max: 10000000 },
-    { label: '10 - 20 triệu', min: 10000000, max: 20000000 },
-    { label: '20 - 40 triệu', min: 20000000, max: 40000000 },
-    { label: 'Trên 40 triệu', min: 40000000, max: null },
+    { label: 'Táº¥t cáº£', min: null, max: null },
+    { label: 'DÆ°á»›i 5 triá»‡u', min: 0, max: 5000000 },
+    { label: '5 - 10 triá»‡u', min: 5000000, max: 10000000 },
+    { label: '10 - 20 triá»‡u', min: 10000000, max: 20000000 },
+    { label: '20 - 40 triá»‡u', min: 20000000, max: 40000000 },
+    { label: 'TrÃªn 40 triá»‡u', min: 40000000, max: null },
 ];
 const statusFilterOptions = [
-    { label: 'Tất cả', value: '' },
-    { label: 'Còn hàng', value: 'in-stock' },
+    { label: 'Táº¥t cáº£', value: '' },
+    { label: 'CÃ²n hÃ ng', value: 'in-stock' },
 ];
 const offerFilterOptions = [
-    { label: 'Tất cả', value: '' },
-    { label: 'Có phiếu giảm giá', value: 'coupon' },
-    { label: 'Hàng mới về', value: 'new' },
-    { label: 'Đang giảm giá', value: 'sale' },
+    { label: 'Táº¥t cáº£', value: '' },
+    { label: 'CÃ³ phiáº¿u giáº£m giÃ¡', value: 'coupon' },
+    { label: 'HÃ ng má»›i vá»', value: 'new' },
+    { label: 'Äang giáº£m giÃ¡', value: 'sale' },
     { label: 'Freeship', value: 'freeship' },
 ];
-const fallbackFeaturedProducts = [
-    { id: 'featured-1', name: 'Điện thoại thông minh', price: 2.99, oldPrice: 4.11, imageUrl: '/electro/img/product-1.png' },
-    { id: 'featured-2', name: 'Máy ảnh thông minh', price: 2.99, oldPrice: 4.11, imageUrl: '/electro/img/product-2.png' },
-    { id: 'featured-3', name: 'Ống kính máy ảnh', price: 2.99, oldPrice: 4.11, imageUrl: '/electro/img/product-3.png' },
-];
-
 const categoryNameMap = {
-    'Accessories': 'Phụ kiện',
-    'Electronics & Computer': 'Điện tử & Máy tính',
-    'Laptops & Desktops': 'Laptop & Máy bàn',
-    'Mobiles & Tablets': 'Điện thoại & Máy tính bảng',
-    'SmartPhone & Smart TV': 'Điện thoại & Smart TV',
-    'Smartphone': 'Điện thoại',
+    'Accessories': 'Phá»¥ kiá»‡n',
+    'Electronics & Computer': 'Äiá»‡n tá»­ & MÃ¡y tÃ­nh',
+    'Laptops & Desktops': 'Laptop & MÃ¡y bÃ n',
+    'Mobiles & Tablets': 'Äiá»‡n thoáº¡i & MÃ¡y tÃ­nh báº£ng',
+    'SmartPhone & Smart TV': 'Äiá»‡n thoáº¡i & Smart TV',
+    'Smartphone': 'Äiá»‡n thoáº¡i',
     'Laptop': 'Laptop',
     'Audio': 'Tai nghe',
-    'Smartwatch': 'Đồng hồ thông minh',
-    'Camera': 'Máy ảnh',
+    'Smartwatch': 'Äá»“ng há»“ thÃ´ng minh',
+    'Camera': 'MÃ¡y áº£nh',
     'Gaming': 'Gaming',
     'Tablet': 'Tablet',
 };
@@ -165,8 +159,8 @@ const getCategoryDisplayName = (name = '') => categoryNameMap[name] || name;
 const normalizeSearchText = (value = '') => String(value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .replace(/Ä‘/g, 'd')
+    .replace(/Ä/g, 'D')
     .toLowerCase();
 
 const getProductSearchText = (product) => normalizeSearchText([
@@ -396,9 +390,9 @@ const phoneFilterGroups = [
     {
         key: 'brand',
         stateKey: 'phoneBrand',
-        title: 'Hãng điện thoại',
+        title: 'HÃ£ng Ä‘iá»‡n thoáº¡i',
         options: [
-            { label: 'Tất cả', value: '' },
+            { label: 'Táº¥t cáº£', value: '' },
             { label: 'Apple', value: 'apple' },
             { label: 'Samsung', value: 'samsung' },
             { label: 'Xiaomi', value: 'xiaomi' },
@@ -411,34 +405,34 @@ const phoneFilterGroups = [
     {
         key: 'usage',
         stateKey: 'phoneUsage',
-        title: 'Nhu cầu sử dụng',
+        title: 'Nhu cáº§u sá»­ dá»¥ng',
         options: [
-            { label: 'Tất cả', value: '' },
-            { label: 'Điện thoại chơi game', value: 'gaming' },
-            { label: 'Điện thoại chụp ảnh', value: 'chup-anh' },
-            { label: 'Điện thoại pin trâu', value: 'pin-trau' },
-            { label: 'Điện thoại học tập', value: 'hoc-tap' },
-            { label: 'Điện thoại văn phòng', value: 'van-phong' },
-            { label: 'Điện thoại giá rẻ', value: 'gia-re' },
-            { label: 'Điện thoại cao cấp', value: 'cao-cap' },
+            { label: 'Táº¥t cáº£', value: '' },
+            { label: 'Äiá»‡n thoáº¡i chÆ¡i game', value: 'gaming' },
+            { label: 'Äiá»‡n thoáº¡i chá»¥p áº£nh', value: 'chup-anh' },
+            { label: 'Äiá»‡n thoáº¡i pin trÃ¢u', value: 'pin-trau' },
+            { label: 'Äiá»‡n thoáº¡i há»c táº­p', value: 'hoc-tap' },
+            { label: 'Äiá»‡n thoáº¡i vÄƒn phÃ²ng', value: 'van-phong' },
+            { label: 'Äiá»‡n thoáº¡i giÃ¡ ráº»', value: 'gia-re' },
+            { label: 'Äiá»‡n thoáº¡i cao cáº¥p', value: 'cao-cap' },
         ],
     },
     {
         key: 'priceRange',
         stateKey: 'phonePriceRange',
-        title: 'Khoảng giá',
+        title: 'Khoáº£ng giÃ¡',
         options: [
-            { label: 'Dưới 3 triệu', value: 'duoi-3' },
-            { label: 'Từ 3 - 7 triệu', value: '3-7' },
-            { label: 'Từ 7 - 15 triệu', value: '7-15' },
-            { label: 'Từ 15 - 25 triệu', value: '15-25' },
-            { label: 'Trên 25 triệu', value: 'tren-25' },
+            { label: 'DÆ°á»›i 3 triá»‡u', value: 'duoi-3' },
+            { label: 'Tá»« 3 - 7 triá»‡u', value: '3-7' },
+            { label: 'Tá»« 7 - 15 triá»‡u', value: '7-15' },
+            { label: 'Tá»« 15 - 25 triá»‡u', value: '15-25' },
+            { label: 'TrÃªn 25 triá»‡u', value: 'tren-25' },
         ],
     },
     {
         key: 'storage',
         stateKey: 'phoneStorage',
-        title: 'Dung lượng bộ nhớ',
+        title: 'Dung lÆ°á»£ng bá»™ nhá»›',
         options: ['64GB', '128GB', '256GB', '512GB', '1TB'].map((label) => ({ label, value: label.toLowerCase() })),
     },
     {
@@ -452,9 +446,9 @@ const phoneFilterGroups = [
         stateKey: 'phoneBattery',
         title: 'Pin',
         options: [
-            { label: 'Từ 4000mAh', value: '4000' },
-            { label: 'Từ 5000mAh', value: '5000' },
-            { label: 'Sạc nhanh', value: 'sac-nhanh' },
+            { label: 'Tá»« 4000mAh', value: '4000' },
+            { label: 'Tá»« 5000mAh', value: '5000' },
+            { label: 'Sáº¡c nhanh', value: 'sac-nhanh' },
         ],
     },
     {
@@ -462,10 +456,10 @@ const phoneFilterGroups = [
         stateKey: 'phoneCamera',
         title: 'Camera',
         options: [
-            { label: 'Chụp ảnh đẹp', value: 'chup-anh-dep' },
-            { label: 'Camera từ 50MP', value: '50mp' },
+            { label: 'Chá»¥p áº£nh Ä‘áº¹p', value: 'chup-anh-dep' },
+            { label: 'Camera tá»« 50MP', value: '50mp' },
             { label: 'Quay video 4K', value: '4k' },
-            { label: 'Chống rung', value: 'chong-rung' },
+            { label: 'Chá»‘ng rung', value: 'chong-rung' },
         ],
     },
 ];
@@ -478,37 +472,37 @@ const getPhoneFilterLabel = (key, value) => {
 const laptopFilterGroups = [
     {
         key: 'brand',
-        title: 'Hãng máy',
+        title: 'HÃ£ng mÃ¡y',
         options: ['', 'Apple', 'Dell', 'HP', 'Asus', 'Acer', 'Lenovo', 'MSI', 'Gigabyte', 'LG'].map((label) => ({
-            label: label || 'Tất cả',
+            label: label || 'Táº¥t cáº£',
             value: label.toLowerCase(),
         })),
     },
     {
         key: 'usage',
-        title: 'Nhu cầu sử dụng',
+        title: 'Nhu cáº§u sá»­ dá»¥ng',
         options: [
-            { label: 'Tất cả', value: '' },
-            { label: 'Laptop văn phòng', value: 'van-phong' },
-            { label: 'Laptop học tập', value: 'hoc-tap' },
+            { label: 'Táº¥t cáº£', value: '' },
+            { label: 'Laptop vÄƒn phÃ²ng', value: 'van-phong' },
+            { label: 'Laptop há»c táº­p', value: 'hoc-tap' },
             { label: 'Laptop gaming', value: 'gaming' },
-            { label: 'Laptop đồ họa', value: 'do-hoa' },
-            { label: 'Laptop lập trình', value: 'lap-trinh' },
-            { label: 'Laptop mỏng nhẹ', value: 'mong-nhe' },
-            { label: 'Laptop cao cấp', value: 'cao-cap' },
+            { label: 'Laptop Ä‘á»“ há»a', value: 'do-hoa' },
+            { label: 'Laptop láº­p trÃ¬nh', value: 'lap-trinh' },
+            { label: 'Laptop má»ng nháº¹', value: 'mong-nhe' },
+            { label: 'Laptop cao cáº¥p', value: 'cao-cap' },
             { label: 'Laptop AI', value: 'ai' },
         ],
     },
     {
         key: 'priceRange',
-        title: 'Khoảng giá',
+        title: 'Khoáº£ng giÃ¡',
         options: [
-            { label: 'Dưới 10 triệu', value: 'duoi-10' },
-            { label: 'Từ 10 - 15 triệu', value: '10-15' },
-            { label: 'Từ 15 - 20 triệu', value: '15-20' },
-            { label: 'Từ 20 - 30 triệu', value: '20-30' },
-            { label: 'Từ 30 - 50 triệu', value: '30-50' },
-            { label: 'Trên 50 triệu', value: 'tren-50' },
+            { label: 'DÆ°á»›i 10 triá»‡u', value: 'duoi-10' },
+            { label: 'Tá»« 10 - 15 triá»‡u', value: '10-15' },
+            { label: 'Tá»« 15 - 20 triá»‡u', value: '15-20' },
+            { label: 'Tá»« 20 - 30 triá»‡u', value: '20-30' },
+            { label: 'Tá»« 30 - 50 triá»‡u', value: '30-50' },
+            { label: 'TrÃªn 50 triá»‡u', value: 'tren-50' },
         ],
     },
     {
@@ -520,11 +514,11 @@ const laptopFilterGroups = [
             ['Apple M1', 'm1'], ['Apple M2', 'm2'], ['Apple M3', 'm3'], ['Apple M4', 'm4'],
         ].map(([label, value]) => ({ label, value })),
     },
-    { key: 'ram', title: 'Dung lượng RAM', options: ['8GB', '16GB', '32GB', '64GB'].map((label) => ({ label, value: label.toLowerCase() })) },
-    { key: 'storage', title: 'Ổ cứng', options: [['SSD 256GB', '256gb'], ['SSD 512GB', '512gb'], ['SSD 1TB', '1tb'], ['SSD 2TB', '2tb']].map(([label, value]) => ({ label, value })) },
+    { key: 'ram', title: 'Dung lÆ°á»£ng RAM', options: ['8GB', '16GB', '32GB', '64GB'].map((label) => ({ label, value: label.toLowerCase() })) },
+    { key: 'storage', title: 'á»” cá»©ng', options: [['SSD 256GB', '256gb'], ['SSD 512GB', '512gb'], ['SSD 1TB', '1tb'], ['SSD 2TB', '2tb']].map(([label, value]) => ({ label, value })) },
     {
         key: 'gpu',
-        title: 'Card đồ họa',
+        title: 'Card Ä‘á»“ há»a',
         options: [
             ['Onboard', 'onboard'], ['Intel Iris Xe', 'iris'], ['AMD Radeon', 'radeon'], ['NVIDIA GTX', 'gtx'],
             ['NVIDIA RTX 3050', 'rtx3050'], ['NVIDIA RTX 4050', 'rtx4050'], ['NVIDIA RTX 4060', 'rtx4060'], ['NVIDIA RTX 4070', 'rtx4070'],
@@ -532,12 +526,12 @@ const laptopFilterGroups = [
     },
     {
         key: 'screenSize',
-        title: 'Kích thước màn hình',
+        title: 'KÃ­ch thÆ°á»›c mÃ n hÃ¬nh',
         options: [
-            ['Dưới 13 inch', 'duoi-13'], ['13 - 14 inch', '13-14'], ['15 - 16 inch', '15-16'], ['Trên 16 inch', 'tren-16'],
+            ['DÆ°á»›i 13 inch', 'duoi-13'], ['13 - 14 inch', '13-14'], ['15 - 16 inch', '15-16'], ['TrÃªn 16 inch', 'tren-16'],
         ].map(([label, value]) => ({ label, value })),
     },
-    { key: 'resolution', title: 'Độ phân giải', options: ['Full HD', '2K', '2.5K', '3K', '4K', 'Retina'].map((label) => ({ label, value: slugifyCategory(label) })) },
+    { key: 'resolution', title: 'Äá»™ phÃ¢n giáº£i', options: ['Full HD', '2K', '2.5K', '3K', '4K', 'Retina'].map((label) => ({ label, value: slugifyCategory(label) })) },
 ];
 
 const getLaptopFilterLabel = (key, value) => {
@@ -551,9 +545,9 @@ const makeOptions = (items) => items.map((item) => Array.isArray(item)
 
 const categoryFilterConfigs = {
     tablet: {
-        title: 'Bộ lọc tablet',
-        clearLabel: 'Xóa bộ lọc tablet',
-        emptyLabel: 'Không tìm thấy sản phẩm phù hợp',
+        title: 'Bá»™ lá»c tablet',
+        clearLabel: 'XÃ³a bá»™ lá»c tablet',
+        emptyLabel: 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m phÃ¹ há»£p',
         params: ['tabletBrand', 'tabletUsage', 'tabletPriceRange', 'tabletStorage', 'tabletRam', 'tabletScreenSize', 'tabletConnection'],
         brandParam: 'tabletBrand',
         priceParam: 'tabletPriceRange',
@@ -573,19 +567,19 @@ const categoryFilterConfigs = {
             'tren-25': [25000000, Infinity],
         },
         groups: [
-            { param: 'tabletBrand', title: 'Hãng tablet', options: [{ label: 'Tất cả', value: '' }, ...makeOptions(['Apple', 'Samsung', 'Xiaomi', 'Lenovo', 'Huawei', 'OPPO'])] },
-            { param: 'tabletUsage', title: 'Nhu cầu sử dụng', options: [{ label: 'Tất cả', value: '' }, ...makeOptions([['Tablet học tập', 'hoc-tap'], ['Tablet giải trí', 'giai-tri'], ['Tablet chơi game', 'choi-game'], ['Tablet vẽ thiết kế', 've-thiet-ke'], ['Tablet làm việc', 'lam-viec'], ['Tablet cho trẻ em', 'tre-em'], ['Tablet cao cấp', 'cao-cap']])] },
-            { param: 'tabletPriceRange', title: 'Khoảng giá', options: makeOptions([['Dưới 5 triệu', 'duoi-5'], ['Từ 5 - 10 triệu', '5-10'], ['Từ 10 - 15 triệu', '10-15'], ['Từ 15 - 25 triệu', '15-25'], ['Trên 25 triệu', 'tren-25']]) },
-            { param: 'tabletStorage', title: 'Dung lượng bộ nhớ', options: makeOptions(['64GB', '128GB', '256GB', '512GB', '1TB']) },
+            { param: 'tabletBrand', title: 'HÃ£ng tablet', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions(['Apple', 'Samsung', 'Xiaomi', 'Lenovo', 'Huawei', 'OPPO'])] },
+            { param: 'tabletUsage', title: 'Nhu cáº§u sá»­ dá»¥ng', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions([['Tablet há»c táº­p', 'hoc-tap'], ['Tablet giáº£i trÃ­', 'giai-tri'], ['Tablet chÆ¡i game', 'choi-game'], ['Tablet váº½ thiáº¿t káº¿', 've-thiet-ke'], ['Tablet lÃ m viá»‡c', 'lam-viec'], ['Tablet cho tráº» em', 'tre-em'], ['Tablet cao cáº¥p', 'cao-cap']])] },
+            { param: 'tabletPriceRange', title: 'Khoáº£ng giÃ¡', options: makeOptions([['DÆ°á»›i 5 triá»‡u', 'duoi-5'], ['Tá»« 5 - 10 triá»‡u', '5-10'], ['Tá»« 10 - 15 triá»‡u', '10-15'], ['Tá»« 15 - 25 triá»‡u', '15-25'], ['TrÃªn 25 triá»‡u', 'tren-25']]) },
+            { param: 'tabletStorage', title: 'Dung lÆ°á»£ng bá»™ nhá»›', options: makeOptions(['64GB', '128GB', '256GB', '512GB', '1TB']) },
             { param: 'tabletRam', title: 'RAM', options: makeOptions(['4GB', '6GB', '8GB', '12GB', '16GB']) },
-            { param: 'tabletScreenSize', title: 'Kích thước màn hình', options: makeOptions([['Dưới 9 inch', 'duoi-9'], ['10 - 11 inch', '10-11'], ['12 inch trở lên', 'tu-12']]) },
-            { param: 'tabletConnection', title: 'Kết nối', options: makeOptions(['WiFi', '4G', '5G']) },
+            { param: 'tabletScreenSize', title: 'KÃ­ch thÆ°á»›c mÃ n hÃ¬nh', options: makeOptions([['DÆ°á»›i 9 inch', 'duoi-9'], ['10 - 11 inch', '10-11'], ['12 inch trá»Ÿ lÃªn', 'tu-12']]) },
+            { param: 'tabletConnection', title: 'Káº¿t ná»‘i', options: makeOptions(['WiFi', '4G', '5G']) },
         ],
     },
     watch: {
-        title: 'Bộ lọc đồng hồ thông minh',
-        clearLabel: 'Xóa bộ lọc đồng hồ thông minh',
-        emptyLabel: 'Không tìm thấy sản phẩm phù hợp',
+        title: 'Bá»™ lá»c Ä‘á»“ng há»“ thÃ´ng minh',
+        clearLabel: 'XÃ³a bá»™ lá»c Ä‘á»“ng há»“ thÃ´ng minh',
+        emptyLabel: 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m phÃ¹ há»£p',
         params: ['watchBrand', 'watchUsage', 'watchPriceRange', 'watchSize', 'watchHealthFeature', 'watchBattery', 'watchConnectivity'],
         brandParam: 'watchBrand',
         priceParam: 'watchPriceRange',
@@ -604,19 +598,19 @@ const categoryFilterConfigs = {
             'tren-10': [10000000, Infinity],
         },
         groups: [
-            { param: 'watchBrand', title: 'Hãng đồng hồ', options: [{ label: 'Tất cả', value: '' }, ...makeOptions(['Apple', 'Samsung', 'Xiaomi', 'Garmin', 'Huawei', 'Amazfit'])] },
-            { param: 'watchUsage', title: 'Nhu cầu sử dụng', options: [{ label: 'Tất cả', value: '' }, ...makeOptions([['Đồng hồ thể thao', 'the-thao'], ['Đồng hồ theo dõi sức khỏe', 'suc-khoe'], ['Đồng hồ thời trang', 'thoi-trang'], ['Đồng hồ cho dân văn phòng', 'van-phong'], ['Đồng hồ cho chạy bộ', 'chay-bo'], ['Đồng hồ cho người mới dùng', 'moi-dung']])] },
-            { param: 'watchPriceRange', title: 'Khoảng giá', options: makeOptions([['Dưới 2 triệu', 'duoi-2'], ['Từ 2 - 5 triệu', '2-5'], ['Từ 5 - 10 triệu', '5-10'], ['Trên 10 triệu', 'tren-10']]) },
-            { param: 'watchSize', title: 'Kích thước mặt', options: makeOptions([['Dưới 40mm', 'duoi-40'], ['40 - 44mm', '40-44'], ['Trên 44mm', 'tren-44']]) },
-            { param: 'watchHealthFeature', title: 'Tính năng sức khỏe', options: makeOptions([['Đo nhịp tim', 'nhip-tim'], ['Đo SpO2', 'spo2'], ['Theo dõi giấc ngủ', 'giac-ngu'], ['Đếm bước chân', 'buoc-chan'], ['ECG nếu có', 'ecg']]) },
-            { param: 'watchBattery', title: 'Thời lượng pin', options: makeOptions([['1 - 3 ngày', '1-3'], ['4 - 7 ngày', '4-7'], ['Trên 7 ngày', 'tren-7']]) },
-            { param: 'watchConnectivity', title: 'Kết nối / tương thích', options: makeOptions(['Android', 'iPhone', 'GPS', ['Nghe gọi Bluetooth', 'bluetooth-call'], 'eSIM']) },
+            { param: 'watchBrand', title: 'HÃ£ng Ä‘á»“ng há»“', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions(['Apple', 'Samsung', 'Xiaomi', 'Garmin', 'Huawei', 'Amazfit'])] },
+            { param: 'watchUsage', title: 'Nhu cáº§u sá»­ dá»¥ng', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions([['Äá»“ng há»“ thá»ƒ thao', 'the-thao'], ['Äá»“ng há»“ theo dÃµi sá»©c khá»e', 'suc-khoe'], ['Äá»“ng há»“ thá»i trang', 'thoi-trang'], ['Äá»“ng há»“ cho dÃ¢n vÄƒn phÃ²ng', 'van-phong'], ['Äá»“ng há»“ cho cháº¡y bá»™', 'chay-bo'], ['Äá»“ng há»“ cho ngÆ°á»i má»›i dÃ¹ng', 'moi-dung']])] },
+            { param: 'watchPriceRange', title: 'Khoáº£ng giÃ¡', options: makeOptions([['DÆ°á»›i 2 triá»‡u', 'duoi-2'], ['Tá»« 2 - 5 triá»‡u', '2-5'], ['Tá»« 5 - 10 triá»‡u', '5-10'], ['TrÃªn 10 triá»‡u', 'tren-10']]) },
+            { param: 'watchSize', title: 'KÃ­ch thÆ°á»›c máº·t', options: makeOptions([['DÆ°á»›i 40mm', 'duoi-40'], ['40 - 44mm', '40-44'], ['TrÃªn 44mm', 'tren-44']]) },
+            { param: 'watchHealthFeature', title: 'TÃ­nh nÄƒng sá»©c khá»e', options: makeOptions([['Äo nhá»‹p tim', 'nhip-tim'], ['Äo SpO2', 'spo2'], ['Theo dÃµi giáº¥c ngá»§', 'giac-ngu'], ['Äáº¿m bÆ°á»›c chÃ¢n', 'buoc-chan'], ['ECG náº¿u cÃ³', 'ecg']]) },
+            { param: 'watchBattery', title: 'Thá»i lÆ°á»£ng pin', options: makeOptions([['1 - 3 ngÃ y', '1-3'], ['4 - 7 ngÃ y', '4-7'], ['TrÃªn 7 ngÃ y', 'tren-7']]) },
+            { param: 'watchConnectivity', title: 'Káº¿t ná»‘i / tÆ°Æ¡ng thÃ­ch', options: makeOptions(['Android', 'iPhone', 'GPS', ['Nghe gá»i Bluetooth', 'bluetooth-call'], 'eSIM']) },
         ],
     },
     camera: {
-        title: 'Bộ lọc máy ảnh',
-        clearLabel: 'Xóa bộ lọc máy ảnh',
-        emptyLabel: 'Không tìm thấy sản phẩm phù hợp',
+        title: 'Bá»™ lá»c mÃ¡y áº£nh',
+        clearLabel: 'XÃ³a bá»™ lá»c mÃ¡y áº£nh',
+        emptyLabel: 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m phÃ¹ há»£p',
         params: ['cameraBrand', 'cameraUsage', 'cameraPriceRange', 'cameraType', 'cameraResolution', 'cameraVideo', 'cameraLens'],
         brandParam: 'cameraBrand',
         priceParam: 'cameraPriceRange',
@@ -635,19 +629,19 @@ const categoryFilterConfigs = {
             'tren-40': [40000000, Infinity],
         },
         groups: [
-            { param: 'cameraBrand', title: 'Hãng máy ảnh', options: [{ label: 'Tất cả', value: '' }, ...makeOptions(['Canon', 'Sony', 'Nikon', 'Fujifilm', 'Panasonic', 'Leica'])] },
-            { param: 'cameraUsage', title: 'Nhu cầu sử dụng', options: [{ label: 'Tất cả', value: '' }, ...makeOptions([['Máy ảnh chụp du lịch', 'du-lich'], ['Máy ảnh chụp chân dung', 'chan-dung'], ['Máy ảnh quay vlog', 'vlog'], ['Máy ảnh quay video', 'video'], ['Máy ảnh chuyên nghiệp', 'chuyen-nghiep'], ['Máy ảnh cho người mới bắt đầu', 'moi-bat-dau']])] },
-            { param: 'cameraPriceRange', title: 'Khoảng giá', options: makeOptions([['Dưới 10 triệu', 'duoi-10'], ['Từ 10 - 20 triệu', '10-20'], ['Từ 20 - 40 triệu', '20-40'], ['Trên 40 triệu', 'tren-40']]) },
-            { param: 'cameraType', title: 'Loại máy', options: makeOptions(['Mirrorless', 'DSLR', 'Compact', 'Action Camera']) },
-            { param: 'cameraResolution', title: 'Độ phân giải', options: makeOptions([['Dưới 20MP', 'duoi-20mp'], ['Từ 20MP - 30MP', '20-30mp'], ['Trên 30MP', 'tren-30mp']]) },
+            { param: 'cameraBrand', title: 'HÃ£ng mÃ¡y áº£nh', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions(['Canon', 'Sony', 'Nikon', 'Fujifilm', 'Panasonic', 'Leica'])] },
+            { param: 'cameraUsage', title: 'Nhu cáº§u sá»­ dá»¥ng', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions([['MÃ¡y áº£nh chá»¥p du lá»‹ch', 'du-lich'], ['MÃ¡y áº£nh chá»¥p chÃ¢n dung', 'chan-dung'], ['MÃ¡y áº£nh quay vlog', 'vlog'], ['MÃ¡y áº£nh quay video', 'video'], ['MÃ¡y áº£nh chuyÃªn nghiá»‡p', 'chuyen-nghiep'], ['MÃ¡y áº£nh cho ngÆ°á»i má»›i báº¯t Ä‘áº§u', 'moi-bat-dau']])] },
+            { param: 'cameraPriceRange', title: 'Khoáº£ng giÃ¡', options: makeOptions([['DÆ°á»›i 10 triá»‡u', 'duoi-10'], ['Tá»« 10 - 20 triá»‡u', '10-20'], ['Tá»« 20 - 40 triá»‡u', '20-40'], ['TrÃªn 40 triá»‡u', 'tren-40']]) },
+            { param: 'cameraType', title: 'Loáº¡i mÃ¡y', options: makeOptions(['Mirrorless', 'DSLR', 'Compact', 'Action Camera']) },
+            { param: 'cameraResolution', title: 'Äá»™ phÃ¢n giáº£i', options: makeOptions([['DÆ°á»›i 20MP', 'duoi-20mp'], ['Tá»« 20MP - 30MP', '20-30mp'], ['TrÃªn 30MP', 'tren-30mp']]) },
             { param: 'cameraVideo', title: 'Quay video', options: makeOptions(['Full HD', '4K', '6K', '8K']) },
-            { param: 'cameraLens', title: 'Ống kính / lens', options: makeOptions([['Kit lens', 'kit-lens'], ['Lens rời', 'lens-roi'], 'Zoom', ['Góc rộng', 'goc-rong']]) },
+            { param: 'cameraLens', title: 'á»ng kÃ­nh / lens', options: makeOptions([['Kit lens', 'kit-lens'], ['Lens rá»i', 'lens-roi'], 'Zoom', ['GÃ³c rá»™ng', 'goc-rong']]) },
         ],
     },
     headphone: {
-        title: 'Bộ lọc tai nghe',
-        clearLabel: 'Xóa bộ lọc tai nghe',
-        emptyLabel: 'Không tìm thấy sản phẩm phù hợp',
+        title: 'Bá»™ lá»c tai nghe',
+        clearLabel: 'XÃ³a bá»™ lá»c tai nghe',
+        emptyLabel: 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m phÃ¹ há»£p',
         params: ['headphoneBrand', 'headphoneUsage', 'headphonePriceRange', 'headphoneType', 'headphoneConnection', 'headphoneFeature'],
         brandParam: 'headphoneBrand',
         priceParam: 'headphonePriceRange',
@@ -669,12 +663,12 @@ const categoryFilterConfigs = {
             'tren-5': [5000000, Infinity],
         },
         groups: [
-            { param: 'headphoneBrand', title: 'Hãng tai nghe', options: [{ label: 'Tất cả', value: '' }, ...makeOptions(['Apple', 'Sony', 'JBL', 'Samsung', 'Xiaomi', 'Soundcore', 'Logitech', 'Razer'])] },
-            { param: 'headphoneUsage', title: 'Nhu cầu sử dụng', options: [{ label: 'Tất cả', value: '' }, ...makeOptions([['Tai nghe chơi game', 'choi-game'], ['Tai nghe nghe nhạc', 'nghe-nhac'], ['Tai nghe học tập', 'hoc-tap'], ['Tai nghe làm việc', 'lam-viec'], ['Tai nghe thể thao', 'the-thao'], ['Tai nghe chống ồn', 'chong-on'], ['Tai nghe giá rẻ', 'gia-re'], ['Tai nghe cao cấp', 'cao-cap']])] },
-            { param: 'headphonePriceRange', title: 'Khoảng giá', options: makeOptions([['Dưới 500 nghìn', 'duoi-500'], ['Từ 500 nghìn - 1 triệu', '500-1'], ['Từ 1 - 3 triệu', '1-3'], ['Từ 3 - 5 triệu', '3-5'], ['Trên 5 triệu', 'tren-5']]) },
-            { param: 'headphoneType', title: 'Kiểu tai nghe', options: makeOptions(['In-ear', 'On-ear', 'Over-ear', 'True Wireless']) },
-            { param: 'headphoneConnection', title: 'Kết nối', options: makeOptions([['Có dây', 'co-day'], 'Bluetooth', ['Wireless 2.4G', 'wireless-24g']]) },
-            { param: 'headphoneFeature', title: 'Tính năng', options: makeOptions([['Chống ồn chủ động', 'chong-on-chu-dong'], ['Xuyên âm', 'xuyen-am'], ['Mic thoại', 'mic-thoai'], ['Pin trâu', 'pin-trau'], ['Âm bass mạnh', 'bass-manh'], ['Âm thanh Hi-Res', 'hi-res']]) },
+            { param: 'headphoneBrand', title: 'HÃ£ng tai nghe', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions(['Apple', 'Sony', 'JBL', 'Samsung', 'Xiaomi', 'Soundcore', 'Logitech', 'Razer'])] },
+            { param: 'headphoneUsage', title: 'Nhu cáº§u sá»­ dá»¥ng', options: [{ label: 'Táº¥t cáº£', value: '' }, ...makeOptions([['Tai nghe chÆ¡i game', 'choi-game'], ['Tai nghe nghe nháº¡c', 'nghe-nhac'], ['Tai nghe há»c táº­p', 'hoc-tap'], ['Tai nghe lÃ m viá»‡c', 'lam-viec'], ['Tai nghe thá»ƒ thao', 'the-thao'], ['Tai nghe chá»‘ng á»“n', 'chong-on'], ['Tai nghe giÃ¡ ráº»', 'gia-re'], ['Tai nghe cao cáº¥p', 'cao-cap']])] },
+            { param: 'headphonePriceRange', title: 'Khoáº£ng giÃ¡', options: makeOptions([['DÆ°á»›i 500 nghÃ¬n', 'duoi-500'], ['Tá»« 500 nghÃ¬n - 1 triá»‡u', '500-1'], ['Tá»« 1 - 3 triá»‡u', '1-3'], ['Tá»« 3 - 5 triá»‡u', '3-5'], ['TrÃªn 5 triá»‡u', 'tren-5']]) },
+            { param: 'headphoneType', title: 'Kiá»ƒu tai nghe', options: makeOptions(['In-ear', 'On-ear', 'Over-ear', 'True Wireless']) },
+            { param: 'headphoneConnection', title: 'Káº¿t ná»‘i', options: makeOptions([['CÃ³ dÃ¢y', 'co-day'], 'Bluetooth', ['Wireless 2.4G', 'wireless-24g']]) },
+            { param: 'headphoneFeature', title: 'TÃ­nh nÄƒng', options: makeOptions([['Chá»‘ng á»“n chá»§ Ä‘á»™ng', 'chong-on-chu-dong'], ['XuyÃªn Ã¢m', 'xuyen-am'], ['Mic thoáº¡i', 'mic-thoai'], ['Pin trÃ¢u', 'pin-trau'], ['Ã‚m bass máº¡nh', 'bass-manh'], ['Ã‚m thanh Hi-Res', 'hi-res']]) },
         ],
     },
 };
@@ -842,7 +836,7 @@ const Shop = () => {
         resolution: params.get('resolution') || '',
     };
     const sidebarCategories = categories.length ? categories : (categoriesLoading ? [] : fallbackSidebarCategories);
-    const featuredSidebarProducts = popularProducts.length ? popularProducts.slice(0, 3) : fallbackFeaturedProducts;
+    const featuredSidebarProducts = popularProducts.slice(0, 3);
     const getCategorySlug = (category) => {
         const name = category?.name || '';
         const displayName = getCategoryDisplayName(name);
@@ -863,7 +857,7 @@ const Shop = () => {
     const activeCategoryName = activeCategory ? getCategoryDisplayName(activeCategory.name) : '';
     const activeCategorySlug = activeCategory ? getCategorySlug(activeCategory) : categorySlug;
     const activeCategoryDescription = activeCategorySlug
-        ? categoryDescriptionMap[activeCategorySlug] || `Khám phá các sản phẩm ${activeCategoryName ? activeCategoryName.toLowerCase() : 'công nghệ'} mới nhất tại Electro`
+        ? categoryDescriptionMap[activeCategorySlug] || `KhÃ¡m phÃ¡ cÃ¡c sáº£n pháº©m ${activeCategoryName ? activeCategoryName.toLowerCase() : 'cÃ´ng nghá»‡'} má»›i nháº¥t táº¡i Electro`
         : '';
     const isPhoneCategory = activeCategorySlug === 'phone';
     const isLaptopCategory = activeCategorySlug === 'laptop';
@@ -1343,7 +1337,14 @@ const Shop = () => {
     const filterCategories = sidebarCategories
         .filter((c) => c.id !== '')
         .filter((c) => !hiddenSidebarCategorySlugs.includes(getCategorySlug(c)))
-        .filter((c) => ['phone', 'laptop', 'tablet', 'watch', 'camera', 'headphone'].includes(getCategorySlug(c)));
+        .filter((c) => ['phone', 'laptop', 'tablet', 'watch', 'camera', 'headphone'].includes(getCategorySlug(c)))
+        .reduce((uniqueCategories, category) => {
+            const slug = getCategorySlug(category);
+            if (!uniqueCategories.some((item) => getCategorySlug(item) === slug)) {
+                uniqueCategories.push(category);
+            }
+            return uniqueCategories;
+        }, []);
 
     const currentFilterGroups = isPhoneCategory
         ? phoneFilterGroups.map((group) => ({
@@ -1372,7 +1373,7 @@ const Shop = () => {
                 : [
                     {
                         key: 'price',
-                        title: 'Khoảng giá',
+                        title: 'Khoáº£ng giÃ¡',
                         options: commonPriceOptions.map((option, index) => ({
                             label: option.label,
                             value: index === 0 ? '' : `${option.min ?? ''}-${option.max ?? ''}`,
@@ -1383,14 +1384,14 @@ const Shop = () => {
                     },
                     {
                         key: 'status',
-                        title: 'Tình trạng',
+                        title: 'TÃ¬nh tráº¡ng',
                         options: statusFilterOptions,
                         value: urlInStock ? 'in-stock' : '',
                         onSelect: handleStatusFilter,
                     },
                     {
                         key: 'offer',
-                        title: 'Ưu đãi',
+                        title: 'Æ¯u Ä‘Ã£i',
                         options: offerFilterOptions,
                         value: urlOffer,
                         onSelect: handleOfferFilter,
@@ -1490,7 +1491,7 @@ const Shop = () => {
         },
         urlInStock && {
             key: 'stock',
-            label: 'Còn hàng',
+            label: 'CÃ²n hÃ ng',
             onRemove: () => handleStatusFilter(''),
         },
         urlOffer && {
@@ -1581,9 +1582,9 @@ const Shop = () => {
                         <div className="col-lg-6 wow fadeInLeft" data-wow-delay="0.2s">
                             <Link to="/shop" className="d-flex align-items-center justify-content-between border bg-white rounded p-4">
                                 <div>
-                                    <p className="text-muted mb-3">Tìm camera tốt nhất dành cho bạn!</p>
+                                    <p className="text-muted mb-3">TÃ¬m camera tá»‘t nháº¥t dÃ nh cho báº¡n!</p>
                                     <h3 className="text-primary">{t('Smart Camera')}</h3>
-                                    <h1 className="display-3 text-secondary mb-0">40% <span className="text-primary fw-normal">Giảm</span></h1>
+                                    <h1 className="display-3 text-secondary mb-0">40% <span className="text-primary fw-normal">Giáº£m</span></h1>
                                 </div>
                                 <img src="/electro/img/product-1.png" className="img-fluid" alt={t('Product')} />
                             </Link>
@@ -1591,9 +1592,9 @@ const Shop = () => {
                         <div className="col-lg-6 wow fadeInRight" data-wow-delay="0.2s">
                             <Link to="/shop" className="d-flex align-items-center justify-content-between border bg-white rounded p-4">
                                 <div>
-                                    <p className="text-muted mb-3">Tìm điện thoại tốt nhất dành cho bạn!</p>
+                                    <p className="text-muted mb-3">TÃ¬m Ä‘iá»‡n thoáº¡i tá»‘t nháº¥t dÃ nh cho báº¡n!</p>
                                     <h3 className="text-primary">{t('SmartPhone')}</h3>
-                                    <h1 className="display-3 text-secondary mb-0">30% <span className="text-primary fw-normal">Giảm</span></h1>
+                                    <h1 className="display-3 text-secondary mb-0">30% <span className="text-primary fw-normal">Giáº£m</span></h1>
                                 </div>
                                 <img src="/electro/img/product-2.png" className="img-fluid" alt={t('Product')} />
                             </Link>
@@ -1607,17 +1608,17 @@ const Shop = () => {
                     <div className="row g-4">
                         <div className="d-none">
                             <div className="border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.05s">
-                                <h4 className="mb-3">Tìm kiếm sản phẩm</h4>
+                                <h4 className="mb-3">TÃ¬m kiáº¿m sáº£n pháº©m</h4>
                                 <form onSubmit={handleKeywordSubmit}>
                                     <div className="input-group">
                                         <input
                                             type="search"
                                             name="keyword"
                                             className="form-control"
-                                            placeholder={activeCategoryName ? 'Tìm kiếm trong danh mục' : 'Tìm sản phẩm'}
+                                            placeholder={activeCategoryName ? 'TÃ¬m kiáº¿m trong danh má»¥c' : 'TÃ¬m sáº£n pháº©m'}
                                             defaultValue={keyword}
                                         />
-                                        <button type="submit" className="btn btn-primary" aria-label="Tìm kiếm sản phẩm">
+                                        <button type="submit" className="btn btn-primary" aria-label="TÃ¬m kiáº¿m sáº£n pháº©m">
                                             <i className="fas fa-search"></i>
                                         </button>
                                     </div>
@@ -1630,7 +1631,7 @@ const Shop = () => {
                                     onClick={() => setCategoriesExpanded((value) => !value)}
                                     aria-expanded={categoriesExpanded}
                                 >
-                                    <span>Danh mục sản phẩm</span>
+                                    <span>Danh má»¥c sáº£n pháº©m</span>
                                     <i className={`fas fa-chevron-${categoriesExpanded ? 'up' : 'down'}`}></i>
                                 </button>
                                 {categoriesExpanded && (
@@ -1651,7 +1652,7 @@ const Shop = () => {
                                                         className="btn btn-link p-0 text-start text-decoration-none"
                                                         onClick={() => handleCategoryChange('')}
                                                     >
-                                                        <i className={`${!activeCategorySlug ? 'fas fa-check' : 'fas fa-list'} me-2`}></i>Tất cả
+                                                        <i className={`${!activeCategorySlug ? 'fas fa-check' : 'fas fa-list'} me-2`}></i>Táº¥t cáº£
                                                     </button>
                                                     {categoryStats.totalProducts > 0 && <span>({categoryStats.totalProducts})</span>}
                                                 </div>
@@ -1686,7 +1687,7 @@ const Shop = () => {
                             {isPhoneCategory && (
                                 <div className="phone-filter-box border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.15s">
                                     <div className="d-flex align-items-center justify-content-between mb-3">
-                                        <h4 className="mb-0">Bộ lọc điện thoại</h4>
+                                        <h4 className="mb-0">Bá»™ lá»c Ä‘iá»‡n thoáº¡i</h4>
                                     </div>
                                     <div className="phone-filter-groups">
                                         {phoneFilterGroups.map((group) => (
@@ -1728,7 +1729,7 @@ const Shop = () => {
                                             className="btn btn-outline-primary rounded-pill w-100 mt-3"
                                             onClick={clearPhoneFilters}
                                         >
-                                            Xóa bộ lọc điện thoại
+                                            XÃ³a bá»™ lá»c Ä‘iá»‡n thoáº¡i
                                         </button>
                                     )}
                                 </div>
@@ -1736,7 +1737,7 @@ const Shop = () => {
                             {isLaptopCategory && (
                                 <div className="phone-filter-box border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.15s">
                                     <div className="d-flex align-items-center justify-content-between mb-3">
-                                        <h4 className="mb-0">Bộ lọc laptop</h4>
+                                        <h4 className="mb-0">Bá»™ lá»c laptop</h4>
                                     </div>
                                     <div className="phone-filter-groups">
                                         {laptopFilterGroups.map((group) => (
@@ -1778,7 +1779,7 @@ const Shop = () => {
                                             className="btn btn-outline-primary rounded-pill w-100 mt-3"
                                             onClick={clearLaptopFilters}
                                         >
-                                            Xóa bộ lọc laptop
+                                            XÃ³a bá»™ lá»c laptop
                                         </button>
                                     )}
                                 </div>
@@ -1834,7 +1835,7 @@ const Shop = () => {
                                 </div>
                             )}
                             <div className="border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.28s">
-                                <h4 className="mb-3">Tình trạng</h4>
+                                <h4 className="mb-3">TÃ¬nh tráº¡ng</h4>
                                 <div className="additional-product">
                                     <label className="additional-product-item d-flex align-items-center text-dark mb-0">
                                         <input
@@ -1843,23 +1844,23 @@ const Shop = () => {
                                             checked={inStockOnly}
                                             onChange={(event) => handleStockFilter(event.target.checked)}
                                         />
-                                        Còn hàng
+                                        CÃ²n hÃ ng
                                     </label>
                                 </div>
                             </div>
                             <div className="bg-primary rounded position-relative wow fadeInUp" data-wow-delay="0.3s">
                                 <img src="/electro/img/product-banner-3.jpg" className="img-fluid w-100 rounded" alt="Sale headphones" />
                                 <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center rounded text-center" style={{ background: 'rgba(255, 255, 255, 0.35)' }}>
-                                    <h2 className="text-primary fw-bold mb-2">GIẢM GIÁ</h2>
-                                    <h5 className="text-secondary mb-3">Giảm đến 50%</h5>
+                                    <h2 className="text-primary fw-bold mb-2">GIáº¢M GIÃ</h2>
+                                    <h5 className="text-secondary mb-3">Giáº£m Ä‘áº¿n 50%</h5>
                                     <Link to="/shop" className="btn btn-primary rounded-pill py-2 px-4">Mua ngay</Link>
                                 </div>
                             </div>
                             <div className="featured-product border rounded p-4 mb-4 mt-4 wow fadeInUp" data-wow-delay="0.35s">
-                                <h4 className="mb-3">Sản phẩm nổi bật</h4>
+                                <h4 className="mb-3">Sáº£n pháº©m ná»•i báº­t</h4>
                                 <div className="d-flex flex-column gap-3">
                                     {featuredSidebarProducts.map((p) => {
-                                        const name = getCategoryDisplayName(p.category?.name || p.name || 'Điện thoại thông minh');
+                                        const name = getCategoryDisplayName(p.category?.name || p.name || 'Äiá»‡n thoáº¡i thÃ´ng minh');
                                         const oldPrice = p.oldPrice || Number(p.price || 2.99) * 1.38;
                                         const fallbackItem = String(p.id).startsWith('featured-');
                                         return (
@@ -1882,10 +1883,10 @@ const Shop = () => {
                                         );
                                     })}
                                 </div>
-                                <Link to="/shop" className="btn btn-primary rounded-pill w-100 py-3 mt-4">Xem thêm</Link>
+                                <Link to="/shop" className="btn btn-primary rounded-pill w-100 py-3 mt-4">Xem thÃªm</Link>
                             </div>
                             <div className="product-tags border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.4s">
-                                <h4 className="mb-3 text-uppercase">THẺ SẢN PHẨM</h4>
+                                <h4 className="mb-3 text-uppercase">THáºº Sáº¢N PHáº¨M</h4>
                                 <div className="product-tags-items bg-light rounded p-3">
                                     {productTags.map((tag) => (
                                         <Link key={tag} to={`/shop?keyword=${encodeURIComponent(tag)}`} className="border rounded py-1 px-2 me-1 mb-2">
@@ -1898,14 +1899,14 @@ const Shop = () => {
                         <div className="col-12">
                             <div className="shop-filter-surface bg-white border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.05s">
                                 <div className="d-flex align-items-center justify-content-between gap-3 mb-3">
-                                    <h4 className="mb-0">Danh mục sản phẩm</h4>
+                                    <h4 className="mb-0">Danh má»¥c sáº£n pháº©m</h4>
                                     <button
                                         type="button"
                                         className="btn btn-outline-primary rounded-pill d-lg-none"
                                         onClick={() => setMobileFiltersOpen((value) => !value)}
                                         aria-expanded={mobileFiltersOpen}
                                     >
-                                        <i className="fas fa-sliders-h me-2"></i>Bộ lọc
+                                        <i className="fas fa-sliders-h me-2"></i>Bá»™ lá»c
                                     </button>
                                 </div>
 
@@ -1915,7 +1916,7 @@ const Shop = () => {
                                         className={`shop-category-chip ${!activeCategorySlug ? 'is-active' : ''}`}
                                         onClick={() => handleCategoryChange('')}
                                     >
-                                        Tất cả
+                                        Táº¥t cáº£
                                         {categoryStats.totalProducts > 0 && <span>{categoryStats.totalProducts}</span>}
                                     </button>
                                     {filterCategories.map((category) => {
@@ -1939,21 +1940,21 @@ const Shop = () => {
                                 <div className="shop-filter-bar d-none d-lg-flex">
                                     {currentFilterGroups.map((group) => renderFilterDropdown(group))}
                                     <button type="button" className="shop-clear-filter-button" onClick={clearSelectedFiltersKeepCategory}>
-                                        Xóa bộ lọc
+                                        XÃ³a bá»™ lá»c
                                     </button>
                                 </div>
 
                                 {mobileFiltersOpen && (
                                     <div className="shop-mobile-filter-panel d-lg-none">
-                                        <div className="shop-mobile-filter-title">Bộ lọc</div>
-                                        <div className="shop-mobile-filter-title small text-muted">Danh mục sản phẩm</div>
+                                        <div className="shop-mobile-filter-title">Bá»™ lá»c</div>
+                                        <div className="shop-mobile-filter-title small text-muted">Danh má»¥c sáº£n pháº©m</div>
                                         <div className="shop-category-chip-row">
                                             <button
                                                 type="button"
                                                 className={`shop-category-chip ${!activeCategorySlug ? 'is-active' : ''}`}
                                                 onClick={() => handleCategoryChange('')}
                                             >
-                                                Tất cả
+                                                Táº¥t cáº£
                                             </button>
                                             {filterCategories.map((category) => {
                                                 const categorySlugValue = getCategorySlug(category);
@@ -1974,10 +1975,10 @@ const Shop = () => {
                                         </div>
                                         <div className="d-flex gap-2 mt-3">
                                             <button type="button" className="btn btn-outline-primary rounded-pill flex-fill" onClick={clearSelectedFiltersKeepCategory}>
-                                                Xóa bộ lọc
+                                                XÃ³a bá»™ lá»c
                                             </button>
                                             <button type="button" className="btn btn-primary rounded-pill flex-fill" onClick={() => setMobileFiltersOpen(false)}>
-                                                Áp dụng
+                                                Ãp dá»¥ng
                                             </button>
                                         </div>
                                     </div>
@@ -1987,7 +1988,7 @@ const Shop = () => {
                                     <div className="shop-active-filter-row">
                                         {activeFilterChips.map((chip) => (
                                             <button type="button" className="shop-active-filter-chip" key={chip.key} onClick={chip.onRemove}>
-                                                {chip.label} <span>×</span>
+                                                {chip.label} <span>Ã—</span>
                                             </button>
                                         ))}
                                     </div>
@@ -1996,14 +1997,14 @@ const Shop = () => {
 
                             {activeCategoryName && (
                                 <div className="bg-white border rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.05s">
-                                    <div className="text-muted small mb-2">Danh mục sản phẩm</div>
+                                    <div className="text-muted small mb-2">Danh má»¥c sáº£n pháº©m</div>
                                     <h2 className="h3 mb-2">{activeCategoryName}</h2>
                                     <p className="mb-0 text-muted">{activeCategoryDescription}</p>
                                 </div>
                             )}
                             <div className="row g-4 justify-content-between mb-4 wow fadeInUp" data-wow-delay="0.1s">
                                 <div className="col-md-6 d-flex align-items-center gap-2 flex-wrap shop-result-heading">
-                                    <h4 className="mb-0">{keyword ? `Kết quả tìm kiếm: ${keyword}` : (activeCategoryName ? ((isPhoneCategory || isLaptopCategory) ? activeCategoryName : `Danh mục: ${activeCategoryName}`) : 'Tất cả sản phẩm')}</h4>
+                                    <h4 className="mb-0">{keyword ? `Káº¿t quáº£ tÃ¬m kiáº¿m: ${keyword}` : (activeCategoryName ? ((isPhoneCategory || isLaptopCategory) ? activeCategoryName : `Danh má»¥c: ${activeCategoryName}`) : 'Táº¥t cáº£ sáº£n pháº©m')}</h4>
                                     {/* Active filter indicators */}
                                     {keyword && (
                                         <span className="badge bg-primary rounded-pill">
@@ -2017,7 +2018,7 @@ const Shop = () => {
                                             onClick={() => handleCategoryChange('')}
                                         >
                                             <i className="fas fa-tag me-1"></i>
-                                            {activeCategoryName} ×
+                                            {activeCategoryName} Ã—
                                         </button>
                                     )}
                                     {isPhoneCategory && Object.entries(selectedPhoneFilters)
@@ -2029,7 +2030,7 @@ const Shop = () => {
                                                 key={`phone-chip-${key}`}
                                                 onClick={() => updatePhoneFilter(key, '')}
                                             >
-                                                {getPhoneFilterLabel(key, value)} ×
+                                                {getPhoneFilterLabel(key, value)} Ã—
                                             </button>
                                         ))}
                                     {isLaptopCategory && Object.entries(selectedLaptopFilters)
@@ -2041,7 +2042,7 @@ const Shop = () => {
                                                 key={`laptop-chip-${key}`}
                                                 onClick={() => updateLaptopFilter(key, '')}
                                             >
-                                                {getLaptopFilterLabel(key, value)} ×
+                                                {getLaptopFilterLabel(key, value)} Ã—
                                             </button>
                                         ))}
                                     {activeExtraFilterConfig && Object.entries(selectedExtraFilters)
@@ -2056,7 +2057,7 @@ const Shop = () => {
                                                     key={`extra-chip-${key}`}
                                                     onClick={() => updateExtraCategoryFilter(key, '')}
                                                 >
-                                                    {label} ×
+                                                    {label} Ã—
                                                 </button>
                                             );
                                         })}
@@ -2068,7 +2069,7 @@ const Shop = () => {
                                     )}
                                     {urlInStock && (
                                         <span className="badge bg-success rounded-pill">
-                                            <i className="fas fa-check me-1"></i>Còn hàng
+                                            <i className="fas fa-check me-1"></i>CÃ²n hÃ ng
                                         </span>
                                     )}
                                 </div>
@@ -2078,10 +2079,10 @@ const Shop = () => {
                                         value={urlSortBy}
                                         onChange={(e) => handleSortChange(e.target.value)}
                                     >
-                                        <option value="">Sắp xếp</option>
-                                        <option value="name_desc">Mới nhất</option>
-                                        <option value="price_asc">Giá thấp đến cao</option>
-                                        <option value="price_desc">Giá cao đến thấp</option>
+                                        <option value="">Sáº¯p xáº¿p</option>
+                                        <option value="name_desc">Má»›i nháº¥t</option>
+                                        <option value="price_asc">GiÃ¡ tháº¥p Ä‘áº¿n cao</option>
+                                        <option value="price_desc">GiÃ¡ cao Ä‘áº¿n tháº¥p</option>
                                     </select>
                                 </div>
                             </div>
@@ -2107,7 +2108,7 @@ const Shop = () => {
                                         {products.length === 0 && (
                                             <div className="col-12">
                                                 <div className="alert alert-light border">
-                                                    {isPhoneCategory ? 'Không tìm thấy điện thoại phù hợp' : (isLaptopCategory ? 'Không tìm thấy laptop phù hợp' : (activeExtraFilterConfig ? activeExtraFilterConfig.emptyLabel : (activeCategoryName ? 'Không tìm thấy sản phẩm trong danh mục này' : t('No products found'))))}
+                                                    {isPhoneCategory ? 'KhÃ´ng tÃ¬m tháº¥y Ä‘iá»‡n thoáº¡i phÃ¹ há»£p' : (isLaptopCategory ? 'KhÃ´ng tÃ¬m tháº¥y laptop phÃ¹ há»£p' : (activeExtraFilterConfig ? activeExtraFilterConfig.emptyLabel : (activeCategoryName ? 'KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m trong danh má»¥c nÃ y' : t('No products found'))))}
                                                 </div>
                                             </div>
                                         )}
@@ -2146,7 +2147,7 @@ const Shop = () => {
                                                 }, [])
                                                 .map((p, idx) =>
                                                     p === '...' ? (
-                                                        <span key={`ellipsis-${idx}`} className="px-1 text-muted">…</span>
+                                                        <span key={`ellipsis-${idx}`} className="px-1 text-muted">â€¦</span>
                                                     ) : (
                                                         <button
                                                             key={p}
@@ -2183,3 +2184,4 @@ const Shop = () => {
 };
 
 export default Shop;
+

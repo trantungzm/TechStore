@@ -107,9 +107,6 @@ const Login = () => {
               </div>
             </div>
 
-            <p className="mb-0 mt-3 text-center text-muted">
-              <small>Demo: admin / admin123</small>
-            </p>
           </div>
         </div>
       </div>

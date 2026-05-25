@@ -5,6 +5,7 @@ namespace BaseCore.Entities
         public int Id { get; set; }
         public int ProductId { get; set; }
         public int SpecDefinitionId { get; set; }
+        public int? SpecOptionId { get; set; }
         public string? ValueText { get; set; }
         public decimal? ValueNumber { get; set; }
         public bool? ValueBool { get; set; }
@@ -13,5 +14,6 @@ namespace BaseCore.Entities
 
         public Product Product { get; set; }
         public SpecDefinition SpecDefinition { get; set; }
+        public SpecOption? SpecOption { get; set; }
     }
 }

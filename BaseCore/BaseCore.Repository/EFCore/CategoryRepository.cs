@@ -18,6 +18,14 @@ namespace BaseCore.Repository.EFCore
         {
         }
 
+        public override async Task<IEnumerable<Category>> GetAllAsync()
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .OrderBy(c => c.Id)
+                .ToListAsync();
+        }
+
         public async Task<Category?> GetByNameAsync(string name)
         {
             return await _dbSet.FirstOrDefaultAsync(c => c.Name.ToLower() == name.ToLower());

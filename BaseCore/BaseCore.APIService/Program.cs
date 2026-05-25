@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using BaseCore.APIService.Demo;
 using BaseCore.APIService.Validators;
 using BaseCore.Repository;
 using BaseCore.Repository.EFCore;
@@ -84,81 +83,53 @@ builder.Services.AddCors(options =>
     });
 });
 
-var useDemoMode = builder.Configuration.GetValue<bool?>("DemoMode:Enabled") ?? true;
-
-if (useDemoMode)
+builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    builder.Services.AddSingleton<DemoStore>();
-    builder.Services.AddSingleton<IProductRepositoryEF, DemoProductRepository>();
-    builder.Services.AddSingleton<ICategoryRepositoryEF, DemoCategoryRepository>();
-    builder.Services.AddSingleton<IOrderRepositoryEF, DemoOrderRepository>();
-    builder.Services.AddSingleton<IOrderDetailRepositoryEF, DemoOrderDetailRepository>();
-    builder.Services.AddSingleton<IOrderTimelineRepositoryEF, DemoOrderTimelineRepository>();
-    builder.Services.AddSingleton<IOrderCancellationRepositoryEF, DemoOrderCancellationRepository>();
-    builder.Services.AddSingleton<IWarehouseRepositoryEF, DemoWarehouseRepository>();
-    builder.Services.AddSingleton<ISupplierRepositoryEF, DemoSupplierRepository>();
-    builder.Services.AddSingleton<ICategorySupplierRepositoryEF, DemoCategorySupplierRepository>();
-    builder.Services.AddSingleton<IStockItemRepositoryEF, DemoStockItemRepository>();
-    builder.Services.AddSingleton<IGoodsReceiptRepositoryEF, DemoGoodsReceiptRepository>();
-    builder.Services.AddSingleton<IGoodsReceiptLineRepositoryEF, DemoGoodsReceiptLineRepository>();
-    builder.Services.AddSingleton<IGoodsReceiptSerialRepositoryEF, DemoGoodsReceiptSerialRepository>();
-    builder.Services.AddSingleton<IStockMovementRepositoryEF, DemoStockMovementRepository>();
-    builder.Services.AddSingleton<IInventoryReturnRepositoryEF, DemoInventoryReturnRepository>();
-    builder.Services.AddSingleton<IOrderDetailStockItemRepositoryEF, DemoOrderDetailStockItemRepository>();
+    var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Server=(localdb)\\MSSQLLocalDB;Database=BaseCoreSales;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;TrustServerCertificate=True";
+    options.UseSqlServer(sqlConnectionString);
+});
 
-    builder.Services.AddSingleton<IProductService, ProductService>();
-    builder.Services.AddSingleton<ICategoryService, CategoryService>();
-    builder.Services.AddSingleton<IOrderService, OrderService>();
-    builder.Services.AddSingleton<IInventoryService, InventoryService>();
-}
-else
-{
-    builder.Services.AddDbContext<AppDbContext>(options =>
-    {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    });
+builder.Services.AddScoped<IProductRepositoryEF, ProductRepositoryEF>();
+builder.Services.AddScoped<ICategoryRepositoryEF, CategoryRepositoryEF>();
+builder.Services.AddScoped<IOrderRepositoryEF, OrderRepositoryEF>();
+builder.Services.AddScoped<IOrderDetailRepositoryEF, OrderDetailRepositoryEF>();
+builder.Services.AddScoped<IOrderTimelineRepositoryEF, OrderTimelineRepositoryEF>();
+builder.Services.AddScoped<IOrderCancellationRepositoryEF, OrderCancellationRepositoryEF>();
+builder.Services.AddScoped<IWarehouseRepositoryEF, WarehouseRepositoryEF>();
+builder.Services.AddScoped<ISupplierRepositoryEF, SupplierRepositoryEF>();
+builder.Services.AddScoped<ICategorySupplierRepositoryEF, CategorySupplierRepositoryEF>();
+builder.Services.AddScoped<IStockItemRepositoryEF, StockItemRepositoryEF>();
+builder.Services.AddScoped<IGoodsReceiptRepositoryEF, GoodsReceiptRepositoryEF>();
+builder.Services.AddScoped<IGoodsReceiptLineRepositoryEF, GoodsReceiptLineRepositoryEF>();
+builder.Services.AddScoped<IGoodsReceiptSerialRepositoryEF, GoodsReceiptSerialRepositoryEF>();
+builder.Services.AddScoped<IStockMovementRepositoryEF, StockMovementRepositoryEF>();
+builder.Services.AddScoped<IInventoryReturnRepositoryEF, InventoryReturnRepositoryEF>();
+builder.Services.AddScoped<IOrderDetailStockItemRepositoryEF, OrderDetailStockItemRepositoryEF>();
+builder.Services.AddScoped<IWarrantyRecordRepositoryEF, WarrantyRecordRepositoryEF>();
+builder.Services.AddScoped<IWarrantyClaimRepositoryEF, WarrantyClaimRepositoryEF>();
+builder.Services.AddScoped<IWarrantyClaimUpdateRepositoryEF, WarrantyClaimUpdateRepositoryEF>();
+builder.Services.AddScoped<IRepairCaseRepositoryEF, RepairCaseRepositoryEF>();
+builder.Services.AddScoped<IRepairUpdateRepositoryEF, RepairUpdateRepositoryEF>();
+builder.Services.AddScoped<ISupportTicketRepositoryEF, SupportTicketRepositoryEF>();
+builder.Services.AddScoped<ISupportTicketUpdateRepositoryEF, SupportTicketUpdateRepositoryEF>();
+builder.Services.AddScoped<INotificationRepositoryEF, NotificationRepositoryEF>();
+builder.Services.AddScoped<IAttachmentRepositoryEF, AttachmentRepositoryEF>();
+builder.Services.AddScoped<ICouponRepositoryEF, CouponRepositoryEF>();
+builder.Services.AddScoped<ICouponScopeRepositoryEF, CouponScopeRepositoryEF>();
+builder.Services.AddScoped<IUserCouponRepositoryEF, UserCouponRepositoryEF>();
+builder.Services.AddScoped<IOrderCouponRepositoryEF, OrderCouponRepositoryEF>();
+builder.Services.AddScoped<IVoucherSpinRepositoryEF, VoucherSpinRepositoryEF>();
 
-    builder.Services.AddScoped<IProductRepositoryEF, ProductRepositoryEF>();
-    builder.Services.AddScoped<ICategoryRepositoryEF, CategoryRepositoryEF>();
-    builder.Services.AddScoped<IOrderRepositoryEF, OrderRepositoryEF>();
-    builder.Services.AddScoped<IOrderDetailRepositoryEF, OrderDetailRepositoryEF>();
-    builder.Services.AddScoped<IOrderTimelineRepositoryEF, OrderTimelineRepositoryEF>();
-    builder.Services.AddScoped<IOrderCancellationRepositoryEF, OrderCancellationRepositoryEF>();
-    builder.Services.AddScoped<IWarehouseRepositoryEF, WarehouseRepositoryEF>();
-    builder.Services.AddScoped<ISupplierRepositoryEF, SupplierRepositoryEF>();
-    builder.Services.AddScoped<ICategorySupplierRepositoryEF, CategorySupplierRepositoryEF>();
-    builder.Services.AddScoped<IStockItemRepositoryEF, StockItemRepositoryEF>();
-    builder.Services.AddScoped<IGoodsReceiptRepositoryEF, GoodsReceiptRepositoryEF>();
-    builder.Services.AddScoped<IGoodsReceiptLineRepositoryEF, GoodsReceiptLineRepositoryEF>();
-    builder.Services.AddScoped<IGoodsReceiptSerialRepositoryEF, GoodsReceiptSerialRepositoryEF>();
-    builder.Services.AddScoped<IStockMovementRepositoryEF, StockMovementRepositoryEF>();
-    builder.Services.AddScoped<IInventoryReturnRepositoryEF, InventoryReturnRepositoryEF>();
-    builder.Services.AddScoped<IOrderDetailStockItemRepositoryEF, OrderDetailStockItemRepositoryEF>();
-    builder.Services.AddScoped<IWarrantyRecordRepositoryEF, WarrantyRecordRepositoryEF>();
-    builder.Services.AddScoped<IWarrantyClaimRepositoryEF, WarrantyClaimRepositoryEF>();
-    builder.Services.AddScoped<IWarrantyClaimUpdateRepositoryEF, WarrantyClaimUpdateRepositoryEF>();
-    builder.Services.AddScoped<IRepairCaseRepositoryEF, RepairCaseRepositoryEF>();
-    builder.Services.AddScoped<IRepairUpdateRepositoryEF, RepairUpdateRepositoryEF>();
-    builder.Services.AddScoped<ISupportTicketRepositoryEF, SupportTicketRepositoryEF>();
-    builder.Services.AddScoped<ISupportTicketUpdateRepositoryEF, SupportTicketUpdateRepositoryEF>();
-    builder.Services.AddScoped<INotificationRepositoryEF, NotificationRepositoryEF>();
-    builder.Services.AddScoped<IAttachmentRepositoryEF, AttachmentRepositoryEF>();
-    builder.Services.AddScoped<ICouponRepositoryEF, CouponRepositoryEF>();
-    builder.Services.AddScoped<ICouponScopeRepositoryEF, CouponScopeRepositoryEF>();
-    builder.Services.AddScoped<IUserCouponRepositoryEF, UserCouponRepositoryEF>();
-    builder.Services.AddScoped<IOrderCouponRepositoryEF, OrderCouponRepositoryEF>();
-    builder.Services.AddScoped<IVoucherSpinRepositoryEF, VoucherSpinRepositoryEF>();
-
-    builder.Services.AddScoped<IProductService, ProductService>();
-    builder.Services.AddScoped<ICategoryService, CategoryService>();
-    builder.Services.AddScoped<INotificationService, NotificationService>();
-    builder.Services.AddScoped<IWarrantyService, WarrantyService>();
-    builder.Services.AddScoped<IRepairService, RepairService>();
-    builder.Services.AddScoped<ITicketService, TicketService>();
-    builder.Services.AddScoped<ICouponService, CouponService>();
-    builder.Services.AddScoped<IOrderService, OrderService>();
-    builder.Services.AddScoped<IInventoryService, InventoryService>();
-}
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IWarrantyService, WarrantyService>();
+builder.Services.AddScoped<IRepairService, RepairService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // JWT Authentication
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "CHANGE_ME_TO_A_LONG_RANDOM_SECRET");
@@ -210,19 +181,28 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-// Auto migrate database when not in demo mode
-if (!useDemoMode)
+// Auto migrate database
+var autoMigrateOnStartup = builder.Configuration.GetValue("Database:AutoMigrateOnStartup", true);
+if (autoMigrateOnStartup)
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     
     // Create database and apply migrations
-    db.Database.Migrate();
+    try
+    {
+        db.Database.Migrate();
     
     // Seed initial data
-    db.SeedDataAsync().GetAwaiter().GetResult();
+        db.SeedDataAsync().GetAwaiter().GetResult();
     
     Console.WriteLine("✓ Database migrated and seeded successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine("Database migration/seed failed. Check DefaultConnection.");
+        Console.Error.WriteLine(ex);
+    }
 }
 
 // Configure the HTTP request pipeline
@@ -238,6 +218,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine($"BaseCore API Service running on port 5001 - DemoMode: {useDemoMode}");
+Console.WriteLine("BaseCore API Service running on port 5001 - Database mode");
 Console.WriteLine("Endpoints: /api/products, /api/categories, /api/orders, /api/inventory, /api/warranty, /api/repairs, /api/tickets, /api/notifications, /api/coupons, /api/specs, /api/uploads, /api/recommendations");
 app.Run();

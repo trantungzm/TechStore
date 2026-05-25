@@ -1,24 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { productApi, categoryApi, supplierApi, specApi } from '../services/api';
+import { productApi, categoryApi, supplierApi, specApi, uploadApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, resolveProductImage } from '../utils/store';
 
 const inputClass = 'rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
-
-const emptyImage = () => ({ imageUrl: '', altText: '', sortOrder: 0, isPrimary: false });
-const emptyVariant = () => ({
-    variantName: '',
-    colorName: '',
-    colorCode: '',
-    storage: '',
-    ram: '',
-    price: '',
-    originalPrice: '',
-    stock: 0,
-    sku: '',
-    imageUrl: '',
-    isActive: true,
-});
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -26,6 +11,7 @@ const Products = () => {
     const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [keyword, setKeyword] = useState('');
+    const [submittedKeyword, setSubmittedKeyword] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [stockFilter, setStockFilter] = useState('');
     const [page, setPage] = useState(1);
@@ -36,6 +22,7 @@ const Products = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [specDefinitions, setSpecDefinitions] = useState([]);
     const [specValues, setSpecValues] = useState({});
+    const [uploadingImages, setUploadingImages] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         price: 0,
@@ -43,24 +30,25 @@ const Products = () => {
         description: '',
         imageUrl: '',
         images: [],
-        variants: [],
         categoryId: '',
         supplierId: '',
-        backupSupplierId: '',
-        supplyType: '',
-        warrantyProvider: '',
     });
     const [error, setError] = useState('');
-    const { isAdmin } = useAuth();
+    const { user, isAdmin } = useAuth();
+    const canLoadSuppliers = ['Admin', 'Warehouse'].includes(user?.role);
 
     useEffect(() => {
         loadCategories();
-        loadSuppliers();
-    }, []);
+        if (canLoadSuppliers) {
+            loadSuppliers();
+        } else {
+            setSuppliers([]);
+        }
+    }, [canLoadSuppliers]);
 
     useEffect(() => {
         loadProducts();
-    }, [page, keyword, categoryId]);
+    }, [page, submittedKeyword, categoryId]);
 
     const loadSpecDefinitions = async (nextCategoryId, productSpecs = []) => {
         if (!nextCategoryId) {
@@ -76,7 +64,10 @@ const Products = () => {
             productSpecs.forEach((spec) => {
                 const definitionId = spec.specDefinitionId ?? spec.SpecDefinitionId;
                 if (!definitionId) return;
-                values[definitionId] = spec.value ?? spec.valueText ?? spec.valueNumber ?? spec.valueBool ?? '';
+                values[definitionId] = {
+                    specOptionId: spec.specOptionId ?? spec.SpecOptionId ?? '',
+                    value: spec.valueText ?? spec.optionValue ?? spec.value ?? spec.valueNumber ?? spec.valueBool ?? '',
+                };
             });
             setSpecDefinitions(definitions);
             setSpecValues(values);
@@ -110,7 +101,7 @@ const Products = () => {
         setLoading(true);
         try {
             const response = await productApi.search({
-                keyword,
+                keyword: submittedKeyword,
                 categoryId: categoryId || undefined,
                 page,
                 pageSize,
@@ -146,8 +137,8 @@ const Products = () => {
 
     const handleSearch = (e) => {
         e.preventDefault();
+        setSubmittedKeyword(keyword.trim());
         setPage(1);
-        loadProducts();
     };
 
     const openModal = async (product = null) => {
@@ -168,12 +159,8 @@ const Products = () => {
                 description: detail.description || '',
                 imageUrl: detail.imageUrl || '',
                 images: Array.isArray(detail.images) ? detail.images : [],
-                variants: Array.isArray(detail.variants) ? detail.variants : [],
                 categoryId: detail.categoryId,
                 supplierId: detail.supplierId || '',
-                backupSupplierId: detail.backupSupplierId || '',
-                supplyType: detail.supplyType || '',
-                warrantyProvider: detail.warrantyProvider || '',
             });
             await loadSpecDefinitions(detail.categoryId, detail.specs || []);
         } else {
@@ -186,12 +173,8 @@ const Products = () => {
                 description: '',
                 imageUrl: '',
                 images: [],
-                variants: [],
                 categoryId: nextCategoryId,
                 supplierId: '',
-                backupSupplierId: '',
-                supplyType: '',
-                warrantyProvider: '',
             });
             await loadSpecDefinitions(nextCategoryId, []);
         }
@@ -212,16 +195,72 @@ const Products = () => {
         }));
     };
 
-    const updateVariant = (index, patch) => {
-        setFormData((current) => ({
-            ...current,
-            variants: current.variants.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item),
-        }));
-    };
-
     const handleCategoryChange = async (nextCategoryId) => {
         setFormData({ ...formData, categoryId: nextCategoryId });
         await loadSpecDefinitions(nextCategoryId, []);
+    };
+
+    const setPrimaryImage = (imageUrl) => {
+        setFormData((current) => ({
+            ...current,
+            imageUrl,
+            images: (current.images || []).map((image) => ({ ...image, isPrimary: image.imageUrl === imageUrl })),
+        }));
+    };
+
+    const removeImage = (index) => {
+        setFormData((current) => {
+            const currentImages = current.images || [];
+            const removedImage = currentImages[index];
+            const nextImages = currentImages.filter((_, itemIndex) => itemIndex !== index);
+            const nextMainImage = removedImage?.imageUrl === current.imageUrl ? (nextImages[0]?.imageUrl || '') : current.imageUrl;
+
+            return {
+                ...current,
+                imageUrl: nextMainImage,
+                images: nextImages.map((image) => ({ ...image, isPrimary: image.imageUrl === nextMainImage })),
+            };
+        });
+    };
+
+    const handleUploadImages = async (files) => {
+        const selectedFiles = Array.from(files || []);
+        if (selectedFiles.length === 0) return;
+
+        setUploadingImages(true);
+        try {
+            const response = await uploadApi.uploadProductImages(selectedFiles);
+            const urls = Array.isArray(response.data?.urls) ? response.data.urls.filter(Boolean) : [];
+            if (urls.length === 0) return;
+
+            setFormData((current) => {
+                const hasMainImage = Boolean(String(current.imageUrl || '').trim());
+                const mainImageUrl = hasMainImage ? current.imageUrl : urls[0];
+                const existingUrls = new Set((current.images || []).map((image) => image.imageUrl));
+                const uploadedImages = urls
+                    .filter((url) => !existingUrls.has(url))
+                    .map((url, index) => ({
+                        imageUrl: url,
+                        altText: current.name || '',
+                        sortOrder: (current.images || []).length + index,
+                        isPrimary: url === mainImageUrl,
+                    }));
+
+                return {
+                    ...current,
+                    imageUrl: mainImageUrl,
+                    images: [...(current.images || []), ...uploadedImages].map((image) => ({
+                        ...image,
+                        isPrimary: image.imageUrl === mainImageUrl,
+                    })),
+                };
+            });
+        } catch (err) {
+            const data = err.response?.data;
+            setError(data?.message || data?.detail || data?.title || 'Khong the upload anh san pham');
+        } finally {
+            setUploadingImages(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -239,39 +278,18 @@ const Products = () => {
                     isPrimary: Boolean(image.isPrimary),
                 }));
 
-            const variants = (formData.variants || [])
-                .filter((variant) => String(variant.variantName || variant.colorName || variant.sku || '').trim())
-                .map((variant) => ({
-                    ...variant,
-                    variantName: variant.variantName || null,
-                    colorName: variant.colorName || null,
-                    colorCode: variant.colorCode || null,
-                    storage: variant.storage || null,
-                    ram: variant.ram || null,
-                    price: variant.price === '' || variant.price == null ? null : Number(variant.price),
-                    originalPrice: variant.originalPrice === '' || variant.originalPrice == null ? null : Number(variant.originalPrice),
-                    stock: Number(variant.stock || 0),
-                    sku: variant.sku || null,
-                    imageUrl: variant.imageUrl || null,
-                    isActive: variant.isActive !== false,
-                }));
-
             const data = {
                 ...formData,
                 price: parseFloat(formData.price),
-                stock: parseInt(formData.stock),
+                stock: editingProduct ? Number(editingProduct.stock || 0) : 0,
                 categoryId: parseInt(formData.categoryId),
                 supplierId: formData.supplierId ? parseInt(formData.supplierId) : null,
-                backupSupplierId: formData.backupSupplierId ? parseInt(formData.backupSupplierId) : null,
-                supplyType: formData.supplyType || null,
-                warrantyProvider: formData.warrantyProvider || null,
                 images,
-                variants,
             };
 
             let savedProduct;
             if (editingProduct) {
-                const response = await productApi.update(editingProduct.id, { id: editingProduct.id, ...data });
+                const response = await productApi.update(editingProduct.id, data);
                 savedProduct = response.data || { id: editingProduct.id };
             } else {
                 const response = await productApi.create(data);
@@ -279,15 +297,19 @@ const Products = () => {
             }
 
             const savedProductId = savedProduct?.id || editingProduct?.id;
-            if (savedProductId) {
+            if (savedProductId && specDefinitions.length > 0) {
                 const specPayload = specDefinitions.map((definition) => {
-                    const rawValue = specValues[definition.id];
-                    const dataType = String(definition.dataType || 'text').toLowerCase();
+                    const stateValue = specValues[definition.id] || {};
+                    const rawValue = typeof stateValue === 'object' ? stateValue.value : stateValue;
+                    const specOptionId = typeof stateValue === 'object' ? stateValue.specOptionId : null;
+                    const inputType = String(definition.inputType || definition.dataType || 'text');
+                    const normalizedInputType = inputType.toLowerCase();
                     return {
                         specDefinitionId: definition.id,
-                        valueText: dataType === 'number' || dataType === 'bool' ? null : (rawValue ? String(rawValue) : null),
-                        valueNumber: dataType === 'number' && rawValue !== '' && rawValue != null ? Number(rawValue) : null,
-                        valueBool: dataType === 'bool' && rawValue !== '' && rawValue != null ? rawValue === true || rawValue === 'true' : null,
+                        specOptionId: specOptionId ? Number(specOptionId) : null,
+                        valueText: normalizedInputType === 'number' || normalizedInputType === 'boolean' ? null : (rawValue ? String(rawValue) : null),
+                        valueNumber: normalizedInputType === 'number' && rawValue !== '' && rawValue != null ? Number(rawValue) : null,
+                        valueBool: normalizedInputType === 'boolean' && rawValue !== '' && rawValue != null ? rawValue === true || rawValue === 'true' : null,
                     };
                 });
                 await specApi.updateProductSpecs(savedProductId, specPayload);
@@ -462,72 +484,119 @@ const Products = () => {
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="md:col-span-2 rounded-md border border-slate-200 p-3">
                                         <div className="mb-3 flex items-center justify-between gap-2">
-                                            <span className="text-sm font-semibold text-admin-ink">Images</span>
-                                            <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold" onClick={() => setFormData({ ...formData, images: [...(formData.images || []), emptyImage()] })}>Them anh</button>
+                                            <div>
+                                                <span className="block text-sm font-semibold text-admin-ink">Anh san pham</span>
+                                                <span className="text-xs text-admin-muted">Upload file anh vao thu muc uploads/products. Anh chinh se dung lam banner.</span>
+                                            </div>
+                                            <label className="cursor-pointer rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold hover:bg-slate-50">
+                                                {uploadingImages ? 'Dang upload...' : 'Upload anh'}
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    multiple
+                                                    disabled={uploadingImages}
+                                                    onChange={(e) => {
+                                                        handleUploadImages(e.target.files);
+                                                        e.target.value = '';
+                                                    }}
+                                                />
+                                            </label>
                                         </div>
+                                        {formData.imageUrl && (
+                                            <div className="mb-4 rounded-md border border-orange-200 bg-orange-50 p-3">
+                                                <div className="mb-2 text-xs font-semibold uppercase text-orange-700">Anh chinh / banner</div>
+                                                <div className="flex items-center gap-3">
+                                                    <img src={resolveProductImage({ imageUrl: formData.imageUrl })} className="h-20 w-20 rounded-md border border-orange-200 bg-white object-contain" alt="Anh chinh" />
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="truncate text-sm font-semibold text-admin-ink">{formData.imageUrl}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                         {(formData.images || []).length === 0 ? (
-                                            <p className="mb-0 text-sm text-admin-muted">Chua co du lieu</p>
+                                            <p className="mb-0 text-sm text-admin-muted">Chua co anh. Hay bam "Upload anh".</p>
                                         ) : (formData.images || []).map((image, index) => (
-                                            <div key={`image-${index}`} className="mb-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_140px_110px_44px]">
-                                                <input type="text" className={`${inputClass} w-full`} placeholder="Image URL" value={image.imageUrl || ''} onChange={(e) => updateImage(index, { imageUrl: e.target.value })} />
-                                                <input type="text" className={`${inputClass} w-full`} placeholder="Alt text" value={image.altText || ''} onChange={(e) => updateImage(index, { altText: e.target.value })} />
-                                                <label className="flex items-center gap-2 text-sm text-admin-muted">
-                                                    <input type="checkbox" checked={Boolean(image.isPrimary)} onChange={(e) => updateImage(index, { isPrimary: e.target.checked })} />
-                                                    Primary
-                                                </label>
-                                                <button type="button" className="rounded-md bg-rose-600 text-white" onClick={() => setFormData({ ...formData, images: formData.images.filter((_, itemIndex) => itemIndex !== index) })}>
-                                                    <i className="fas fa-trash"></i>
+                                            <div key={`image-${index}`} className="mb-3 grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[80px_minmax(0,1fr)_auto_auto] md:items-center">
+                                                <img src={resolveProductImage({ imageUrl: image.imageUrl })} className="h-20 w-20 rounded-md border border-slate-200 bg-white object-contain" alt={image.altText || formData.name || 'Anh san pham'} />
+                                                <div className="min-w-0">
+                                                    <div className="truncate text-sm font-semibold text-admin-ink">{image.imageUrl}</div>
+                                                    <input type="text" className={`${inputClass} mt-2 w-full`} placeholder="Alt text" value={image.altText || ''} onChange={(e) => updateImage(index, { altText: e.target.value })} />
+                                                </div>
+                                                <button type="button" className={`rounded-md px-3 py-2 text-xs font-semibold ${formData.imageUrl === image.imageUrl ? 'bg-admin-brand text-white' : 'border border-slate-200 text-slate-700 hover:bg-slate-50'}`} onClick={() => setPrimaryImage(image.imageUrl)}>
+                                                    {formData.imageUrl === image.imageUrl ? 'Anh chinh' : 'Lam anh chinh'}
+                                                </button>
+                                                <button type="button" className="rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700" onClick={() => removeImage(index)}>
+                                                    Xoa
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="md:col-span-2 rounded-md border border-slate-200 p-3">
-                                        <div className="mb-3 flex items-center justify-between gap-2">
-                                            <span className="text-sm font-semibold text-admin-ink">Variants</span>
-                                            <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold" onClick={() => setFormData({ ...formData, variants: [...(formData.variants || []), emptyVariant()] })}>Them bien the</button>
-                                        </div>
-                                        {(formData.variants || []).length === 0 ? (
-                                            <p className="mb-0 text-sm text-admin-muted">Chua co du lieu</p>
-                                        ) : (formData.variants || []).map((variant, index) => (
-                                            <div key={`variant-${index}`} className="mb-4 rounded-md bg-slate-50 p-3">
-                                                <div className="grid gap-2 md:grid-cols-3">
-                                                    <input type="text" className={`${inputClass} w-full`} placeholder="Phien ban" value={variant.variantName || ''} onChange={(e) => updateVariant(index, { variantName: e.target.value })} />
-                                                    <input type="text" className={`${inputClass} w-full`} placeholder="Mau sac" value={variant.colorName || ''} onChange={(e) => updateVariant(index, { colorName: e.target.value })} />
-                                                    <input type="text" className={`${inputClass} w-full`} placeholder="Ma mau" value={variant.colorCode || ''} onChange={(e) => updateVariant(index, { colorCode: e.target.value })} />
-                                                    <input type="text" className={`${inputClass} w-full`} placeholder="Storage" value={variant.storage || ''} onChange={(e) => updateVariant(index, { storage: e.target.value })} />
-                                                    <input type="text" className={`${inputClass} w-full`} placeholder="RAM" value={variant.ram || ''} onChange={(e) => updateVariant(index, { ram: e.target.value })} />
-                                                    <input type="text" className={`${inputClass} w-full`} placeholder="SKU" value={variant.sku || ''} onChange={(e) => updateVariant(index, { sku: e.target.value })} />
-                                                    <input type="number" className={`${inputClass} w-full`} placeholder="Gia" value={variant.price ?? ''} onChange={(e) => updateVariant(index, { price: e.target.value })} />
-                                                    <input type="number" className={`${inputClass} w-full`} placeholder="Gia goc" value={variant.originalPrice ?? ''} onChange={(e) => updateVariant(index, { originalPrice: e.target.value })} />
-                                                    <input type="number" className={`${inputClass} w-full`} placeholder="Ton kho" value={variant.stock ?? 0} onChange={(e) => updateVariant(index, { stock: e.target.value })} />
-                                                    <input type="text" className={`${inputClass} w-full md:col-span-2`} placeholder="Anh bien the" value={variant.imageUrl || ''} onChange={(e) => updateVariant(index, { imageUrl: e.target.value })} />
-                                                    <button type="button" className="rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => setFormData({ ...formData, variants: formData.variants.filter((_, itemIndex) => itemIndex !== index) })}>Xoa</button>
-                                                </div>
+                                        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                            <div>
+                                                <span className="block text-sm font-semibold text-admin-ink">Thong so ky thuat theo danh muc</span>
+                                                <span className="text-xs text-admin-muted">Lay tu bo thong so cua danh muc dang chon, chi luu dong co gia tri.</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <div className="md:col-span-2 rounded-md border border-slate-200 p-3">
-                                        <div className="mb-3 flex items-center justify-between gap-2">
-                                            <span className="text-sm font-semibold text-admin-ink">Specs</span>
-                                            <span className="text-xs text-admin-muted">{specDefinitions.length} definitions</span>
+                                            <span className="text-xs font-semibold text-admin-muted">{specDefinitions.length} thong so</span>
                                         </div>
                                         {specDefinitions.length === 0 ? (
-                                            <p className="mb-0 text-sm text-admin-muted">Chua co du lieu</p>
+                                            <p className="mb-0 text-sm text-admin-muted">Danh muc nay chua co bo thong so. Hay cau hinh trong trang Danh muc truoc.</p>
                                         ) : (
                                             <div className="grid gap-3 md:grid-cols-2">
                                                 {specDefinitions.map((definition) => {
-                                                    const dataType = String(definition.dataType || 'text').toLowerCase();
+                                                    const inputType = String(definition.inputType || definition.dataType || 'text');
+                                                    const dataType = inputType.toLowerCase();
+                                                    const currentValue = specValues[definition.id] || {};
+                                                    const rawValue = typeof currentValue === 'object' ? currentValue.value : currentValue;
+                                                    const currentOptionId = typeof currentValue === 'object' ? currentValue.specOptionId : '';
+                                                    const options = Array.isArray(definition.options) ? definition.options : [];
+                                                    const hasOptions = options.length > 0;
+                                                    const allowCustomValue = definition.allowCustomValue !== false;
+                                                    const setSpecValue = (patch) => setSpecValues({
+                                                        ...specValues,
+                                                        [definition.id]: { specOptionId: currentOptionId || '', value: rawValue || '', ...patch },
+                                                    });
                                                     return (
                                                         <label key={definition.id}>
                                                             <span className="mb-1 block text-sm font-semibold text-admin-ink">{definition.name}{definition.unit ? ` (${definition.unit})` : ''}</span>
-                                                            {dataType === 'bool' ? (
-                                                                <select className={`${inputClass} w-full`} value={specValues[definition.id] ?? ''} onChange={(e) => setSpecValues({ ...specValues, [definition.id]: e.target.value })}>
+                                                            {dataType === 'boolean' || dataType === 'bool' ? (
+                                                                <select className={`${inputClass} w-full`} value={rawValue ?? ''} onChange={(e) => setSpecValue({ value: e.target.value, specOptionId: '' })}>
                                                                     <option value="">Chua co du lieu</option>
                                                                     <option value="true">Co</option>
                                                                     <option value="false">Khong</option>
                                                                 </select>
+                                                            ) : hasOptions && dataType === 'multiselect' ? (
+                                                                <div className="grid gap-2">
+                                                                    <select
+                                                                        multiple
+                                                                        className={`${inputClass} h-28 w-full`}
+                                                                        value={String(rawValue || '').split(',').map((item) => item.trim()).filter(Boolean)}
+                                                                        onChange={(e) => setSpecValue({ value: Array.from(e.target.selectedOptions).map((option) => option.value).join(', '), specOptionId: '' })}
+                                                                    >
+                                                                        {options.map((option) => <option key={option.id} value={option.value}>{option.value}</option>)}
+                                                                    </select>
+                                                                    {allowCustomValue && (
+                                                                        <input type="text" className={`${inputClass} w-full`} placeholder="Gia tri tuy chinh" value={rawValue ?? ''} onChange={(e) => setSpecValue({ value: e.target.value, specOptionId: '' })} />
+                                                                    )}
+                                                                </div>
+                                                            ) : hasOptions ? (
+                                                                <div className="grid gap-2">
+                                                                    <select className={`${inputClass} w-full`} value={currentOptionId || ''} onChange={(e) => {
+                                                                        const option = options.find((item) => String(item.id) === e.target.value);
+                                                                        setSpecValue({ specOptionId: e.target.value, value: option?.value || '' });
+                                                                    }}>
+                                                                        <option value="">Chon gia tri co san</option>
+                                                                        {options.map((option) => <option key={option.id} value={option.id}>{option.value}</option>)}
+                                                                    </select>
+                                                                    {allowCustomValue && (
+                                                                        <input type="text" className={`${inputClass} w-full`} placeholder="Nhap gia tri khac neu danh sach chua co" value={currentOptionId ? '' : (rawValue ?? '')} onChange={(e) => setSpecValue({ value: e.target.value, specOptionId: '' })} />
+                                                                    )}
+                                                                </div>
+                                                            ) : dataType === 'textarea' ? (
+                                                                <textarea className={`${inputClass} w-full`} rows="3" value={rawValue ?? ''} onChange={(e) => setSpecValue({ value: e.target.value, specOptionId: '' })} />
                                                             ) : (
-                                                                <input type={dataType === 'number' ? 'number' : 'text'} className={`${inputClass} w-full`} value={specValues[definition.id] ?? ''} onChange={(e) => setSpecValues({ ...specValues, [definition.id]: e.target.value })} />
+                                                                <input type={dataType === 'number' ? 'number' : 'text'} className={`${inputClass} w-full`} value={rawValue ?? ''} onChange={(e) => setSpecValue({ value: e.target.value, specOptionId: '' })} />
                                                             )}
                                                         </label>
                                                     );
@@ -552,39 +621,19 @@ const Products = () => {
                                     </label>
                                     <label>
                                         <span className="mb-1 block text-sm font-semibold text-admin-ink">Tồn kho</span>
-                                        <input type="number" className={`${inputClass} w-full`} value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} required min="0" />
-                                    </label>
-                                    <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">URL hình ảnh</span>
-                                        <input type="text" className={`${inputClass} w-full`} value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
+                                        <input type="number" className={`${inputClass} w-full bg-slate-100 text-slate-600`} value={formData.stock} readOnly />
+                                        <span className="mt-1 block text-xs font-semibold text-admin-muted">Tồn kho được cập nhật qua phiếu nhập kho, không chỉnh trực tiếp tại đây.</span>
                                     </label>
                                     <label className="md:col-span-2">
                                         <span className="mb-1 block text-sm font-semibold text-admin-ink">Mô tả</span>
                                         <textarea className={`${inputClass} w-full`} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows="4" />
                                     </label>
                                     <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Nha cung cap chinh</span>
+                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Nha cung cap</span>
                                         <select className={`${inputClass} w-full`} value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}>
                                             <option value="">Chua chon</option>
                                             {suppliers.map((supplier) => <option key={supplier.id ?? supplier.Id} value={supplier.id ?? supplier.Id}>{supplier.name ?? supplier.Name}</option>)}
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Nha cung cap du phong</span>
-                                        <select className={`${inputClass} w-full`} value={formData.backupSupplierId} onChange={(e) => setFormData({ ...formData, backupSupplierId: e.target.value })}>
-                                            <option value="">Chua chon</option>
-                                            {suppliers
-                                                .filter((supplier) => String(supplier.id ?? supplier.Id) !== String(formData.supplierId || ''))
-                                                .map((supplier) => <option key={supplier.id ?? supplier.Id} value={supplier.id ?? supplier.Id}>{supplier.name ?? supplier.Name}</option>)}
-                                        </select>
-                                    </label>
-                                    <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Loai nguon hang</span>
-                                        <input type="text" className={`${inputClass} w-full`} value={formData.supplyType} onChange={(e) => setFormData({ ...formData, supplyType: e.target.value })} />
-                                    </label>
-                                    <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Don vi bao hanh</span>
-                                        <input type="text" className={`${inputClass} w-full`} value={formData.warrantyProvider} onChange={(e) => setFormData({ ...formData, warrantyProvider: e.target.value })} />
                                     </label>
                                 </div>
                             </div>

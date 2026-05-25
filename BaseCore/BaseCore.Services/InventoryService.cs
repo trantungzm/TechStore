@@ -33,7 +33,6 @@ namespace BaseCore.Services
         private readonly IOrderRepositoryEF _orderRepository;
         private readonly IOrderDetailRepositoryEF _orderDetailRepository;
         private readonly ISupplierRepositoryEF _supplierRepository;
-        private readonly ICategorySupplierRepositoryEF _categorySupplierRepository;
 
         public InventoryService(
             IWarehouseRepositoryEF warehouseRepository,
@@ -47,8 +46,7 @@ namespace BaseCore.Services
             IProductRepositoryEF productRepository,
             IOrderRepositoryEF orderRepository,
             IOrderDetailRepositoryEF orderDetailRepository,
-            ISupplierRepositoryEF supplierRepository,
-            ICategorySupplierRepositoryEF categorySupplierRepository)
+            ISupplierRepositoryEF supplierRepository)
         {
             _warehouseRepository = warehouseRepository;
             _stockItemRepository = stockItemRepository;
@@ -62,7 +60,6 @@ namespace BaseCore.Services
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
             _supplierRepository = supplierRepository;
-            _categorySupplierRepository = categorySupplierRepository;
         }
 
         public async Task<GoodsReceiptDto> CreateReceiptAsync(CreateGoodsReceiptDto dto, Guid? userId)
@@ -107,10 +104,6 @@ namespace BaseCore.Services
             }
 
             if (categoryId <= 0) throw new InvalidOperationException("Category is required");
-            if (!await _categorySupplierRepository.ExistsAsync(categoryId, supplier.Id))
-            {
-                throw new InvalidOperationException("Supplier is not configured for the selected category");
-            }
 
             var receipt = new GoodsReceipt
             {

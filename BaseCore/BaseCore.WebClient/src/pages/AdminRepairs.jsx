@@ -5,6 +5,7 @@ import AdminFilterDropdown from '../components/AdminFilterDropdown';
 const REPAIR_STATUS_LABELS = {
     Pending: 'Chờ tiếp nhận',
     Intake: 'Đã tiếp nhận',
+    Received: 'Đã tiếp nhận',
     Diagnosing: 'Đang chẩn đoán',
     WaitingCustomerApproval: 'Chờ khách duyệt chi phí',
     WaitingParts: 'Chờ linh kiện',
@@ -16,7 +17,44 @@ const REPAIR_STATUS_LABELS = {
     Rejected: 'Từ chối',
 };
 
+const inputClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
+const labelClass = 'mb-1 block text-sm font-semibold text-admin-ink';
+
 const repairStatusText = (value) => REPAIR_STATUS_LABELS[value] || value || 'Không rõ';
+
+const normalize = (item) => ({
+    id: item.id ?? item.Id,
+    stockItemId: item.stockItemId ?? item.StockItemId,
+    repairCode: item.repairCode ?? item.RepairCode,
+    stockItem: item.stockItem ?? item.StockItem ?? null,
+    warrantyId: item.warrantyId ?? item.WarrantyId,
+    serialOrImei: item.serialOrImei ?? item.SerialOrImei,
+    productName: item.productName ?? item.ProductName,
+    customerName: item.customerName ?? item.CustomerName,
+    customerPhone: item.customerPhone ?? item.CustomerPhone,
+    status: item.status ?? item.Status,
+    issueDescription: item.issueDescription ?? item.IssueDescription,
+    receivedAt: item.receivedAt ?? item.ReceivedAt,
+    updatedAt: item.updatedAt ?? item.UpdatedAt,
+    updatedBy: item.updatedBy ?? item.UpdatedBy,
+    updates: item.updates ?? item.Updates ?? [],
+});
+
+const statusClass = (value) => {
+    const status = String(value || '').toLowerCase();
+    if (status === 'pending' || status === 'intake' || status === 'received') return 'bg-blue-50 text-blue-700';
+    if (status === 'diagnosing' || status === 'testing') return 'bg-cyan-50 text-cyan-700';
+    if (status === 'repairing') return 'bg-amber-50 text-amber-700';
+    if (status === 'waitingparts' || status === 'waitingcustomerapproval') return 'bg-violet-50 text-violet-700';
+    if (status === 'completed' || status === 'delivered') return 'bg-emerald-50 text-emerald-700';
+    if (status === 'cancelled' || status === 'rejected') return 'bg-rose-50 text-rose-700';
+    return 'bg-slate-100 text-slate-700';
+};
+
+const readError = (err, fallback) => {
+    const data = err?.response?.data;
+    return data?.message || data?.detail || data?.title || err?.message || fallback;
+};
 
 const AdminRepairs = () => {
     const [cases, setCases] = useState([]);
@@ -33,7 +71,6 @@ const AdminRepairs = () => {
         serialOrImei: '',
         issueDescription: '',
     });
-
     const [updateById, setUpdateById] = useState({});
     const [deviceLookup, setDeviceLookup] = useState({ loading: false, data: null, error: '' });
     const [warrantyLookup, setWarrantyLookup] = useState({ loading: false, data: null, error: '' });
@@ -45,8 +82,7 @@ const AdminRepairs = () => {
             const res = await repairApi.getAll();
             setCases(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            const data = err.response?.data;
-            setError(data?.message || data?.detail || data?.title || 'Không tải được hồ sơ sửa chữa.');
+            setError(readError(err, 'Không tải được hồ sơ sửa chữa.'));
         } finally {
             setLoading(false);
         }
@@ -61,23 +97,17 @@ const AdminRepairs = () => {
         if (!serial) {
             setDeviceLookup({ loading: false, data: null, error: '' });
             setWarrantyLookup({ loading: false, data: null, error: '' });
-            return;
+            return undefined;
         }
 
         let cancelled = false;
-        const timer = setTimeout(async () => {
+        const timer = window.setTimeout(async () => {
             setDeviceLookup({ loading: true, data: null, error: '' });
             try {
                 const res = await inventoryApi.lookupStockItem(serial);
                 if (!cancelled) setDeviceLookup({ loading: false, data: res.data || null, error: '' });
             } catch (err) {
-                if (cancelled) return;
-                const status = err?.response?.status;
-                if (status === 404) setDeviceLookup({ loading: false, data: null, error: 'Không tìm thấy mã thiết bị' });
-                else {
-                    const data = err?.response?.data;
-                    setDeviceLookup({ loading: false, data: null, error: data?.message || data?.detail || data?.title || 'Không tra cứu được thiết bị' });
-                }
+                if (!cancelled) setDeviceLookup({ loading: false, data: null, error: readError(err, 'Không tìm thấy mã thiết bị') });
             }
 
             setWarrantyLookup({ loading: true, data: null, error: '' });
@@ -87,58 +117,31 @@ const AdminRepairs = () => {
                 const warranty = Array.isArray(payload?.warranties) ? payload.warranties[0] : payload;
                 if (!cancelled) setWarrantyLookup({ loading: false, data: warranty || null, error: '' });
             } catch (err) {
-                if (cancelled) return;
-                const data = err?.response?.data;
-                setWarrantyLookup({ loading: false, data: null, error: data?.message || data?.detail || data?.title || 'Không tìm thấy bảo hành' });
+                if (!cancelled) setWarrantyLookup({ loading: false, data: null, error: readError(err, 'Không tìm thấy bảo hành') });
             }
         }, 300);
 
         return () => {
             cancelled = true;
-            clearTimeout(timer);
+            window.clearTimeout(timer);
         };
     }, [intake.serialOrImei]);
-
-    const normalize = (c) => ({
-        id: c.id ?? c.Id,
-        stockItemId: c.stockItemId ?? c.StockItemId,
-        repairCode: c.repairCode ?? c.RepairCode,
-        stockItem: c.stockItem ?? c.StockItem ?? null,
-        warrantyId: c.warrantyId ?? c.WarrantyId,
-        serialOrImei: c.serialOrImei ?? c.SerialOrImei,
-        productName: c.productName ?? c.ProductName,
-        customerName: c.customerName ?? c.CustomerName,
-        customerPhone: c.customerPhone ?? c.CustomerPhone,
-        status: c.status ?? c.Status,
-        issueDescription: c.issueDescription ?? c.IssueDescription,
-        receivedAt: c.receivedAt ?? c.ReceivedAt,
-        updatedAt: c.updatedAt ?? c.UpdatedAt,
-        updatedBy: c.updatedBy ?? c.UpdatedBy,
-        updates: c.updates ?? c.Updates ?? [],
-    });
 
     const filteredCases = useMemo(() => {
         const keyword = filters.keyword.trim().toLowerCase();
         const status = filters.status.trim().toLowerCase();
         return cases.filter((raw) => {
-            const c = normalize(raw);
-            if (status && String(c.status || '').toLowerCase() !== status) return false;
+            const item = normalize(raw);
+            if (status && String(item.status || '').toLowerCase() !== status) return false;
             if (!keyword) return true;
-            const serial = c.stockItem?.serialOrImei || c.stockItem?.SerialOrImei || '';
-            const productName = c.stockItem?.product?.name || c.stockItem?.Product?.Name || '';
-            const hay = [
-                c.id,
-                c.stockItemId,
-                c.warrantyId,
-                serial,
-                productName,
-                c.issueDescription,
-            ]
-                .map((x) => String(x || '').toLowerCase())
-                .join(' ');
-            return hay.includes(keyword);
+            const serial = item.serialOrImei || item.stockItem?.serialOrImei || item.stockItem?.SerialOrImei || '';
+            const productName = item.productName || item.stockItem?.product?.name || item.stockItem?.Product?.Name || '';
+            return [item.id, item.stockItemId, item.warrantyId, serial, productName, item.issueDescription]
+                .map((value) => String(value || '').toLowerCase())
+                .join(' ')
+                .includes(keyword);
         });
-    }, [cases, filters.keyword, filters.status]);
+    }, [cases, filters]);
 
     useEffect(() => {
         setPage(1);
@@ -147,7 +150,7 @@ const AdminRepairs = () => {
     const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredCases.length / pageSize)), [filteredCases.length]);
 
     useEffect(() => {
-        setPage((p) => Math.min(Math.max(1, p), totalPages));
+        setPage((current) => Math.min(Math.max(1, current), totalPages));
     }, [totalPages]);
 
     const pagedCases = useMemo(() => {
@@ -156,20 +159,11 @@ const AdminRepairs = () => {
     }, [filteredCases, page]);
 
     const activeFilterCount = (filters.keyword.trim() ? 1 : 0) + (filters.status ? 1 : 0);
+    const from = filteredCases.length ? (page - 1) * pageSize + 1 : 0;
+    const to = Math.min(page * pageSize, filteredCases.length);
 
-    const statusBadge = (value) => {
-        const s = String(value || '').toLowerCase();
-        if (s === 'pending' || s === 'intake') return 'badge-primary';
-        if (s === 'diagnosing') return 'badge-info';
-        if (s === 'repairing') return 'badge-warning';
-        if (s === 'waitingparts' || s === 'waitingcustomerapproval') return 'badge-secondary';
-        if (s === 'completed') return 'badge-success';
-        if (s === 'delivered') return 'badge-dark';
-        return 'badge-secondary';
-    };
-
-    const handleIntake = async (e) => {
-        e.preventDefault();
+    const handleIntake = async (event) => {
+        event.preventDefault();
         if (!intake.serialOrImei.trim()) return;
         setSubmitting(true);
         setError('');
@@ -182,8 +176,7 @@ const AdminRepairs = () => {
             setIntake({ serialOrImei: '', issueDescription: '' });
             await load();
         } catch (err) {
-            const data = err.response?.data;
-            setError(data?.message || data?.detail || data?.title || 'Không tạo được hồ sơ sửa chữa.');
+            setError(readError(err, 'Không tạo được hồ sơ sửa chữa.'));
         } finally {
             setSubmitting(false);
         }
@@ -201,279 +194,208 @@ const AdminRepairs = () => {
             setUpdateById((prev) => ({ ...prev, [id]: { message: '', statusAfter: '' } }));
             await load();
         } catch (err) {
-            const data = err.response?.data;
-            setError(data?.message || data?.detail || data?.title || 'Không cập nhật được hồ sơ sửa chữa.');
+            setError(readError(err, 'Không cập nhật được hồ sơ sửa chữa.'));
         } finally {
             setUpdatingId(null);
         }
     };
 
     return (
-        <div className="row">
-            <div className="col-lg-4">
-                <div className="card card-primary">
-                    <div className="card-header">
-                        <h3 className="card-title">Tiếp nhận sửa chữa</h3>
+        <div className="px-4 py-6">
+            <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Bảo hành</p>
+                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Hồ sơ sửa chữa</h2>
+                </div>
+                <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50 disabled:opacity-60" onClick={load} disabled={loading}>
+                    Làm mới
+                </button>
+            </div>
+
+            {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</div>}
+
+            <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
+                <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                    <div className="border-b border-slate-200 px-4 py-3">
+                        <h3 className="mb-0 text-base font-bold text-admin-ink">Tiếp nhận sửa chữa</h3>
                     </div>
-                    <div className="card-body">
-                        {error && <div className="alert alert-danger">{error}</div>}
-                        <form onSubmit={handleIntake}>
-                            <div className="form-group">
-                                <label>Mã thiết bị (Serial/IMEI)</label>
+                    <div className="p-4">
+                        <form className="space-y-4" onSubmit={handleIntake}>
+                            <label className="block">
+                                <span className={labelClass}>Mã thiết bị (Serial/IMEI)</span>
                                 <input
-                                    className="form-control"
+                                    className={inputClass}
                                     value={intake.serialOrImei}
                                     onChange={(e) => setIntake((p) => ({ ...p, serialOrImei: e.target.value }))}
+                                    placeholder="Nhập serial/IMEI cần tiếp nhận"
                                     required
                                 />
-                            </div>
-                            {(deviceLookup.loading || deviceLookup.error || deviceLookup.data || warrantyLookup.loading || warrantyLookup.error || warrantyLookup.data) && (
-                                <div className="border rounded p-2 bg-light mb-3">
-                                    <div className="d-flex justify-content-between flex-wrap" style={{ gap: 8 }}>
-                                        <div className="font-weight-bold">Thiết bị</div>
-                                        {deviceLookup.loading && <span className="text-muted small">Đang tải...</span>}
-                                    </div>
-                                    {deviceLookup.error ? (
-                                        <div className="text-danger small">{deviceLookup.error}</div>
-                                    ) : deviceLookup.data ? (
-                                        <>
-                                            <div className="small text-muted">{deviceLookup.data.productName || '-'}</div>
-                                            <div className="small text-muted">
-                                                Trạng thái: <span className="text-monospace">{deviceLookup.data.status || '-'}</span>
-                                            </div>
-                                            <div className="small text-muted">
-                                                Bán lúc: {deviceLookup.data.soldAt ? new Date(deviceLookup.data.soldAt).toLocaleString() : '-'}
-                                            </div>
-                                            <div className="small text-muted">
-                                                Khách hàng: {deviceLookup.data.customerName || '-'} {deviceLookup.data.customerPhone ? `(${deviceLookup.data.customerPhone})` : ''}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="text-muted small">-</div>
-                                    )}
+                            </label>
 
-                                    <hr className="my-2" />
-                                    <div className="d-flex justify-content-between flex-wrap" style={{ gap: 8 }}>
-                                        <div className="font-weight-bold">Bảo hành</div>
-                                        {warrantyLookup.loading && <span className="text-muted small">Đang tải...</span>}
+                            {(deviceLookup.loading || deviceLookup.error || deviceLookup.data || warrantyLookup.loading || warrantyLookup.error || warrantyLookup.data) && (
+                                <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+                                    <div>
+                                        <div className="mb-1 flex items-center justify-between gap-2">
+                                            <span className="text-sm font-bold text-admin-ink">Thiết bị</span>
+                                            {deviceLookup.loading && <span className="text-xs font-semibold text-admin-muted">Đang tải...</span>}
+                                        </div>
+                                        {deviceLookup.error ? (
+                                            <div className="text-sm font-semibold text-rose-700">{deviceLookup.error}</div>
+                                        ) : deviceLookup.data ? (
+                                            <div className="space-y-1 text-sm text-admin-muted">
+                                                <div className="font-semibold text-admin-ink">{deviceLookup.data.productName || '-'}</div>
+                                                <div>Trạng thái: {deviceLookup.data.status || '-'}</div>
+                                                <div>Bán lúc: {deviceLookup.data.soldAt ? new Date(deviceLookup.data.soldAt).toLocaleString() : '-'}</div>
+                                                <div>Khách hàng: {deviceLookup.data.customerName || '-'} {deviceLookup.data.customerPhone ? `(${deviceLookup.data.customerPhone})` : ''}</div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-admin-muted">-</div>
+                                        )}
                                     </div>
-                                    {warrantyLookup.error ? (
-                                        <div className="text-muted small">{warrantyLookup.error}</div>
-                                    ) : warrantyLookup.data ? (
-                                        <>
-                                            <div className="small text-muted">
-                                                Trạng thái: <span className="text-monospace">{warrantyLookup.data.status || warrantyLookup.data.Status || '-'}</span>
+
+                                    <div className="border-t border-slate-200 pt-3">
+                                        <div className="mb-1 flex items-center justify-between gap-2">
+                                            <span className="text-sm font-bold text-admin-ink">Bảo hành</span>
+                                            {warrantyLookup.loading && <span className="text-xs font-semibold text-admin-muted">Đang tải...</span>}
+                                        </div>
+                                        {warrantyLookup.error ? (
+                                            <div className="text-sm font-semibold text-admin-muted">{warrantyLookup.error}</div>
+                                        ) : warrantyLookup.data ? (
+                                            <div className="space-y-1 text-sm text-admin-muted">
+                                                <div>Trạng thái: {warrantyLookup.data.status || warrantyLookup.data.Status || '-'}</div>
+                                                <div>
+                                                    Hết hạn: {warrantyLookup.data.endDate || warrantyLookup.data.EndDate || warrantyLookup.data.expiresAt || warrantyLookup.data.ExpiresAt
+                                                        ? new Date(warrantyLookup.data.endDate || warrantyLookup.data.EndDate || warrantyLookup.data.expiresAt || warrantyLookup.data.ExpiresAt).toLocaleString()
+                                                        : '-'}
+                                                </div>
                                             </div>
-                                            <div className="small text-muted">
-                                                Hết hạn: {warrantyLookup.data.endDate || warrantyLookup.data.EndDate || warrantyLookup.data.expiresAt || warrantyLookup.data.ExpiresAt ? new Date(warrantyLookup.data.endDate || warrantyLookup.data.EndDate || warrantyLookup.data.expiresAt || warrantyLookup.data.ExpiresAt).toLocaleString() : '-'}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="text-muted small">-</div>
-                                    )}
+                                        ) : (
+                                            <div className="text-sm text-admin-muted">-</div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
-                            <div className="form-group">
-                                <label>Mô tả lỗi</label>
+
+                            <label className="block">
+                                <span className={labelClass}>Mô tả lỗi</span>
                                 <textarea
-                                    className="form-control"
-                                    rows="5"
+                                    className={`${inputClass} min-h-32 resize-y`}
                                     value={intake.issueDescription}
                                     onChange={(e) => setIntake((p) => ({ ...p, issueDescription: e.target.value }))}
+                                    placeholder="Ghi nhận lỗi khách báo hoặc tình trạng máy khi tiếp nhận"
                                 />
-                            </div>
-                            <button className="btn btn-primary btn-block" disabled={submitting}>
+                            </label>
+
+                            <button className="w-full rounded-md bg-admin-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" disabled={submitting}>
                                 {submitting ? 'Đang lưu...' : 'Tạo hồ sơ sửa chữa'}
                             </button>
                         </form>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            <div className="col-lg-8">
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Hồ sơ sửa chữa</h3>
-                        <div className="card-tools">
-                            <AdminFilterDropdown
-                                open={isFilterMenuOpen}
-                                onOpenChange={setIsFilterMenuOpen}
-                                label="Bộ lọc"
-                                activeCount={activeFilterCount}
-                            >
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        setIsFilterMenuOpen(false);
-                                    }}
-                                >
-                                    <div className="form-group">
-                                        <label>Từ khóa</label>
-                                        <input
-                                            className="form-control"
-                                            value={filters.keyword}
-                                            onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Trạng thái</label>
-                                        <select
-                                            className="form-control"
-                                            value={filters.status}
-                                            onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}
-                                        >
-                                            <option value="">Tất cả</option>
-                                            {Object.entries(REPAIR_STATUS_LABELS).map(([value, label]) => (
-                                                <option key={value} value={value}>{label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="d-flex justify-content-end" style={{ gap: 8 }}>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-secondary"
-                                            onClick={() => setFilters({ keyword: '', status: '' })}
-                                        >
-                                            Xóa lọc
-                                        </button>
-                                        <button type="submit" className="btn btn-primary">
-                                            Đóng
-                                        </button>
-                                    </div>
-                                </form>
-                            </AdminFilterDropdown>
-                            <button className="btn btn-sm btn-outline-primary" onClick={load} disabled={loading}>
-                                Làm mới
-                            </button>
-                        </div>
+                <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                    <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                        <h3 className="mb-0 text-base font-bold text-admin-ink">Danh sách hồ sơ</h3>
+                        <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bộ lọc" activeCount={activeFilterCount}>
+                            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); setIsFilterMenuOpen(false); }}>
+                                <label className="block">
+                                    <span className={labelClass}>Từ khóa</span>
+                                    <input className={inputClass} value={filters.keyword} onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))} />
+                                </label>
+                                <label className="block">
+                                    <span className={labelClass}>Trạng thái</span>
+                                    <select className={inputClass} value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
+                                        <option value="">Tất cả</option>
+                                        {Object.entries(REPAIR_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                    </select>
+                                </label>
+                                <div className="flex justify-end gap-2">
+                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => setFilters({ keyword: '', status: '' })}>Xóa lọc</button>
+                                    <button type="submit" className="rounded-md bg-admin-brand px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">Đóng</button>
+                                </div>
+                            </form>
+                        </AdminFilterDropdown>
                     </div>
-                    <div className="card-body">
+
+                    <div className="p-4">
                         {loading ? (
-                            <div className="text-center py-5">
-                                <div className="spinner-border text-primary"></div>
-                            </div>
-                        ) : filteredCases.length === 0 ? (
-                            <div className="alert alert-light border mb-0">Chưa có hồ sơ sửa chữa</div>
+                            <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải hồ sơ sửa chữa...</div>
                         ) : (
-                            <div className="table-responsive">
-                                <table className="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ width: 70 }}>ID</th>
-                                            <th style={{ width: 110 }}>Serial</th>
-                                            <th style={{ width: 120 }}>Bảo hành</th>
-                                            <th style={{ width: 140 }}>Trạng thái</th>
-                                            <th>Mô tả</th>
-                                            <th style={{ width: 260 }}>Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pagedCases.map((raw) => {
-                                            const c = normalize(raw);
-                                            const local = updateById[c.id] || { message: '', statusAfter: '' };
-                                            return (
-                                                <tr key={c.id}>
-                                                    <td>#{c.id}</td>
-                                                    <td>
-                                                        <div>{c.serialOrImei || c.stockItemId || '-'}</div>
-                                                        {(c.stockItem?.serialOrImei || c.stockItem?.SerialOrImei) && (
-                                                            <div className="text-muted small text-monospace">
-                                                                {c.stockItem.serialOrImei || c.stockItem.SerialOrImei}
+                            <>
+                                <div className="overflow-x-auto rounded-md border border-slate-200">
+                                    <table className="min-w-[980px] divide-y divide-slate-200 text-sm">
+                                        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                                            <tr>
+                                                <th className="w-[80px] px-4 py-3">ID</th>
+                                                <th className="w-[220px] px-4 py-3">Thiết bị</th>
+                                                <th className="w-[140px] px-4 py-3">Bảo hành</th>
+                                                <th className="w-[170px] px-4 py-3">Trạng thái</th>
+                                                <th className="px-4 py-3">Mô tả</th>
+                                                <th className="w-[280px] px-4 py-3">Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {pagedCases.map((raw) => {
+                                                const item = normalize(raw);
+                                                const local = updateById[item.id] || { message: '', statusAfter: '' };
+                                                const serial = item.serialOrImei || item.stockItem?.serialOrImei || item.stockItem?.SerialOrImei || item.stockItemId || '-';
+                                                const productName = item.productName || item.stockItem?.product?.name || item.stockItem?.Product?.Name || '-';
+                                                return (
+                                                    <tr key={item.id} className="align-top hover:bg-slate-50">
+                                                        <td className="px-4 py-3 font-semibold text-admin-ink">#{item.id}</td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="font-mono text-sm font-semibold text-admin-ink">{serial}</div>
+                                                            <div className="mt-1 text-sm text-admin-muted">{productName}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-admin-muted">{item.warrantyId ?? '-'}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusClass(item.status)}`}>{repairStatusText(item.status)}</span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="mb-1 text-xs font-semibold text-admin-muted">Tiếp nhận: {item.receivedAt ? new Date(item.receivedAt).toLocaleString() : '-'}</div>
+                                                            <div className="max-w-[320px] whitespace-pre-wrap text-admin-ink">{item.issueDescription || '-'}</div>
+                                                            {item.updatedAt && (
+                                                                <div className="mt-1 text-xs font-semibold text-admin-muted">
+                                                                    Cập nhật: {new Date(item.updatedAt).toLocaleString()} ({item.updatedBy || 'nhân viên'})
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="space-y-2">
+                                                                <select className={inputClass} value={local.statusAfter} onChange={(e) => setUpdateById((prev) => ({ ...prev, [item.id]: { ...local, statusAfter: e.target.value } }))}>
+                                                                    <option value="">-- Trạng thái --</option>
+                                                                    {Object.entries(REPAIR_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                                                </select>
+                                                                <input className={inputClass} placeholder="Ghi chú kỹ thuật" value={local.message} onChange={(e) => setUpdateById((prev) => ({ ...prev, [item.id]: { ...local, message: e.target.value } }))} />
+                                                                <button type="button" className="w-full rounded-md bg-admin-brand px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" onClick={() => handleUpdate(item.id)} disabled={updatingId === item.id}>
+                                                                    {updatingId === item.id ? 'Đang cập nhật...' : 'Cập nhật'}
+                                                                </button>
                                                             </div>
-                                                        )}
-                                                        {(c.productName || c.stockItem?.product?.name || c.stockItem?.Product?.Name) && (
-                                                            <div className="text-muted small">
-                                                                {c.productName || c.stockItem.product?.name || c.stockItem.Product?.Name}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td>{c.warrantyId ?? '-'}</td>
-                                                    <td>
-                                                        <span className={`badge ${statusBadge(c.status)}`}>{repairStatusText(c.status)}</span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="text-muted small">
-                                                            Tiếp nhận: {c.receivedAt ? new Date(c.receivedAt).toLocaleString() : '-'}
-                                                        </div>
-                                                        <div>{c.issueDescription || '-'}</div>
-                                                        {c.updatedAt && (
-                                                            <div className="text-muted small">
-                                                                Cập nhật: {new Date(c.updatedAt).toLocaleString()} ({c.updatedBy || 'nhân viên'})
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex flex-column" style={{ gap: 8 }}>
-                                                            <select
-                                                                className="form-control form-control-sm"
-                                                                value={local.statusAfter}
-                                                                onChange={(e) =>
-                                                                    setUpdateById((prev) => ({
-                                                                        ...prev,
-                                                                        [c.id]: { ...local, statusAfter: e.target.value },
-                                                                    }))
-                                                                }
-                                                            >
-                                                                <option value="">-- Trạng thái --</option>
-                                                                {Object.entries(REPAIR_STATUS_LABELS).map(([value, label]) => (
-                                                                    <option key={value} value={value}>{label}</option>
-                                                                ))}
-                                                            </select>
-                                                            <input
-                                                                className="form-control form-control-sm"
-                                                                placeholder="Ghi chú kỹ thuật"
-                                                                value={local.message}
-                                                                onChange={(e) =>
-                                                                    setUpdateById((prev) => ({
-                                                                        ...prev,
-                                                                        [c.id]: { ...local, message: e.target.value },
-                                                                    }))
-                                                                }
-                                                            />
-                                                            <button
-                                                                className="btn btn-sm btn-primary"
-                                                                onClick={() => handleUpdate(c.id)}
-                                                                disabled={updatingId === c.id}
-                                                            >
-                                                                {updatingId === c.id ? 'Đang cập nhật...' : 'Cập nhật'}
-                                                            </button>
-                                                        </div>
-                                                    </td>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {!pagedCases.length && (
+                                                <tr>
+                                                    <td colSpan="6" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">Chưa có hồ sơ sửa chữa phù hợp.</td>
                                                 </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <div className="text-muted small">
-                                        Hiển thị {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredCases.length)} / {filteredCases.length}
-                                    </div>
-                                    <div className="btn-group">
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                            disabled={page <= 1}
-                                        >
-                                            Trước
-                                        </button>
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" disabled>
-                                            Trang {page} / {totalPages}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm btn-outline-secondary"
-                                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                            disabled={page >= totalPages}
-                                        >
-                                            Sau
-                                        </button>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                                    <div>Hiển thị {from}-{to} trong {filteredCases.length} hồ sơ</div>
+                                    <div className="flex items-center gap-2">
+                                        <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Trước</button>
+                                        <span className="rounded-md bg-slate-100 px-3 py-2 font-semibold text-admin-ink">Trang {page} / {totalPages}</span>
+                                        <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Sau</button>
                                     </div>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     );

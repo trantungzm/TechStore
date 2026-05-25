@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { orderApi, userApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency } from '../utils/store';
 
 const statuses = ['Pending', 'Confirmed', 'Processing', 'Shipping', 'Completed', 'CancelRequested', 'Cancelled', 'CancelRejected'];
@@ -64,6 +65,7 @@ const AdminOrders = () => {
     const [error, setError] = useState('');
     const [processingActionId, setProcessingActionId] = useState(null);
     const [orderDetails, setOrderDetails] = useState(null);
+    const { isAdmin } = useAuth();
 
     useEffect(() => {
         loadData();
@@ -75,7 +77,7 @@ const AdminOrders = () => {
         try {
             const [ordersRes, usersRes] = await Promise.all([
                 orderApi.getAll(),
-                userApi.getAll({ page: 1, pageSize: 200 }),
+                isAdmin() ? userApi.getAll({ page: 1, pageSize: 200 }) : Promise.resolve({ data: [] }),
             ]);
             const usersMap = {};
             const usersData = Array.isArray(usersRes.data)

@@ -18,8 +18,64 @@ const PRIORITY_LABELS = {
     Urgent: 'Khẩn cấp',
 };
 
+const inputClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
+
 const ticketStatusText = (value) => TICKET_STATUS_LABELS[value] || value || 'Không rõ';
 const priorityText = (value) => PRIORITY_LABELS[value] || value || 'Không rõ';
+
+const normalize = (t) => ({
+    id: t.id ?? t.Id,
+    userId: t.userId ?? t.UserId ?? null,
+    subject: t.subject ?? t.Subject,
+    description: t.description ?? t.Description,
+    status: t.status ?? t.Status,
+    priority: t.priority ?? t.Priority ?? 'Normal',
+    createdAt: t.createdAt ?? t.CreatedAt,
+    updatedAt: t.updatedAt ?? t.UpdatedAt,
+    serialOrImei: t.serialOrImei ?? t.SerialOrImei ?? t.stockItem?.serialOrImei ?? t.StockItem?.SerialOrImei ?? null,
+    updates: t.updates ?? t.Updates ?? [],
+});
+
+const statusClass = (value) => {
+    const s = String(value || '').toLowerCase();
+    if (s === 'open') return 'bg-blue-50 text-blue-700';
+    if (s === 'inprogress') return 'bg-amber-50 text-amber-700';
+    if (s === 'waitingcustomer') return 'bg-violet-50 text-violet-700';
+    if (s === 'resolved') return 'bg-emerald-50 text-emerald-700';
+    if (s === 'closed') return 'bg-slate-100 text-slate-700';
+    if (s === 'cancelled') return 'bg-rose-50 text-rose-700';
+    return 'bg-slate-100 text-slate-700';
+};
+
+const priorityClass = (value) => {
+    const p = String(value || '').toLowerCase();
+    if (p === 'urgent') return 'bg-rose-50 text-rose-700';
+    if (p === 'high') return 'bg-orange-50 text-orange-700';
+    if (p === 'low') return 'bg-slate-100 text-slate-700';
+    return 'bg-blue-50 text-blue-700';
+};
+
+const splitMessageParts = (text) => {
+    const raw = String(text || '').trim();
+    if (!raw) return { text: '', images: [] };
+    const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const images = [];
+    const textLines = [];
+
+    const isImageUrl = (url) => {
+        if (url.startsWith('data:image/')) return true;
+        const lower = url.toLowerCase();
+        if (!(lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/'))) return false;
+        return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some((ext) => lower.endsWith(ext));
+    };
+
+    lines.forEach((line) => {
+        if (isImageUrl(line)) images.push(line);
+        else textLines.push(line);
+    });
+
+    return { text: textLines.join('\n'), images };
+};
 
 const AdminTickets = () => {
     const [tickets, setTickets] = useState([]);
@@ -52,41 +108,21 @@ const AdminTickets = () => {
         load();
     }, []);
 
-    const normalize = (t) => ({
-        id: t.id ?? t.Id,
-        userId: t.userId ?? t.UserId ?? null,
-        subject: t.subject ?? t.Subject,
-        description: t.description ?? t.Description,
-        status: t.status ?? t.Status,
-        priority: t.priority ?? t.Priority ?? 'Normal',
-        createdAt: t.createdAt ?? t.CreatedAt,
-        updatedAt: t.updatedAt ?? t.UpdatedAt,
-        stockItem: t.stockItem ?? t.StockItem ?? null,
-        serialOrImei: t.serialOrImei ?? t.SerialOrImei ?? t.stockItem?.serialOrImei ?? t.StockItem?.SerialOrImei ?? null,
-        updates: t.updates ?? t.Updates ?? [],
-    });
-
     const filteredTickets = useMemo(() => {
         const keyword = filters.keyword.trim().toLowerCase();
         const status = filters.status.trim().toLowerCase();
         const priority = filters.priority.trim().toLowerCase();
         return tickets.filter((raw) => {
-            const t = normalize(raw);
-            if (status && String(t.status || '').toLowerCase() !== status) return false;
-            if (priority && String(t.priority || '').toLowerCase() !== priority) return false;
+            const ticket = normalize(raw);
+            if (status && String(ticket.status || '').toLowerCase() !== status) return false;
+            if (priority && String(ticket.priority || '').toLowerCase() !== priority) return false;
             if (!keyword) return true;
-            const hay = [
-                t.subject,
-                t.description,
-                t.serialOrImei,
-                t.userId,
-                t.id,
-            ]
-                .map((x) => String(x || '').toLowerCase())
-                .join(' ');
-            return hay.includes(keyword);
+            return [ticket.subject, ticket.description, ticket.serialOrImei, ticket.userId, ticket.id]
+                .map((value) => String(value || '').toLowerCase())
+                .join(' ')
+                .includes(keyword);
         });
-    }, [tickets, filters.keyword, filters.status, filters.priority]);
+    }, [tickets, filters]);
 
     useEffect(() => {
         setPage(1);
@@ -95,7 +131,7 @@ const AdminTickets = () => {
     const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredTickets.length / pageSize)), [filteredTickets.length]);
 
     useEffect(() => {
-        setPage((p) => Math.min(Math.max(1, p), totalPages));
+        setPage((current) => Math.min(Math.max(1, current), totalPages));
     }, [totalPages]);
 
     const pagedTickets = useMemo(() => {
@@ -104,44 +140,8 @@ const AdminTickets = () => {
     }, [filteredTickets, page]);
 
     const activeFilterCount = (filters.keyword.trim() ? 1 : 0) + (filters.status ? 1 : 0) + (filters.priority ? 1 : 0);
-
-    const statusBadge = (value) => {
-        const s = String(value || '').toLowerCase();
-        if (s === 'open') return 'badge-primary';
-        if (s === 'inprogress') return 'badge-info';
-        if (s === 'waitingcustomer') return 'badge-warning';
-        if (s === 'resolved') return 'badge-success';
-        if (s === 'pending') return 'badge-danger';
-        if (s === 'closed') return 'badge-secondary';
-        return 'badge-secondary';
-    };
-
-    const priorityBadge = (value) => {
-        const p = String(value || '').toLowerCase();
-        if (p === 'urgent') return 'badge-danger';
-        if (p === 'high') return 'badge-warning';
-        if (p === 'low') return 'badge-secondary';
-        return 'badge-primary';
-    };
-
-    const splitMessageParts = (text) => {
-        const raw = String(text || '').trim();
-        if (!raw) return { text: '', images: [] };
-        const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const imageUrls = [];
-        const textLines = [];
-        const isImageUrl = (url) => {
-            if (url.startsWith('data:image/')) return true;
-            const lower = url.toLowerCase();
-            if (!(lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('/'))) return false;
-            return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp') || lower.endsWith('.gif');
-        };
-        lines.forEach((line) => {
-            if (isImageUrl(line)) imageUrls.push(line);
-            else textLines.push(line);
-        });
-        return { text: textLines.join('\n'), images: imageUrls };
-    };
+    const from = filteredTickets.length ? (page - 1) * pageSize + 1 : 0;
+    const to = Math.min(page * pageSize, filteredTickets.length);
 
     const handleUpdate = async (ticketId) => {
         setUpdatingId(ticketId);
@@ -163,230 +163,155 @@ const AdminTickets = () => {
     };
 
     return (
-        <div className="card">
-            <div className="card-header">
-                <h3 className="card-title">Ticket hỗ trợ</h3>
-                <div className="card-tools">
-                    <AdminFilterDropdown
-                        open={isFilterMenuOpen}
-                        onOpenChange={setIsFilterMenuOpen}
-                        label="Bộ lọc"
-                        activeCount={activeFilterCount}
-                    >
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                setIsFilterMenuOpen(false);
-                            }}
-                        >
-                            <div className="form-group">
-                                <label>Từ khóa</label>
-                                <input
-                                    className="form-control"
-                                    value={filters.keyword}
-                                    onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Trạng thái</label>
-                                <select
-                                    className="form-control"
-                                    value={filters.status}
-                                    onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}
-                                >
-                                    <option value="">Tất cả</option>
-                                    {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => (
-                                        <option key={value} value={value}>{label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Độ ưu tiên</label>
-                                <select
-                                    className="form-control"
-                                    value={filters.priority}
-                                    onChange={(e) => setFilters((p) => ({ ...p, priority: e.target.value }))}
-                                >
-                                    <option value="">Tất cả</option>
-                                    {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                                        <option key={value} value={value}>{label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="d-flex justify-content-end" style={{ gap: 8 }}>
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary"
-                                    onClick={() => setFilters({ keyword: '', status: '', priority: '' })}
-                                >
-                                    Xóa lọc
-                                </button>
-                                <button type="submit" className="btn btn-primary">
-                                    Đóng
-                                </button>
-                            </div>
-                        </form>
-                    </AdminFilterDropdown>
-                    <button className="btn btn-sm btn-outline-primary" onClick={load} disabled={loading}>
-                        Làm mới
-                    </button>
+        <div className="px-4 py-6">
+            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Hỗ trợ</p>
+                        <h2 className="mb-0 text-2xl font-bold text-admin-ink">Ticket hỗ trợ</h2>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bộ lọc" activeCount={activeFilterCount}>
+                            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); setIsFilterMenuOpen(false); }}>
+                                <label className="block">
+                                    <span className="mb-1 block text-sm font-semibold text-admin-ink">Từ khóa</span>
+                                    <input className={inputClass} value={filters.keyword} onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))} />
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-sm font-semibold text-admin-ink">Trạng thái</span>
+                                    <select className={inputClass} value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
+                                        <option value="">Tất cả</option>
+                                        {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                    </select>
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-sm font-semibold text-admin-ink">Độ ưu tiên</span>
+                                    <select className={inputClass} value={filters.priority} onChange={(e) => setFilters((p) => ({ ...p, priority: e.target.value }))}>
+                                        <option value="">Tất cả</option>
+                                        {Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                    </select>
+                                </label>
+                                <div className="flex justify-end gap-2">
+                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => setFilters({ keyword: '', status: '', priority: '' })}>Xóa lọc</button>
+                                    <button type="submit" className="rounded-md bg-admin-brand px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">Đóng</button>
+                                </div>
+                            </form>
+                        </AdminFilterDropdown>
+                        <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50 disabled:opacity-60" onClick={load} disabled={loading}>
+                            Làm mới
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div className="card-body">
-                {error && <div className="alert alert-danger">{error}</div>}
-                {loading ? (
-                    <div className="text-center py-5">
-                        <div className="spinner-border text-primary"></div>
-                    </div>
-                ) : filteredTickets.length === 0 ? (
-                    <div className="alert alert-light border mb-0">Chưa có ticket</div>
-                ) : (
-                    <div className="table-responsive">
-                        <table className="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th style={{ width: 80 }}>ID</th>
-                                    <th>Nội dung</th>
-                                    <th style={{ width: 130 }}>Trạng thái</th>
-                                    <th style={{ width: 200 }}>Ngày tạo</th>
-                                    <th style={{ width: 260 }}>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagedTickets.map((raw) => {
-                                    const ticket = normalize(raw);
-                                    return (
-                                        <tr key={ticket.id}>
-                                            <td>#{ticket.id}</td>
-                                            <td>
-                                                <div className="font-weight-bold">
-                                                    {ticket.subject}
-                                                    {ticket.serialOrImei && <span className="text-muted ml-2">({ticket.serialOrImei})</span>}
-                                                </div>
-                                                <div className="text-muted small">{ticket.description}</div>
-                                                {ticket.updates?.length > 0 && (
-                                                    <div className="mt-2 border rounded p-2 bg-white" style={{ maxHeight: 260, overflowY: 'auto' }}>
-                                                        <div className="text-muted small mb-1">Trao đổi</div>
-                                                        {ticket.updates.map((u, idx) => {
-                                                            const actor = u.actorUserId || u.ActorUserId || null;
-                                                            const owner = ticket.userId || null;
-                                                            const byText = (() => {
-                                                                if (u.by || u.By) return u.by || u.By;
-                                                                if (!actor || !owner) return '';
-                                                                return String(actor).toLowerCase() === String(owner).toLowerCase() ? 'Customer' : 'Support';
-                                                            })();
-                                                            const isCustomer = String(byText).toLowerCase() === 'customer';
-                                                            const parts = splitMessageParts(u.message || u.Message || '');
-                                                            const timeText = new Date(u.createdAt || u.CreatedAt).toLocaleString();
-                                                            return (
-                                                                <div key={idx} className={`d-flex ${isCustomer ? 'justify-content-end' : 'justify-content-start'} mb-2`}>
-                                                                    <div
-                                                                        className={`${isCustomer ? 'bg-primary text-white' : 'bg-light border'} p-2 rounded`}
-                                                                        style={{ maxWidth: '78%', whiteSpace: 'pre-wrap' }}
-                                                                    >
-                                                                        <div className={`small ${isCustomer ? 'text-white-50' : 'text-muted'}`}>
-                                                                            {byText} · {timeText}
-                                                                        </div>
-                                                                        {parts.text && <div className="mt-1">{parts.text}</div>}
-                                                                        {parts.images.length > 0 && (
-                                                                            <div className="mt-2 d-flex flex-wrap" style={{ gap: 8 }}>
-                                                                                {parts.images.map((url) => (
-                                                                                    <a key={url} href={url} target="_blank" rel="noreferrer">
-                                                                                        <img src={url} alt="attachment" style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 10 }} />
-                                                                                    </a>
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                        {(u.statusAfter || u.StatusAfter) && (
-                                                                            <div className={`small mt-2 ${isCustomer ? 'text-white-50' : 'text-muted'}`}>
-                                                                                Trạng thái: {ticketStatusText(u.statusAfter || u.StatusAfter)}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <div className="d-flex flex-column" style={{ gap: 6 }}>
-                                                    <span className={`badge ${priorityBadge(ticket.priority)}`}>{priorityText(ticket.priority)}</span>
-                                                    <span className={`badge ${statusBadge(ticket.status)}`}>{ticketStatusText(ticket.status)}</span>
-                                                </div>
-                                            </td>
-                                            <td>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
-                                            <td>
-                                                <div className="d-flex flex-column" style={{ gap: 8 }}>
-                                                    <select
-                                                        className="form-control form-control-sm"
-                                                        value={priorityById[ticket.id] ?? ''}
-                                                        onChange={(e) => setPriorityById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}
-                                                    >
-                                                        <option value="">-- Độ ưu tiên --</option>
-                                                        {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                                                            <option key={value} value={value}>{label}</option>
-                                                        ))}
-                                                    </select>
-                                                    <select
-                                                        className="form-control form-control-sm"
-                                                        value={statusById[ticket.id] ?? ''}
-                                                        onChange={(e) => setStatusById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}
-                                                    >
-                                                        <option value="">-- Trạng thái --</option>
-                                                        {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => (
-                                                            <option key={value} value={value}>{label}</option>
-                                                        ))}
-                                                    </select>
-                                                    <input
-                                                        className="form-control form-control-sm"
-                                                        placeholder="Ghi chú / phản hồi"
-                                                        value={noteById[ticket.id] ?? ''}
-                                                        onChange={(e) => setNoteById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}
-                                                    />
-                                                    <button
-                                                        className="btn btn-sm btn-primary"
-                                                        onClick={() => handleUpdate(ticket.id)}
-                                                        disabled={updatingId === ticket.id}
-                                                    >
-                                                        {updatingId === ticket.id ? 'Đang cập nhật...' : 'Cập nhật'}
-                                                    </button>
-                                                </div>
-                                            </td>
+
+                <div className="p-4">
+                    {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</div>}
+                    {loading ? (
+                        <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải ticket...</div>
+                    ) : (
+                        <>
+                            <div className="overflow-x-auto rounded-md border border-slate-200">
+                                <table className="min-w-[1120px] divide-y divide-slate-200 text-sm">
+                                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                                        <tr>
+                                            <th className="w-[80px] px-4 py-3">ID</th>
+                                            <th className="px-4 py-3">Nội dung</th>
+                                            <th className="w-[170px] px-4 py-3">Trạng thái</th>
+                                            <th className="w-[190px] px-4 py-3">Ngày tạo</th>
+                                            <th className="w-[300px] px-4 py-3">Thao tác</th>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                        <div className="d-flex justify-content-between align-items-center">
-                            <div className="text-muted small">
-                                Hiển thị {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredTickets.length)} / {filteredTickets.length}
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {pagedTickets.map((raw) => {
+                                            const ticket = normalize(raw);
+                                            return (
+                                                <tr key={ticket.id} className="align-top hover:bg-slate-50">
+                                                    <td className="px-4 py-3 font-semibold text-admin-ink">#{ticket.id}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-bold text-admin-ink">
+                                                            {ticket.subject || '-'}
+                                                            {ticket.serialOrImei && <span className="ml-2 font-mono text-xs text-admin-muted">({ticket.serialOrImei})</span>}
+                                                        </div>
+                                                        <div className="mt-1 max-w-[460px] whitespace-pre-wrap text-sm text-admin-muted">{ticket.description || '-'}</div>
+                                                        {ticket.updates?.length > 0 && (
+                                                            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto rounded-md border border-slate-200 bg-white p-3">
+                                                                <div className="text-xs font-bold uppercase tracking-wide text-admin-muted">Trao đổi</div>
+                                                                {ticket.updates.map((update, index) => {
+                                                                    const actor = update.actorUserId || update.ActorUserId || null;
+                                                                    const owner = ticket.userId || null;
+                                                                    const byText = update.by || update.By || (actor && owner && String(actor).toLowerCase() === String(owner).toLowerCase() ? 'Customer' : 'Support');
+                                                                    const isCustomer = String(byText).toLowerCase() === 'customer';
+                                                                    const parts = splitMessageParts(update.message || update.Message || '');
+                                                                    const createdAt = update.createdAt || update.CreatedAt;
+                                                                    return (
+                                                                        <div key={`${ticket.id}-${index}`} className={`flex ${isCustomer ? 'justify-end' : 'justify-start'}`}>
+                                                                            <div className={`max-w-[78%] rounded-md px-3 py-2 ${isCustomer ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-slate-50 text-admin-ink'}`}>
+                                                                                <div className={`text-xs font-semibold ${isCustomer ? 'text-blue-100' : 'text-admin-muted'}`}>
+                                                                                    {isCustomer ? 'Khách hàng' : 'Hỗ trợ'} - {createdAt ? new Date(createdAt).toLocaleString() : '-'}
+                                                                                </div>
+                                                                                {parts.text && <div className="mt-1 whitespace-pre-wrap">{parts.text}</div>}
+                                                                                {parts.images.length > 0 && (
+                                                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                                                        {parts.images.map((url) => (
+                                                                                            <a key={url} href={url} target="_blank" rel="noreferrer">
+                                                                                                <img src={url} alt="Đính kèm" className="h-20 w-20 rounded-md object-cover" />
+                                                                                            </a>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex flex-col items-start gap-2">
+                                                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${priorityClass(ticket.priority)}`}>{priorityText(ticket.priority)}</span>
+                                                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusClass(ticket.status)}`}>{ticketStatusText(ticket.status)}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-admin-muted">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="space-y-2">
+                                                            <select className={inputClass} value={priorityById[ticket.id] ?? ''} onChange={(e) => setPriorityById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
+                                                                <option value="">-- Độ ưu tiên --</option>
+                                                                {Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                                            </select>
+                                                            <select className={inputClass} value={statusById[ticket.id] ?? ''} onChange={(e) => setStatusById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
+                                                                <option value="">-- Trạng thái --</option>
+                                                                {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                                            </select>
+                                                            <input className={inputClass} placeholder="Ghi chú / phản hồi" value={noteById[ticket.id] ?? ''} onChange={(e) => setNoteById((prev) => ({ ...prev, [ticket.id]: e.target.value }))} />
+                                                            <button type="button" className="w-full rounded-md bg-admin-brand px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" onClick={() => handleUpdate(ticket.id)} disabled={updatingId === ticket.id}>
+                                                                {updatingId === ticket.id ? 'Đang cập nhật...' : 'Cập nhật'}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {!pagedTickets.length && (
+                                            <tr>
+                                                <td colSpan="5" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">Chưa có ticket phù hợp.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div className="btn-group">
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-secondary"
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={page <= 1}
-                                >
-                                    Trước
-                                </button>
-                                <button type="button" className="btn btn-sm btn-outline-secondary" disabled>
-                                    Trang {page} / {totalPages}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-secondary"
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={page >= totalPages}
-                                >
-                                    Sau
-                                </button>
+
+                            <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                                <div>Hiển thị {from}-{to} trong {filteredTickets.length} ticket</div>
+                                <div className="flex items-center gap-2">
+                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Trước</button>
+                                    <span className="rounded-md bg-slate-100 px-3 py-2 font-semibold text-admin-ink">Trang {page} / {totalPages}</span>
+                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Sau</button>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+                        </>
+                    )}
+                </div>
+            </section>
         </div>
     );
 };

@@ -40,7 +40,6 @@ namespace BaseCore.DTO.Store
         public bool RequiresSerialTracking { get; set; }
         public int WarrantyMonths { get; set; } = 12;
         public List<ProductImageDto> Images { get; set; } = new();
-        public List<ProductVariantDto> Variants { get; set; } = new();
     }
 
     public class ProductUpdateDto
@@ -68,7 +67,6 @@ namespace BaseCore.DTO.Store
         public bool? RequiresSerialTracking { get; set; }
         public int? WarrantyMonths { get; set; }
         public List<ProductImageDto>? Images { get; set; }
-        public List<ProductVariantDto>? Variants { get; set; }
     }
 
     public class ProductSearchDto
@@ -166,11 +164,18 @@ namespace BaseCore.DTO.Store
         public string Name { get; set; } = "";
         public string Code { get; set; } = "";
         public string DataType { get; set; } = "text";
-        public string? Unit { get; set; }
-        public int SortOrder { get; set; }
-        public bool IsComparable { get; set; } = true;
-        public bool IsFilterable { get; set; }
-        public bool IsRequired { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public List<SpecOptionDto>? Options { get; set; }
+    }
+
+    public class SpecOptionDto
+    {
+        public int Id { get; set; }
+        public int SpecDefinitionId { get; set; }
+        public string Value { get; set; } = "";
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
@@ -180,10 +185,13 @@ namespace BaseCore.DTO.Store
         public int Id { get; set; }
         public int ProductId { get; set; }
         public int SpecDefinitionId { get; set; }
+        public int? SpecOptionId { get; set; }
         public string? Name { get; set; }
         public string? Code { get; set; }
         public string? DataType { get; set; }
+        public string? InputType { get; set; }
         public string? Unit { get; set; }
+        public string? OptionValue { get; set; }
         public string? ValueText { get; set; }
         public decimal? ValueNumber { get; set; }
         public bool? ValueBool { get; set; }
@@ -193,6 +201,7 @@ namespace BaseCore.DTO.Store
     public class ProductSpecValueUpsertDto
     {
         public int SpecDefinitionId { get; set; }
+        public int? SpecOptionId { get; set; }
         public string? ValueText { get; set; }
         public decimal? ValueNumber { get; set; }
         public bool? ValueBool { get; set; }

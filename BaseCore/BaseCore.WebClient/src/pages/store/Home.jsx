@@ -9,17 +9,6 @@ import ProductMiniCard from '../../components/store/ProductMiniCard';
 import { setPageMeta, t } from '../../utils/store';
 import { fadeInLeft, fadeInRight, fadeInUp, motionTransition, motionViewport } from '../../utils/motionVariants';
 
-const demoProducts = [
-    { id: 201, name: 'iPhone 15 Pro', price: 28990000, oldPrice: 32990000, stock: 15, badge: 'New', tab: 'New Arrivals', category: { name: 'Điện thoại' }, categoryId: 1, imageUrl: '/electro/img/product-1.png' },
-    { id: 202, name: 'MacBook Air M3', price: 31990000, oldPrice: 35990000, stock: 12, badge: 'Sale', tab: 'Top Selling', category: { name: 'Laptop' }, categoryId: 2, imageUrl: '/electro/img/product-3.png' },
-    { id: 203, name: 'AirPods Pro', price: 5990000, oldPrice: 6990000, stock: 25, tab: 'Featured', category: { name: 'Tai nghe' }, categoryId: 7, imageUrl: '/electro/img/product-5.png' },
-    { id: 204, name: 'iPad Pro 12.9', price: 25990000, oldPrice: 28990000, stock: 14, badge: 'New', tab: 'New Arrivals', category: { name: 'Tablet' }, categoryId: 4, imageUrl: '/electro/img/product-7.png' },
-    { id: 205, name: 'Apple Watch Series 9', price: 9990000, oldPrice: 11990000, stock: 16, badge: 'Sale', tab: 'Top Selling', category: { name: 'Đồng hồ thông minh' }, categoryId: 5, imageUrl: '/electro/img/product-8.png' },
-    { id: 206, name: 'Canon EOS R5', price: 64990000, oldPrice: 69990000, stock: 5, tab: 'Featured', category: { name: 'Máy ảnh' }, categoryId: 6, imageUrl: '/electro/img/product-9.png' },
-    { id: 207, name: 'Dell XPS 15', price: 35990000, oldPrice: 39990000, stock: 8, badge: 'New', tab: 'New Arrivals', category: { name: 'Laptop' }, categoryId: 2, imageUrl: '/electro/img/product-4.png' },
-    { id: 208, name: 'Bose QuietComfort 45', price: 8990000, oldPrice: 9990000, stock: 11, badge: 'Sale', tab: 'Top Selling', category: { name: 'Tai nghe' }, categoryId: 7, imageUrl: '/electro/img/product-10.png' },
-];
-
 const normalizeHomeProduct = (product, index) => ({
     ...product,
     oldPrice: product.oldPrice || Math.round(Number(product.price || 26250000) * 1.19),
@@ -128,7 +117,7 @@ const Home = () => {
 
     const miniProducts = useMemo(() => {
         const productMap = new Map();
-        [...bestsellerProducts, ...featuredProducts, ...demoProducts].forEach((product) => {
+        [...bestsellerProducts, ...featuredProducts].forEach((product) => {
             if (!productMap.has(product.id)) {
                 productMap.set(product.id, product);
             }
@@ -138,8 +127,7 @@ const Home = () => {
     }, [bestsellerProducts, featuredProducts]);
 
     const allProductItems = useMemo(() => {
-        const catalog = allProducts.length ? allProducts : demoProducts;
-        return spreadByCategory(catalog, 12).map(normalizeHomeProduct);
+        return spreadByCategory(allProducts, 12).map(normalizeHomeProduct);
     }, [allProducts]);
 
     const handleAddToCart = (product) => {
@@ -154,10 +142,9 @@ const Home = () => {
         const loadData = async () => {
             try {
                 const prods = await fetchHomeCatalog();
-                const catalog = prods.length ? prods : demoProducts;
-                setAllProducts(catalog);
-                setFeaturedProducts(getFeaturedProducts(catalog));
-                setBestsellerProducts(getBestsellerProducts(catalog));
+                setAllProducts(prods);
+                setFeaturedProducts(getFeaturedProducts(prods));
+                setBestsellerProducts(getBestsellerProducts(prods));
             } catch (error) {
                 console.error('Failed to load store home data', error);
             } finally {
@@ -351,4 +338,5 @@ const Home = () => {
 };
 
 export default Home;
+
 

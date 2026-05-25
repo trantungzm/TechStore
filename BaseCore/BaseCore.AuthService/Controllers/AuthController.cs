@@ -13,14 +13,14 @@ namespace BaseCore.AuthService.Controllers
     {
         private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
-        private readonly AppDbContext _db;
+        private readonly IServiceProvider _serviceProvider;
         private const int TokenExpirationMinutes = 480; // 8 hours
 
-        public AuthController(IUserService userService, IConfiguration configuration, AppDbContext db)
+        public AuthController(IUserService userService, IConfiguration configuration, IServiceProvider serviceProvider)
         {
             _userService = userService;
             _configuration = configuration;
-            _db = db;
+            _serviceProvider = serviceProvider;
         }
 
         [HttpPost("login")]
@@ -40,8 +40,8 @@ namespace BaseCore.AuthService.Controllers
 
             // Generate JWT token
             var secretKey = _configuration["Jwt:SecretKey"] ?? _configuration["AppSettings:Secret"] ?? "CHANGE_ME_TO_A_LONG_RANDOM_SECRET";
-            var issuer = _configuration["Jwt:Issuer"];
-            var audience = _configuration["Jwt:Audience"];
+            var issuer = _configuration["Jwt:Issuer"] ?? "BaseCore";
+            var audience = _configuration["Jwt:Audience"] ?? "BaseCore.WebClient";
             var roleName = await ResolveRoleName(user.UserType);
             var token = TokenHelper.GenerateToken(
                 secretKey,
@@ -78,7 +78,13 @@ namespace BaseCore.AuthService.Controllers
 
         private async Task<string> ResolveRoleName(int userType)
         {
-            var roleName = await _db.Roles
+            var db = _serviceProvider.GetService<AppDbContext>();
+            if (db == null)
+            {
+                return userType == 1 ? "Admin" : "User";
+            }
+
+            var roleName = await db.Roles
                 .Where(r => r.IsActive && !r.IsDeleted && r.RoleType == userType)
                 .Select(r => r.Name)
                 .FirstOrDefaultAsync();

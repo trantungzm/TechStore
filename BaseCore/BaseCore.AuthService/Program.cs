@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using BaseCore.AuthService.Demo;
 using BaseCore.AuthService.Validators;
 using BaseCore.Repository;
 using BaseCore.Repository.Authen;
@@ -21,6 +21,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+
+var dataProtectionKeysPath = Path.Combine(builder.Environment.ContentRootPath, ".data-protection-keys");
+Directory.CreateDirectory(dataProtectionKeysPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("BaseCore.AuthService")
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -82,21 +88,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var useDemoMode = builder.Configuration.GetValue<bool?>("DemoMode:Enabled") ?? true;
+var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=localhost;Database=BaseCoreSales;Trusted_Connection=true;";
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(sqlConnectionString));
 
-if (useDemoMode)
-{
-    builder.Services.AddSingleton<IUserRepository, DemoUserRepository>();
-}
-else
-{
-    var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Server=localhost;Database=BaseCoreSales;Trusted_Connection=true;";
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(sqlConnectionString));
-
-    builder.Services.AddScoped<IUserRepository, UserRepository>();
-}
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // DI for Authentication Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -152,12 +149,22 @@ app.UseExceptionHandler(errorApp =>
 });
 
 // Apply migrations and seed SQL Server data
-if (!useDemoMode)
+var autoMigrateOnStartup = builder.Configuration.GetValue("Database:AutoMigrateOnStartup", true);
+if (autoMigrateOnStartup)
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await dbContext.SeedDataAsync();
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+        await dbContext.SeedDataAsync();
+        Console.WriteLine("Database migrated and seeded successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine("Database migration/seed failed. Check DefaultConnection.");
+        Console.Error.WriteLine(ex);
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -172,6 +179,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine($"BaseCore Auth Service running on port 5002 - DemoMode: {useDemoMode}");
+Console.WriteLine("BaseCore Auth Service running on port 5002 - Database mode");
 Console.WriteLine("Endpoints: /api/auth, /api/users, /api/roles");
 app.Run();

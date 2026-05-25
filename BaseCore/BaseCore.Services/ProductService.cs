@@ -65,12 +65,12 @@ namespace BaseCore.Services
                 Sku = dto.Sku,
                 Brand = dto.Brand,
                 SupplierId = await ResolveSupplierIdAsync(dto.SupplierId),
-                BackupSupplierId = await ResolveSupplierIdAsync(dto.BackupSupplierId),
+                BackupSupplierId = null,
                 SupplyType = dto.SupplyType,
                 WarrantyProvider = dto.WarrantyProvider,
                 Description = dto.Description,
                 LongDescription = dto.LongDescription,
-                ImageUrl = dto.ImageUrl ?? string.Empty,
+                ImageUrl = string.Empty,
                 IsActive = dto.IsActive,
                 IsFeatured = dto.IsFeatured,
                 IsBestSeller = dto.IsBestSeller,
@@ -82,8 +82,6 @@ namespace BaseCore.Services
                 Category = category
             };
 
-            EnsureSupplierPair(product.SupplierId, product.BackupSupplierId);
-
             product.Images = dto.Images.Select((image, index) => new ProductImage
             {
                 ImageUrl = image.ImageUrl,
@@ -92,21 +90,7 @@ namespace BaseCore.Services
                 IsPrimary = image.IsPrimary
             }).ToList();
 
-            product.Variants = dto.Variants.Select(variant => new ProductVariant
-            {
-                VariantName = variant.VariantName,
-                ColorName = variant.ColorName,
-                ColorCode = variant.ColorCode,
-                Storage = variant.Storage,
-                Ram = variant.Ram,
-                Price = variant.Price,
-                OriginalPrice = variant.OriginalPrice,
-                Stock = variant.Stock,
-                Sku = variant.Sku,
-                ImageUrl = variant.ImageUrl,
-                IsActive = variant.IsActive,
-                CreatedAt = DateTime.UtcNow
-            }).ToList();
+            product.ImageUrl = ResolvePrimaryImageUrl(dto.ImageUrl, product.Images);
 
             return await _productRepository.AddAsync(product);
         }
@@ -138,7 +122,8 @@ namespace BaseCore.Services
             product.Stock = dto.Stock ?? product.Stock;
             product.Brand = dto.Brand ?? product.Brand;
             product.SupplierId = dto.SupplierId.HasValue ? await ResolveSupplierIdAsync(dto.SupplierId) : product.SupplierId;
-            product.BackupSupplierId = dto.BackupSupplierId.HasValue ? await ResolveSupplierIdAsync(dto.BackupSupplierId) : product.BackupSupplierId;
+            product.BackupSupplierId = null;
+            product.BackupSupplier = null;
             product.SupplyType = dto.SupplyType ?? product.SupplyType;
             product.WarrantyProvider = dto.WarrantyProvider ?? product.WarrantyProvider;
             product.Description = dto.Description ?? product.Description;
@@ -151,7 +136,6 @@ namespace BaseCore.Services
             product.IsDiscounted = dto.IsDiscounted ?? product.IsDiscounted;
             product.RequiresSerialTracking = dto.RequiresSerialTracking ?? product.RequiresSerialTracking;
             product.WarrantyMonths = dto.WarrantyMonths ?? product.WarrantyMonths;
-            EnsureSupplierPair(product.SupplierId, product.BackupSupplierId);
             product.UpdatedAt = DateTime.UtcNow;
 
             if (dto.Images != null)
@@ -166,28 +150,7 @@ namespace BaseCore.Services
                     IsPrimary = image.IsPrimary,
                     CreatedAt = image.CreatedAt == default ? DateTime.UtcNow : image.CreatedAt
                 }));
-            }
-
-            if (dto.Variants != null)
-            {
-                product.Variants.Clear();
-                product.Variants.AddRange(dto.Variants.Select(variant => new ProductVariant
-                {
-                    ProductId = product.Id,
-                    VariantName = variant.VariantName,
-                    ColorName = variant.ColorName,
-                    ColorCode = variant.ColorCode,
-                    Storage = variant.Storage,
-                    Ram = variant.Ram,
-                    Price = variant.Price,
-                    OriginalPrice = variant.OriginalPrice,
-                    Stock = variant.Stock,
-                    Sku = variant.Sku,
-                    ImageUrl = variant.ImageUrl,
-                    IsActive = variant.IsActive,
-                    CreatedAt = variant.CreatedAt == default ? DateTime.UtcNow : variant.CreatedAt,
-                    UpdatedAt = DateTime.UtcNow
-                }));
+                product.ImageUrl = ResolvePrimaryImageUrl(dto.ImageUrl, product.Images);
             }
 
             await _productRepository.UpdateAsync(product);
@@ -234,6 +197,18 @@ namespace BaseCore.Services
             return slug.Trim('-');
         }
 
+        private static string ResolvePrimaryImageUrl(string? imageUrl, IEnumerable<ProductImage> images)
+        {
+            if (!string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return imageUrl.Trim();
+            }
+
+            return images.FirstOrDefault(image => image.IsPrimary)?.ImageUrl
+                ?? images.OrderBy(image => image.SortOrder).FirstOrDefault()?.ImageUrl
+                ?? string.Empty;
+        }
+
         private async Task<int?> ResolveSupplierIdAsync(int? supplierId)
         {
             if (!supplierId.HasValue || supplierId.Value <= 0) return null;
@@ -248,19 +223,6 @@ namespace BaseCore.Services
             if (product.Supplier == null && product.SupplierId.HasValue)
             {
                 product.Supplier = await _supplierRepository.GetByIdAsync(product.SupplierId.Value);
-            }
-
-            if (product.BackupSupplier == null && product.BackupSupplierId.HasValue)
-            {
-                product.BackupSupplier = await _supplierRepository.GetByIdAsync(product.BackupSupplierId.Value);
-            }
-        }
-
-        private static void EnsureSupplierPair(int? supplierId, int? backupSupplierId)
-        {
-            if (supplierId.HasValue && backupSupplierId.HasValue && supplierId.Value == backupSupplierId.Value)
-            {
-                throw new InvalidOperationException("Backup supplier must be different from supplier");
             }
         }
     }

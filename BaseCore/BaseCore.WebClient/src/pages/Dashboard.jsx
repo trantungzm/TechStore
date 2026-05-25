@@ -72,7 +72,8 @@ const Dashboard = () => {
     const [orders, setOrders] = useState([]);
     const [usersCount, setUsersCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const { isAdmin } = useAuth();
+    const { user, isAdmin } = useAuth();
+    const canViewOrders = ['Admin', 'Warehouse'].includes(user?.role);
 
     useEffect(() => {
         loadDashboard();
@@ -84,7 +85,7 @@ const Dashboard = () => {
             const [productsRes, categoriesRes, ordersRes] = await Promise.all([
                 productApi.getAll({ page: 1, pageSize: 200 }),
                 categoryApi.getAll(),
-                orderApi.getAll(),
+                canViewOrders ? orderApi.getAll() : Promise.resolve({ data: [] }),
             ]);
 
             const productItems = productsRes.data?.items || productsRes.data?.data || productsRes.data || [];

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { categoryApi, categorySupplierApi, supplierApi } from '../services/api';
+import { supplierApi } from '../services/api';
 import { toast } from '../utils/store';
 
 const readError = (err, fallback) => err?.response?.data?.message || err?.response?.data?.detail || err?.message || fallback;
@@ -14,7 +14,6 @@ const normalizeSupplier = (x) => ({
     address: x.address ?? x.Address ?? '',
     taxCode: x.taxCode ?? x.TaxCode ?? '',
     contactPerson: x.contactPerson ?? x.ContactPerson ?? '',
-    supplierType: x.supplierType ?? x.SupplierType ?? 'AuthorizedDistributor',
     note: x.note ?? x.Note ?? '',
     isActive: x.isActive ?? x.IsActive ?? true,
     createdAt: x.createdAt ?? x.CreatedAt ?? null,
@@ -30,7 +29,6 @@ const emptyForm = {
     address: '',
     taxCode: '',
     contactPerson: '',
-    supplierType: 'AuthorizedDistributor',
     note: '',
     isActive: true,
 };
@@ -42,8 +40,7 @@ const AdminSuppliers = () => {
     const [error, setError] = useState('');
     const [query, setQuery] = useState('');
     const [form, setForm] = useState(emptyForm);
-    const [categories, setCategories] = useState([]);
-    const [categorySuppliers, setCategorySuppliers] = useState([]);
+    const [showForm, setShowForm] = useState(false);
 
     const loadItems = async () => {
         setLoading(true);
@@ -53,9 +50,6 @@ const AdminSuppliers = () => {
             const data = res.data;
             const list = Array.isArray(data) ? data : data.items || data.Items || [];
             setItems(list.map(normalizeSupplier));
-            const [categoryRes, mappingRes] = await Promise.all([categoryApi.getAll(), categorySupplierApi.getAll()]);
-            setCategories(Array.isArray(categoryRes.data) ? categoryRes.data : categoryRes.data?.items || []);
-            setCategorySuppliers(Array.isArray(mappingRes.data) ? mappingRes.data : mappingRes.data?.items || []);
         } catch (err) {
             setError(readError(err, 'Khong tai duoc danh sach nha cung cap.'));
         } finally {
@@ -78,21 +72,18 @@ const AdminSuppliers = () => {
         );
     }, [items, query]);
 
-    const supplierMapByCategory = useMemo(() => {
-        const map = new Map();
-        categorySuppliers.forEach((item) => {
-            const categoryId = Number(item.categoryId ?? item.CategoryId);
-            if (!categoryId) return;
-            if (!map.has(categoryId)) map.set(categoryId, []);
-            map.get(categoryId).push(item);
-        });
-        map.forEach((list) => list.sort((a, b) => Number(a.sortOrder ?? a.SortOrder ?? 0) - Number(b.sortOrder ?? b.SortOrder ?? 0)));
-        return map;
-    }, [categorySuppliers]);
-
     const handleChange = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-    const resetForm = () => setForm(emptyForm);
+    const resetForm = () => {
+        setForm(emptyForm);
+        setShowForm(false);
+    };
+
+    const openCreateForm = () => {
+        setForm(emptyForm);
+        setError('');
+        setShowForm(true);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -108,7 +99,7 @@ const AdminSuppliers = () => {
                 address: form.address.trim() || null,
                 taxCode: form.taxCode.trim() || null,
                 contactPerson: form.contactPerson.trim() || null,
-                supplierType: form.supplierType || 'AuthorizedDistributor',
+                supplierType: 'AuthorizedDistributor',
                 note: form.note.trim() || null,
                 isActive: Boolean(form.isActive),
             };
@@ -118,7 +109,7 @@ const AdminSuppliers = () => {
                 toast('Da cap nhat nha cung cap', 'success');
             } else {
                 await supplierApi.create(payload);
-                toast('Da tao nha cung cap', 'success');
+                toast('Da them nha cung cap', 'success');
             }
 
             resetForm();
@@ -130,7 +121,11 @@ const AdminSuppliers = () => {
         }
     };
 
-    const handleEdit = (item) => setForm({ ...item });
+    const handleEdit = (item) => {
+        setForm({ ...item });
+        setError('');
+        setShowForm(true);
+    };
 
     const handleToggleActive = async (item) => {
         const action = item.isActive ? 'Ngung hoat dong' : 'Kich hoat';
@@ -150,164 +145,130 @@ const AdminSuppliers = () => {
     };
 
     return (
-        <div className="p-3 p-lg-4">
-            <div className="row">
-                <div className="col-lg-7 mb-3 mb-lg-0">
-                    <div className="card mb-3">
-                        <div className="card-header">
-                            <h3 className="card-title mb-0">Nha cung cap theo danh muc</h3>
-                        </div>
-                        <div className="card-body p-0">
-                            <div className="table-responsive">
-                                <table className="table table-sm mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Danh muc</th>
-                                            <th>Nha cung cap</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {categories.map((category) => {
-                                            const categoryId = Number(category.id ?? category.Id);
-                                            const mappings = supplierMapByCategory.get(categoryId) || [];
-                                            return (
-                                                <tr key={categoryId}>
-                                                    <td className="font-weight-bold">{category.name ?? category.Name}</td>
-                                                    <td>
-                                                        {mappings.length ? mappings.map((mapping) => (
-                                                            <span key={mapping.id ?? mapping.Id} className="badge badge-info mr-2">
-                                                                {mapping.supplierName ?? mapping.SupplierName}
-                                                            </span>
-                                                        )) : <span className="text-muted">Chua cau hinh</span>}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="card">
-                        <div className="card-header d-flex align-items-center justify-content-between">
-                            <h3 className="card-title mb-0">Nha cung cap</h3>
-                            <div className="d-flex align-items-center gap-2">
-                                <input className="form-control form-control-sm" style={{ width: 240 }} placeholder="Tim nha cung cap..." value={query} onChange={(e) => setQuery(e.target.value)} />
-                                <button type="button" className="btn btn-sm btn-outline-primary" onClick={loadItems} disabled={loading}>
-                                    Lam moi
-                                </button>
-                            </div>
-                        </div>
-                        <div className="card-body p-0">
-                            {error && <div className="alert alert-danger m-3">{error}</div>}
-                            {loading ? (
-                                <div className="p-4 text-center">
-                                    <div className="spinner-border text-primary"></div>
-                                </div>
-                            ) : (
-                                <div className="table-responsive">
-                                    <table className="table table-striped mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th style={{ width: 120 }}>Ma</th>
-                                                <th>Ten</th>
-                                                <th style={{ width: 170 }}>Loai</th>
-                                                <th style={{ width: 160 }}>Dien thoai</th>
-                                                <th style={{ width: 110 }}>Trang thai</th>
-                                                <th style={{ width: 150 }}>Thao tac</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredItems.map((item) => (
-                                                <tr key={item.id}>
-                                                    <td className="text-monospace">{item.code || '-'}</td>
-                                                    <td>
-                                                        <div className="font-weight-bold">{item.name}</div>
-                                                        <div className="text-muted small text-truncate" style={{ maxWidth: 280 }}>
-                                                            {item.contactPerson || item.address || '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td>{item.supplierType || '-'}</td>
-                                                    <td>{item.phone || '-'}</td>
-                                                    <td>
-                                                        <span className={`badge ${item.isActive ? 'badge-success' : 'badge-secondary'}`}>
-                                                            {item.isActive ? 'Dang hoat dong' : 'Tam dung'}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => handleEdit(item)}>
-                                                                Sua
-                                                            </button>
-                                                            <button type="button" className={`btn btn-sm ${item.isActive ? 'btn-outline-danger' : 'btn-outline-success'}`} onClick={() => handleToggleActive(item)} disabled={saving}>
-                                                                {item.isActive ? 'Ngung' : 'Bat'}
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {!filteredItems.length && (
-                                                <tr>
-                                                    <td colSpan="6" className="text-center text-muted py-4">
-                                                        Khong co du lieu phu hop.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
+        <div className="px-4 py-6 lg:px-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Kho hàng</p>
+                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Nhà cung cấp</h2>
+                </div>
+                <button type="button" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600" onClick={openCreateForm}>
+                    <i className="fas fa-plus mr-2"></i>
+                    Thêm nhà cung cấp
+                </button>
+            </div>
+
+            {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div>}
+
+            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                    <h3 className="mb-0 text-base font-bold text-admin-ink">Danh sách nhà cung cấp</h3>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <input
+                            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100 sm:min-w-[320px]"
+                            placeholder="Tìm nhà cung cấp..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
+                        <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50 disabled:opacity-60" onClick={loadItems} disabled={loading}>
+                            Lam moi
+                        </button>
                     </div>
                 </div>
-
-                <div className="col-lg-5">
-                    <div className="card card-primary">
-                        <div className="card-header">
-                            <h3 className="card-title mb-0">{form.id ? 'Cap nhat nha cung cap' : 'Tao nha cung cap'}</h3>
+                <div className="p-4">
+                    {loading ? (
+                        <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải nhà cung cấp...</div>
+                    ) : (
+                        <div className="overflow-x-auto rounded-md border border-slate-200">
+                            <table className="w-full table-fixed divide-y divide-slate-200 text-sm">
+                                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                                    <tr>
+                                        <th className="w-[16%] px-4 py-3">Mã</th>
+                                        <th className="w-[22%] px-4 py-3">Tên nhà cung cấp</th>
+                                        <th className="w-[13%] px-4 py-3">Điện thoại</th>
+                                        <th className="w-[19%] px-4 py-3">Email</th>
+                                        <th className="w-[16%] px-4 py-3">Địa chỉ</th>
+                                        <th className="w-[16%] px-3 py-3">Trạng thái</th>
+                                        <th className="w-[132px] px-3 py-3 text-right">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredItems.map((item) => (
+                                        <tr key={item.id} className="hover:bg-slate-50">
+                                            <td className="truncate px-4 py-3 font-mono font-bold text-admin-ink">{item.code || '-'}</td>
+                                            <td className="truncate px-4 py-3 font-bold text-admin-ink">{item.name}</td>
+                                            <td className="truncate px-4 py-3">{item.phone || '-'}</td>
+                                            <td className="px-4 py-3">
+                                                <span className="block truncate">{item.email || '-'}</span>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="block truncate">{item.address || '-'}</span>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${item.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                                                    {item.isActive ? ' Hoạt động' : 'Tạm dừng'}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <button type="button" className="h-8 rounded-md bg-admin-brand px-2.5 text-xs font-semibold text-white hover:bg-orange-600" onClick={() => handleEdit(item)}>
+                                                        Sửa
+                                                    </button>
+                                                    <button type="button" className={`h-8 rounded-md px-2.5 text-xs font-semibold ${item.isActive ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`} onClick={() => handleToggleActive(item)} disabled={saving}>
+                                                        {item.isActive ? 'Ngừng' : 'Bật'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!filteredItems.length && (
+                                        <tr>
+                                            <td colSpan="7" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">
+                                                Không có dữ liệu phù hợp.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                        <div className="card-body">
+                    )}
+                </div>
+            </section>
+
+            {showForm && (
+                <div className="modal d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(15, 23, 42, 0.55)' }}>
+                    <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                        <div className="modal-content">
                             <form onSubmit={handleSubmit}>
-                                <div className="form-group">
-                                    <label>Ma NCC</label>
-                                    <input className="form-control" value={form.code} onChange={handleChange('code')} placeholder="Bo trong de tu tao" />
+                                <div className="modal-header">
+                                    <h5 className="modal-title">{form.id ? 'Cập nhật nhà cung cấp' : 'Thêm nhà cung cấp'}</h5>
+                                    <button type="button" className="close" aria-label="Close" onClick={resetForm}>
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
-                                <div className="form-group">
-                                    <label>Ten NCC</label>
+                                <div className="modal-body">
+                                    <div className="form-row">
+                                        <div className="form-group col-md-6">
+                                    <label>Mã nhà cung cấp</label>
+                                    <input className="form-control" value={form.code} onChange={handleChange('code')} placeholder="Bỏ trống để tự tạo" />
+                                </div>
+                                        <div className="form-group col-md-6">
+                                    <label>Tên nhà cung cấp</label>
                                     <input className="form-control" value={form.name} onChange={handleChange('name')} required />
                                 </div>
-                                <div className="form-group">
-                                    <label>Dien thoai</label>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group col-md-6">
+                                    <label>Điện thoại</label>
                                     <input className="form-control" value={form.phone} onChange={handleChange('phone')} />
                                 </div>
-                                <div className="form-group">
+                                        <div className="form-group col-md-6">
                                     <label>Email</label>
                                     <input className="form-control" value={form.email} onChange={handleChange('email')} />
                                 </div>
+                                    </div>
                                 <div className="form-group">
-                                    <label>Dia chi</label>
+                                    <label>Địa chỉ</label>
                                     <input className="form-control" value={form.address} onChange={handleChange('address')} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Ma so thue</label>
-                                    <input className="form-control" value={form.taxCode} onChange={handleChange('taxCode')} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Nguoi lien he</label>
-                                    <input className="form-control" value={form.contactPerson} onChange={handleChange('contactPerson')} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Loai nha cung cap</label>
-                                    <select className="form-control" value={form.supplierType} onChange={handleChange('supplierType')}>
-                                        <option value="OfficialBrand">OfficialBrand</option>
-                                        <option value="AuthorizedDistributor">AuthorizedDistributor</option>
-                                        <option value="Tier1Distributor">Tier1Distributor</option>
-                                        <option value="WholesalePartner">WholesalePartner</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Ghi chu</label>
-                                    <textarea className="form-control" rows="3" value={form.note} onChange={handleChange('note')} />
                                 </div>
                                 <div className="form-group">
                                     <div className="custom-control custom-switch">
@@ -318,22 +279,21 @@ const AdminSuppliers = () => {
                                             checked={Boolean(form.isActive)}
                                             onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
                                         />
-                                        <label className="custom-control-label" htmlFor="supplierIsActive">Kich hoat</label>
+                                        <label className="custom-control-label" htmlFor="supplierIsActive">Kích hoạt</label>
                                     </div>
                                 </div>
-                                <div className="d-flex justify-content-between">
-                                    <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
-                                        Dat lai
-                                    </button>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>Đóng</button>
                                     <button type="submit" className="btn btn-primary" disabled={saving}>
-                                        {saving ? 'Dang luu...' : form.id ? 'Cap nhat' : 'Tao moi'}
+                                        {saving ? 'Đang lưu...' : form.id ? 'Cập nhật' : 'Thêm mới'}
                                     </button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

@@ -1,22 +1,56 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { categoryApi, categorySupplierApi, inventoryApi, productApi } from '../services/api';
+import { Link, useLocation } from 'react-router-dom';
+import { categoryApi, inventoryApi, productApi, supplierApi } from '../services/api';
 import { toast } from '../utils/store';
 import AdminFilterDropdown from '../components/AdminFilterDropdown';
 import { useAuth } from '../contexts/AuthContext';
 
 const STOCK_STATUS_LABELS = {
-    InStock: 'Con trong kho',
-    Reserved: 'Da giu hang',
-    Sold: 'Da ban',
-    Returned: 'Khach tra',
-    Repairing: 'Dang sua',
-    Warranty: 'Dang bao hanh',
-    Damaged: 'Hu hong',
-    Lost: 'That lac',
+    InStock: 'Còn trong kho',
+    Reserved: 'Đã giữ hàng',
+    Sold: 'Đã bán',
+    Returned: 'Khách trả',
+    Repairing: 'Đang sửa',
+    Warranty: 'Đang bảo hành',
+    Damaged: 'Hư hỏng',
+    Lost: 'Thất lạc',
 };
 
-const stockStatusText = (value) => STOCK_STATUS_LABELS[value] || value || 'Khong ro';
+const stockStatusText = (value) => STOCK_STATUS_LABELS[value] || value || 'Không rõ';
+const fieldClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-500';
+const labelClass = 'mb-1 block text-sm font-semibold text-admin-ink';
+const CSV_SOURCE_HINT = 'D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore';
+const SERIAL_CSV_TEMPLATE = 'serialOrImei\n356938035643809\n356938035643810\n356938035643811\n';
+
+const stockStatusClass = (value) => {
+    const status = String(value || '');
+    if (status === 'InStock') return 'bg-emerald-50 text-emerald-700';
+    if (status === 'Sold') return 'bg-slate-100 text-slate-700';
+    if (status === 'Reserved') return 'bg-amber-50 text-amber-700';
+    if (status === 'Damaged' || status === 'Lost') return 'bg-rose-50 text-rose-700';
+    return 'bg-blue-50 text-blue-700';
+};
+
+const unwrapItems = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.items)) return payload.items;
+    if (Array.isArray(payload?.data)) return payload.data;
+    return [];
+};
+
+const unwrapPageMeta = (payload, items, page, pageSize) => {
+    if (!payload || Array.isArray(payload)) {
+        const totalCount = items.length;
+        return { totalCount, totalPages: Math.ceil(totalCount / pageSize) || 1, page, pageSize };
+    }
+    const totalCount = Number(payload.totalCount ?? payload.total ?? payload.count ?? items.length);
+    return {
+        totalCount,
+        totalPages: Number(payload.totalPages ?? (Math.ceil(totalCount / pageSize) || 1)),
+        page: Number(payload.page || page),
+        pageSize: Number(payload.pageSize || pageSize),
+    };
+};
 
 const normalizeStockItem = (x) => ({
     id: x.id ?? x.Id,
@@ -50,11 +84,18 @@ const AdminInventory = () => {
     const [serialQuickSearch, setSerialQuickSearch] = useState('');
     const [stockPage, setStockPage] = useState(1);
     const [stockPageSize] = useState(10);
-    const [productSearch, setProductSearch] = useState('');
+    const [stockTotalCount, setStockTotalCount] = useState(0);
+    const [stockTotalPages, setStockTotalPages] = useState(1);
     const [returnLookup, setReturnLookup] = useState({ loading: false, data: null, error: '' });
     const [activeLeftPanel, setActiveLeftPanel] = useState(canReceive ? 'receive' : 'return');
     const [suppliers, setSuppliers] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [csvImportStatus, setCsvImportStatus] = useState('');
+    const [isCsvDragging, setIsCsvDragging] = useState(false);
+    const [csvPreview, setCsvPreview] = useState(null);
+    const [csvPreviewPage, setCsvPreviewPage] = useState(1);
+    const [selectedCsvSerials, setSelectedCsvSerials] = useState([]);
+    const csvPreviewPageSize = 20;
 
     const [form, setForm] = useState({
         categoryId: '',
@@ -88,6 +129,27 @@ const AdminInventory = () => {
         [form.serialsText]
     );
 
+    const serialValidation = useMemo(() => {
+        const seen = new Set();
+        const duplicates = new Set();
+        serials.forEach((serial) => {
+            const key = serial.toLowerCase();
+            if (seen.has(key)) duplicates.add(serial);
+            seen.add(key);
+        });
+
+        const quantity = Number(form.quantity || 0);
+        const count = serials.length;
+        return {
+            count,
+            duplicates: Array.from(duplicates),
+            isEnough: count === quantity,
+            isMissing: count < quantity,
+            isExtra: count > quantity,
+            isValid: !requiresSerialTracking || (quantity > 0 && count === quantity && duplicates.size === 0),
+        };
+    }, [serials, form.quantity, requiresSerialTracking]);
+
     const productNameById = useMemo(() => {
         const map = new Map();
         products.forEach((p) => {
@@ -98,7 +160,7 @@ const AdminInventory = () => {
     }, [products]);
 
     const loadProducts = async () => {
-        const res = await productApi.getAll({ page: 1, pageSize: 200 });
+        const res = await productApi.getAllRemote({ page: 1, pageSize: 200 });
         const data = res.data;
         setProducts(Array.isArray(data) ? data : data.items || data.Items || []);
     };
@@ -109,35 +171,40 @@ const AdminInventory = () => {
         setCategories(Array.isArray(data) ? data : data.items || data.Items || []);
     };
 
-    const loadSuppliersByCategory = async (categoryId) => {
-        if (!categoryId) {
-            setSuppliers([]);
-            return;
-        }
-
-        const res = await categorySupplierApi.getByCategory(categoryId);
+    const loadSuppliers = async () => {
+        const res = await supplierApi.getAll({ isActive: true, page: 1, pageSize: 100 });
         const data = res.data;
-        const mappings = Array.isArray(data) ? data : data.items || data.Items || [];
-        setSuppliers(mappings.map((item) => ({
-            id: item.supplierId ?? item.SupplierId,
-            name: item.supplierName ?? item.SupplierName,
-            code: item.supplierCode ?? item.SupplierCode,
-            supplierType: item.supplierType ?? item.SupplierType,
-        })));
+        const list = Array.isArray(data) ? data : data.items || data.Items || [];
+        setSuppliers(list.filter((item) => (item.isActive ?? item.IsActive) !== false));
     };
 
-    const loadStock = async () => {
-        const res = await inventoryApi.getStockItems();
-        setStockItems(Array.isArray(res.data) ? res.data : []);
+    const loadStock = async (page = stockPage) => {
+        const keyword = serialQuickSearch.trim() || filters.keyword.trim();
+        const res = await inventoryApi.getStockItems({
+            page,
+            pageSize: stockPageSize,
+            keyword: keyword || undefined,
+            status: filters.status || undefined,
+            productId: filters.productId || undefined,
+            minDays: filters.minDaysInStock || undefined,
+        });
+        const items = unwrapItems(res.data);
+        const meta = unwrapPageMeta(res.data, items, page, stockPageSize);
+        setStockItems(items);
+        setStockTotalCount(meta.totalCount);
+        setStockTotalPages(Math.max(1, meta.totalPages));
+        if (meta.page && meta.page !== stockPage) {
+            setStockPage(meta.page);
+        }
     };
 
     const loadAll = async () => {
         setLoading(true);
         setError('');
         try {
-            await Promise.all([loadProducts(), loadCategories(), loadStock()]);
+            await Promise.all([loadProducts(), loadCategories(), loadSuppliers(), loadStock()]);
         } catch (err) {
-            setError(readError(err, 'Khong tai duoc du lieu kho.'));
+            setError(readError(err, 'Không tải được dữ liệu kho.'));
         } finally {
             setLoading(false);
         }
@@ -148,8 +215,7 @@ const AdminInventory = () => {
     }, []);
 
     useEffect(() => {
-        loadSuppliersByCategory(form.categoryId).catch((err) => setError(readError(err, 'Khong tai duoc nha cung cap theo danh muc.')));
-        setForm((prev) => ({ ...prev, supplierId: '', productId: '' }));
+        setForm((prev) => ({ ...prev, productId: '' }));
     }, [form.categoryId]);
 
     useEffect(() => {
@@ -169,6 +235,10 @@ const AdminInventory = () => {
     }, [filters.keyword, filters.status, filters.productId, filters.minDaysInStock, serialQuickSearch]);
 
     useEffect(() => {
+        loadStock(stockPage).catch((err) => setError(readError(err, 'Không tải được tồn kho.')));
+    }, [stockPage, filters.keyword, filters.status, filters.productId, filters.minDaysInStock, serialQuickSearch]);
+
+    useEffect(() => {
         const serial = String(returnForm.serialOrImei || '').trim();
         if (!serial) {
             setReturnLookup({ loading: false, data: null, error: '' });
@@ -184,10 +254,10 @@ const AdminInventory = () => {
             } catch (err) {
                 if (cancelled) return;
                 if (err?.response?.status === 404) {
-                    setReturnLookup({ loading: false, data: null, error: 'Khong tim thay Serial/IMEI' });
+                    setReturnLookup({ loading: false, data: null, error: 'Không tìm thấy Serial/IMEI' });
                     return;
                 }
-                setReturnLookup({ loading: false, data: null, error: readError(err, 'Khong tra cuu duoc Serial/IMEI') });
+                setReturnLookup({ loading: false, data: null, error: readError(err, 'Không tra cứu được Serial/IMEI') });
             }
         }, 300);
 
@@ -199,12 +269,335 @@ const AdminInventory = () => {
 
     const handleChange = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+    const cleanSerialWhitespace = () => {
+        setForm((prev) => ({
+            ...prev,
+            serialsText: prev.serialsText.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).join('\n'),
+        }));
+    };
+
+    const removeDuplicateSerials = () => {
+        const seen = new Set();
+        const unique = [];
+        form.serialsText.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).forEach((serial) => {
+            const key = serial.toLowerCase();
+            if (seen.has(key)) return;
+            seen.add(key);
+            unique.push(serial);
+        });
+        setForm((prev) => ({ ...prev, serialsText: unique.join('\n') }));
+    };
+
+    const normalizeCsvKey = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizeCsvValue = (value) => String(value || '').trim().toLowerCase();
+    const isCsvHeaderValue = (value) => {
+        const key = normalizeCsvKey(value);
+        return [
+            'receiptcode',
+            'categoryid',
+            'categoryname',
+            'category',
+            'danhmucid',
+            'danhmuc',
+            'tendanhmuc',
+            'productid',
+            'productname',
+            'product',
+            'sanphamid',
+            'sanpham',
+            'tensanpham',
+            'sku',
+            'productsku',
+            'masanpham',
+            'supplierid',
+            'suppliername',
+            'supplier',
+            'nhacungcap',
+            'quantity',
+            'soluong',
+            'unitcost',
+            'giavon',
+        ].includes(key);
+    };
+
+    const splitCsvLine = (line) => {
+        const cells = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i += 1) {
+            const char = line[i];
+            const next = line[i + 1];
+            if (char === '"' && next === '"') {
+                current += '"';
+                i += 1;
+                continue;
+            }
+            if (char === '"') {
+                inQuotes = !inQuotes;
+                continue;
+            }
+            if (!inQuotes && (char === ',' || char === ';' || char === '\t')) {
+                cells.push(current.trim());
+                current = '';
+                continue;
+            }
+            current += char;
+        }
+
+        cells.push(current.trim());
+        return cells;
+    };
+
+    const findHeaderIndex = (headers, aliases) => {
+        const aliasSet = new Set(aliases);
+        return headers.findIndex((header) => aliasSet.has(normalizeCsvKey(header)));
+    };
+
+    const parseSerialsFromCsv = (text) => {
+        const rows = text.split(/\r?\n/).map((row) => row.trim()).filter(Boolean).map(splitCsvLine);
+        if (rows.length === 0) return { serials: [], totalRows: 0, skippedByContext: 0, missingSerialColumn: true };
+
+        const headers = rows[0];
+        const serialIndex = findHeaderIndex(headers, [
+            'serial',
+            'imei',
+            'serialimei',
+            'serialorimei',
+            'serialnumber',
+            'serialno',
+            'imeinumber',
+            'imeino',
+            'maserial',
+            'maimei',
+            'somay',
+        ]);
+        const categoryIdIndex = findHeaderIndex(headers, ['categoryid', 'danhmucid']);
+        const categoryNameIndex = findHeaderIndex(headers, ['categoryname', 'category', 'danhmuc', 'tendanhmuc']);
+        const productIdIndex = findHeaderIndex(headers, ['productid', 'sanphamid']);
+        const productNameIndex = findHeaderIndex(headers, ['productname', 'product', 'sanpham', 'tensanpham']);
+        const skuIndex = findHeaderIndex(headers, ['sku', 'productsku', 'masanpham']);
+
+        const hasHeader = serialIndex >= 0 || headers.some((header) => /receipt|category|product|sku/i.test(header));
+        if (serialIndex < 0 && rows.every((row) => row.length <= 1)) {
+            if (isCsvHeaderValue(rows[0]?.[0])) {
+                return { serials: [], totalRows: Math.max(0, rows.length - 1), skippedByContext: 0, missingSerialColumn: true };
+            }
+            const serials = rows
+                .map((row) => row[0] || '')
+                .filter((value) => value && !isCsvHeaderValue(value) && !/^serial|imei|serial\/imei|serialOrImei$/i.test(value));
+            return { serials, totalRows: serials.length, skippedByContext: 0, missingSerialColumn: false };
+        }
+        if (serialIndex < 0 || !hasHeader) {
+            return { serials: [], totalRows: Math.max(0, rows.length - 1), skippedByContext: 0, missingSerialColumn: true };
+        }
+
+        const selectedCategoryId = String(form.categoryId || '').trim();
+        const selectedCategory = categories.find((item) => String(item.id ?? item.Id) === selectedCategoryId);
+        const selectedCategoryName = normalizeCsvValue(selectedCategory?.name ?? selectedCategory?.Name);
+        const selectedProductId = String(form.productId || '').trim();
+        const selectedProductName = normalizeCsvValue(selectedProduct?.name ?? selectedProduct?.Name);
+        const selectedSku = normalizeCsvValue(selectedProduct?.sku ?? selectedProduct?.Sku);
+        let skippedByContext = 0;
+
+        const previewRows = [];
+        const serials = rows.slice(1).map((row, index) => {
+            const rowCategoryId = categoryIdIndex >= 0 ? String(row[categoryIdIndex] || '').trim() : '';
+            const rowCategoryName = categoryNameIndex >= 0 ? normalizeCsvValue(row[categoryNameIndex]) : '';
+            const rowProductId = productIdIndex >= 0 ? String(row[productIdIndex] || '').trim() : '';
+            const rowProductName = productNameIndex >= 0 ? normalizeCsvValue(row[productNameIndex]) : '';
+            const rowSku = skuIndex >= 0 ? normalizeCsvValue(row[skuIndex]) : '';
+
+            const categoryMatches =
+                (categoryIdIndex < 0 && categoryNameIndex < 0) ||
+                (selectedCategoryId && rowCategoryId && rowCategoryId === selectedCategoryId) ||
+                (selectedCategoryName && rowCategoryName && rowCategoryName === selectedCategoryName);
+            const productMatches =
+                (productIdIndex < 0 && productNameIndex < 0 && skuIndex < 0) ||
+                (selectedProductId && rowProductId && rowProductId === selectedProductId) ||
+                (selectedProductName && rowProductName && rowProductName === selectedProductName) ||
+                (selectedSku && rowSku && rowSku === selectedSku);
+
+            const serialValue = String(row[serialIndex] || '').trim();
+            const isMatch = categoryMatches && productMatches && serialValue && !isCsvHeaderValue(serialValue);
+            previewRows.push({
+                index: index + 1,
+                cells: headers.map((_, cellIndex) => row[cellIndex] || ''),
+                serial: serialValue,
+                isMatch,
+            });
+
+            if (!isMatch) {
+                skippedByContext += 1;
+                return '';
+            }
+
+            return serialValue;
+        }).map((value) => String(value).trim()).filter((value) => value && !isCsvHeaderValue(value));
+
+        return {
+            serials,
+            totalRows: Math.max(0, rows.length - 1),
+            skippedByContext,
+            missingSerialColumn: false,
+            headers,
+            serialIndex,
+            previewRows,
+        };
+    };
+
+    const importSerialsFromCsv = async (file) => {
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const parsedCsv = parseSerialsFromCsv(text);
+            setCsvPreview({ ...parsedCsv, fileName: file.name });
+            setCsvPreviewPage(1);
+            setSelectedCsvSerials([]);
+            if (parsedCsv.missingSerialColumn) {
+                setCsvImportStatus(`File ${file.name} thieu cot serial/IMEI. Khong lay cot dau tien de tranh nham receipt_code.`);
+            } else {
+                setCsvImportStatus(`Da doc ${parsedCsv.totalRows} dong tu ${file.name}. Co ${parsedCsv.serials.length} dong dung danh muc/san pham dang chon.`);
+            }
+            return;
+            const csvSerials = parsedCsv.serials;
+            const quantity = Math.max(0, Number(form.quantity || 0));
+            const currentSerials = serials;
+            const remainingSlots = Math.max(0, quantity - currentSerials.length);
+            const existingKeys = new Set(currentSerials.map((item) => item.toLowerCase()));
+            const uniqueCsvSerials = [];
+            let duplicateCount = 0;
+
+            csvSerials.forEach((item) => {
+                const key = item.toLowerCase();
+                if (existingKeys.has(key)) {
+                    duplicateCount += 1;
+                    return;
+                }
+                existingKeys.add(key);
+                uniqueCsvSerials.push(item);
+            });
+
+            const imported = uniqueCsvSerials.slice(0, remainingSlots);
+            const skippedByLimit = Math.max(0, uniqueCsvSerials.length - imported.length);
+
+            setForm((prev) => ({
+                ...prev,
+                serialsText: [...currentSerials, ...imported].join('\n'),
+            }));
+
+            const parts = [];
+            if (parsedCsv.missingSerialColumn) {
+                parts.push(`File ${file.name} thieu cot serial/IMEI. Khong lay cot dau tien de tranh nham receipt_code.`);
+            } else if (csvSerials.length === 0) {
+                parts.push(`File ${file.name} khong co serial/IMEI hop le.`);
+            } else if (remainingSlots === 0) {
+                parts.push(`Da du ${quantity} ma theo so luong, chua nhap them tu ${file.name}.`);
+            } else {
+                parts.push(`Da nhap ${imported.length}/${remainingSlots} ma can them tu ${file.name}.`);
+            }
+            if (parsedCsv.skippedByContext > 0) parts.push(`Bo qua ${parsedCsv.skippedByContext} dong khong dung danh muc/san pham dang chon.`);
+            if (skippedByLimit > 0) parts.push(`Bo qua ${skippedByLimit} ma vi vuot so luong.`);
+            if (duplicateCount > 0) parts.push(`Bo qua ${duplicateCount} ma trung.`);
+            setCsvImportStatus(parts.join(' '));
+        } catch (err) {
+            setError('Không đọc được file CSV serial/IMEI.');
+        }
+    };
+
+    const applyCsvPreviewToReceipt = () => {
+        if (!csvPreview) return;
+        const csvSerials = selectedCsvSerials;
+        const quantity = Math.max(0, Number(form.quantity || 0));
+        const currentSerials = serials;
+        const remainingSlots = Math.max(0, quantity - currentSerials.length);
+        const existingKeys = new Set(currentSerials.map((item) => item.toLowerCase()));
+        const uniqueCsvSerials = [];
+        let duplicateCount = 0;
+
+        csvSerials.forEach((item) => {
+            const key = item.toLowerCase();
+            if (existingKeys.has(key)) {
+                duplicateCount += 1;
+                return;
+            }
+            existingKeys.add(key);
+            uniqueCsvSerials.push(item);
+        });
+
+        const imported = uniqueCsvSerials.slice(0, remainingSlots);
+        const skippedByLimit = Math.max(0, uniqueCsvSerials.length - imported.length);
+
+        setForm((prev) => ({
+            ...prev,
+            serialsText: [...currentSerials, ...imported].join('\n'),
+        }));
+
+        const parts = [];
+        if (csvPreview.missingSerialColumn) {
+            parts.push(`File ${csvPreview.fileName} thieu cot serial/IMEI.`);
+        } else if (selectedCsvSerials.length === 0) {
+            parts.push('Chua chon serial/IMEI nao trong bang CSV.');
+        } else if (remainingSlots === 0) {
+            parts.push(`Da du ${quantity} ma theo so luong, chua nhap them.`);
+        } else {
+            parts.push(`Da dua ${imported.length}/${remainingSlots} ma vao phieu.`);
+        }
+        if (csvPreview.skippedByContext > 0) parts.push(`Bo qua ${csvPreview.skippedByContext} dong khong dung danh muc/san pham.`);
+        if (skippedByLimit > 0) parts.push(`Bo qua ${skippedByLimit} ma vi vuot so luong.`);
+        if (duplicateCount > 0) parts.push(`Bo qua ${duplicateCount} ma trung.`);
+        setCsvImportStatus(parts.join(' '));
+        if (imported.length > 0) {
+            setSelectedCsvSerials((prev) => prev.filter((item) => !imported.includes(item)));
+        }
+    };
+
+    const toggleCsvSerialSelection = (serial) => {
+        if (!serial) return;
+        setSelectedCsvSerials((prev) =>
+            prev.includes(serial) ? prev.filter((item) => item !== serial) : [...prev, serial]
+        );
+    };
+
+    const selectCurrentCsvPage = () => {
+        const pageSerials = csvPageRows
+            .filter((row) => row.isMatch && row.serial)
+            .map((row) => row.serial);
+        setSelectedCsvSerials((prev) => Array.from(new Set([...prev, ...pageSerials])));
+    };
+
+    const handleCsvDrop = async (e) => {
+        e.preventDefault();
+        setIsCsvDragging(false);
+        const file = Array.from(e.dataTransfer?.files || []).find((item) =>
+            item.type === 'text/csv' ||
+            item.type === 'text/plain' ||
+            item.name.toLowerCase().endsWith('.csv') ||
+            item.name.toLowerCase().endsWith('.txt')
+        );
+        await importSerialsFromCsv(file);
+    };
+
+    const downloadCsvTemplate = () => {
+        const blob = new Blob([SERIAL_CSV_TEMPLATE], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'serial-imei-template.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const handleCreateReceipt = async (e) => {
         e.preventDefault();
         const productId = Number(form.productId);
         const quantity = Number(form.quantity);
         const unitCost = Number(form.unitCost);
         if (!productId || quantity <= 0) return;
+        if (requiresSerialTracking && !serialValidation.isValid) {
+            setError('Serial/IMEI chưa hợp lệ. Vui lòng nhập đúng số lượng và không để trùng mã.');
+            return;
+        }
 
         setSubmitting(true);
         setError('');
@@ -218,7 +611,7 @@ const AdminInventory = () => {
             await loadAll();
             toast(requiresSerialTracking ? 'Da nhap kho va tao serial/IMEI' : 'Da nhap kho', 'success');
         } catch (err) {
-            setError(readError(err, 'Khong tao duoc phieu nhap.'));
+            setError(readError(err, 'Không tạo được phiếu nhập.'));
         } finally {
             setSubmitting(false);
         }
@@ -241,319 +634,493 @@ const AdminInventory = () => {
             await loadAll();
             toast('Da xu ly hang tra', 'success');
         } catch (err) {
-            setError(readError(err, 'Khong xu ly duoc hang tra.'));
+            setError(readError(err, 'Không xử lý được hàng trả.'));
         } finally {
             setSubmitting(false);
         }
     };
 
-    const filteredStockItems = useMemo(() => {
-        const keyword = filters.keyword.trim().toLowerCase();
-        const status = filters.status.trim().toLowerCase();
-        const pid = filters.productId ? Number(filters.productId) : null;
-        const quick = serialQuickSearch.trim().toLowerCase();
-        const minDays = Number(filters.minDaysInStock || 0);
-        const now = Date.now();
-
-        return stockItems.filter((raw) => {
-            const s = normalizeStockItem(raw);
-            if (pid && Number(s.productId) !== pid) return false;
-            const itemStatus = String(s.status || '').toLowerCase();
-            if (status && itemStatus !== status) return false;
-
-            if (minDays > 0) {
-                if (!status && itemStatus !== 'instock') return false;
-                const receivedTs = Date.parse(String(s.receivedAt || ''));
-                if (!Number.isFinite(receivedTs)) return false;
-                const days = Math.floor((now - receivedTs) / 86400000);
-                if (days < minDays) return false;
-            }
-
-            const serial = String(s.serialOrImei || '').toLowerCase();
-            if (quick && !serial.includes(quick)) return false;
-            return !keyword || serial.includes(keyword);
-        });
-    }, [stockItems, filters, serialQuickSearch]);
-
-    const totalStockPages = Math.max(1, Math.ceil(filteredStockItems.length / stockPageSize));
-    const pagedStockItems = filteredStockItems.slice((stockPage - 1) * stockPageSize, stockPage * stockPageSize);
+    const pagedStockItems = stockItems;
+    const totalStockPages = stockTotalPages;
 
     useEffect(() => {
         setStockPage((p) => Math.min(Math.max(1, p), totalStockPages));
     }, [totalStockPages]);
 
     const productOptions = useMemo(() => {
-        const q = productSearch.trim().toLowerCase();
         const categoryId = Number(form.categoryId || 0);
-        const list = products
+        return products
             .filter((p) => !categoryId || Number(p.categoryId ?? p.CategoryId) === categoryId)
             .slice()
-            .sort((a, b) => String(a.name ?? a.Name ?? '').localeCompare(String(b.name ?? b.Name ?? '')));
-        return (q
-            ? list.filter((p) => String(p.name ?? p.Name ?? '').toLowerCase().includes(q) || String(p.id ?? p.Id).includes(q))
-            : list
-        ).slice(0, 120);
-    }, [products, productSearch, form.categoryId]);
+            .sort((a, b) => String(a.name ?? a.Name ?? '').localeCompare(String(b.name ?? b.Name ?? '')))
+            .slice(0, 120);
+    }, [products, form.categoryId]);
 
     const activeFilterCount =
         (filters.keyword.trim() ? 1 : 0) +
         (filters.status ? 1 : 0) +
         (filters.productId ? 1 : 0) +
         (String(filters.minDaysInStock || '').trim() ? 1 : 0);
+    const stockFrom = stockItems.length ? (stockPage - 1) * stockPageSize + 1 : 0;
+    const stockTo = stockItems.length ? (stockPage - 1) * stockPageSize + stockItems.length : 0;
+    const csvRows = csvPreview?.previewRows || [];
+    const csvTotalPages = Math.max(1, Math.ceil(csvRows.length / csvPreviewPageSize));
+    const csvPage = Math.min(Math.max(1, csvPreviewPage), csvTotalPages);
+    const csvPageRows = csvRows.slice((csvPage - 1) * csvPreviewPageSize, csvPage * csvPreviewPageSize);
+    const csvFrom = csvRows.length ? (csvPage - 1) * csvPreviewPageSize + 1 : 0;
+    const csvTo = csvRows.length ? Math.min(csvPage * csvPreviewPageSize, csvRows.length) : 0;
 
     return (
-        <div className="row">
-            <div className="col-lg-4">
-                <div className="btn-group w-100 mb-3">
+        <div className="px-4 py-6 lg:px-8">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Kho hàng</p>
+                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Quản lý tồn kho</h2>
+                </div>
+                <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50" onClick={loadAll} disabled={loading}>
+                    Làm mới
+                </button>
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
+            <div>
+                <div className="mb-3 grid grid-cols-2 gap-2">
                     {canReceive && (
                         <button
                             type="button"
-                            className={`btn ${activeLeftPanel === 'receive' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${activeLeftPanel === 'receive' ? 'bg-admin-brand text-white' : 'border border-admin-brand text-admin-brand hover:bg-orange-50'}`}
                             onClick={() => setActiveLeftPanel('receive')}
                         >
-                            Nhap/xuat kho
+                            Nhập kho
                         </button>
                     )}
                     {canReturn && (
                         <button
                             type="button"
-                            className={`btn ${activeLeftPanel === 'return' ? 'btn-warning' : 'btn-outline-warning'}`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${activeLeftPanel === 'return' ? 'bg-amber-500 text-white' : 'border border-amber-500 text-amber-700 hover:bg-amber-50'}`}
                             onClick={() => setActiveLeftPanel('return')}
                         >
-                            Tra hang / nhap lai
+                            Trả hàng
                         </button>
                     )}
                 </div>
 
                 {activeLeftPanel === 'receive' && canReceive ? (
-                    <div className="card card-primary">
-                        <div className="card-header">
-                            <h3 className="card-title">Nhap/xuat kho theo phieu</h3>
+                    <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                        <div className="border-b border-slate-200 px-4 py-3">
+                            <h3 className="mb-0 text-base font-bold text-admin-ink">Nhập kho theo phiếu</h3>
                         </div>
-                        <div className="card-body">
+                        <div className="p-4">
                             {error && <div className="alert alert-danger">{error}</div>}
-                            <form onSubmit={handleCreateReceipt}>
-                                <div className="form-group">
-                                    <label>Danh muc</label>
-                                    <select className="form-control" value={form.categoryId} onChange={handleChange('categoryId')} required>
-                                        <option value="">-- Chon danh muc --</option>
-                                        {categories.map((category) => (
-                                            <option key={category.id ?? category.Id} value={category.id ?? category.Id}>
-                                                {category.name ?? category.Name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Nha cung cap</label>
-                                    <select
-                                        className="form-control"
-                                        value={form.supplierId}
-                                        onChange={handleChange('supplierId')}
-                                        required
-                                        disabled={!form.categoryId || suppliers.length === 0}
-                                    >
-                                        <option value="">-- Chon nha cung cap --</option>
-                                        {suppliers.map((s) => (
-                                            <option key={s.id ?? s.Id} value={s.id ?? s.Id}>
-                                                {s.name ?? s.Name} {s.code ? `(${s.code})` : s.Code ? `(${s.Code})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
+                            <form onSubmit={handleCreateReceipt} className="space-y-4">
+                                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                                    <div className="mb-3 text-sm font-bold text-admin-ink">Thông tin phiếu nhập</div>
+                                    <label className="block">
+                                        <span className={labelClass}>Danh mục</span>
+                                        <select className={fieldClass} value={form.categoryId} onChange={handleChange('categoryId')} required>
+                                            <option value="">Chọn danh mục</option>
+                                            {categories.map((category) => (
+                                                <option key={category.id ?? category.Id} value={category.id ?? category.Id}>
+                                                    {category.name ?? category.Name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="mt-3 block">
+                                        <span className={labelClass}>Nhà cung cấp</span>
+                                        <select
+                                            className={fieldClass}
+                                            value={form.supplierId}
+                                            onChange={handleChange('supplierId')}
+                                            required
+                                            disabled={suppliers.length === 0}
+                                        >
+                                            <option value="">Chọn nhà cung cấp</option>
+                                            {suppliers.map((s) => (
+                                                <option key={s.id ?? s.Id} value={s.id ?? s.Id}>
+                                                    {s.name ?? s.Name} {s.code ? `(${s.code})` : s.Code ? `(${s.Code})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
                                     {selectedSupplier && (
-                                        <small className="text-muted d-block mt-1">
+                                        <div className="mt-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-admin-muted">
                                             {[selectedSupplier.phone || selectedSupplier.Phone, selectedSupplier.email || selectedSupplier.Email].filter(Boolean).join(' - ')}
-                                        </small>
+                                        </div>
                                     )}
-                                    {form.categoryId && suppliers.length === 0 && <small className="text-muted d-block mt-1">Danh muc nay chua co nha cung cap.</small>}
+                                    {suppliers.length === 0 && <div className="mt-2 text-xs font-semibold text-rose-600">Chưa có nhà cung cấp đang hoạt động.</div>}
                                 </div>
-                                <div className="form-group">
-                                    <label>San pham</label>
-                                    <input className="form-control mb-2" placeholder="Tim san pham..." value={productSearch} onChange={(e) => setProductSearch(e.target.value)} disabled={!form.categoryId} />
-                                    <select className="form-control" value={form.productId} onChange={handleChange('productId')} required disabled={!form.categoryId}>
-                                        <option value="">-- Chon san pham --</option>
-                                        {productOptions.map((p) => (
-                                            <option key={p.id ?? p.Id} value={p.id ?? p.Id}>
-                                                {p.name ?? p.Name} (ID: {p.id ?? p.Id})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="form-row">
-                                    <div className="form-group col-6">
-                                        <label>So luong</label>
-                                        <input className="form-control" type="number" min="1" value={form.quantity} onChange={handleChange('quantity')} required />
+
+                                <div className="rounded-md border border-slate-200 bg-white p-3">
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="text-sm font-bold text-admin-ink">Sản phẩm nhập kho</div>
+                                        <Link to="/admin/products" className="text-xs font-semibold text-admin-brand hover:text-orange-600">
+                                            Tạo sản phẩm
+                                        </Link>
                                     </div>
-                                    <div className="form-group col-6">
-                                        <label>Gia nhap</label>
-                                        <input className="form-control" type="number" min="0" value={form.unitCost} onChange={handleChange('unitCost')} />
-                                    </div>
+                                    <label className="block">
+                                        <span className={labelClass}>Chọn sản phẩm có sẵn</span>
+                                        <select className={fieldClass} value={form.productId} onChange={handleChange('productId')} required disabled={!form.categoryId || productOptions.length === 0}>
+                                            <option value="">{!form.categoryId ? 'Chọn danh mục trước' : productOptions.length ? 'Chọn sản phẩm' : 'Danh mục này chưa có sản phẩm'}</option>
+                                            {productOptions.map((p) => (
+                                                <option key={p.id ?? p.Id} value={p.id ?? p.Id}>
+                                                    {p.name ?? p.Name} (ID: {p.id ?? p.Id})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    {form.categoryId && productOptions.length === 0 && (
+                                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                                            Danh mục này chưa có sản phẩm. Hãy tạo sản phẩm trước, sau đó quay lại nhập kho.
+                                        </div>
+                                    )}
+                                    {selectedProduct && (
+                                        <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-semibold text-admin-muted">
+                                            {requiresSerialTracking ? 'Sản phẩm này cần nhập Serial/IMEI.' : 'Sản phẩm này không bắt buộc Serial/IMEI.'}
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="form-group">
-                                    <label>Serial/IMEI (moi dong mot ma)</label>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="block">
+                                        <span className={labelClass}>Số lượng</span>
+                                        <input className={fieldClass} type="number" min="1" value={form.quantity} onChange={handleChange('quantity')} required />
+                                    </label>
+                                    <label className="block">
+                                        <span className={labelClass}>Giá vốn nhập</span>
+                                        <input className={fieldClass} type="number" min="0" value={form.unitCost} onChange={handleChange('unitCost')} placeholder="Giá mua từ nhà cung cấp" />
+                                        <span className="mt-1 block text-xs font-semibold text-admin-muted">Dùng để tính giá trị phiếu nhập, không phải giá bán cho khách.</span>
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <div className="mb-1 flex items-center justify-between gap-3">
+                                        <span className={labelClass}>Serial/IMEI</span>
+                                        {selectedProduct && requiresSerialTracking && (
+                                            <span className={`text-xs font-bold ${serialValidation.isValid ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                                Đã nhập {serialValidation.count}/{Number(form.quantity || 0)} mã
+                                            </span>
+                                        )}
+                                    </div>
                                     <textarea
-                                        className="form-control"
+                                        className={`${fieldClass} min-h-32 resize-y font-mono`}
                                         rows="6"
                                         value={form.serialsText}
                                         onChange={handleChange('serialsText')}
-                                        placeholder={'356938035643809\n356938035643810'}
+                                        placeholder={'Mỗi dòng một mã\n356938035643809\n356938035643810'}
                                         disabled={!selectedProduct || !requiresSerialTracking}
                                     />
                                     {selectedProduct && requiresSerialTracking && (
-                                        <small className="text-muted">San pham nay bat buoc co Serial/IMEI. Vui long nhap dung {form.quantity} dong.</small>
+                                        <div className="mt-2 space-y-2">
+                                            <div className={`rounded-md px-3 py-2 text-xs font-semibold ${serialValidation.isValid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                                                {serialValidation.duplicates.length > 0
+                                                    ? `Có ${serialValidation.duplicates.length} mã bị trùng trong danh sách.`
+                                                    : serialValidation.isMissing
+                                                        ? `Còn thiếu ${Number(form.quantity || 0) - serialValidation.count} mã Serial/IMEI.`
+                                                        : serialValidation.isExtra
+                                                            ? `Đang thừa ${serialValidation.count - Number(form.quantity || 0)} mã Serial/IMEI.`
+                                                            : 'Danh sách Serial/IMEI hợp lệ.'}
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                <label className="cursor-pointer rounded-md border border-admin-brand px-3 py-1.5 text-xs font-semibold text-admin-brand hover:bg-orange-50">
+                                                    Nhập từ CSV
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        accept=".csv,text/csv,text/plain"
+                                                        onChange={(e) => {
+                                                            importSerialsFromCsv(e.target.files?.[0]);
+                                                            e.target.value = '';
+                                                        }}
+                                                    />
+                                                </label>
+                                                <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={cleanSerialWhitespace}>
+                                                    Xóa khoảng trắng
+                                                </button>
+                                                <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50" onClick={removeDuplicateSerials} disabled={serialValidation.duplicates.length === 0}>
+                                                    Xóa dòng trùng
+                                                </button>
+                                            </div>
+                                            <div className="text-xs font-semibold text-admin-muted">
+                                                CSV có thể là một cột serial/IMEI, hoặc nhiều cột; hệ thống lấy giá trị đầu tiên trên mỗi dòng.
+                                            </div>
+                                        </div>
                                     )}
                                     {selectedProduct && !requiresSerialTracking && (
-                                        <small className="text-muted">San pham nay khong bat buoc Serial/IMEI.</small>
+                                        <span className="mt-1 block text-xs font-semibold text-admin-muted">Có thể bỏ qua trường này với sản phẩm không quản lý serial.</span>
                                     )}
                                 </div>
-                                <button className="btn btn-primary btn-block" disabled={submitting || loading}>
-                                    {submitting ? 'Dang luu...' : 'Tao phieu nhap'}
+
+                                <button className="w-full rounded-md bg-admin-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" disabled={submitting || loading || (requiresSerialTracking && !serialValidation.isValid)}>
+                                    {submitting ? 'Đang lưu...' : 'Tạo phiếu nhập'}
                                 </button>
                             </form>
                         </div>
-                    </div>
+                    </section>
                 ) : activeLeftPanel === 'return' && canReturn ? (
-                    <div className="card card-warning">
-                        <div className="card-header">
-                            <h3 className="card-title">Tra hang / nhap lai kho</h3>
+                    <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                        <div className="border-b border-slate-200 px-4 py-3">
+                            <h3 className="mb-0 text-base font-bold text-admin-ink">Trả hàng / nhập lại kho</h3>
                         </div>
-                        <div className="card-body">
-                            {error && <div className="alert alert-danger">{error}</div>}
-                            <form onSubmit={handleReturn}>
-                                <div className="form-group">
-                                    <label>Serial/IMEI</label>
-                                    <input className="form-control" value={returnForm.serialOrImei} onChange={(e) => setReturnForm((p) => ({ ...p, serialOrImei: e.target.value }))} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Trang thai sau xu ly</label>
-                                    <select className="form-control" value={returnForm.statusAfter} onChange={(e) => setReturnForm((p) => ({ ...p, statusAfter: e.target.value }))}>
-                                        <option value="InStock">Con trong kho (ban lai)</option>
-                                        <option value="Damaged">Hu hong (khong ban)</option>
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Ly do</label>
-                                    <input className="form-control" value={returnForm.reason} onChange={(e) => setReturnForm((p) => ({ ...p, reason: e.target.value }))} />
+                        <div className="p-4">
+                            {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</div>}
+                            <form className="space-y-4" onSubmit={handleReturn}>
+                                <label className="block">
+                                    <span className={labelClass}>Serial/IMEI</span>
+                                    <input
+                                        className={fieldClass}
+                                        value={returnForm.serialOrImei}
+                                        onChange={(e) => setReturnForm((p) => ({ ...p, serialOrImei: e.target.value }))}
+                                        placeholder="Nhập serial/IMEI của sản phẩm khách trả"
+                                    />
+                                </label>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <label className="block">
+                                        <span className={labelClass}>Trạng thái sau xử lý</span>
+                                        <select className={fieldClass} value={returnForm.statusAfter} onChange={(e) => setReturnForm((p) => ({ ...p, statusAfter: e.target.value }))}>
+                                            <option value="InStock">Còn trong kho - có thể bán lại</option>
+                                            <option value="Damaged">Hư hỏng - không bán lại</option>
+                                        </select>
+                                    </label>
+                                    <label className="block">
+                                        <span className={labelClass}>Lý do trả hàng</span>
+                                        <input
+                                            className={fieldClass}
+                                            value={returnForm.reason}
+                                            onChange={(e) => setReturnForm((p) => ({ ...p, reason: e.target.value }))}
+                                            placeholder="Ví dụ: khách đổi ý, lỗi kỹ thuật..."
+                                        />
+                                    </label>
                                 </div>
                                 {(returnLookup.loading || returnLookup.error || returnLookup.data) && (
-                                    <div className="border rounded p-2 bg-light mb-3">
+                                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                                         {returnLookup.loading ? (
-                                            <div className="text-muted">Dang tra cuu serial...</div>
+                                            <div className="text-sm font-semibold text-admin-muted">Đang tra cứu serial...</div>
                                         ) : returnLookup.error ? (
-                                            <div className="text-danger">{returnLookup.error}</div>
+                                            <div className="text-sm font-semibold text-rose-700">{returnLookup.error}</div>
                                         ) : (
-                                            <>
-                                                <div className="font-weight-bold">{returnLookup.data?.productName || '-'}</div>
-                                                <div className="text-muted small">Trang thai: <span className="text-monospace">{stockStatusText(returnLookup.data?.status)}</span></div>
-                                                <div className="text-muted small">Ban luc: {returnLookup.data?.soldAt ? new Date(returnLookup.data.soldAt).toLocaleString() : '-'}</div>
-                                                <div className="text-muted small">Don hang: {returnLookup.data?.orderCode || (returnLookup.data?.orderId ? `#${returnLookup.data.orderId}` : '-')}</div>
-                                                <div className="text-muted small">Khach hang: {returnLookup.data?.customerName || '-'} {returnLookup.data?.customerPhone ? `(${returnLookup.data.customerPhone})` : ''}</div>
-                                            </>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                                    <div className="font-bold text-admin-ink">{returnLookup.data?.productName || '-'}</div>
+                                                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${stockStatusClass(returnLookup.data?.status)}`}>
+                                                        {stockStatusText(returnLookup.data?.status)}
+                                                    </span>
+                                                </div>
+                                                <div className="grid gap-2 text-admin-muted sm:grid-cols-2">
+                                                    <div>Bán lúc: {returnLookup.data?.soldAt ? new Date(returnLookup.data.soldAt).toLocaleString() : '-'}</div>
+                                                    <div>Đơn hàng: {returnLookup.data?.orderCode || (returnLookup.data?.orderId ? `#${returnLookup.data.orderId}` : '-')}</div>
+                                                    <div className="sm:col-span-2">
+                                                        Khách hàng: {returnLookup.data?.customerName || '-'} {returnLookup.data?.customerPhone ? `(${returnLookup.data.customerPhone})` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 )}
-                                <button className="btn btn-warning btn-block" disabled={submitting}>
-                                    {submitting ? 'Dang xu ly...' : 'Xac nhan nhap lai'}
+                                <button className="w-full rounded-md bg-admin-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" disabled={submitting}>
+                                    {submitting ? 'Đang xử lý...' : 'Xác nhận nhập lại'}
                                 </button>
-                                <small className="text-muted d-block mt-2">Chi xu ly nhap lai khi serial da ban va yeu cau tra hang duoc duyet.</small>
+                                <div className="text-xs font-semibold text-admin-muted">
+                                    Chỉ xử lý nhập lại khi serial đã bán và yêu cầu trả hàng được duyệt.
+                                </div>
                             </form>
                         </div>
-                    </div>
+                    </section>
                 ) : (
-                    <div className="alert alert-info">Khong co quyen truy cap chuc nang nay.</div>
+                    <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">Không có quyền truy cập chức năng này.</div>
                 )}
             </div>
 
-            <div className="col-lg-8">
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Ton kho theo Serial/IMEI</h3>
-                        <div className="card-tools">
-                            <input className="form-control form-control-sm d-inline-block mr-2" style={{ width: 240 }} placeholder="Tim nhanh serial..." value={serialQuickSearch} onChange={(e) => setSerialQuickSearch(e.target.value)} />
-                            <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bo loc" activeCount={activeFilterCount}>
+            <div>
+                {activeLeftPanel === 'receive' && csvPreview && (
+                    <section className="flex h-full min-h-[760px] flex-col rounded-md border border-slate-200 bg-white shadow-sm">
+                        <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <h3 className="mb-0 text-base font-bold text-admin-ink">Bang CSV nhap kho</h3>
+                                <p className="mb-0 mt-1 text-xs font-semibold text-admin-muted">
+                                    {csvPreview.fileName} - {csvPreview.serials?.length || 0}/{csvPreview.totalRows || 0} dong phu hop - da chon {selectedCsvSerials.length}
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <button type="button" className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={selectCurrentCsvPage} disabled={csvPreview.missingSerialColumn}>
+                                    Chon trang nay
+                                </button>
+                                <button
+                                    type="button"
+                                    className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+                                    onClick={applyCsvPreviewToReceipt}
+                                    disabled={csvPreview.missingSerialColumn || !selectedProduct || !requiresSerialTracking || selectedCsvSerials.length === 0}
+                                >
+                                    Dua vao phieu
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex flex-1 flex-col p-4">
+                            {csvPreview.missingSerialColumn ? (
+                                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+                                    File thieu cot serial/IMEI. Them cot serial, imei hoac serialOrImei de he thong doc dung.
+                                </div>
+                            ) : (
+                                <div className="min-h-[610px] max-h-[610px] flex-1 overflow-auto rounded-md border border-slate-200">
+                                    <table className="min-w-[760px] divide-y divide-slate-200 text-xs">
+                                        <thead className="bg-slate-50 text-left font-bold uppercase tracking-wide text-admin-muted">
+                                            <tr>
+                                                <th className="px-3 py-2">Dong</th>
+                                                <th className="px-3 py-2">Chon</th>
+                                                <th className="px-3 py-2">Trang thai</th>
+                                                {(csvPreview.headers || []).map((header, index) => (
+                                                    <th key={`${header}-${index}`} className={`px-3 py-2 ${index === csvPreview.serialIndex ? 'bg-emerald-50 text-emerald-700' : ''}`}>
+                                                        {header || `Cot ${index + 1}`}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {csvPageRows.map((row) => (
+                                                <tr key={row.index} className={row.isMatch ? 'bg-emerald-50/40' : 'bg-white text-slate-400'}>
+                                                    <td className="px-3 py-2 font-semibold">{row.index}</td>
+                                                    <td className="px-3 py-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedCsvSerials.includes(row.serial)}
+                                                            disabled={!row.isMatch}
+                                                            onChange={() => toggleCsvSerialSelection(row.serial)}
+                                                        />
+                                                    </td>
+                                                    <td className="px-3 py-2">
+                                                        <span className={`rounded-full px-2 py-1 font-bold ${row.isMatch ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                            {row.isMatch ? 'Dung phieu' : 'Bo qua'}
+                                                        </span>
+                                                    </td>
+                                                    {(csvPreview.headers || []).map((_, index) => (
+                                                        <td key={`${row.index}-${index}`} className={`max-w-[180px] truncate px-3 py-2 ${index === csvPreview.serialIndex ? 'font-mono font-bold text-emerald-700' : ''}`}>
+                                                            {row.cells?.[index] || '-'}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                            <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                                <span>Hien thi {csvFrom}-{csvTo} trong {csvRows.length} dong CSV</span>
+                                <div className="flex items-center gap-2">
+                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-50" onClick={() => setCsvPreviewPage((p) => Math.max(1, p - 1))} disabled={csvPage <= 1}>Truoc</button>
+                                    <span className="rounded-md bg-slate-100 px-3 py-1.5 text-admin-ink">Trang {csvPage} / {csvTotalPages}</span>
+                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-50" onClick={() => setCsvPreviewPage((p) => Math.min(csvTotalPages, p + 1))} disabled={csvPage >= csvTotalPages}>Sau</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
+                {!(activeLeftPanel === 'receive' && csvPreview) && (
+                <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                    <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                        <h3 className="mb-0 text-base font-bold text-admin-ink">Tồn kho theo Serial/IMEI</h3>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100 sm:w-[240px]" placeholder="Tìm serial..." value={serialQuickSearch} onChange={(e) => setSerialQuickSearch(e.target.value)} />
+                            <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bộ lọc" activeCount={activeFilterCount}>
                                 <form onSubmit={(e) => { e.preventDefault(); setIsFilterMenuOpen(false); }}>
                                     <div className="form-group">
                                         <label>Serial/IMEI</label>
                                         <input className="form-control" value={filters.keyword} onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Trang thai</label>
+                                        <label>Trạng thái</label>
                                         <select className="form-control" value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
-                                            <option value="">Tat ca</option>
+                                            <option value="">Tất cả</option>
                                             {Object.entries(STOCK_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
-                                        <label>So ngay ton toi thieu</label>
-                                        <input className="form-control" type="number" min="0" value={filters.minDaysInStock} onChange={(e) => setFilters((p) => ({ ...p, minDaysInStock: e.target.value }))} placeholder="Vi du: 90" />
+                                        <label>Số ngày tồn tối thiểu</label>
+                                        <input className="form-control" type="number" min="0" value={filters.minDaysInStock} onChange={(e) => setFilters((p) => ({ ...p, minDaysInStock: e.target.value }))} placeholder="Ví dụ: 90" />
                                         <button type="button" className="btn btn-sm btn-outline-secondary mt-2" onClick={() => setFilters((p) => ({ ...p, minDaysInStock: '90', status: p.status || 'InStock' }))}>
-                                            {'>= 90 ngay'}
+                                            {'>= 90 ngày'}
                                         </button>
                                     </div>
                                     <div className="form-group">
-                                        <label>San pham</label>
+                                        <label>Sản phẩm</label>
                                         <select className="form-control" value={filters.productId} onChange={(e) => setFilters((p) => ({ ...p, productId: e.target.value }))}>
-                                            <option value="">Tat ca</option>
+                                            <option value="">Tất cả</option>
                                             {products.map((p) => <option key={p.id ?? p.Id} value={p.id ?? p.Id}>{(p.name ?? p.Name) || `#${p.id ?? p.Id}`}</option>)}
                                         </select>
                                     </div>
                                     <div className="d-flex justify-content-end" style={{ gap: 8 }}>
-                                        <button type="button" className="btn btn-outline-secondary" onClick={() => setFilters({ keyword: '', status: '', productId: '', minDaysInStock: '' })}>Xoa loc</button>
-                                        <button type="submit" className="btn btn-primary">Dong</button>
+                                        <button type="button" className="btn btn-outline-secondary" onClick={() => setFilters({ keyword: '', status: '', productId: '', minDaysInStock: '' })}>Xóa lọc</button>
+                                        <button type="submit" className="btn btn-primary">Đóng</button>
                                     </div>
                                 </form>
                             </AdminFilterDropdown>
-                            <button className="btn btn-sm btn-outline-primary" onClick={loadAll} disabled={loading}>Lam moi</button>
                         </div>
                     </div>
-                    <div className="card-body p-0">
+                    <div className="p-4">
                         {loading ? (
-                            <div className="p-4 text-center"><div className="spinner-border text-primary"></div></div>
+                            <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải tồn kho...</div>
                         ) : (
-                            <div className="table-responsive">
-                                <table className="table table-striped mb-0">
-                                    <thead>
+                            <>
+                            <div className="overflow-x-auto rounded-md border border-slate-200">
+                                <table className="min-w-[920px] divide-y divide-slate-200 text-sm">
+                                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
                                         <tr>
-                                            <th style={{ width: 80 }}>ID</th>
-                                            <th style={{ width: 240 }}>San pham</th>
-                                            <th style={{ width: 260 }}>Serial/IMEI</th>
-                                            <th style={{ width: 130 }}>Trang thai</th>
-                                            <th style={{ width: 200 }}>Ngay nhap</th>
-                                            <th style={{ width: 200 }}>Ngay ban</th>
+                                            <th className="px-4 py-3">ID</th>
+                                            <th className="px-4 py-3">Sản phẩm</th>
+                                            <th className="px-4 py-3">Serial/IMEI</th>
+                                            <th className="px-4 py-3">Trạng thái</th>
+                                            <th className="px-4 py-3">Ngày nhập</th>
+                                            <th className="px-4 py-3">Ngày bán</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-slate-100">
                                         {pagedStockItems.map((raw) => {
                                             const s = normalizeStockItem(raw);
                                             const productName = s.productName || productNameById.get(Number(s.productId)) || `#${s.productId}`;
                                             return (
-                                                <tr key={s.id}>
-                                                    <td>{s.id}</td>
-                                                    <td style={{ maxWidth: 240, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{productName}</td>
-                                                    <td className="text-monospace" style={{ maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.serialOrImei}</td>
-                                                    <td><span className="badge badge-secondary">{stockStatusText(s.status)}</span></td>
-                                                    <td>{s.receivedAt ? new Date(s.receivedAt).toLocaleString() : '-'}</td>
-                                                    <td>{s.soldAt ? new Date(s.soldAt).toLocaleString() : '-'}</td>
+                                                <tr key={s.id} className="hover:bg-slate-50">
+                                                    <td className="px-4 py-3 font-semibold text-admin-ink">{s.id}</td>
+                                                    <td className="px-4 py-3">
+                                                        <span className="block max-w-[240px] truncate font-semibold text-admin-ink">{productName}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3 font-mono">
+                                                        <span className="block max-w-[260px] truncate">{s.serialOrImei}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${stockStatusClass(s.status)}`}>{stockStatusText(s.status)}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3">{s.receivedAt ? new Date(s.receivedAt).toLocaleString() : '-'}</td>
+                                                    <td className="px-4 py-3">{s.soldAt ? new Date(s.soldAt).toLocaleString() : '-'}</td>
                                                 </tr>
                                             );
                                         })}
+                                        {!pagedStockItems.length && (
+                                            <tr>
+                                                <td colSpan="6" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">
+                                                    Không có dữ liệu phù hợp.
+                                                </td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
-                                <div className="d-flex justify-content-between align-items-center p-2 border-top">
-                                    <div className="text-muted small">
-                                        Hien thi {(stockPage - 1) * stockPageSize + 1}-{Math.min(stockPage * stockPageSize, filteredStockItems.length)} / {filteredStockItems.length}
+                            </div>
+                                <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        Hiển thị {stockFrom}-{stockTo} trong {stockTotalCount} serial
                                     </div>
-                                    <div className="btn-group">
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setStockPage((p) => Math.max(1, p - 1))} disabled={stockPage <= 1}>Truoc</button>
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" disabled>Trang {stockPage} / {totalStockPages}</button>
-                                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setStockPage((p) => Math.min(totalStockPages, p + 1))} disabled={stockPage >= totalStockPages}>Sau</button>
+                                    <div className="flex items-center gap-2">
+                                        <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setStockPage((p) => Math.max(1, p - 1))} disabled={stockPage <= 1}>Trước</button>
+                                        <span className="rounded-md bg-slate-100 px-3 py-2 font-semibold text-admin-ink">Trang {stockPage} / {totalStockPages}</span>
+                                        <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setStockPage((p) => Math.min(totalStockPages, p + 1))} disabled={stockPage >= totalStockPages}>Sau</button>
                                     </div>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
-                </div>
+                </section>
+                )}
             </div>
+        </div>
         </div>
     );
 };

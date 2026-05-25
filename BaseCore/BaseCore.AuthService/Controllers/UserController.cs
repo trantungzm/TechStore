@@ -17,19 +17,21 @@ namespace BaseCore.AuthService.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly AppDbContext _db;
+        private readonly IServiceProvider _serviceProvider;
 
-        public UserController(IUserService userService, AppDbContext db)
+        public UserController(IUserService userService, IServiceProvider serviceProvider)
         {
             _userService = userService;
-            _db = db;
+            _serviceProvider = serviceProvider;
         }
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll([FromQuery] string keyword = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var (users, totalCount) = await _userService.Search(keyword, page, pageSize);
+            var safePage = Math.Max(1, page);
+            var safePageSize = Math.Clamp(pageSize, 1, 500);
+            var (users, totalCount) = await _userService.Search(keyword, safePage, safePageSize);
             var roleNames = await GetRoleNamesAsync();
 
             var result = users.Select(u => new UserResponse
@@ -51,9 +53,9 @@ namespace BaseCore.AuthService.Controllers
             {
                 data = result,
                 totalCount,
-                page,
-                pageSize,
-                totalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                page = safePage,
+                pageSize = safePageSize,
+                totalPages = (int)Math.Ceiling((double)totalCount / safePageSize)
             });
         }
 
@@ -294,12 +296,29 @@ namespace BaseCore.AuthService.Controllers
 
         private async Task<bool> ActiveAdminExistsAsync()
         {
-            return await _db.Users.AnyAsync(u => u.IsActive && u.UserType == 1);
+            var db = _serviceProvider.GetService<AppDbContext>();
+            if (db != null)
+            {
+                return await db.Users.AnyAsync(u => u.IsActive && u.UserType == 1);
+            }
+
+            var users = await _userService.GetAll();
+            return users.Any(u => u.IsActive && u.UserType == 1);
         }
 
         private async Task<Dictionary<int, string>> GetRoleNamesAsync()
         {
-            return await _db.Roles
+            var db = _serviceProvider.GetService<AppDbContext>();
+            if (db == null)
+            {
+                return new Dictionary<int, string>
+                {
+                    [0] = "User",
+                    [1] = "Admin"
+                };
+            }
+
+            return await db.Roles
                 .Where(r => r.IsActive && !r.IsDeleted)
                 .ToDictionaryAsync(r => r.RoleType, r => r.Name);
         }
@@ -311,7 +330,24 @@ namespace BaseCore.AuthService.Controllers
 
         private async Task<Role?> ResolveRoleAsync(UpdateUserRoleRequest request)
         {
-            var query = _db.Roles.Where(r => r.IsActive && !r.IsDeleted);
+            var db = _serviceProvider.GetService<AppDbContext>();
+            if (db == null)
+            {
+                if (request.UserType.HasValue)
+                {
+                    return new Role { RoleType = request.UserType.Value, Name = request.UserType.Value == 1 ? "Admin" : "User" };
+                }
+
+                var roleName = request.Role?.Trim();
+                if (!string.IsNullOrWhiteSpace(roleName))
+                {
+                    return new Role { RoleType = string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase) ? 1 : 0, Name = roleName };
+                }
+
+                return null;
+            }
+
+            var query = db.Roles.Where(r => r.IsActive && !r.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(request.RoleId))
             {

@@ -4,6 +4,7 @@ using BaseCore.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseCore.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260523161655_SeedBooleanSpecOptions")]
+    partial class SeedBooleanSpecOptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1428,7 +1431,7 @@ namespace BaseCore.Repository.Migrations
                             Id = 1,
                             Brand = "Apple",
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2026, 5, 23, 17, 13, 24, 671, DateTimeKind.Utc).AddTicks(919),
+                            CreatedAt = new DateTime(2026, 5, 23, 16, 16, 54, 747, DateTimeKind.Utc).AddTicks(6336),
                             Description = "Flagship Apple smartphone",
                             ImageUrl = "/electro/img/product-1.png",
                             IsActive = true,
@@ -1448,7 +1451,7 @@ namespace BaseCore.Repository.Migrations
                             Id = 2,
                             Brand = "Samsung",
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2026, 5, 23, 17, 13, 24, 671, DateTimeKind.Utc).AddTicks(932),
+                            CreatedAt = new DateTime(2026, 5, 23, 16, 16, 54, 747, DateTimeKind.Utc).AddTicks(6350),
                             Description = "Android flagship phone",
                             ImageUrl = "/electro/img/product-2.png",
                             IsActive = true,
@@ -1468,7 +1471,7 @@ namespace BaseCore.Repository.Migrations
                             Id = 3,
                             Brand = "Apple",
                             CategoryId = 2,
-                            CreatedAt = new DateTime(2026, 5, 23, 17, 13, 24, 671, DateTimeKind.Utc).AddTicks(935),
+                            CreatedAt = new DateTime(2026, 5, 23, 16, 16, 54, 747, DateTimeKind.Utc).AddTicks(6354),
                             Description = "Lightweight Apple laptop",
                             ImageUrl = "/electro/img/product-3.png",
                             IsActive = true,
@@ -1488,7 +1491,7 @@ namespace BaseCore.Repository.Migrations
                             Id = 4,
                             Brand = "Dell",
                             CategoryId = 2,
-                            CreatedAt = new DateTime(2026, 5, 23, 17, 13, 24, 671, DateTimeKind.Utc).AddTicks(938),
+                            CreatedAt = new DateTime(2026, 5, 23, 16, 16, 54, 747, DateTimeKind.Utc).AddTicks(6357),
                             Description = "High-end productivity laptop",
                             ImageUrl = "/electro/img/product-4.png",
                             IsActive = true,
@@ -1508,7 +1511,7 @@ namespace BaseCore.Repository.Migrations
                             Id = 5,
                             Brand = "Apple",
                             CategoryId = 7,
-                            CreatedAt = new DateTime(2026, 5, 23, 17, 13, 24, 671, DateTimeKind.Utc).AddTicks(941),
+                            CreatedAt = new DateTime(2026, 5, 23, 16, 16, 54, 747, DateTimeKind.Utc).AddTicks(6360),
                             Description = "Wireless earbuds",
                             ImageUrl = "/electro/img/product-5.png",
                             IsActive = true,
@@ -2049,23 +2052,23 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 1,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "screenSize",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc man hinh",
+                            Name = "Kích thước màn hình",
                             SortOrder = 1
                         },
                         new
                         {
                             Id = 2,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "screenTechnology",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2075,18 +2078,18 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Cong nghe man hinh",
+                            Name = "Công nghệ màn hình",
                             SortOrder = 2
                         },
                         new
                         {
                             Id = 3,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "rearCamera",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2097,28 +2100,28 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 4,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "frontCamera",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Camera truoc",
+                            Name = "Camera trước",
                             SortOrder = 4
                         },
                         new
                         {
                             Id = 5,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "chipset",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2139,13 +2142,13 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Cong nghe NFC",
+                            Name = "Công nghệ NFC",
                             SortOrder = 6
                         },
                         new
                         {
                             Id = 7,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "ram",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2155,13 +2158,13 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Dung luong RAM",
+                            Name = "Dung lượng RAM",
                             SortOrder = 7
                         },
                         new
                         {
                             Id = 8,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "internalStorage",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2171,18 +2174,18 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Bo nho trong",
+                            Name = "Bộ nhớ trong",
                             SortOrder = 8
                         },
                         new
                         {
                             Id = 9,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "battery",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2193,23 +2196,23 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 10,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "sim",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "The SIM",
+                            Name = "Thẻ SIM",
                             SortOrder = 10
                         },
                         new
                         {
                             Id = 11,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "os",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2219,77 +2222,77 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "He dieu hanh",
+                            Name = "Hệ điều hành",
                             SortOrder = 11
                         },
                         new
                         {
                             Id = 12,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "screenResolution",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Do phan giai man hinh",
+                            Name = "Độ phân giải màn hình",
                             SortOrder = 12
                         },
                         new
                         {
                             Id = 13,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "screenFeatures",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tinh nang man hinh",
+                            Name = "Tính năng màn hình",
                             SortOrder = 13
                         },
                         new
                         {
                             Id = 14,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 1,
                             Code = "cpuType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Loai CPU",
+                            Name = "Loại CPU",
                             SortOrder = 14
                         },
                         new
                         {
                             Id = 15,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "graphicsType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Loai card do hoa",
+                            Name = "Loại card đồ họa",
                             SortOrder = 1
                         },
                         new
                         {
                             Id = 16,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "ram",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2299,45 +2302,45 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Dung luong RAM",
+                            Name = "Dung lượng RAM",
                             SortOrder = 2
                         },
                         new
                         {
                             Id = 17,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "ramType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Loai RAM",
+                            Name = "Loại RAM",
                             SortOrder = 3
                         },
                         new
                         {
                             Id = 18,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "ramSlots",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "So khe RAM",
+                            Name = "Số khe RAM",
                             SortOrder = 4
                         },
                         new
                         {
                             Id = 19,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "hardDrive",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2347,29 +2350,29 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "O cung",
+                            Name = "Ổ cứng",
                             SortOrder = 5
                         },
                         new
                         {
                             Id = 20,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "screenSize",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc man hinh",
+                            Name = "Kích thước màn hình",
                             SortOrder = 6
                         },
                         new
                         {
                             Id = 21,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "screenTechnology",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2379,18 +2382,18 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Cong nghe man hinh",
+                            Name = "Công nghệ màn hình",
                             SortOrder = 7
                         },
                         new
                         {
                             Id = 22,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "battery",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2401,7 +2404,7 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 23,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "os",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2411,77 +2414,77 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "He dieu hanh",
+                            Name = "Hệ điều hành",
                             SortOrder = 9
                         },
                         new
                         {
                             Id = 24,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "screenResolution",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Do phan giai man hinh",
+                            Name = "Độ phân giải màn hình",
                             SortOrder = 10
                         },
                         new
                         {
                             Id = 25,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "cpuType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Loai CPU",
+                            Name = "Loại CPU",
                             SortOrder = 11
                         },
                         new
                         {
                             Id = 26,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 2,
                             Code = "ports",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Cong giao tiep",
+                            Name = "Cổng giao tiếp",
                             SortOrder = 12
                         },
                         new
                         {
                             Id = 27,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "screenSize",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc man hinh",
+                            Name = "Kích thước màn hình",
                             SortOrder = 1
                         },
                         new
                         {
                             Id = 28,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "screenTechnology",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2491,18 +2494,18 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Cong nghe man hinh",
+                            Name = "Công nghệ màn hình",
                             SortOrder = 2
                         },
                         new
                         {
                             Id = 29,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "rearCamera",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2513,28 +2516,28 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 30,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "frontCamera",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Camera truoc",
+                            Name = "Camera trước",
                             SortOrder = 4
                         },
                         new
                         {
                             Id = 31,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "chipset",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2545,7 +2548,7 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 32,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "ram",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2555,13 +2558,13 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Dung luong RAM",
+                            Name = "Dung lượng RAM",
                             SortOrder = 6
                         },
                         new
                         {
                             Id = 33,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "internalStorage",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2571,18 +2574,18 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Bo nho trong",
+                            Name = "Bộ nhớ trong",
                             SortOrder = 7
                         },
                         new
                         {
                             Id = 34,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "battery",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2593,7 +2596,7 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 35,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "os",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2603,77 +2606,77 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "He dieu hanh",
+                            Name = "Hệ điều hành",
                             SortOrder = 9
                         },
                         new
                         {
                             Id = 36,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "screenResolution",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Do phan giai man hinh",
+                            Name = "Độ phân giải màn hình",
                             SortOrder = 10
                         },
                         new
                         {
                             Id = 37,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "screenFeatures",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tinh nang man hinh",
+                            Name = "Tính năng màn hình",
                             SortOrder = 11
                         },
                         new
                         {
                             Id = 38,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "cpuType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Loai CPU",
+                            Name = "Loại CPU",
                             SortOrder = 12
                         },
                         new
                         {
                             Id = 39,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 4,
                             Code = "compatibility",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tuong thich",
+                            Name = "Tương thích",
                             SortOrder = 13
                         },
                         new
                         {
                             Id = 40,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "screenTechnology",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2683,55 +2686,55 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Cong nghe man hinh",
+                            Name = "Công nghệ màn hình",
                             SortOrder = 1
                         },
                         new
                         {
                             Id = 41,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "screenSize",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc man hinh",
+                            Name = "Kích thước màn hình",
                             SortOrder = 2
                         },
                         new
                         {
                             Id = 42,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "faceDiameter",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Duong kinh mat",
+                            Name = "Đường kính mặt",
                             SortOrder = 3
                         },
                         new
                         {
                             Id = 43,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "wristSize",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc co tay phu hop",
+                            Name = "Kích thước cổ tay phù hợp",
                             SortOrder = 4
                         },
                         new
@@ -2741,67 +2744,67 @@ namespace BaseCore.Repository.Migrations
                             CategoryId = 5,
                             Code = "calling",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "boolean",
+                            InputType = "boolean",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Nghe goi",
+                            Name = "Nghe gọi",
                             SortOrder = 5
                         },
                         new
                         {
                             Id = 45,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "healthFeatures",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tien ich suc khoe",
+                            Name = "Tiện ích sức khỏe",
                             SortOrder = 6
                         },
                         new
                         {
                             Id = 46,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "compatibility",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tuong thich",
+                            Name = "Tương thích",
                             SortOrder = 7
                         },
                         new
                         {
                             Id = 47,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "batteryLife",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Thoi luong pin",
+                            Name = "Thời lượng pin",
                             SortOrder = 8
                         },
                         new
                         {
                             Id = 48,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 5,
                             Code = "manufacturer",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2811,55 +2814,55 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Hang san xuat",
+                            Name = "Hãng sản xuất",
                             SortOrder = 9
                         },
                         new
                         {
                             Id = 49,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "dimensions",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc",
+                            Name = "Kích thước",
                             SortOrder = 1
                         },
                         new
                         {
                             Id = 50,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "weight",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Trong luong",
+                            Name = "Trọng lượng",
                             SortOrder = 2
                         },
                         new
                         {
                             Id = 51,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "audioTechnology",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Cong nghe am thanh",
+                            Name = "Công nghệ âm thanh",
                             SortOrder = 3
                         },
                         new
@@ -2881,44 +2884,44 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 53,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "batteryLife",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Thoi luong su dung pin",
+                            Name = "Thời lượng sử dụng pin",
                             SortOrder = 5
                         },
                         new
                         {
                             Id = 54,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "controlMethod",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Phuong thuc dieu khien",
+                            Name = "Phương thức điều khiển",
                             SortOrder = 6
                         },
                         new
                         {
                             Id = 55,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "chipset",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
@@ -2929,23 +2932,23 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 56,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "otherFeatures",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tinh nang khac",
+                            Name = "Tính năng khác",
                             SortOrder = 8
                         },
                         new
                         {
                             Id = 57,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 7,
                             Code = "manufacturer",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2955,13 +2958,13 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Hang san xuat",
+                            Name = "Hãng sản xuất",
                             SortOrder = 9
                         },
                         new
                         {
                             Id = 58,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "manufacturer",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2971,151 +2974,151 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Hang san xuat",
+                            Name = "Hãng sản xuất",
                             SortOrder = 1
                         },
                         new
                         {
                             Id = 59,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "cameraType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Loai may anh",
+                            Name = "Loại máy ảnh",
                             SortOrder = 2
                         },
                         new
                         {
                             Id = 60,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "sensorType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
-                            Name = "Loai cam bien",
+                            Name = "Loại cảm biến",
                             SortOrder = 3
                         },
                         new
                         {
                             Id = 61,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "aperture",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Khau do",
+                            Name = "Khẩu độ",
                             SortOrder = 4
                         },
                         new
                         {
                             Id = 62,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "focalLength",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Tieu cu",
+                            Name = "Tiêu cự",
                             SortOrder = 5
                         },
                         new
                         {
                             Id = 63,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "lensType",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Loai ong kinh",
+                            Name = "Loại ống kính",
                             SortOrder = 6
                         },
                         new
                         {
                             Id = 64,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "focusMode",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "textarea",
+                            InputType = "textarea",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Che do lay net",
+                            Name = "Chế độ lấy nét",
                             SortOrder = 7
                         },
                         new
                         {
                             Id = 65,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "shutter",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Man trap",
+                            Name = "Màn trập",
                             SortOrder = 8
                         },
                         new
                         {
                             Id = 66,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
-                            Code = "printStandard",
+                            Code = "printSpeed",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "multiSelect",
-                            InputType = "multiSelect",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Chuan in anh",
+                            Name = "Tốc độ in",
                             SortOrder = 9
                         },
                         new
                         {
                             Id = 67,
-                            AllowCustomValue = false,
+                            AllowCustomValue = true,
                             CategoryId = 6,
                             Code = "imageSize",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DataType = "select",
-                            InputType = "select",
+                            DataType = "text",
+                            InputType = "text",
                             IsActive = true,
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
-                            Name = "Kich thuoc anh",
+                            Name = "Kích thước ảnh",
                             SortOrder = 10
                         });
                 });
@@ -3163,8 +3166,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 1,
-                            Value = "6.3 inches"
+                            SpecDefinitionId = 7,
+                            Value = "4 GB"
                         },
                         new
                         {
@@ -3172,8 +3175,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 1,
-                            Value = "6.59 inches"
+                            SpecDefinitionId = 7,
+                            Value = "6 GB"
                         },
                         new
                         {
@@ -3181,8 +3184,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 1,
-                            Value = "6.67 inches"
+                            SpecDefinitionId = 7,
+                            Value = "8 GB"
                         },
                         new
                         {
@@ -3190,188 +3193,188 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 1,
-                            Value = "6.9 inches"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 2,
-                            Value = "AMOLED"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 2,
-                            Value = "Dynamic AMOLED 2X"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 2,
-                            Value = "Super Retina XDR"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 3,
-                            Value = "48MP + 48MP + 48MP"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 3,
-                            Value = "50MP + 50MP + 50MP"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 3,
-                            Value = "200MP + 50MP + 50MP + 10MP"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 3,
-                            Value = "200MP + 8MP + 2MP"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 4,
-                            Value = "12MP"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 4,
-                            Value = "32MP"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 4,
-                            Value = "Camera 18MP Center Stage"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 4,
-                            Value = "Camera truoc - f/2.2"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 5,
-                            Value = "Chip A19 Pro"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 5,
-                            Value = "Snapdragon 8 Elite Gen 5 danh cho Galaxy (3nm)"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 5,
-                            Value = "Snapdragon 7s Gen 3"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 5,
-                            Value = "MediaTek Dimensity 9500s"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 6,
-                            Value = "Khong"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 6,
-                            Value = "Co"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 7,
-                            Value = "8 GB"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
                             SpecDefinitionId = 7,
                             Value = "12 GB"
                         },
                         new
                         {
-                            Id = 24,
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 7,
+                            Value = "16 GB"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 7,
+                            Value = "32 GB"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 16,
+                            Value = "4 GB"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 16,
+                            Value = "6 GB"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 16,
+                            Value = "8 GB"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 16,
+                            Value = "12 GB"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 16,
+                            Value = "16 GB"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 16,
+                            Value = "32 GB"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 32,
+                            Value = "4 GB"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 32,
+                            Value = "6 GB"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 32,
+                            Value = "8 GB"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 32,
+                            Value = "12 GB"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 32,
+                            Value = "16 GB"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 32,
+                            Value = "32 GB"
+                        },
+                        new
+                        {
+                            Id = 19,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
                             SpecDefinitionId = 8,
+                            Value = "64 GB"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 8,
+                            Value = "128 GB"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 8,
                             Value = "256 GB"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 8,
+                            Value = "512 GB"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 8,
+                            Value = "1 TB"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 8,
+                            Value = "2 TB"
                         },
                         new
                         {
@@ -3379,8 +3382,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 9,
-                            Value = "5000 mAh"
+                            SpecDefinitionId = 19,
+                            Value = "64 GB"
                         },
                         new
                         {
@@ -3388,8 +3391,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 9,
-                            Value = "5110 mAh"
+                            SpecDefinitionId = 19,
+                            Value = "128 GB"
                         },
                         new
                         {
@@ -3397,858 +3400,246 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 9,
-                            Value = "7025 mAh"
+                            SpecDefinitionId = 19,
+                            Value = "256 GB"
                         },
                         new
                         {
                             Id = 28,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 10,
-                            Value = "Sim kep (nano-Sim va e-Sim) - Ho tro 2 e-Sim"
+                            SpecDefinitionId = 19,
+                            Value = "512 GB"
                         },
                         new
                         {
                             Id = 29,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 10,
-                            Value = "2 Nano-SIM + eSIM"
+                            SpecDefinitionId = 19,
+                            Value = "1 TB"
                         },
                         new
                         {
                             Id = 30,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 10,
-                            Value = "2 Nano-SIM"
+                            SpecDefinitionId = 19,
+                            Value = "2 TB"
                         },
                         new
                         {
                             Id = 31,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 10,
-                            Value = "Dual nano-SIM hoac 1 nano-SIM + 1 eSIM"
+                            SpecDefinitionId = 33,
+                            Value = "64 GB"
                         },
                         new
                         {
                             Id = 32,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 11,
-                            Value = "iOS 26"
+                            SpecDefinitionId = 33,
+                            Value = "128 GB"
                         },
                         new
                         {
                             Id = 33,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 11,
-                            Value = "Android 14"
+                            SpecDefinitionId = 33,
+                            Value = "256 GB"
                         },
                         new
                         {
                             Id = 34,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 11,
-                            Value = "ColorOS 16.0"
+                            SpecDefinitionId = 33,
+                            Value = "512 GB"
                         },
                         new
                         {
                             Id = 35,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 12,
-                            Value = "2622 x 1206 pixels"
+                            SpecDefinitionId = 33,
+                            Value = "1 TB"
                         },
                         new
                         {
                             Id = 36,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 12,
-                            Value = "2712 x 1220 pixels"
+                            SpecDefinitionId = 33,
+                            Value = "2 TB"
                         },
                         new
                         {
                             Id = 37,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 12,
-                            Value = "3120 x 1440 pixels (Quad HD+)"
+                            SpecDefinitionId = 2,
+                            Value = "LCD"
                         },
                         new
                         {
                             Id = 38,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 12,
-                            Value = "1256 x 2760 pixels"
+                            SpecDefinitionId = 2,
+                            Value = "IPS LCD"
                         },
                         new
                         {
                             Id = 39,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Man hinh Luon Bat"
+                            SpecDefinitionId = 2,
+                            Value = "OLED"
                         },
                         new
                         {
                             Id = 40,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "ProMotion 120Hz"
+                            SpecDefinitionId = 2,
+                            Value = "AMOLED"
                         },
                         new
                         {
                             Id = 41,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "HDR"
+                            SpecDefinitionId = 2,
+                            Value = "Super AMOLED"
                         },
                         new
                         {
                             Id = 42,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "True Tone"
+                            SpecDefinitionId = 2,
+                            Value = "Dynamic AMOLED 2X"
                         },
                         new
                         {
                             Id = 43,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
+                            DisplayOrder = 7,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "P3"
+                            SpecDefinitionId = 2,
+                            Value = "Liquid Retina"
                         },
                         new
                         {
                             Id = 44,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
+                            DisplayOrder = 8,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Tan so quet 1-120Hz"
+                            SpecDefinitionId = 2,
+                            Value = "Super Retina XDR"
                         },
                         new
                         {
                             Id = 45,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 7,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Do sang toi da 2600 nits"
+                            SpecDefinitionId = 21,
+                            Value = "LCD"
                         },
                         new
                         {
                             Id = 46,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 8,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Tan so quet len den 120Hz"
+                            SpecDefinitionId = 21,
+                            Value = "IPS LCD"
                         },
                         new
                         {
                             Id = 47,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 9,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Do sang 3000 nits"
+                            SpecDefinitionId = 21,
+                            Value = "OLED"
                         },
                         new
                         {
                             Id = 48,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 10,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Do sau mau 12-bit"
+                            SpecDefinitionId = 21,
+                            Value = "AMOLED"
                         },
                         new
                         {
                             Id = 49,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 11,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Ty le tuong phan 5,000,000:1"
+                            SpecDefinitionId = 21,
+                            Value = "Super AMOLED"
                         },
                         new
                         {
                             Id = 50,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 12,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Tan so lay mau cam ung 240Hz"
+                            SpecDefinitionId = 21,
+                            Value = "Dynamic AMOLED 2X"
                         },
                         new
                         {
                             Id = 51,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 13,
-                            IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "1.07 ty mau (10 bits)"
-                        },
-                        new
-                        {
-                            Id = 52,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 14,
-                            IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "100% DCI-P3"
-                        },
-                        new
-                        {
-                            Id = 53,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 15,
-                            IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "460 PPI"
-                        },
-                        new
-                        {
-                            Id = 54,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 16,
-                            IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Do sang toi da 1800 nits (HBM)"
-                        },
-                        new
-                        {
-                            Id = 55,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 17,
-                            IsActive = true,
-                            SpecDefinitionId = 13,
-                            Value = "Kinh bao ve Corning Gorilla Glass 7i"
-                        },
-                        new
-                        {
-                            Id = 56,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 14,
-                            Value = "CPU 6 loi voi 2 loi hieu nang va 4 loi tiet kiem dien"
-                        },
-                        new
-                        {
-                            Id = 57,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 14,
-                            Value = "8 nhan, xung nhip 2.5GHz"
-                        },
-                        new
-                        {
-                            Id = 58,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 14,
-                            Value = "8 nhan"
-                        },
-                        new
-                        {
-                            Id = 59,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 15,
-                            Value = "GPU 5 loi va Neural Engine 16 loi"
-                        },
-                        new
-                        {
-                            Id = 60,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 15,
-                            Value = "Intel UHD Graphics"
-                        },
-                        new
-                        {
-                            Id = 61,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 15,
-                            Value = "Intel Graphics"
-                        },
-                        new
-                        {
-                            Id = 62,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 15,
-                            Value = "NVIDIA GeForce RTX 3050 6GB GDDR6"
-                        },
-                        new
-                        {
-                            Id = 63,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 16,
-                            Value = "8GB"
-                        },
-                        new
-                        {
-                            Id = 64,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 16,
-                            Value = "16GB"
-                        },
-                        new
-                        {
-                            Id = 65,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 17,
-                            Value = "DDR4"
-                        },
-                        new
-                        {
-                            Id = 66,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 17,
-                            Value = "DDR5"
-                        },
-                        new
-                        {
-                            Id = 67,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 17,
-                            Value = "DDR4 3200 MT/s"
-                        },
-                        new
-                        {
-                            Id = 68,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 17,
-                            Value = "SODIMM DDR5-4800"
-                        },
-                        new
-                        {
-                            Id = 69,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 17,
-                            Value = "Unified Memory"
-                        },
-                        new
-                        {
-                            Id = 70,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 18,
-                            Value = "8GB DDR4 on board + 8GB DDR4 SO-DIMM"
-                        },
-                        new
-                        {
-                            Id = 71,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 18,
-                            Value = "1 khe Onboard + 1 khe trong nang cap toi da 32GB"
-                        },
-                        new
-                        {
-                            Id = 72,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 18,
-                            Value = "2 khe (1 x 16GB)"
-                        },
-                        new
-                        {
-                            Id = 73,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 18,
-                            Value = "2 khe (May nguyen ban 16GB)"
-                        },
-                        new
-                        {
-                            Id = 74,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 19,
-                            Value = "256GB"
-                        },
-                        new
-                        {
-                            Id = 75,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 19,
-                            Value = "512GB M.2 NVMe PCIe 4.0 SSD"
-                        },
-                        new
-                        {
-                            Id = 76,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 19,
-                            Value = "512GB M.2 PCIe NVMe (nang cap toi da 1TB)"
-                        },
-                        new
-                        {
-                            Id = 77,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 19,
-                            Value = "512GB SSD M.2 2242 PCIe 4.0x4 NVMe"
-                        },
-                        new
-                        {
-                            Id = 78,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 19,
-                            Value = "512GB PCIe NVMe SSD (Nang cap toi da 4TB)"
-                        },
-                        new
-                        {
-                            Id = 79,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 20,
-                            Value = "13 inches"
-                        },
-                        new
-                        {
-                            Id = 80,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 20,
-                            Value = "14 inches"
-                        },
-                        new
-                        {
-                            Id = 81,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 20,
-                            Value = "15.6 inches"
-                        },
-                        new
-                        {
-                            Id = 82,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 7,
                             IsActive = true,
                             SpecDefinitionId = 21,
                             Value = "Liquid Retina"
                         },
                         new
                         {
-                            Id = 83,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "Do sang 300nits"
-                        },
-                        new
-                        {
-                            Id = 84,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "45% NTSC"
-                        },
-                        new
-                        {
-                            Id = 85,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "TUV Rheinland-certified"
-                        },
-                        new
-                        {
-                            Id = 86,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "With stylus support"
-                        },
-                        new
-                        {
-                            Id = 87,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "man hinh chong choi"
-                        },
-                        new
-                        {
-                            Id = 88,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 7,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "100% sRGB"
-                        },
-                        new
-                        {
-                            Id = 89,
+                            Id = 52,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 8,
                             IsActive = true,
                             SpecDefinitionId = 21,
-                            Value = "FreeSync"
+                            Value = "Super Retina XDR"
                         },
                         new
                         {
-                            Id = 90,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 9,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "Acer ComfyView"
-                        },
-                        new
-                        {
-                            Id = 91,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 10,
-                            IsActive = true,
-                            SpecDefinitionId = 21,
-                            Value = "LCD TFT"
-                        },
-                        new
-                        {
-                            Id = 92,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 22,
-                            Value = "Thoi gian xem video truc tuyen len den 16 gio, pin lithium-ion 36.5 watt-gio"
-                        },
-                        new
-                        {
-                            Id = 93,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 22,
-                            Value = "50WHrs, 3S1P, 3-cell Li-ion"
-                        },
-                        new
-                        {
-                            Id = 94,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 22,
-                            Value = "Li-ion 4-Cell Battery, 54WHr"
-                        },
-                        new
-                        {
-                            Id = 95,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 22,
-                            Value = "57.5Wh, 135W Slim Tip (3-pin)"
-                        },
-                        new
-                        {
-                            Id = 96,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 22,
-                            Value = "Pin Li-ion 3 cell 54.8Wh, bo doi nguon AC 150W"
-                        },
-                        new
-                        {
-                            Id = 97,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 23,
-                            Value = "macOS"
-                        },
-                        new
-                        {
-                            Id = 98,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 23,
-                            Value = "Windows 11 Home"
-                        },
-                        new
-                        {
-                            Id = 99,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 23,
-                            Value = "Windows 11 Home, Single Language English + Office Home & Student 2024"
-                        },
-                        new
-                        {
-                            Id = 100,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 23,
-                            Value = "Windows 11 Home Single Language"
-                        },
-                        new
-                        {
-                            Id = 101,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 23,
-                            Value = "Windows 11 Home Single Language, English"
-                        },
-                        new
-                        {
-                            Id = 102,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 24,
-                            Value = "2408 x 1506 pixels"
-                        },
-                        new
-                        {
-                            Id = 103,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 24,
-                            Value = "1920 x 1200 pixels (WUXGA)"
-                        },
-                        new
-                        {
-                            Id = 104,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 24,
-                            Value = "1920 x 1200 pixels (FullHD+)"
-                        },
-                        new
-                        {
-                            Id = 105,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 24,
-                            Value = "1920 x 1080 pixels (FullHD)"
-                        },
-                        new
-                        {
-                            Id = 106,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 25,
-                            Value = "Chip Apple A18 Pro"
-                        },
-                        new
-                        {
-                            Id = 107,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 25,
-                            Value = "Intel Core i5-13420H"
-                        },
-                        new
-                        {
-                            Id = 108,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 25,
-                            Value = "Intel Core 5 120U"
-                        },
-                        new
-                        {
-                            Id = 109,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 25,
-                            Value = "AMD Ryzen 7 7735HS"
-                        },
-                        new
-                        {
-                            Id = 110,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 25,
-                            Value = "Intel Core i5-12450H"
-                        },
-                        new
-                        {
-                            Id = 111,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "USB 3 (USB-C) 10Gb/s"
-                        },
-                        new
-                        {
-                            Id = 112,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "USB 2 (USB-C) 480Mb/s"
-                        },
-                        new
-                        {
-                            Id = 113,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "Jack 3.5 mm"
-                        },
-                        new
-                        {
-                            Id = 114,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "USB 3.2"
-                        },
-                        new
-                        {
-                            Id = 115,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "HDMI 1.4"
-                        },
-                        new
-                        {
-                            Id = 116,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "Khe doc the SD"
-                        },
-                        new
-                        {
-                            Id = 117,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 7,
-                            IsActive = true,
-                            SpecDefinitionId = 26,
-                            Value = "Mini DisplayPort 1.4"
-                        },
-                        new
-                        {
-                            Id = 118,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 27,
-                            Value = "11 inches"
-                        },
-                        new
-                        {
-                            Id = 119,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 27,
-                            Value = "11.2 inches"
-                        },
-                        new
-                        {
-                            Id = 120,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 27,
-                            Value = "12.1 inches"
-                        },
-                        new
-                        {
-                            Id = 121,
+                            Id = 53,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
                             SpecDefinitionId = 28,
-                            Value = "IPS"
+                            Value = "LCD"
                         },
                         new
                         {
-                            Id = 122,
+                            Id = 54,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
@@ -4257,619 +3648,412 @@ namespace BaseCore.Repository.Migrations
                         },
                         new
                         {
-                            Id = 123,
+                            Id = 55,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 28,
+                            Value = "OLED"
+                        },
+                        new
+                        {
+                            Id = 56,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 28,
+                            Value = "AMOLED"
+                        },
+                        new
+                        {
+                            Id = 57,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 28,
+                            Value = "Super AMOLED"
+                        },
+                        new
+                        {
+                            Id = 58,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 28,
+                            Value = "Dynamic AMOLED 2X"
+                        },
+                        new
+                        {
+                            Id = 59,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 7,
                             IsActive = true,
                             SpecDefinitionId = 28,
                             Value = "Liquid Retina"
                         },
                         new
                         {
-                            Id = 124,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 29,
-                            Value = "8MP"
-                        },
-                        new
-                        {
-                            Id = 125,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 29,
-                            Value = "13 MP, f/2.2"
-                        },
-                        new
-                        {
-                            Id = 126,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 29,
-                            Value = "Camera goc rong 12MP"
-                        },
-                        new
-                        {
-                            Id = 127,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 29,
-                            Value = "13MP"
-                        },
-                        new
-                        {
-                            Id = 128,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 30,
-                            Value = "8 MP, f/2.28"
-                        },
-                        new
-                        {
-                            Id = 129,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 30,
-                            Value = "12MP, f/2.4"
-                        },
-                        new
-                        {
-                            Id = 130,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 30,
-                            Value = "13MP"
-                        },
-                        new
-                        {
-                            Id = 131,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 31,
-                            Value = "MediaTek Dimensity 6400"
-                        },
-                        new
-                        {
-                            Id = 132,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 31,
-                            Value = "Chip A16"
-                        },
-                        new
-                        {
-                            Id = 133,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 31,
-                            Value = "Snapdragon 7+ Gen 3"
-                        },
-                        new
-                        {
-                            Id = 134,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 32,
-                            Value = "8 GB"
-                        },
-                        new
-                        {
-                            Id = 135,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 33,
-                            Value = "128 GB"
-                        },
-                        new
-                        {
-                            Id = 136,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 33,
-                            Value = "512 GB"
-                        },
-                        new
-                        {
-                            Id = 137,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 34,
-                            Value = "10200 mAh"
-                        },
-                        new
-                        {
-                            Id = 138,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 34,
-                            Value = "Tich hop pin sac Li-Po 28,93 watt-gio"
-                        },
-                        new
-                        {
-                            Id = 139,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 34,
-                            Value = "8850 mAh"
-                        },
-                        new
-                        {
-                            Id = 140,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 35,
-                            Value = "Android 15 tro len"
-                        },
-                        new
-                        {
-                            Id = 141,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 35,
-                            Value = "iPadOS 18"
-                        },
-                        new
-                        {
-                            Id = 142,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 35,
-                            Value = "Xiaomi HyperOS 2"
-                        },
-                        new
-                        {
-                            Id = 143,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 36,
-                            Value = "2560 x 1600 pixels (2.5K)"
-                        },
-                        new
-                        {
-                            Id = 144,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 36,
-                            Value = "2360 x 1640 pixel"
-                        },
-                        new
-                        {
-                            Id = 145,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 36,
-                            Value = "2136 x 3200 pixels"
-                        },
-                        new
-                        {
-                            Id = 146,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Tan so quet 90Hz"
-                        },
-                        new
-                        {
-                            Id = 147,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "600 nits dien hinh"
-                        },
-                        new
-                        {
-                            Id = 148,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "800 nits HBM"
-                        },
-                        new
-                        {
-                            Id = 149,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Chong choi giong nhu giay"
-                        },
-                        new
-                        {
-                            Id = 150,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "96% DCI-P3"
-                        },
-                        new
-                        {
-                            Id = 151,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Cam ung da diem 10 diem"
-                        },
-                        new
-                        {
-                            Id = 152,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 7,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Multi-Touch"
-                        },
-                        new
-                        {
-                            Id = 153,
+                            Id = 60,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 8,
                             IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "LED nen"
+                            SpecDefinitionId = 28,
+                            Value = "Super Retina XDR"
                         },
                         new
                         {
-                            Id = 154,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 9,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "IPS"
-                        },
-                        new
-                        {
-                            Id = 155,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 10,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "True Tone"
-                        },
-                        new
-                        {
-                            Id = 156,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 11,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "500 nit"
-                        },
-                        new
-                        {
-                            Id = 157,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 12,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "lop phu khang dau chong in dau van tay"
-                        },
-                        new
-                        {
-                            Id = 158,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 13,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "144Hz"
-                        },
-                        new
-                        {
-                            Id = 159,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 14,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Ti le 3:2"
-                        },
-                        new
-                        {
-                            Id = 160,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 15,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "800 nit"
-                        },
-                        new
-                        {
-                            Id = 161,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 16,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "68 ty mau"
-                        },
-                        new
-                        {
-                            Id = 162,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 17,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "DCI-P3"
-                        },
-                        new
-                        {
-                            Id = 163,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 18,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Pro HDR"
-                        },
-                        new
-                        {
-                            Id = 164,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 19,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Cong nghe cham khi uot"
-                        },
-                        new
-                        {
-                            Id = 165,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 20,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "TUV Rheinland"
-                        },
-                        new
-                        {
-                            Id = 166,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 21,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Che do duoi anh nang"
-                        },
-                        new
-                        {
-                            Id = 167,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 22,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Che do doc"
-                        },
-                        new
-                        {
-                            Id = 168,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 23,
-                            IsActive = true,
-                            SpecDefinitionId = 37,
-                            Value = "Mau sac thich ung"
-                        },
-                        new
-                        {
-                            Id = 169,
+                            Id = 61,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 38,
-                            Value = "8C, 2x A76 @2.5GHz + 6x A55 @2.0GHz"
-                        },
-                        new
-                        {
-                            Id = 170,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 38,
-                            Value = "CPU 5 loi"
-                        },
-                        new
-                        {
-                            Id = 171,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 38,
-                            Value = "8 nhan len den 2.8GHz"
-                        },
-                        new
-                        {
-                            Id = 172,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 39,
-                            Value = "Apple Pencil (USB-C)"
-                        },
-                        new
-                        {
-                            Id = 173,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 39,
-                            Value = "Android 8.0 tro len"
-                        },
-                        new
-                        {
-                            Id = 174,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 39,
-                            Value = "iOS 13.0 tro len"
-                        },
-                        new
-                        {
-                            Id = 175,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 39,
-                            Value = "Android 6.0 tro len"
-                        },
-                        new
-                        {
-                            Id = 176,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 39,
-                            Value = "iOS 11 tro len"
-                        },
-                        new
-                        {
-                            Id = 177,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
-                            IsActive = true,
-                            SpecDefinitionId = 39,
-                            Value = "Android 12.0 tro len (voi bo nho toi thieu 1.5GB)"
-                        },
-                        new
-                        {
-                            Id = 178,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 40,
-                            Value = "AMOLED"
-                        },
-                        new
-                        {
-                            Id = 179,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
                             IsActive = true,
                             SpecDefinitionId = 40,
                             Value = "LCD"
                         },
                         new
                         {
-                            Id = 180,
+                            Id = 62,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 40,
+                            Value = "IPS LCD"
+                        },
+                        new
+                        {
+                            Id = 63,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 40,
+                            Value = "OLED"
+                        },
+                        new
+                        {
+                            Id = 64,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 40,
+                            Value = "AMOLED"
+                        },
+                        new
+                        {
+                            Id = 65,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
                             IsActive = true,
                             SpecDefinitionId = 40,
                             Value = "Super AMOLED"
                         },
                         new
                         {
-                            Id = 181,
+                            Id = 66,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 40,
+                            Value = "Dynamic AMOLED 2X"
+                        },
+                        new
+                        {
+                            Id = 67,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 7,
+                            IsActive = true,
+                            SpecDefinitionId = 40,
+                            Value = "Liquid Retina"
+                        },
+                        new
+                        {
+                            Id = 68,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 8,
+                            IsActive = true,
+                            SpecDefinitionId = 40,
+                            Value = "Super Retina XDR"
+                        },
+                        new
+                        {
+                            Id = 69,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 41,
-                            Value = "1.47 inch"
+                            SpecDefinitionId = 11,
+                            Value = "iOS"
                         },
                         new
                         {
-                            Id = 182,
+                            Id = 70,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 41,
-                            Value = "1.82 inch"
+                            SpecDefinitionId = 11,
+                            Value = "Android"
                         },
                         new
                         {
-                            Id = 183,
+                            Id = 71,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 41,
-                            Value = "2.0 inch"
+                            SpecDefinitionId = 11,
+                            Value = "HyperOS"
                         },
                         new
                         {
-                            Id = 184,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 42,
-                            Value = "43 mm"
-                        },
-                        new
-                        {
-                            Id = 185,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 42,
-                            Value = "47 mm"
-                        },
-                        new
-                        {
-                            Id = 186,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 42,
-                            Value = "49.1 mm"
-                        },
-                        new
-                        {
-                            Id = 187,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 43,
-                            Value = "Tim: 120-190 mm"
-                        },
-                        new
-                        {
-                            Id = 188,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 43,
-                            Value = "Xam, Trang va Den: 130-210 mm"
-                        },
-                        new
-                        {
-                            Id = 189,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 43,
-                            Value = "Hang khong cong bo"
-                        },
-                        new
-                        {
-                            Id = 190,
+                            Id = 72,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 43,
-                            Value = "Khong cong bo"
+                            SpecDefinitionId = 11,
+                            Value = "ColorOS"
                         },
                         new
                         {
-                            Id = 191,
+                            Id = 73,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 11,
+                            Value = "One UI"
+                        },
+                        new
+                        {
+                            Id = 74,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 11,
+                            Value = "iPadOS"
+                        },
+                        new
+                        {
+                            Id = 75,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 7,
+                            IsActive = true,
+                            SpecDefinitionId = 11,
+                            Value = "macOS"
+                        },
+                        new
+                        {
+                            Id = 76,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 8,
+                            IsActive = true,
+                            SpecDefinitionId = 11,
+                            Value = "Windows 11 Home"
+                        },
+                        new
+                        {
+                            Id = 77,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 9,
+                            IsActive = true,
+                            SpecDefinitionId = 11,
+                            Value = "Windows 11 Home Single Language"
+                        },
+                        new
+                        {
+                            Id = 78,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 23,
+                            Value = "macOS"
+                        },
+                        new
+                        {
+                            Id = 79,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 23,
+                            Value = "Windows 11 Home"
+                        },
+                        new
+                        {
+                            Id = 80,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 23,
+                            Value = "Windows 11 Home Single Language"
+                        },
+                        new
+                        {
+                            Id = 81,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 35,
+                            Value = "iPadOS"
+                        },
+                        new
+                        {
+                            Id = 82,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 35,
+                            Value = "Android"
+                        },
+                        new
+                        {
+                            Id = 83,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 35,
+                            Value = "HyperOS"
+                        },
+                        new
+                        {
+                            Id = 84,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 35,
+                            Value = "One UI"
+                        },
+                        new
+                        {
+                            Id = 85,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 48,
+                            Value = "Apple"
+                        },
+                        new
+                        {
+                            Id = 86,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 48,
+                            Value = "Samsung"
+                        },
+                        new
+                        {
+                            Id = 87,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 48,
+                            Value = "Xiaomi"
+                        },
+                        new
+                        {
+                            Id = 88,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 48,
+                            Value = "Huawei"
+                        },
+                        new
+                        {
+                            Id = 89,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 57,
+                            Value = "Apple"
+                        },
+                        new
+                        {
+                            Id = 90,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 57,
+                            Value = "Samsung"
+                        },
+                        new
+                        {
+                            Id = 91,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 57,
+                            Value = "Xiaomi"
+                        },
+                        new
+                        {
+                            Id = 92,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 57,
+                            Value = "OPPO"
+                        },
+                        new
+                        {
+                            Id = 93,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 57,
+                            Value = "Huawei"
+                        },
+                        new
+                        {
+                            Id = 94,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 57,
+                            Value = "Baseus"
+                        },
+                        new
+                        {
+                            Id = 95,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 58,
+                            Value = "Canon"
+                        },
+                        new
+                        {
+                            Id = 96,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 58,
+                            Value = "Sony"
+                        },
+                        new
+                        {
+                            Id = 97,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 58,
+                            Value = "Fujifilm"
+                        },
+                        new
+                        {
+                            Id = 98,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 6,
+                            Value = "Khong"
+                        },
+                        new
+                        {
+                            Id = 99,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 6,
+                            Value = "Co"
+                        },
+                        new
+                        {
+                            Id = 100,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
@@ -4878,340 +4062,16 @@ namespace BaseCore.Repository.Migrations
                         },
                         new
                         {
-                            Id = 192,
+                            Id = 101,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
                             SpecDefinitionId = 44,
-                            Value = "Nghe goi qua Bluetooth"
+                            Value = "Co"
                         },
                         new
                         {
-                            Id = 193,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 44,
-                            Value = "Nghe goi qua eSim"
-                        },
-                        new
-                        {
-                            Id = 194,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Do nhip tim"
-                        },
-                        new
-                        {
-                            Id = 195,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Do SpO2"
-                        },
-                        new
-                        {
-                            Id = 196,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Theo doi giac ngu"
-                        },
-                        new
-                        {
-                            Id = 197,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Do muc cang thang"
-                        },
-                        new
-                        {
-                            Id = 198,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Do ECG"
-                        },
-                        new
-                        {
-                            Id = 199,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Theo doi chu ky kinh nguyet"
-                        },
-                        new
-                        {
-                            Id = 200,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 7,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Theo doi nhiem trung giac ngu"
-                        },
-                        new
-                        {
-                            Id = 201,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 8,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Bai tap ho hap"
-                        },
-                        new
-                        {
-                            Id = 202,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 9,
-                            IsActive = true,
-                            SpecDefinitionId = 45,
-                            Value = "Canh bao nhip tim bat thuong"
-                        },
-                        new
-                        {
-                            Id = 203,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 46,
-                            Value = "Android 8.0 tro len"
-                        },
-                        new
-                        {
-                            Id = 204,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 46,
-                            Value = "iOS 13.0 tro len"
-                        },
-                        new
-                        {
-                            Id = 205,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 46,
-                            Value = "Android 6.0 tro len"
-                        },
-                        new
-                        {
-                            Id = 206,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 46,
-                            Value = "iOS 11 tro len"
-                        },
-                        new
-                        {
-                            Id = 207,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 46,
-                            Value = "Android 12.0 tro len (voi bo nho toi thieu 1.5GB)"
-                        },
-                        new
-                        {
-                            Id = 208,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 47,
-                            Value = "Toi da 10 ngay"
-                        },
-                        new
-                        {
-                            Id = 209,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 47,
-                            Value = "Thuong xuyen 7 ngay"
-                        },
-                        new
-                        {
-                            Id = 210,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 47,
-                            Value = "Bat AOD 4 ngay"
-                        },
-                        new
-                        {
-                            Id = 211,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 47,
-                            Value = "18 ngay su dung lien tuc (khong co AOD)"
-                        },
-                        new
-                        {
-                            Id = 212,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 47,
-                            Value = "Khoang 80 gio (khi tat Always-On-Display)"
-                        },
-                        new
-                        {
-                            Id = 213,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 6,
-                            IsActive = true,
-                            SpecDefinitionId = 47,
-                            Value = "Khoang 100 gio (o che do tiet kiem pin)"
-                        },
-                        new
-                        {
-                            Id = 214,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 48,
-                            Value = "Huawei"
-                        },
-                        new
-                        {
-                            Id = 215,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 48,
-                            Value = "Xiaomi"
-                        },
-                        new
-                        {
-                            Id = 216,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 48,
-                            Value = "Samsung Chinh hang"
-                        },
-                        new
-                        {
-                            Id = 217,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 49,
-                            Value = "Tai nghe 30.9 x 21.8 x 24.0 mm; Hop sac 46.2 x 50.1 x 21.2 mm"
-                        },
-                        new
-                        {
-                            Id = 218,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 49,
-                            Value = "Tai nghe 33.66 x 17.18 x 18.66 mm; Hop sac 46.9 x 65.9 x 24.5 mm"
-                        },
-                        new
-                        {
-                            Id = 219,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 49,
-                            Value = "Tai nghe 33.7 x 20.9 x 23.2 mm; Hop sac 51.3 x 51 x 26.8 mm"
-                        },
-                        new
-                        {
-                            Id = 220,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 49,
-                            Value = "Tai nghe 32 x 17.8 x 18.5 mm; Hop sac 49 x 48.6 x 23 mm"
-                        },
-                        new
-                        {
-                            Id = 221,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 50,
-                            Value = "Tai nghe 5.3 g; Hop sac 50.8 g"
-                        },
-                        new
-                        {
-                            Id = 222,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 50,
-                            Value = "Tai nghe 5.6 g; Hop sac 41.3 g"
-                        },
-                        new
-                        {
-                            Id = 223,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 50,
-                            Value = "4g"
-                        },
-                        new
-                        {
-                            Id = 224,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
-                            IsActive = true,
-                            SpecDefinitionId = 51,
-                            Value = "Adaptive EQ"
-                        },
-                        new
-                        {
-                            Id = 225,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
-                            IsActive = true,
-                            SpecDefinitionId = 51,
-                            Value = "Spatial Audio ca nhan hoa"
-                        },
-                        new
-                        {
-                            Id = 226,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
-                            IsActive = true,
-                            SpecDefinitionId = 51,
-                            Value = "True Wireless Stereo (TWS)"
-                        },
-                        new
-                        {
-                            Id = 227,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
-                            IsActive = true,
-                            SpecDefinitionId = 51,
-                            Value = "Chong on chu dong"
-                        },
-                        new
-                        {
-                            Id = 228,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
-                            IsActive = true,
-                            SpecDefinitionId = 51,
-                            Value = "Chong on moi truong ENC"
-                        },
-                        new
-                        {
-                            Id = 229,
+                            Id = 102,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
@@ -5220,7 +4080,7 @@ namespace BaseCore.Repository.Migrations
                         },
                         new
                         {
-                            Id = 230,
+                            Id = 103,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
@@ -5229,39 +4089,1182 @@ namespace BaseCore.Repository.Migrations
                         },
                         new
                         {
-                            Id = 231,
+                            Id = 104,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 53,
-                            Value = "Tai nghe 5 gio; dam thoai 4.5 gio"
+                            SpecDefinitionId = 1,
+                            Value = "5.8 inch"
+                        },
+                        new
+                        {
+                            Id = 105,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 1,
+                            Value = "6.1 inch"
+                        },
+                        new
+                        {
+                            Id = 106,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 1,
+                            Value = "6.5 inch"
+                        },
+                        new
+                        {
+                            Id = 107,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 1,
+                            Value = "6.67 inch"
+                        },
+                        new
+                        {
+                            Id = 108,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 1,
+                            Value = "6.7 inch"
+                        },
+                        new
+                        {
+                            Id = 109,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 1,
+                            Value = "6.8 inch"
+                        },
+                        new
+                        {
+                            Id = 110,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 3,
+                            Value = "12 MP"
+                        },
+                        new
+                        {
+                            Id = 111,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 3,
+                            Value = "48 MP"
+                        },
+                        new
+                        {
+                            Id = 112,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 3,
+                            Value = "50 MP"
+                        },
+                        new
+                        {
+                            Id = 113,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 3,
+                            Value = "64 MP"
+                        },
+                        new
+                        {
+                            Id = 114,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 3,
+                            Value = "108 MP"
+                        },
+                        new
+                        {
+                            Id = 115,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 3,
+                            Value = "200 MP"
+                        },
+                        new
+                        {
+                            Id = 116,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 4,
+                            Value = "10 MP"
+                        },
+                        new
+                        {
+                            Id = 117,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 4,
+                            Value = "12 MP"
+                        },
+                        new
+                        {
+                            Id = 118,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 4,
+                            Value = "16 MP"
+                        },
+                        new
+                        {
+                            Id = 119,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 4,
+                            Value = "20 MP"
+                        },
+                        new
+                        {
+                            Id = 120,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 4,
+                            Value = "32 MP"
+                        },
+                        new
+                        {
+                            Id = 121,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 4,
+                            Value = "50 MP"
+                        },
+                        new
+                        {
+                            Id = 122,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 5,
+                            Value = "Apple A16 Bionic"
+                        },
+                        new
+                        {
+                            Id = 123,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 5,
+                            Value = "Apple A17 Pro"
+                        },
+                        new
+                        {
+                            Id = 124,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 5,
+                            Value = "Snapdragon 8 Gen 2"
+                        },
+                        new
+                        {
+                            Id = 125,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 5,
+                            Value = "Snapdragon 8 Gen 3"
+                        },
+                        new
+                        {
+                            Id = 126,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 5,
+                            Value = "Dimensity 8300"
+                        },
+                        new
+                        {
+                            Id = 127,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 5,
+                            Value = "Dimensity 9300"
+                        },
+                        new
+                        {
+                            Id = 128,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 9,
+                            Value = "3274 mAh"
+                        },
+                        new
+                        {
+                            Id = 129,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 9,
+                            Value = "4000 mAh"
+                        },
+                        new
+                        {
+                            Id = 130,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 9,
+                            Value = "4500 mAh"
+                        },
+                        new
+                        {
+                            Id = 131,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 9,
+                            Value = "5000 mAh"
+                        },
+                        new
+                        {
+                            Id = 132,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 9,
+                            Value = "5500 mAh"
+                        },
+                        new
+                        {
+                            Id = 133,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 9,
+                            Value = "6000 mAh"
+                        },
+                        new
+                        {
+                            Id = 134,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 10,
+                            Value = "1 Nano SIM"
+                        },
+                        new
+                        {
+                            Id = 135,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 10,
+                            Value = "2 Nano SIM"
+                        },
+                        new
+                        {
+                            Id = 136,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 10,
+                            Value = "1 Nano SIM + 1 eSIM"
+                        },
+                        new
+                        {
+                            Id = 137,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 10,
+                            Value = "2 Nano SIM + 1 eSIM"
+                        },
+                        new
+                        {
+                            Id = 138,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 10,
+                            Value = "eSIM"
+                        },
+                        new
+                        {
+                            Id = 139,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 12,
+                            Value = "HD+"
+                        },
+                        new
+                        {
+                            Id = 140,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 12,
+                            Value = "Full HD"
+                        },
+                        new
+                        {
+                            Id = 141,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 12,
+                            Value = "Full HD+"
+                        },
+                        new
+                        {
+                            Id = 142,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 12,
+                            Value = "1.5K"
+                        },
+                        new
+                        {
+                            Id = 143,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 12,
+                            Value = "2K"
+                        },
+                        new
+                        {
+                            Id = 144,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 12,
+                            Value = "Quad HD+"
+                        },
+                        new
+                        {
+                            Id = 145,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 13,
+                            Value = "120 Hz"
+                        },
+                        new
+                        {
+                            Id = 146,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 13,
+                            Value = "Always-On Display"
+                        },
+                        new
+                        {
+                            Id = 147,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 13,
+                            Value = "HDR10+"
+                        },
+                        new
+                        {
+                            Id = 148,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 13,
+                            Value = "Dolby Vision"
+                        },
+                        new
+                        {
+                            Id = 149,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 13,
+                            Value = "Man hinh tran vien"
+                        },
+                        new
+                        {
+                            Id = 150,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 13,
+                            Value = "Khang kinh cuong luc"
+                        },
+                        new
+                        {
+                            Id = 151,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 14,
+                            Value = "Hexa-core"
+                        },
+                        new
+                        {
+                            Id = 152,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 14,
+                            Value = "Octa-core"
+                        },
+                        new
+                        {
+                            Id = 153,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 14,
+                            Value = "Apple CPU 6-core"
+                        },
+                        new
+                        {
+                            Id = 154,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 14,
+                            Value = "Kryo Octa-core"
+                        },
+                        new
+                        {
+                            Id = 155,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 14,
+                            Value = "Cortex Octa-core"
+                        },
+                        new
+                        {
+                            Id = 156,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 15,
+                            Value = "Intel Iris Xe"
+                        },
+                        new
+                        {
+                            Id = 157,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 15,
+                            Value = "Intel Arc"
+                        },
+                        new
+                        {
+                            Id = 158,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 15,
+                            Value = "NVIDIA GeForce RTX 4050"
+                        },
+                        new
+                        {
+                            Id = 159,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 15,
+                            Value = "NVIDIA GeForce RTX 4060"
+                        },
+                        new
+                        {
+                            Id = 160,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 15,
+                            Value = "AMD Radeon Graphics"
+                        },
+                        new
+                        {
+                            Id = 161,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 15,
+                            Value = "Apple GPU"
+                        },
+                        new
+                        {
+                            Id = 162,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 17,
+                            Value = "DDR4"
+                        },
+                        new
+                        {
+                            Id = 163,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 17,
+                            Value = "DDR5"
+                        },
+                        new
+                        {
+                            Id = 164,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 17,
+                            Value = "LPDDR4X"
+                        },
+                        new
+                        {
+                            Id = 165,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 17,
+                            Value = "LPDDR5"
+                        },
+                        new
+                        {
+                            Id = 166,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 17,
+                            Value = "LPDDR5X"
+                        },
+                        new
+                        {
+                            Id = 167,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 17,
+                            Value = "Unified Memory"
+                        },
+                        new
+                        {
+                            Id = 168,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 18,
+                            Value = "1 khe"
+                        },
+                        new
+                        {
+                            Id = 169,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 18,
+                            Value = "2 khe"
+                        },
+                        new
+                        {
+                            Id = 170,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 18,
+                            Value = "4 khe"
+                        },
+                        new
+                        {
+                            Id = 171,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 20,
+                            Value = "13.3 inch"
+                        },
+                        new
+                        {
+                            Id = 172,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 20,
+                            Value = "13.6 inch"
+                        },
+                        new
+                        {
+                            Id = 173,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 20,
+                            Value = "14 inch"
+                        },
+                        new
+                        {
+                            Id = 174,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 20,
+                            Value = "15.6 inch"
+                        },
+                        new
+                        {
+                            Id = 175,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 20,
+                            Value = "16 inch"
+                        },
+                        new
+                        {
+                            Id = 176,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 20,
+                            Value = "17.3 inch"
+                        },
+                        new
+                        {
+                            Id = 177,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 22,
+                            Value = "50 Wh"
+                        },
+                        new
+                        {
+                            Id = 178,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 22,
+                            Value = "60 Wh"
+                        },
+                        new
+                        {
+                            Id = 179,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 22,
+                            Value = "70 Wh"
+                        },
+                        new
+                        {
+                            Id = 180,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 22,
+                            Value = "75 Wh"
+                        },
+                        new
+                        {
+                            Id = 181,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 22,
+                            Value = "80 Wh"
+                        },
+                        new
+                        {
+                            Id = 182,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 22,
+                            Value = "90 Wh"
+                        },
+                        new
+                        {
+                            Id = 183,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 24,
+                            Value = "Full HD"
+                        },
+                        new
+                        {
+                            Id = 184,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 24,
+                            Value = "Full HD+"
+                        },
+                        new
+                        {
+                            Id = 185,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 24,
+                            Value = "2.2K"
+                        },
+                        new
+                        {
+                            Id = 186,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 24,
+                            Value = "2.8K"
+                        },
+                        new
+                        {
+                            Id = 187,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 24,
+                            Value = "3K"
+                        },
+                        new
+                        {
+                            Id = 188,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 24,
+                            Value = "4K"
+                        },
+                        new
+                        {
+                            Id = 189,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 25,
+                            Value = "Intel Core i5"
+                        },
+                        new
+                        {
+                            Id = 190,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 25,
+                            Value = "Intel Core i7"
+                        },
+                        new
+                        {
+                            Id = 191,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 25,
+                            Value = "Intel Core Ultra 7"
+                        },
+                        new
+                        {
+                            Id = 192,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 25,
+                            Value = "AMD Ryzen 5"
+                        },
+                        new
+                        {
+                            Id = 193,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 25,
+                            Value = "AMD Ryzen 7"
+                        },
+                        new
+                        {
+                            Id = 194,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 25,
+                            Value = "Apple M3"
+                        },
+                        new
+                        {
+                            Id = 195,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 26,
+                            Value = "USB-A"
+                        },
+                        new
+                        {
+                            Id = 196,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 26,
+                            Value = "USB-C"
+                        },
+                        new
+                        {
+                            Id = 197,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 26,
+                            Value = "HDMI"
+                        },
+                        new
+                        {
+                            Id = 198,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 26,
+                            Value = "Thunderbolt 4"
+                        },
+                        new
+                        {
+                            Id = 199,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 26,
+                            Value = "3.5 mm Audio"
+                        },
+                        new
+                        {
+                            Id = 200,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 26,
+                            Value = "MicroSD"
+                        },
+                        new
+                        {
+                            Id = 201,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 27,
+                            Value = "8.3 inch"
+                        },
+                        new
+                        {
+                            Id = 202,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 27,
+                            Value = "10.9 inch"
+                        },
+                        new
+                        {
+                            Id = 203,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 27,
+                            Value = "11 inch"
+                        },
+                        new
+                        {
+                            Id = 204,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 27,
+                            Value = "12.4 inch"
+                        },
+                        new
+                        {
+                            Id = 205,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 27,
+                            Value = "12.9 inch"
+                        },
+                        new
+                        {
+                            Id = 206,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 29,
+                            Value = "8 MP"
+                        },
+                        new
+                        {
+                            Id = 207,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 29,
+                            Value = "12 MP"
+                        },
+                        new
+                        {
+                            Id = 208,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 29,
+                            Value = "13 MP"
+                        },
+                        new
+                        {
+                            Id = 209,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 29,
+                            Value = "48 MP"
+                        },
+                        new
+                        {
+                            Id = 210,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 29,
+                            Value = "50 MP"
+                        },
+                        new
+                        {
+                            Id = 211,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 30,
+                            Value = "8 MP"
+                        },
+                        new
+                        {
+                            Id = 212,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 30,
+                            Value = "12 MP"
+                        },
+                        new
+                        {
+                            Id = 213,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 30,
+                            Value = "12 MP Ultra Wide"
+                        },
+                        new
+                        {
+                            Id = 214,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 30,
+                            Value = "16 MP"
+                        },
+                        new
+                        {
+                            Id = 215,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 31,
+                            Value = "Apple M2"
+                        },
+                        new
+                        {
+                            Id = 216,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 31,
+                            Value = "Apple M4"
+                        },
+                        new
+                        {
+                            Id = 217,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 31,
+                            Value = "Snapdragon 8s Gen 3"
+                        },
+                        new
+                        {
+                            Id = 218,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 31,
+                            Value = "Dimensity 9000"
+                        },
+                        new
+                        {
+                            Id = 219,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 31,
+                            Value = "Helio G99"
+                        },
+                        new
+                        {
+                            Id = 220,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 34,
+                            Value = "7000 mAh"
+                        },
+                        new
+                        {
+                            Id = 221,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 34,
+                            Value = "8000 mAh"
+                        },
+                        new
+                        {
+                            Id = 222,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 34,
+                            Value = "8500 mAh"
+                        },
+                        new
+                        {
+                            Id = 223,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 34,
+                            Value = "9000 mAh"
+                        },
+                        new
+                        {
+                            Id = 224,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 34,
+                            Value = "10000 mAh"
+                        },
+                        new
+                        {
+                            Id = 225,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 36,
+                            Value = "1488 x 2266"
+                        },
+                        new
+                        {
+                            Id = 226,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 36,
+                            Value = "1600 x 2560"
+                        },
+                        new
+                        {
+                            Id = 227,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 36,
+                            Value = "1800 x 2880"
+                        },
+                        new
+                        {
+                            Id = 228,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 36,
+                            Value = "2000 x 1200"
+                        },
+                        new
+                        {
+                            Id = 229,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 36,
+                            Value = "2360 x 1640"
+                        },
+                        new
+                        {
+                            Id = 230,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 37,
+                            Value = "120 Hz"
+                        },
+                        new
+                        {
+                            Id = 231,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 37,
+                            Value = "Ho tro but"
                         },
                         new
                         {
                             Id = 232,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 53,
-                            Value = "Tai nghe 8 gio; hop sac 36 gio"
+                            SpecDefinitionId = 37,
+                            Value = "Chia doi man hinh"
                         },
                         new
                         {
                             Id = 233,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 53,
-                            Value = "Tai nghe 6 gio; hop sac 25 gio"
+                            SpecDefinitionId = 37,
+                            Value = "HDR"
                         },
                         new
                         {
                             Id = 234,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 53,
-                            Value = "Tai nghe 6 gio; hop sac 30 gio"
+                            SpecDefinitionId = 37,
+                            Value = "Dolby Vision"
                         },
                         new
                         {
@@ -5269,8 +5272,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 54,
-                            Value = "Cam bien luc"
+                            SpecDefinitionId = 38,
+                            Value = "Apple M-series"
                         },
                         new
                         {
@@ -5278,116 +5281,116 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 54,
-                            Value = "Cam ung cham"
+                            SpecDefinitionId = 38,
+                            Value = "Snapdragon"
                         },
                         new
                         {
                             Id = 237,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 55,
-                            Value = "Chip tai nghe H2"
+                            SpecDefinitionId = 38,
+                            Value = "MediaTek"
                         },
                         new
                         {
                             Id = 238,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 56,
-                            Value = "Khang nuoc va bui IP54"
+                            SpecDefinitionId = 38,
+                            Value = "Octa-core"
                         },
                         new
                         {
                             Id = 239,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 56,
-                            Value = "Chong on moi truong ENC"
+                            SpecDefinitionId = 39,
+                            Value = "iOS"
                         },
                         new
                         {
                             Id = 240,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 56,
-                            Value = "Chong nuoc IPX4"
+                            SpecDefinitionId = 39,
+                            Value = "Android"
                         },
                         new
                         {
                             Id = 241,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 57,
-                            Value = "Apple Chinh hang"
+                            SpecDefinitionId = 39,
+                            Value = "Windows"
                         },
                         new
                         {
                             Id = 242,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 57,
-                            Value = "Huawei"
+                            SpecDefinitionId = 39,
+                            Value = "macOS"
                         },
                         new
                         {
                             Id = 243,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 57,
-                            Value = "Baseus"
+                            SpecDefinitionId = 41,
+                            Value = "1.43 inch"
                         },
                         new
                         {
                             Id = 244,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 57,
-                            Value = "Xiaomi"
+                            SpecDefinitionId = 41,
+                            Value = "1.5 inch"
                         },
                         new
                         {
                             Id = 245,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 58,
-                            Value = "Sony"
+                            SpecDefinitionId = 41,
+                            Value = "1.78 inch"
                         },
                         new
                         {
                             Id = 246,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 58,
-                            Value = "Fujifilm"
+                            SpecDefinitionId = 41,
+                            Value = "1.83 inch"
                         },
                         new
                         {
                             Id = 247,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 59,
-                            Value = "Full-frame"
+                            SpecDefinitionId = 41,
+                            Value = "1.9 inch"
                         },
                         new
                         {
                             Id = 248,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 59,
-                            Value = "Mirrorless (khong guong lat)"
+                            SpecDefinitionId = 41,
+                            Value = "2.0 inch"
                         },
                         new
                         {
@@ -5395,8 +5398,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 60,
-                            Value = "Full-frame 35 mm (35,9 x 23,9 mm), cam bien Exmor R CMOS"
+                            SpecDefinitionId = 42,
+                            Value = "41 mm"
                         },
                         new
                         {
@@ -5404,44 +5407,44 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 60,
-                            Value = "APS-C CMOS (23.5 x 15.6 mm)"
+                            SpecDefinitionId = 42,
+                            Value = "42 mm"
                         },
                         new
                         {
                             Id = 251,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 61,
-                            Value = "Khong cong bo"
+                            SpecDefinitionId = 42,
+                            Value = "44 mm"
                         },
                         new
                         {
                             Id = 252,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 62,
-                            Value = "Khong cong bo"
+                            SpecDefinitionId = 42,
+                            Value = "45 mm"
                         },
                         new
                         {
                             Id = 253,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 63,
-                            Value = "Ngam E-mount"
+                            SpecDefinitionId = 42,
+                            Value = "46 mm"
                         },
                         new
                         {
                             Id = 254,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 63,
-                            Value = "Ngam FUJIFILM X"
+                            SpecDefinitionId = 42,
+                            Value = "49 mm"
                         },
                         new
                         {
@@ -5449,8 +5452,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 64,
-                            Value = "AF-A"
+                            SpecDefinitionId = 43,
+                            Value = "Co tay 130-180 mm"
                         },
                         new
                         {
@@ -5458,8 +5461,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 64,
-                            Value = "AF-S"
+                            SpecDefinitionId = 43,
+                            Value = "Co tay 140-190 mm"
                         },
                         new
                         {
@@ -5467,8 +5470,8 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 64,
-                            Value = "AF-C"
+                            SpecDefinitionId = 43,
+                            Value = "Co tay 150-200 mm"
                         },
                         new
                         {
@@ -5476,107 +5479,836 @@ namespace BaseCore.Repository.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 64,
-                            Value = "DMF"
+                            SpecDefinitionId = 43,
+                            Value = "Co tay 160-220 mm"
                         },
                         new
                         {
                             Id = 259,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 5,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 64,
-                            Value = "MF"
+                            SpecDefinitionId = 45,
+                            Value = "Do nhip tim"
                         },
                         new
                         {
                             Id = 260,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 65,
-                            Value = "Co / Dien tu, 1/8000s - 30s, Bulb"
+                            SpecDefinitionId = 45,
+                            Value = "Do SpO2"
                         },
                         new
                         {
                             Id = 261,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 65,
-                            Value = "Co hoc: 1/4000 - 900s, bulb toi da 60 phut"
+                            SpecDefinitionId = 45,
+                            Value = "Theo doi giac ngu"
                         },
                         new
                         {
                             Id = 262,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 4,
                             IsActive = true,
-                            SpecDefinitionId = 65,
-                            Value = "Dien tu: 1/32000 - 900s, bulb toi da 1 giay"
+                            SpecDefinitionId = 45,
+                            Value = "Do stress"
                         },
                         new
                         {
                             Id = 263,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 4,
+                            DisplayOrder = 5,
                             IsActive = true,
-                            SpecDefinitionId = 65,
-                            Value = "EFCS: 1/4000 - 900s, bulb toi da 60 phut"
+                            SpecDefinitionId = 45,
+                            Value = "Do ECG"
                         },
                         new
                         {
                             Id = 264,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 6,
                             IsActive = true,
-                            SpecDefinitionId = 66,
-                            Value = "Exif Print"
+                            SpecDefinitionId = 45,
+                            Value = "Theo doi chu ky"
                         },
                         new
                         {
                             Id = 265,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 66,
-                            Value = "Print Image Matching III"
+                            SpecDefinitionId = 46,
+                            Value = "iPhone"
                         },
                         new
                         {
                             Id = 266,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 1,
+                            DisplayOrder = 2,
                             IsActive = true,
-                            SpecDefinitionId = 67,
-                            Value = "L 3:2 6240 x 4160"
+                            SpecDefinitionId = 46,
+                            Value = "Android"
                         },
                         new
                         {
                             Id = 267,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 2,
+                            DisplayOrder = 3,
                             IsActive = true,
-                            SpecDefinitionId = 67,
-                            Value = "L 16:9 6240 x 3512"
+                            SpecDefinitionId = 46,
+                            Value = "iOS va Android"
                         },
                         new
                         {
                             Id = 268,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DisplayOrder = 3,
+                            DisplayOrder = 1,
                             IsActive = true,
-                            SpecDefinitionId = 67,
-                            Value = "L 1:1 4160 x 4160"
+                            SpecDefinitionId = 47,
+                            Value = "2 ngay"
                         },
                         new
                         {
                             Id = 269,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 47,
+                            Value = "5 ngay"
+                        },
+                        new
+                        {
+                            Id = 270,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 47,
+                            Value = "7 ngay"
+                        },
+                        new
+                        {
+                            Id = 271,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 47,
+                            Value = "10 ngay"
+                        },
+                        new
+                        {
+                            Id = 272,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 47,
+                            Value = "14 ngay"
+                        },
+                        new
+                        {
+                            Id = 273,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 49,
+                            Value = "Nho gon"
+                        },
+                        new
+                        {
+                            Id = 274,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 49,
+                            Value = "In-ear"
+                        },
+                        new
+                        {
+                            Id = 275,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 49,
+                            Value = "On-ear"
+                        },
+                        new
+                        {
+                            Id = 276,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 49,
+                            Value = "Over-ear"
+                        },
+                        new
+                        {
+                            Id = 277,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 49,
+                            Value = "Case kem theo"
+                        },
+                        new
+                        {
+                            Id = 278,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 50,
+                            Value = "30 g"
+                        },
+                        new
+                        {
+                            Id = 279,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 50,
+                            Value = "45 g"
+                        },
+                        new
+                        {
+                            Id = 280,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 50,
+                            Value = "60 g"
+                        },
+                        new
+                        {
+                            Id = 281,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 50,
+                            Value = "120 g"
+                        },
+                        new
+                        {
+                            Id = 282,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 50,
+                            Value = "220 g"
+                        },
+                        new
+                        {
+                            Id = 283,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 50,
+                            Value = "260 g"
+                        },
+                        new
+                        {
+                            Id = 284,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 51,
+                            Value = "Chong on chu dong"
+                        },
+                        new
+                        {
+                            Id = 285,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 51,
+                            Value = "Spatial Audio"
+                        },
+                        new
+                        {
+                            Id = 286,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 51,
+                            Value = "Hi-Res Audio"
+                        },
+                        new
+                        {
+                            Id = 287,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 51,
+                            Value = "Bass Boost"
+                        },
+                        new
+                        {
+                            Id = 288,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 51,
+                            Value = "Bluetooth 5.3"
+                        },
+                        new
+                        {
+                            Id = 289,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 51,
+                            Value = "ENC"
+                        },
+                        new
+                        {
+                            Id = 290,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 53,
+                            Value = "5 gio"
+                        },
+                        new
+                        {
+                            Id = 291,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 53,
+                            Value = "6 gio"
+                        },
+                        new
+                        {
+                            Id = 292,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 53,
+                            Value = "8 gio"
+                        },
+                        new
+                        {
+                            Id = 293,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 53,
+                            Value = "10 gio"
+                        },
+                        new
+                        {
+                            Id = 294,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 53,
+                            Value = "20 gio"
+                        },
+                        new
+                        {
+                            Id = 295,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 6,
+                            IsActive = true,
+                            SpecDefinitionId = 53,
+                            Value = "30 gio"
+                        },
+                        new
+                        {
+                            Id = 296,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 54,
+                            Value = "Cam ung"
+                        },
+                        new
+                        {
+                            Id = 297,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 54,
+                            Value = "Nut vat ly"
+                        },
+                        new
+                        {
+                            Id = 298,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 54,
+                            Value = "Vuot cham"
+                        },
+                        new
+                        {
+                            Id = 299,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 54,
+                            Value = "Giong noi"
+                        },
+                        new
+                        {
+                            Id = 300,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 55,
+                            Value = "Apple H2"
+                        },
+                        new
+                        {
+                            Id = 301,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 55,
+                            Value = "Snapdragon Sound"
+                        },
+                        new
+                        {
+                            Id = 302,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 55,
+                            Value = "Kirin A1"
+                        },
+                        new
+                        {
+                            Id = 303,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 55,
+                            Value = "BES2700"
+                        },
+                        new
+                        {
+                            Id = 304,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 56,
+                            Value = "Chong nuoc IPX4"
+                        },
+                        new
+                        {
+                            Id = 305,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 56,
+                            Value = "Ket noi da diem"
+                        },
+                        new
+                        {
+                            Id = 306,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 56,
+                            Value = "Sac nhanh"
+                        },
+                        new
+                        {
+                            Id = 307,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 56,
+                            Value = "Game Mode"
+                        },
+                        new
+                        {
+                            Id = 308,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 56,
+                            Value = "Xuyen am"
+                        },
+                        new
+                        {
+                            Id = 309,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 59,
+                            Value = "Mirrorless"
+                        },
+                        new
+                        {
+                            Id = 310,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 59,
+                            Value = "DSLR"
+                        },
+                        new
+                        {
+                            Id = 311,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 59,
+                            Value = "Compact"
+                        },
+                        new
+                        {
+                            Id = 312,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 59,
+                            Value = "Action Camera"
+                        },
+                        new
+                        {
+                            Id = 313,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 59,
+                            Value = "Instant Camera"
+                        },
+                        new
+                        {
+                            Id = 314,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 60,
+                            Value = "CMOS"
+                        },
+                        new
+                        {
+                            Id = 315,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 60,
+                            Value = "APS-C CMOS"
+                        },
+                        new
+                        {
+                            Id = 316,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 60,
+                            Value = "Full Frame CMOS"
+                        },
+                        new
+                        {
+                            Id = 317,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 60,
+                            Value = "BSI CMOS"
+                        },
+                        new
+                        {
+                            Id = 318,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 60,
+                            Value = "Stacked CMOS"
+                        },
+                        new
+                        {
+                            Id = 319,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 61,
+                            Value = "f/1.8"
+                        },
+                        new
+                        {
+                            Id = 320,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 61,
+                            Value = "f/2.0"
+                        },
+                        new
+                        {
+                            Id = 321,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 61,
+                            Value = "f/2.8"
+                        },
+                        new
+                        {
+                            Id = 322,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 61,
+                            Value = "f/3.5-5.6"
+                        },
+                        new
+                        {
+                            Id = 323,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 61,
+                            Value = "f/4"
+                        },
+                        new
+                        {
+                            Id = 324,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 62,
+                            Value = "16-50 mm"
+                        },
+                        new
+                        {
+                            Id = 325,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 62,
+                            Value = "18-55 mm"
+                        },
+                        new
+                        {
+                            Id = 326,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 62,
+                            Value = "24-70 mm"
+                        },
+                        new
+                        {
+                            Id = 327,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 62,
+                            Value = "24-105 mm"
+                        },
+                        new
+                        {
+                            Id = 328,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 62,
+                            Value = "70-200 mm"
+                        },
+                        new
+                        {
+                            Id = 329,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 63,
+                            Value = "Lens kit"
+                        },
+                        new
+                        {
+                            Id = 330,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 63,
+                            Value = "Prime"
+                        },
+                        new
+                        {
+                            Id = 331,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 63,
+                            Value = "Zoom"
+                        },
+                        new
+                        {
+                            Id = 332,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 63,
+                            Value = "Telephoto"
+                        },
+                        new
+                        {
+                            Id = 333,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 63,
+                            Value = "Wide"
+                        },
+                        new
+                        {
+                            Id = 334,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 64,
+                            Value = "AF-S"
+                        },
+                        new
+                        {
+                            Id = 335,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 64,
+                            Value = "AF-C"
+                        },
+                        new
+                        {
+                            Id = 336,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 64,
+                            Value = "Nhan dien khuon mat"
+                        },
+                        new
+                        {
+                            Id = 337,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 64,
+                            Value = "Nhan dien mat"
+                        },
+                        new
+                        {
+                            Id = 338,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 5,
+                            IsActive = true,
+                            SpecDefinitionId = 64,
+                            Value = "Lay net thu cong"
+                        },
+                        new
+                        {
+                            Id = 339,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 65,
+                            Value = "1/4000 s"
+                        },
+                        new
+                        {
+                            Id = 340,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 65,
+                            Value = "1/8000 s"
+                        },
+                        new
+                        {
+                            Id = 341,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 65,
+                            Value = "Electronic shutter"
+                        },
+                        new
+                        {
+                            Id = 342,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 65,
+                            Value = "Mechanical shutter"
+                        },
+                        new
+                        {
+                            Id = 343,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 66,
+                            Value = "10 fps"
+                        },
+                        new
+                        {
+                            Id = 344,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 66,
+                            Value = "15 fps"
+                        },
+                        new
+                        {
+                            Id = 345,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 66,
+                            Value = "20 fps"
+                        },
+                        new
+                        {
+                            Id = 346,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            SpecDefinitionId = 66,
+                            Value = "30 fps"
+                        },
+                        new
+                        {
+                            Id = 347,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            SpecDefinitionId = 67,
+                            Value = "6000 x 4000"
+                        },
+                        new
+                        {
+                            Id = 348,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            SpecDefinitionId = 67,
+                            Value = "6240 x 4160"
+                        },
+                        new
+                        {
+                            Id = 349,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            SpecDefinitionId = 67,
+                            Value = "6720 x 4480"
+                        },
+                        new
+                        {
+                            Id = 350,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DisplayOrder = 4,
                             IsActive = true,
                             SpecDefinitionId = 67,
-                            Value = "L 65:24 6240 x 2304"
+                            Value = "7008 x 4672"
                         });
                 });
 

@@ -45,6 +45,31 @@ const unwrapItems = (payload) => {
     return [];
 };
 
+const unwrapPageMeta = (payload, fallbackItems, fallbackPage, fallbackPageSize) => {
+    if (!payload || Array.isArray(payload)) {
+        const totalCount = fallbackItems.length;
+        return { totalCount, totalPages: Math.ceil(totalCount / fallbackPageSize) || 1 };
+    }
+
+    const totalCount = Number(payload.totalCount ?? payload.total ?? payload.count ?? fallbackItems.length);
+    const totalPages = Number(payload.totalPages ?? (Math.ceil(totalCount / fallbackPageSize) || 1));
+    return {
+        totalCount,
+        totalPages: Math.max(1, totalPages),
+        page: Number(payload.page || fallbackPage),
+        pageSize: Number(payload.pageSize || fallbackPageSize),
+    };
+};
+
+const getStatusLabel = (coupon) => {
+    const status = String(coupon.status || '').toLowerCase();
+    if (status === 'active' || (!status && coupon.isActive)) return ' Hoạt động';
+    if (status === 'disabled' || status === 'inactive' || !coupon.isActive) return 'Tạm dừng';
+    if (status === 'expired') return 'ết hạn';
+    if (status === 'scheduled') return 'ắp diễn ra';
+    return coupon.status || 'ạm dung';
+};
+
 const AdminCoupons = () => {
     const [coupons, setCoupons] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -55,23 +80,34 @@ const AdminCoupons = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     const activeCoupons = useMemo(() => coupons.filter((item) => item.status === 'Active' || item.isActive).length, [coupons]);
 
     useEffect(() => {
-        loadData();
-    }, []);
+        loadData(page);
+    }, [page]);
 
-    const loadData = async () => {
+    const loadData = async (nextPage = page) => {
         setLoading(true);
         setError('');
         try {
             const [couponRes, statsRes, categoryRes] = await Promise.all([
-                couponApi.getAll({ page: 1, pageSize: 100 }),
+                couponApi.getAll({ page: nextPage, pageSize }),
                 couponApi.getStats(),
                 categoryApi.getAll(),
             ]);
-            setCoupons(unwrapItems(couponRes.data));
+            const items = unwrapItems(couponRes.data);
+            const meta = unwrapPageMeta(couponRes.data, items, nextPage, pageSize);
+            setCoupons(items);
+            setTotalCount(meta.totalCount);
+            setTotalPages(meta.totalPages);
+            if (meta.page && meta.page !== page) {
+                setPage(meta.page);
+            }
             setStats(statsRes.data || null);
             setCategories(unwrapItems(categoryRes.data));
         } catch (err) {
@@ -164,7 +200,11 @@ const AdminCoupons = () => {
                 setSuccess('Đã tạo phiếu giảm giá');
             }
             resetForm();
-            await loadData();
+            if (!editingId && page !== 1) {
+                setPage(1);
+            } else {
+                await loadData(page);
+            }
         } catch (err) {
             const data = err.response?.data;
             setError(data?.message || data?.detail || data?.title || 'Không thể lưu phiếu giảm giá');
@@ -177,7 +217,7 @@ const AdminCoupons = () => {
         setError('');
         try {
             await couponApi.toggle(coupon.id);
-            await loadData();
+            await loadData(page);
         } catch (err) {
             const data = err.response?.data;
             setError(data?.message || 'Không thể đổi trạng thái phiếu');
@@ -189,12 +229,22 @@ const AdminCoupons = () => {
         setError('');
         try {
             await couponApi.delete(coupon.id);
-            await loadData();
+            const nextTotal = Math.max(0, totalCount - 1);
+            const nextTotalPages = Math.max(1, Math.ceil(nextTotal / pageSize));
+            const nextPage = Math.min(page, nextTotalPages);
+            if (nextPage !== page) {
+                setPage(nextPage);
+            } else {
+                await loadData(nextPage);
+            }
         } catch (err) {
             const data = err.response?.data;
             setError(data?.message || 'Không thể xóa phiếu');
         }
     };
+
+    const fromItem = coupons.length ? (page - 1) * pageSize + 1 : 0;
+    const toItem = coupons.length ? (page - 1) * pageSize + coupons.length : 0;
 
     return (
         <div className="px-4 py-6 lg:px-8">
@@ -240,6 +290,7 @@ const AdminCoupons = () => {
                         {loading ? (
                             <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải phiếu giảm giá...</div>
                         ) : (
+                            <>
                             <div className="overflow-x-auto rounded-md border border-slate-200">
                                 <table className="min-w-[920px] divide-y divide-slate-200 text-sm">
                                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -267,8 +318,8 @@ const AdminCoupons = () => {
                                                 <td className="px-4 py-3">{Number(coupon.minOrderAmount || 0).toLocaleString('vi-VN')}đ</td>
                                                 <td className="px-4 py-3">{coupon.claimedQuantity || 0}/{coupon.totalQuantity || '∞'} nhận, {coupon.usedQuantity || 0} dùng</td>
                                                 <td className="px-4 py-3">
-                                                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${coupon.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                                                        {coupon.status || (coupon.isActive ? 'Active' : 'Disabled')}
+                                                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${(coupon.status === 'Active' || coupon.isActive) ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                        {getStatusLabel(coupon)}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -289,6 +340,33 @@ const AdminCoupons = () => {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                                <span>
+                                    Hiển thị {fromItem}-{toItem} trong {totalCount} phiếu
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        disabled={page <= 1}
+                                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                                    >
+                                        Trước
+                                    </button>
+                                    <span className="rounded-md bg-slate-100 px-3 py-2 font-semibold text-admin-ink">
+                                        {page}/{totalPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        disabled={page >= totalPages}
+                                        onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                                    >
+                                        Sau
+                                    </button>
+                                </div>
+                            </div>
+                            </>
                         )}
                     </div>
                 </section>
