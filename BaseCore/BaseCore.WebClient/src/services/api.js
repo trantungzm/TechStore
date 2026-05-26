@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { BYPASS_AUTH } from '../config/authBypass';
 
 const API_BASE_URL = '/api';
 
@@ -23,7 +24,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && !BYPASS_AUTH) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
 

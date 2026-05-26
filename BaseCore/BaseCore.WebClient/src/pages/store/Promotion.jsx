@@ -2,16 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import CouponCard from '../../components/store/CouponCard';
 import VoucherSpinWheel from '../../components/store/VoucherSpinWheel';
+import PageHero from '../../components/store/PageHero';
 import { useCart } from '../../contexts/CartContext';
 import coupons from '../../data/coupons';
 import { canClaimCoupon, claimCoupon, getClaimedCoupons, getCouponClaimStatus, isCouponClaimed } from '../../utils/couponUtils';
-import { fadeInUp, motionTransition, motionViewport, staggerContainer } from '../../utils/motionVariants';
 import { setPageMeta } from '../../utils/store';
+import { cn } from '../../utils/cn';
 
 const filters = [
     { id: 'all', label: 'Tất cả' },
-    { id: 'product', label: 'Phiếu sản phẩm' },
-    { id: 'shipping', label: 'Phiếu vận chuyển' },
+    { id: 'product', label: 'Sản phẩm' },
+    { id: 'shipping', label: 'Vận chuyển' },
     { id: 'available', label: 'Có thể nhận' },
     { id: 'claimed', label: 'Đã nhận' },
     { id: 'locked', label: 'Chưa đủ điều kiện' },
@@ -26,15 +27,15 @@ const Promotion = () => {
     const claimableCoupons = useMemo(() => coupons.filter((coupon) => coupon.code), []);
     const spinRewards = useMemo(() => coupons.filter((coupon) => coupon.spinWeight > 0), []);
     const context = useMemo(() => ({ currentHour: new Date().getHours(), subtotal: totalAmount, cartItems: items }), [items, totalAmount]);
-    const claimedCoupons = useMemo(() => claimableCoupons.filter((coupon) => claimedIds.includes(coupon.id)), [claimableCoupons, claimedIds]);
+    const claimedCoupons = useMemo(() => claimableCoupons.filter((c) => claimedIds.includes(c.id)), [claimableCoupons, claimedIds]);
     const availableCount = useMemo(
-        () => claimableCoupons.filter((coupon) => getCouponClaimStatus(coupon, context).status === 'available').length,
+        () => claimableCoupons.filter((c) => getCouponClaimStatus(c, context).status === 'available').length,
         [claimableCoupons, context]
     );
 
     useEffect(() => {
         setPageMeta({
-            title: 'Phiếu giảm giá | Electro',
+            title: 'Phiếu giảm giá | TechStore',
             description: 'Nhận phiếu mua hàng và phiếu vận chuyển để tiết kiệm hơn khi thanh toán.',
         });
         setClaimedIds(getClaimedCoupons());
@@ -85,115 +86,105 @@ const Promotion = () => {
     });
 
     return (
-        <div className="container-fluid promotion-page py-4">
-            <div className="container py-3">
-                <motion.header
-                    className="promotion-compact-header mb-3"
-                    variants={fadeInUp}
-                    initial="hidden"
-                    animate="visible"
-                    transition={motionTransition}
-                >
-                    <div>
-                        <h1>Phiếu giảm giá</h1>
-                        <p>Nhận phiếu mua hàng và phiếu vận chuyển để tiết kiệm hơn khi thanh toán.</p>
+        <>
+            <PageHero title="Phiếu giảm giá" current="Promotion" kicker="Vouchers" />
+
+            <section className="ts-container py-12">
+                <div className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-border)] md:grid-cols-3">
+                    <div className="flex items-center gap-3 bg-[var(--color-surface)] p-5">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
+                            <i className="fas fa-wallet"></i>
+                        </div>
+                        <div>
+                            <p className="ts-eyebrow text-[10px]">Ví của tôi</p>
+                            <p className="ts-mono mt-1 text-lg font-semibold">{claimedCoupons.length} <span className="text-xs text-[var(--color-fg-dim)]">phiếu</span></p>
+                        </div>
                     </div>
-                    <div className="promotion-stats">
-                        <span>Phiếu đã nhận: <strong>{claimedCoupons.length}</strong></span>
-                        <span>Phiếu có thể nhận: <strong>{availableCount}</strong></span>
+                    <div className="flex items-center gap-3 bg-[var(--color-surface)] p-5">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-400">
+                            <i className="fas fa-gift"></i>
+                        </div>
+                        <div>
+                            <p className="ts-eyebrow text-[10px]">Có thể nhận</p>
+                            <p className="ts-mono mt-1 text-lg font-semibold">{availableCount}</p>
+                        </div>
                     </div>
-                </motion.header>
+                    <div className="col-span-2 flex items-center gap-3 bg-[var(--color-surface)] p-5 md:col-span-1">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+                            <i className="fas fa-tags"></i>
+                        </div>
+                        <div>
+                            <p className="ts-eyebrow text-[10px]">Tổng phiếu</p>
+                            <p className="ts-mono mt-1 text-lg font-semibold">{claimableCoupons.length}</p>
+                        </div>
+                    </div>
+                </div>
 
                 <AnimatePresence>
                     {message && (
                         <motion.div
-                            className="alert alert-primary py-2 mb-3"
-                            initial={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: -8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                            exit={{ opacity: 0, y: -4 }}
+                            className="mb-6 rounded-md border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 px-4 py-2 text-sm text-[var(--color-fg)]"
                         >
                             {message}
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                <motion.div
-                    className="promotion-wallet-bar mb-3"
-                    variants={fadeInUp}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={motionViewport}
-                    transition={{ ...motionTransition, delay: 0.06 }}
-                >
-                    <span>Ví của tôi: <strong>{claimedCoupons.length}</strong> phiếu đã nhận</span>
-                    <button type="button" className="btn btn-sm btn-outline-primary rounded-pill" onClick={() => setActiveFilter('claimed')}>
-                        Xem phiếu đã nhận
-                    </button>
-                </motion.div>
-
-                <motion.div
-                    variants={fadeInUp}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={motionViewport}
-                    transition={{ ...motionTransition, delay: 0.1 }}
-                >
+                <div className="mb-10">
                     <VoucherSpinWheel rewards={spinRewards} onReward={handleSpinReward} />
-                </motion.div>
+                </div>
 
-                <motion.section
-                    className="promotion-list-section"
-                    variants={fadeInUp}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={motionViewport}
-                    transition={{ ...motionTransition, delay: 0.12 }}
+                <div className="mb-6 flex flex-wrap gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-1">
+                    {filters.map((filter) => (
+                        <button
+                            key={filter.id}
+                            type="button"
+                            onClick={() => setActiveFilter(filter.id)}
+                            className={cn(
+                                "rounded-sm px-3 py-1.5 text-xs font-medium transition-all",
+                                activeFilter === filter.id
+                                    ? "bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)] text-white"
+                                    : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                            )}
+                        >
+                            {filter.label}
+                        </button>
+                    ))}
+                </div>
+
+                <motion.div
+                    key={activeFilter}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid grid-cols-1 gap-4 md:grid-cols-2"
                 >
-                    <div className="promotion-filter-tabs mb-3">
-                        {filters.map((filter) => (
-                            <button
-                                type="button"
-                                key={filter.id}
-                                className={activeFilter === filter.id ? 'is-active' : ''}
-                                onClick={() => setActiveFilter(filter.id)}
-                            >
-                                {filter.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <motion.div
-                        key={activeFilter}
-                        className="promotion-coupon-grid"
-                        variants={staggerContainer}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={motionViewport}
-                    >
-                        {filteredCoupons.map((coupon) => {
+                    {filteredCoupons.length === 0 ? (
+                        <p className="col-span-full rounded-md border border-dashed border-[var(--color-border)] p-12 text-center text-sm text-[var(--color-fg-dim)]">
+                            Không có phiếu phù hợp.
+                        </p>
+                    ) : (
+                        filteredCoupons.map((coupon) => {
                             const status = getCouponStatus(coupon);
                             return (
-                                <motion.div
+                                <CouponCard
                                     key={coupon.id}
-                                    variants={fadeInUp}
-                                    transition={{ ...motionTransition, duration: 0.85 }}
-                                >
-                                    <CouponCard
-                                        coupon={coupon}
-                                        status={status}
-                                        claimed={status === 'claimed'}
-                                        onClaim={handleClaim}
-                                        onCopy={handleCopy}
-                                        context={context}
-                                    />
-                                </motion.div>
+                                    coupon={coupon}
+                                    status={status}
+                                    claimed={status === 'claimed'}
+                                    onClaim={handleClaim}
+                                    onCopy={handleCopy}
+                                    context={context}
+                                />
                             );
-                        })}
-                    </motion.div>
-                </motion.section>
-            </div>
-        </div>
+                        })
+                    )}
+                </motion.div>
+            </section>
+        </>
     );
 };
 

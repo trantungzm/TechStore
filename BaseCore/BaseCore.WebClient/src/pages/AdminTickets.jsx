@@ -18,7 +18,7 @@ const PRIORITY_LABELS = {
     Urgent: 'Khẩn cấp',
 };
 
-const inputClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
+const inputClass = 'w-full rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
 const ticketStatusText = (value) => TICKET_STATUS_LABELS[value] || value || 'Không rõ';
 const priorityText = (value) => PRIORITY_LABELS[value] || value || 'Không rõ';
@@ -38,21 +38,21 @@ const normalize = (t) => ({
 
 const statusClass = (value) => {
     const s = String(value || '').toLowerCase();
-    if (s === 'open') return 'bg-blue-50 text-blue-700';
-    if (s === 'inprogress') return 'bg-amber-50 text-amber-700';
+    if (s === 'open') return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]';
+    if (s === 'inprogress') return 'bg-[var(--color-surface-2)] text-amber-300';
     if (s === 'waitingcustomer') return 'bg-violet-50 text-violet-700';
-    if (s === 'resolved') return 'bg-emerald-50 text-emerald-700';
-    if (s === 'closed') return 'bg-slate-100 text-slate-700';
-    if (s === 'cancelled') return 'bg-rose-50 text-rose-700';
-    return 'bg-slate-100 text-slate-700';
+    if (s === 'resolved') return 'bg-emerald-500/10 text-emerald-300';
+    if (s === 'closed') return 'bg-[var(--color-surface-3)] text-[var(--color-fg)]';
+    if (s === 'cancelled') return 'bg-red-500/10 text-red-300';
+    return 'bg-[var(--color-surface-3)] text-[var(--color-fg)]';
 };
 
 const priorityClass = (value) => {
     const p = String(value || '').toLowerCase();
-    if (p === 'urgent') return 'bg-rose-50 text-rose-700';
-    if (p === 'high') return 'bg-orange-50 text-orange-700';
-    if (p === 'low') return 'bg-slate-100 text-slate-700';
-    return 'bg-blue-50 text-blue-700';
+    if (p === 'urgent') return 'bg-red-500/10 text-red-300';
+    if (p === 'high') return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]';
+    if (p === 'low') return 'bg-[var(--color-surface-3)] text-[var(--color-fg)]';
+    return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]';
 };
 
 const splitMessageParts = (text) => {
@@ -164,54 +164,54 @@ const AdminTickets = () => {
 
     return (
         <div className="px-4 py-6">
-            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Hỗ trợ</p>
-                        <h2 className="mb-0 text-2xl font-bold text-admin-ink">Ticket hỗ trợ</h2>
+                        <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Hỗ trợ</p>
+                        <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Ticket hỗ trợ</h2>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bộ lọc" activeCount={activeFilterCount}>
                             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); setIsFilterMenuOpen(false); }}>
                                 <label className="block">
-                                    <span className="mb-1 block text-sm font-semibold text-admin-ink">Từ khóa</span>
+                                    <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Từ khóa</span>
                                     <input className={inputClass} value={filters.keyword} onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))} />
                                 </label>
                                 <label className="block">
-                                    <span className="mb-1 block text-sm font-semibold text-admin-ink">Trạng thái</span>
+                                    <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Trạng thái</span>
                                     <select className={inputClass} value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
                                         <option value="">Tất cả</option>
                                         {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                     </select>
                                 </label>
                                 <label className="block">
-                                    <span className="mb-1 block text-sm font-semibold text-admin-ink">Độ ưu tiên</span>
+                                    <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Độ ưu tiên</span>
                                     <select className={inputClass} value={filters.priority} onChange={(e) => setFilters((p) => ({ ...p, priority: e.target.value }))}>
                                         <option value="">Tất cả</option>
                                         {Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                     </select>
                                 </label>
                                 <div className="flex justify-end gap-2">
-                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => setFilters({ keyword: '', status: '', priority: '' })}>Xóa lọc</button>
-                                    <button type="submit" className="rounded-md bg-admin-brand px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">Đóng</button>
+                                    <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={() => setFilters({ keyword: '', status: '', priority: '' })}>Xóa lọc</button>
+                                    <button type="submit" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)]">Đóng</button>
                                 </div>
                             </form>
                         </AdminFilterDropdown>
-                        <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50 disabled:opacity-60" onClick={load} disabled={loading}>
+                        <button type="button" className="rounded-md border border-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60" onClick={load} disabled={loading}>
                             Làm mới
                         </button>
                     </div>
                 </div>
 
                 <div className="p-4">
-                    {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</div>}
+                    {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">{error}</div>}
                     {loading ? (
-                        <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải ticket...</div>
+                        <div className="py-12 text-center text-sm font-semibold text-[var(--color-fg-muted)]">Đang tải ticket...</div>
                     ) : (
                         <>
-                            <div className="overflow-x-auto rounded-md border border-slate-200">
-                                <table className="min-w-[1120px] divide-y divide-slate-200 text-sm">
-                                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                            <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
+                                <table className="min-w-[1120px] divide-y divide-[var(--color-border)] text-sm">
+                                    <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                         <tr>
                                             <th className="w-[80px] px-4 py-3">ID</th>
                                             <th className="px-4 py-3">Nội dung</th>
@@ -220,21 +220,21 @@ const AdminTickets = () => {
                                             <th className="w-[300px] px-4 py-3">Thao tác</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-[var(--color-border)]">
                                         {pagedTickets.map((raw) => {
                                             const ticket = normalize(raw);
                                             return (
-                                                <tr key={ticket.id} className="align-top hover:bg-slate-50">
-                                                    <td className="px-4 py-3 font-semibold text-admin-ink">#{ticket.id}</td>
+                                                <tr key={ticket.id} className="align-top hover:bg-[var(--color-surface-2)]">
+                                                    <td className="px-4 py-3 font-semibold text-[var(--color-fg)]">#{ticket.id}</td>
                                                     <td className="px-4 py-3">
-                                                        <div className="font-bold text-admin-ink">
+                                                        <div className="font-bold text-[var(--color-fg)]">
                                                             {ticket.subject || '-'}
-                                                            {ticket.serialOrImei && <span className="ml-2 font-mono text-xs text-admin-muted">({ticket.serialOrImei})</span>}
+                                                            {ticket.serialOrImei && <span className="ml-2 font-mono text-xs text-[var(--color-fg-muted)]">({ticket.serialOrImei})</span>}
                                                         </div>
-                                                        <div className="mt-1 max-w-[460px] whitespace-pre-wrap text-sm text-admin-muted">{ticket.description || '-'}</div>
+                                                        <div className="mt-1 max-w-[460px] whitespace-pre-wrap text-sm text-[var(--color-fg-muted)]">{ticket.description || '-'}</div>
                                                         {ticket.updates?.length > 0 && (
-                                                            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto rounded-md border border-slate-200 bg-white p-3">
-                                                                <div className="text-xs font-bold uppercase tracking-wide text-admin-muted">Trao đổi</div>
+                                                            <div className="mt-3 max-h-64 space-y-2 overflow-y-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                                                                <div className="text-xs font-bold uppercase tracking-wide text-[var(--color-fg-muted)]">Trao đổi</div>
                                                                 {ticket.updates.map((update, index) => {
                                                                     const actor = update.actorUserId || update.ActorUserId || null;
                                                                     const owner = ticket.userId || null;
@@ -244,8 +244,8 @@ const AdminTickets = () => {
                                                                     const createdAt = update.createdAt || update.CreatedAt;
                                                                     return (
                                                                         <div key={`${ticket.id}-${index}`} className={`flex ${isCustomer ? 'justify-end' : 'justify-start'}`}>
-                                                                            <div className={`max-w-[78%] rounded-md px-3 py-2 ${isCustomer ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-slate-50 text-admin-ink'}`}>
-                                                                                <div className={`text-xs font-semibold ${isCustomer ? 'text-blue-100' : 'text-admin-muted'}`}>
+                                                                            <div className={`max-w-[78%] rounded-md px-3 py-2 ${isCustomer ? 'bg-blue-600 text-white' : 'border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-fg)]'}`}>
+                                                                                <div className={`text-xs font-semibold ${isCustomer ? 'text-blue-100' : 'text-[var(--color-fg-muted)]'}`}>
                                                                                     {isCustomer ? 'Khách hàng' : 'Hỗ trợ'} - {createdAt ? new Date(createdAt).toLocaleString() : '-'}
                                                                                 </div>
                                                                                 {parts.text && <div className="mt-1 whitespace-pre-wrap">{parts.text}</div>}
@@ -271,7 +271,7 @@ const AdminTickets = () => {
                                                             <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusClass(ticket.status)}`}>{ticketStatusText(ticket.status)}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3 text-admin-muted">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
+                                                    <td className="px-4 py-3 text-[var(--color-fg-muted)]">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
                                                     <td className="px-4 py-3">
                                                         <div className="space-y-2">
                                                             <select className={inputClass} value={priorityById[ticket.id] ?? ''} onChange={(e) => setPriorityById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
@@ -283,7 +283,7 @@ const AdminTickets = () => {
                                                                 {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                                             </select>
                                                             <input className={inputClass} placeholder="Ghi chú / phản hồi" value={noteById[ticket.id] ?? ''} onChange={(e) => setNoteById((prev) => ({ ...prev, [ticket.id]: e.target.value }))} />
-                                                            <button type="button" className="w-full rounded-md bg-admin-brand px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" onClick={() => handleUpdate(ticket.id)} disabled={updatingId === ticket.id}>
+                                                            <button type="button" className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" onClick={() => handleUpdate(ticket.id)} disabled={updatingId === ticket.id}>
                                                                 {updatingId === ticket.id ? 'Đang cập nhật...' : 'Cập nhật'}
                                                             </button>
                                                         </div>
@@ -293,19 +293,19 @@ const AdminTickets = () => {
                                         })}
                                         {!pagedTickets.length && (
                                             <tr>
-                                                <td colSpan="5" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">Chưa có ticket phù hợp.</td>
+                                                <td colSpan="5" className="px-4 py-8 text-center text-sm font-semibold text-[var(--color-fg-muted)]">Chưa có ticket phù hợp.</td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                            <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between">
                                 <div>Hiển thị {from}-{to} trong {filteredTickets.length} ticket</div>
                                 <div className="flex items-center gap-2">
-                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Trước</button>
-                                    <span className="rounded-md bg-slate-100 px-3 py-2 font-semibold text-admin-ink">Trang {page} / {totalPages}</span>
-                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Sau</button>
+                                    <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-2 font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Trước</button>
+                                    <span className="rounded-md bg-[var(--color-surface-3)] px-3 py-2 font-semibold text-[var(--color-fg)]">Trang {page} / {totalPages}</span>
+                                    <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-2 font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Sau</button>
                                 </div>
                             </div>
                         </>

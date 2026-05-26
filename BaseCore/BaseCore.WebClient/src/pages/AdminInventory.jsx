@@ -17,18 +17,18 @@ const STOCK_STATUS_LABELS = {
 };
 
 const stockStatusText = (value) => STOCK_STATUS_LABELS[value] || value || 'Không rõ';
-const fieldClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-500';
-const labelClass = 'mb-1 block text-sm font-semibold text-admin-ink';
+const fieldClass = 'w-full rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)] disabled:bg-[var(--color-surface-3)] disabled:text-[var(--color-fg-dim)]';
+const labelClass = 'mb-1 block text-sm font-semibold text-[var(--color-fg)]';
 const CSV_SOURCE_HINT = 'D:\\nam3\\Ki2\\CNTHTT\\BaseCoreAnhTung\\BaseCore';
 const SERIAL_CSV_TEMPLATE = 'serialOrImei\n356938035643809\n356938035643810\n356938035643811\n';
 
 const stockStatusClass = (value) => {
     const status = String(value || '');
-    if (status === 'InStock') return 'bg-emerald-50 text-emerald-700';
-    if (status === 'Sold') return 'bg-slate-100 text-slate-700';
-    if (status === 'Reserved') return 'bg-amber-50 text-amber-700';
-    if (status === 'Damaged' || status === 'Lost') return 'bg-rose-50 text-rose-700';
-    return 'bg-blue-50 text-blue-700';
+    if (status === 'InStock') return 'bg-emerald-500/10 text-emerald-300';
+    if (status === 'Sold') return 'bg-[var(--color-surface-3)] text-[var(--color-fg)]';
+    if (status === 'Reserved') return 'bg-[var(--color-surface-2)] text-amber-300';
+    if (status === 'Damaged' || status === 'Lost') return 'bg-red-500/10 text-red-300';
+    return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]';
 };
 
 const unwrapItems = (payload) => {
@@ -674,10 +674,10 @@ const AdminInventory = () => {
         <div className="px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Kho hàng</p>
-                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Quản lý tồn kho</h2>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Kho hàng</p>
+                    <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Quản lý tồn kho</h2>
                 </div>
-                <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50" onClick={loadAll} disabled={loading}>
+                <button type="button" className="rounded-md border border-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10" onClick={loadAll} disabled={loading}>
                     Làm mới
                 </button>
             </div>
@@ -688,7 +688,7 @@ const AdminInventory = () => {
                     {canReceive && (
                         <button
                             type="button"
-                            className={`rounded-md px-3 py-2 text-sm font-semibold ${activeLeftPanel === 'receive' ? 'bg-admin-brand text-white' : 'border border-admin-brand text-admin-brand hover:bg-orange-50'}`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${activeLeftPanel === 'receive' ? 'bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] text-white' : 'border border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10'}`}
                             onClick={() => setActiveLeftPanel('receive')}
                         >
                             Nhập kho
@@ -697,7 +697,7 @@ const AdminInventory = () => {
                     {canReturn && (
                         <button
                             type="button"
-                            className={`rounded-md px-3 py-2 text-sm font-semibold ${activeLeftPanel === 'return' ? 'bg-amber-500 text-white' : 'border border-amber-500 text-amber-700 hover:bg-amber-50'}`}
+                            className={`rounded-md px-3 py-2 text-sm font-semibold ${activeLeftPanel === 'return' ? 'bg-[var(--color-surface-2)]0 text-white' : 'border border-amber-500 text-amber-300 hover:bg-[var(--color-surface-2)]'}`}
                             onClick={() => setActiveLeftPanel('return')}
                         >
                             Trả hàng
@@ -706,15 +706,15 @@ const AdminInventory = () => {
                 </div>
 
                 {activeLeftPanel === 'receive' && canReceive ? (
-                    <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                        <div className="border-b border-slate-200 px-4 py-3">
-                            <h3 className="mb-0 text-base font-bold text-admin-ink">Nhập kho theo phiếu</h3>
+                    <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                        <div className="border-b border-[var(--color-border)] px-4 py-3">
+                            <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Nhập kho theo phiếu</h3>
                         </div>
                         <div className="p-4">
-                            {error && <div className="alert alert-danger">{error}</div>}
+                            {error && <div className="rounded-sm border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">{error}</div>}
                             <form onSubmit={handleCreateReceipt} className="space-y-4">
-                                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                                    <div className="mb-3 text-sm font-bold text-admin-ink">Thông tin phiếu nhập</div>
+                                <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
+                                    <div className="mb-3 text-sm font-bold text-[var(--color-fg)]">Thông tin phiếu nhập</div>
                                     <label className="block">
                                         <span className={labelClass}>Danh mục</span>
                                         <select className={fieldClass} value={form.categoryId} onChange={handleChange('categoryId')} required>
@@ -744,17 +744,17 @@ const AdminInventory = () => {
                                         </select>
                                     </label>
                                     {selectedSupplier && (
-                                        <div className="mt-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-admin-muted">
+                                        <div className="mt-2 rounded-md bg-[var(--color-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-fg-muted)]">
                                             {[selectedSupplier.phone || selectedSupplier.Phone, selectedSupplier.email || selectedSupplier.Email].filter(Boolean).join(' - ')}
                                         </div>
                                     )}
                                     {suppliers.length === 0 && <div className="mt-2 text-xs font-semibold text-rose-600">Chưa có nhà cung cấp đang hoạt động.</div>}
                                 </div>
 
-                                <div className="rounded-md border border-slate-200 bg-white p-3">
+                                <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
                                     <div className="mb-3 flex items-center justify-between gap-3">
-                                        <div className="text-sm font-bold text-admin-ink">Sản phẩm nhập kho</div>
-                                        <Link to="/admin/products" className="text-xs font-semibold text-admin-brand hover:text-orange-600">
+                                        <div className="text-sm font-bold text-[var(--color-fg)]">Sản phẩm nhập kho</div>
+                                        <Link to="/admin/products" className="text-xs font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)]">
                                             Tạo sản phẩm
                                         </Link>
                                     </div>
@@ -770,12 +770,12 @@ const AdminInventory = () => {
                                         </select>
                                     </label>
                                     {form.categoryId && productOptions.length === 0 && (
-                                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                                        <div className="mt-3 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-2)] px-3 py-2 text-xs font-semibold text-amber-800">
                                             Danh mục này chưa có sản phẩm. Hãy tạo sản phẩm trước, sau đó quay lại nhập kho.
                                         </div>
                                     )}
                                     {selectedProduct && (
-                                        <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-semibold text-admin-muted">
+                                        <div className="mt-3 rounded-md bg-[var(--color-surface-2)] px-3 py-2 text-xs font-semibold text-[var(--color-fg-muted)]">
                                             {requiresSerialTracking ? 'Sản phẩm này cần nhập Serial/IMEI.' : 'Sản phẩm này không bắt buộc Serial/IMEI.'}
                                         </div>
                                     )}
@@ -789,7 +789,7 @@ const AdminInventory = () => {
                                     <label className="block">
                                         <span className={labelClass}>Giá vốn nhập</span>
                                         <input className={fieldClass} type="number" min="0" value={form.unitCost} onChange={handleChange('unitCost')} placeholder="Giá mua từ nhà cung cấp" />
-                                        <span className="mt-1 block text-xs font-semibold text-admin-muted">Dùng để tính giá trị phiếu nhập, không phải giá bán cho khách.</span>
+                                        <span className="mt-1 block text-xs font-semibold text-[var(--color-fg-muted)]">Dùng để tính giá trị phiếu nhập, không phải giá bán cho khách.</span>
                                     </label>
                                 </div>
 
@@ -797,7 +797,7 @@ const AdminInventory = () => {
                                     <div className="mb-1 flex items-center justify-between gap-3">
                                         <span className={labelClass}>Serial/IMEI</span>
                                         {selectedProduct && requiresSerialTracking && (
-                                            <span className={`text-xs font-bold ${serialValidation.isValid ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                            <span className={`text-xs font-bold ${serialValidation.isValid ? 'text-emerald-300' : 'text-amber-300'}`}>
                                                 Đã nhập {serialValidation.count}/{Number(form.quantity || 0)} mã
                                             </span>
                                         )}
@@ -812,7 +812,7 @@ const AdminInventory = () => {
                                     />
                                     {selectedProduct && requiresSerialTracking && (
                                         <div className="mt-2 space-y-2">
-                                            <div className={`rounded-md px-3 py-2 text-xs font-semibold ${serialValidation.isValid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                                            <div className={`rounded-md px-3 py-2 text-xs font-semibold ${serialValidation.isValid ? 'bg-emerald-500/10 text-emerald-300' : 'bg-[var(--color-surface-2)] text-amber-800'}`}>
                                                 {serialValidation.duplicates.length > 0
                                                     ? `Có ${serialValidation.duplicates.length} mã bị trùng trong danh sách.`
                                                     : serialValidation.isMissing
@@ -822,7 +822,7 @@ const AdminInventory = () => {
                                                             : 'Danh sách Serial/IMEI hợp lệ.'}
                                             </div>
                                             <div className="flex flex-wrap gap-2">
-                                                <label className="cursor-pointer rounded-md border border-admin-brand px-3 py-1.5 text-xs font-semibold text-admin-brand hover:bg-orange-50">
+                                                <label className="cursor-pointer rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10">
                                                     Nhập từ CSV
                                                     <input
                                                         type="file"
@@ -834,36 +834,36 @@ const AdminInventory = () => {
                                                         }}
                                                     />
                                                 </label>
-                                                <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={cleanSerialWhitespace}>
+                                                <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={cleanSerialWhitespace}>
                                                     Xóa khoảng trắng
                                                 </button>
-                                                <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50" onClick={removeDuplicateSerials} disabled={serialValidation.duplicates.length === 0}>
+                                                <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:opacity-50" onClick={removeDuplicateSerials} disabled={serialValidation.duplicates.length === 0}>
                                                     Xóa dòng trùng
                                                 </button>
                                             </div>
-                                            <div className="text-xs font-semibold text-admin-muted">
+                                            <div className="text-xs font-semibold text-[var(--color-fg-muted)]">
                                                 CSV có thể là một cột serial/IMEI, hoặc nhiều cột; hệ thống lấy giá trị đầu tiên trên mỗi dòng.
                                             </div>
                                         </div>
                                     )}
                                     {selectedProduct && !requiresSerialTracking && (
-                                        <span className="mt-1 block text-xs font-semibold text-admin-muted">Có thể bỏ qua trường này với sản phẩm không quản lý serial.</span>
+                                        <span className="mt-1 block text-xs font-semibold text-[var(--color-fg-muted)]">Có thể bỏ qua trường này với sản phẩm không quản lý serial.</span>
                                     )}
                                 </div>
 
-                                <button className="w-full rounded-md bg-admin-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" disabled={submitting || loading || (requiresSerialTracking && !serialValidation.isValid)}>
+                                <button className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" disabled={submitting || loading || (requiresSerialTracking && !serialValidation.isValid)}>
                                     {submitting ? 'Đang lưu...' : 'Tạo phiếu nhập'}
                                 </button>
                             </form>
                         </div>
                     </section>
                 ) : activeLeftPanel === 'return' && canReturn ? (
-                    <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                        <div className="border-b border-slate-200 px-4 py-3">
-                            <h3 className="mb-0 text-base font-bold text-admin-ink">Trả hàng / nhập lại kho</h3>
+                    <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                        <div className="border-b border-[var(--color-border)] px-4 py-3">
+                            <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Trả hàng / nhập lại kho</h3>
                         </div>
                         <div className="p-4">
-                            {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{error}</div>}
+                            {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">{error}</div>}
                             <form className="space-y-4" onSubmit={handleReturn}>
                                 <label className="block">
                                     <span className={labelClass}>Serial/IMEI</span>
@@ -894,20 +894,20 @@ const AdminInventory = () => {
                                     </label>
                                 </div>
                                 {(returnLookup.loading || returnLookup.error || returnLookup.data) && (
-                                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
                                         {returnLookup.loading ? (
-                                            <div className="text-sm font-semibold text-admin-muted">Đang tra cứu serial...</div>
+                                            <div className="text-sm font-semibold text-[var(--color-fg-muted)]">Đang tra cứu serial...</div>
                                         ) : returnLookup.error ? (
-                                            <div className="text-sm font-semibold text-rose-700">{returnLookup.error}</div>
+                                            <div className="text-sm font-semibold text-red-300">{returnLookup.error}</div>
                                         ) : (
                                             <div className="space-y-2 text-sm">
                                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                                    <div className="font-bold text-admin-ink">{returnLookup.data?.productName || '-'}</div>
+                                                    <div className="font-bold text-[var(--color-fg)]">{returnLookup.data?.productName || '-'}</div>
                                                     <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${stockStatusClass(returnLookup.data?.status)}`}>
                                                         {stockStatusText(returnLookup.data?.status)}
                                                     </span>
                                                 </div>
-                                                <div className="grid gap-2 text-admin-muted sm:grid-cols-2">
+                                                <div className="grid gap-2 text-[var(--color-fg-muted)] sm:grid-cols-2">
                                                     <div>Bán lúc: {returnLookup.data?.soldAt ? new Date(returnLookup.data.soldAt).toLocaleString() : '-'}</div>
                                                     <div>Đơn hàng: {returnLookup.data?.orderCode || (returnLookup.data?.orderId ? `#${returnLookup.data.orderId}` : '-')}</div>
                                                     <div className="sm:col-span-2">
@@ -918,37 +918,37 @@ const AdminInventory = () => {
                                         )}
                                     </div>
                                 )}
-                                <button className="w-full rounded-md bg-admin-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60" disabled={submitting}>
+                                <button className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" disabled={submitting}>
                                     {submitting ? 'Đang xử lý...' : 'Xác nhận nhập lại'}
                                 </button>
-                                <div className="text-xs font-semibold text-admin-muted">
+                                <div className="text-xs font-semibold text-[var(--color-fg-muted)]">
                                     Chỉ xử lý nhập lại khi serial đã bán và yêu cầu trả hàng được duyệt.
                                 </div>
                             </form>
                         </div>
                     </section>
                 ) : (
-                    <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">Không có quyền truy cập chức năng này.</div>
+                    <div className="rounded-md border border-blue-200 bg-[var(--color-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--color-accent)]">Không có quyền truy cập chức năng này.</div>
                 )}
             </div>
 
             <div>
                 {activeLeftPanel === 'receive' && csvPreview && (
-                    <section className="flex h-full min-h-[760px] flex-col rounded-md border border-slate-200 bg-white shadow-sm">
-                        <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                    <section className="flex h-full min-h-[760px] flex-col rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                        <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                             <div>
-                                <h3 className="mb-0 text-base font-bold text-admin-ink">Bang CSV nhap kho</h3>
-                                <p className="mb-0 mt-1 text-xs font-semibold text-admin-muted">
+                                <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Bang CSV nhap kho</h3>
+                                <p className="mb-0 mt-1 text-xs font-semibold text-[var(--color-fg-muted)]">
                                     {csvPreview.fileName} - {csvPreview.serials?.length || 0}/{csvPreview.totalRows || 0} dong phu hop - da chon {selectedCsvSerials.length}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                <button type="button" className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={selectCurrentCsvPage} disabled={csvPreview.missingSerialColumn}>
+                                <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={selectCurrentCsvPage} disabled={csvPreview.missingSerialColumn}>
                                     Chon trang nay
                                 </button>
                                 <button
                                     type="button"
-                                    className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+                                    className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60"
                                     onClick={applyCsvPreviewToReceipt}
                                     disabled={csvPreview.missingSerialColumn || !selectedProduct || !requiresSerialTracking || selectedCsvSerials.length === 0}
                                 >
@@ -958,27 +958,27 @@ const AdminInventory = () => {
                         </div>
                         <div className="flex flex-1 flex-col p-4">
                             {csvPreview.missingSerialColumn ? (
-                                <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+                                <div className="rounded-md border border-rose-200 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">
                                     File thieu cot serial/IMEI. Them cot serial, imei hoac serialOrImei de he thong doc dung.
                                 </div>
                             ) : (
-                                <div className="min-h-[610px] max-h-[610px] flex-1 overflow-auto rounded-md border border-slate-200">
-                                    <table className="min-w-[760px] divide-y divide-slate-200 text-xs">
-                                        <thead className="bg-slate-50 text-left font-bold uppercase tracking-wide text-admin-muted">
+                                <div className="min-h-[610px] max-h-[610px] flex-1 overflow-auto rounded-md border border-[var(--color-border)]">
+                                    <table className="min-w-[760px] divide-y divide-[var(--color-border)] text-xs">
+                                        <thead className="bg-[var(--color-surface-2)] text-left font-bold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                             <tr>
                                                 <th className="px-3 py-2">Dong</th>
                                                 <th className="px-3 py-2">Chon</th>
                                                 <th className="px-3 py-2">Trang thai</th>
                                                 {(csvPreview.headers || []).map((header, index) => (
-                                                    <th key={`${header}-${index}`} className={`px-3 py-2 ${index === csvPreview.serialIndex ? 'bg-emerald-50 text-emerald-700' : ''}`}>
+                                                    <th key={`${header}-${index}`} className={`px-3 py-2 ${index === csvPreview.serialIndex ? 'bg-emerald-500/10 text-emerald-300' : ''}`}>
                                                         {header || `Cot ${index + 1}`}
                                                     </th>
                                                 ))}
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100">
+                                        <tbody className="divide-y divide-[var(--color-border)]">
                                             {csvPageRows.map((row) => (
-                                                <tr key={row.index} className={row.isMatch ? 'bg-emerald-50/40' : 'bg-white text-slate-400'}>
+                                                <tr key={row.index} className={row.isMatch ? 'bg-emerald-500/10/40' : 'bg-[var(--color-surface)] text-[var(--color-fg-dim)]'}>
                                                     <td className="px-3 py-2 font-semibold">{row.index}</td>
                                                     <td className="px-3 py-2">
                                                         <input
@@ -989,12 +989,12 @@ const AdminInventory = () => {
                                                         />
                                                     </td>
                                                     <td className="px-3 py-2">
-                                                        <span className={`rounded-full px-2 py-1 font-bold ${row.isMatch ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        <span className={`rounded-full px-2 py-1 font-bold ${row.isMatch ? 'bg-emerald-100 text-emerald-300' : 'bg-[var(--color-surface-3)] text-[var(--color-fg-dim)]'}`}>
                                                             {row.isMatch ? 'Dung phieu' : 'Bo qua'}
                                                         </span>
                                                     </td>
                                                     {(csvPreview.headers || []).map((_, index) => (
-                                                        <td key={`${row.index}-${index}`} className={`max-w-[180px] truncate px-3 py-2 ${index === csvPreview.serialIndex ? 'font-mono font-bold text-emerald-700' : ''}`}>
+                                                        <td key={`${row.index}-${index}`} className={`max-w-[180px] truncate px-3 py-2 ${index === csvPreview.serialIndex ? 'font-mono font-bold text-emerald-300' : ''}`}>
                                                             {row.cells?.[index] || '-'}
                                                         </td>
                                                     ))}
@@ -1004,53 +1004,53 @@ const AdminInventory = () => {
                                     </table>
                                 </div>
                             )}
-                            <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                            <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between">
                                 <span>Hien thi {csvFrom}-{csvTo} trong {csvRows.length} dong CSV</span>
                                 <div className="flex items-center gap-2">
-                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-50" onClick={() => setCsvPreviewPage((p) => Math.max(1, p - 1))} disabled={csvPage <= 1}>Truoc</button>
-                                    <span className="rounded-md bg-slate-100 px-3 py-1.5 text-admin-ink">Trang {csvPage} / {csvTotalPages}</span>
-                                    <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-50" onClick={() => setCsvPreviewPage((p) => Math.min(csvTotalPages, p + 1))} disabled={csvPage >= csvTotalPages}>Sau</button>
+                                    <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:opacity-50" onClick={() => setCsvPreviewPage((p) => Math.max(1, p - 1))} disabled={csvPage <= 1}>Truoc</button>
+                                    <span className="rounded-md bg-[var(--color-surface-3)] px-3 py-1.5 text-[var(--color-fg)]">Trang {csvPage} / {csvTotalPages}</span>
+                                    <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:opacity-50" onClick={() => setCsvPreviewPage((p) => Math.min(csvTotalPages, p + 1))} disabled={csvPage >= csvTotalPages}>Sau</button>
                                 </div>
                             </div>
                         </div>
                     </section>
                 )}
                 {!(activeLeftPanel === 'receive' && csvPreview) && (
-                <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                    <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-                        <h3 className="mb-0 text-base font-bold text-admin-ink">Tồn kho theo Serial/IMEI</h3>
+                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                    <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                        <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Tồn kho theo Serial/IMEI</h3>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100 sm:w-[240px]" placeholder="Tìm serial..." value={serialQuickSearch} onChange={(e) => setSerialQuickSearch(e.target.value)} />
+                            <input className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)] sm:w-[240px]" placeholder="Tìm serial..." value={serialQuickSearch} onChange={(e) => setSerialQuickSearch(e.target.value)} />
                             <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bộ lọc" activeCount={activeFilterCount}>
                                 <form onSubmit={(e) => { e.preventDefault(); setIsFilterMenuOpen(false); }}>
-                                    <div className="form-group">
+                                    <div className="mb-3">
                                         <label>Serial/IMEI</label>
-                                        <input className="form-control" value={filters.keyword} onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))} />
+                                        <input className="ts-input" value={filters.keyword} onChange={(e) => setFilters((p) => ({ ...p, keyword: e.target.value }))} />
                                     </div>
-                                    <div className="form-group">
+                                    <div className="mb-3">
                                         <label>Trạng thái</label>
-                                        <select className="form-control" value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
+                                        <select className="ts-input" value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
                                             <option value="">Tất cả</option>
                                             {Object.entries(STOCK_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                         </select>
                                     </div>
-                                    <div className="form-group">
+                                    <div className="mb-3">
                                         <label>Số ngày tồn tối thiểu</label>
-                                        <input className="form-control" type="number" min="0" value={filters.minDaysInStock} onChange={(e) => setFilters((p) => ({ ...p, minDaysInStock: e.target.value }))} placeholder="Ví dụ: 90" />
-                                        <button type="button" className="btn btn-sm btn-outline-secondary mt-2" onClick={() => setFilters((p) => ({ ...p, minDaysInStock: '90', status: p.status || 'InStock' }))}>
+                                        <input className="ts-input" type="number" min="0" value={filters.minDaysInStock} onChange={(e) => setFilters((p) => ({ ...p, minDaysInStock: e.target.value }))} placeholder="Ví dụ: 90" />
+                                        <button type="button" className="ts-btn ts-btn-ghost mt-2 px-3 py-1.5 text-xs" onClick={() => setFilters((p) => ({ ...p, minDaysInStock: '90', status: p.status || 'InStock' }))}>
                                             {'>= 90 ngày'}
                                         </button>
                                     </div>
-                                    <div className="form-group">
+                                    <div className="mb-3">
                                         <label>Sản phẩm</label>
-                                        <select className="form-control" value={filters.productId} onChange={(e) => setFilters((p) => ({ ...p, productId: e.target.value }))}>
+                                        <select className="ts-input" value={filters.productId} onChange={(e) => setFilters((p) => ({ ...p, productId: e.target.value }))}>
                                             <option value="">Tất cả</option>
                                             {products.map((p) => <option key={p.id ?? p.Id} value={p.id ?? p.Id}>{(p.name ?? p.Name) || `#${p.id ?? p.Id}`}</option>)}
                                         </select>
                                     </div>
-                                    <div className="d-flex justify-content-end" style={{ gap: 8 }}>
-                                        <button type="button" className="btn btn-outline-secondary" onClick={() => setFilters({ keyword: '', status: '', productId: '', minDaysInStock: '' })}>Xóa lọc</button>
-                                        <button type="submit" className="btn btn-primary">Đóng</button>
+                                    <div className="flex justify-end gap-2">
+                                        <button type="button" className="ts-btn ts-btn-ghost text-xs" onClick={() => setFilters({ keyword: '', status: '', productId: '', minDaysInStock: '' })}>Xóa lọc</button>
+                                        <button type="submit" className="ts-btn ts-btn-primary text-xs">Đóng</button>
                                     </div>
                                 </form>
                             </AdminFilterDropdown>
@@ -1058,12 +1058,12 @@ const AdminInventory = () => {
                     </div>
                     <div className="p-4">
                         {loading ? (
-                            <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải tồn kho...</div>
+                            <div className="py-12 text-center text-sm font-semibold text-[var(--color-fg-muted)]">Đang tải tồn kho...</div>
                         ) : (
                             <>
-                            <div className="overflow-x-auto rounded-md border border-slate-200">
-                                <table className="min-w-[920px] divide-y divide-slate-200 text-sm">
-                                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                            <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
+                                <table className="min-w-[920px] divide-y divide-[var(--color-border)] text-sm">
+                                    <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                         <tr>
                                             <th className="px-4 py-3">ID</th>
                                             <th className="px-4 py-3">Sản phẩm</th>
@@ -1073,15 +1073,15 @@ const AdminInventory = () => {
                                             <th className="px-4 py-3">Ngày bán</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-[var(--color-border)]">
                                         {pagedStockItems.map((raw) => {
                                             const s = normalizeStockItem(raw);
                                             const productName = s.productName || productNameById.get(Number(s.productId)) || `#${s.productId}`;
                                             return (
-                                                <tr key={s.id} className="hover:bg-slate-50">
-                                                    <td className="px-4 py-3 font-semibold text-admin-ink">{s.id}</td>
+                                                <tr key={s.id} className="hover:bg-[var(--color-surface-2)]">
+                                                    <td className="px-4 py-3 font-semibold text-[var(--color-fg)]">{s.id}</td>
                                                     <td className="px-4 py-3">
-                                                        <span className="block max-w-[240px] truncate font-semibold text-admin-ink">{productName}</span>
+                                                        <span className="block max-w-[240px] truncate font-semibold text-[var(--color-fg)]">{productName}</span>
                                                     </td>
                                                     <td className="px-4 py-3 font-mono">
                                                         <span className="block max-w-[260px] truncate">{s.serialOrImei}</span>
@@ -1096,7 +1096,7 @@ const AdminInventory = () => {
                                         })}
                                         {!pagedStockItems.length && (
                                             <tr>
-                                                <td colSpan="6" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">
+                                                <td colSpan="6" className="px-4 py-8 text-center text-sm font-semibold text-[var(--color-fg-muted)]">
                                                     Không có dữ liệu phù hợp.
                                                 </td>
                                             </tr>
@@ -1104,14 +1104,14 @@ const AdminInventory = () => {
                                     </tbody>
                                 </table>
                             </div>
-                                <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                                <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         Hiển thị {stockFrom}-{stockTo} trong {stockTotalCount} serial
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setStockPage((p) => Math.max(1, p - 1))} disabled={stockPage <= 1}>Trước</button>
-                                        <span className="rounded-md bg-slate-100 px-3 py-2 font-semibold text-admin-ink">Trang {stockPage} / {totalStockPages}</span>
-                                        <button type="button" className="rounded-md border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setStockPage((p) => Math.min(totalStockPages, p + 1))} disabled={stockPage >= totalStockPages}>Sau</button>
+                                        <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-2 font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setStockPage((p) => Math.max(1, p - 1))} disabled={stockPage <= 1}>Trước</button>
+                                        <span className="rounded-md bg-[var(--color-surface-3)] px-3 py-2 font-semibold text-[var(--color-fg)]">Trang {stockPage} / {totalStockPages}</span>
+                                        <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-2 font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50" onClick={() => setStockPage((p) => Math.min(totalStockPages, p + 1))} disabled={stockPage >= totalStockPages}>Sau</button>
                                     </div>
                                 </div>
                             </>

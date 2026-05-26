@@ -3,7 +3,7 @@ import { productApi, categoryApi, supplierApi, specApi, uploadApi } from '../ser
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, resolveProductImage } from '../utils/store';
 
-const inputClass = 'rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
+const inputClass = 'rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -336,20 +336,20 @@ const Products = () => {
 
     const stockBadge = (stock) => {
         const value = Number(stock || 0);
-        if (value <= 0) return 'bg-rose-50 text-rose-700 ring-rose-100';
-        if (value <= 10) return 'bg-amber-50 text-amber-700 ring-amber-100';
-        return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
+        if (value <= 0) return 'bg-red-500/10 text-red-300 ring-red-500/30';
+        if (value <= 10) return 'bg-[var(--color-surface-2)] text-amber-300 ring-[var(--color-border)]';
+        return 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30';
     };
 
     return (
         <div className="px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Danh mục bán hàng</p>
-                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Quản lý sản phẩm</h2>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Danh mục bán hàng</p>
+                    <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Quản lý sản phẩm</h2>
                 </div>
                 {isAdmin() && (
-                    <button className="inline-flex items-center justify-center gap-2 rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600" onClick={() => openModal()}>
+                    <button className="inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white  transition hover:bg-[var(--color-primary)]" onClick={() => openModal()}>
                         <i className="fas fa-plus"></i>
                         Thêm sản phẩm
                     </button>
@@ -357,26 +357,26 @@ const Products = () => {
             </div>
 
             <div className="mb-5 grid gap-3 md:grid-cols-4">
-                <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="mb-1 text-sm font-semibold text-admin-muted">Tổng sản phẩm</p>
-                    <div className="text-2xl font-bold text-admin-ink">{totalCount}</div>
+                <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-4 ">
+                    <p className="mb-1 text-sm font-semibold text-[var(--color-fg-muted)]">Tổng sản phẩm</p>
+                    <div className="text-2xl font-bold text-[var(--color-fg)]">{totalCount}</div>
                 </div>
-                <button type="button" className={`rounded-md border p-4 text-left shadow-sm ${stockFilter === 'available' ? 'border-admin-brand bg-orange-50' : 'border-slate-200 bg-white'}`} onClick={() => setStockFilter(stockFilter === 'available' ? '' : 'available')}>
-                    <p className="mb-1 text-sm font-semibold text-admin-muted">Còn hàng</p>
-                    <div className="text-2xl font-bold text-emerald-700">{inventoryStats.available}</div>
+                <button type="button" className={`rounded-md border p-4 text-left  ${stockFilter === 'available' ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10' : 'border-[var(--color-border)] bg-[var(--color-surface)]'}`} onClick={() => setStockFilter(stockFilter === 'available' ? '' : 'available')}>
+                    <p className="mb-1 text-sm font-semibold text-[var(--color-fg-muted)]">Còn hàng</p>
+                    <div className="text-2xl font-bold text-emerald-300">{inventoryStats.available}</div>
                 </button>
-                <button type="button" className={`rounded-md border p-4 text-left shadow-sm ${stockFilter === 'low' ? 'border-admin-brand bg-orange-50' : 'border-slate-200 bg-white'}`} onClick={() => setStockFilter(stockFilter === 'low' ? '' : 'low')}>
-                    <p className="mb-1 text-sm font-semibold text-admin-muted">Sắp hết hàng</p>
-                    <div className="text-2xl font-bold text-amber-700">{inventoryStats.low}</div>
+                <button type="button" className={`rounded-md border p-4 text-left  ${stockFilter === 'low' ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10' : 'border-[var(--color-border)] bg-[var(--color-surface)]'}`} onClick={() => setStockFilter(stockFilter === 'low' ? '' : 'low')}>
+                    <p className="mb-1 text-sm font-semibold text-[var(--color-fg-muted)]">Sắp hết hàng</p>
+                    <div className="text-2xl font-bold text-amber-300">{inventoryStats.low}</div>
                 </button>
-                <button type="button" className={`rounded-md border p-4 text-left shadow-sm ${stockFilter === 'out' ? 'border-admin-brand bg-orange-50' : 'border-slate-200 bg-white'}`} onClick={() => setStockFilter(stockFilter === 'out' ? '' : 'out')}>
-                    <p className="mb-1 text-sm font-semibold text-admin-muted">Hết hàng</p>
-                    <div className="text-2xl font-bold text-rose-700">{inventoryStats.out}</div>
+                <button type="button" className={`rounded-md border p-4 text-left  ${stockFilter === 'out' ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10' : 'border-[var(--color-border)] bg-[var(--color-surface)]'}`} onClick={() => setStockFilter(stockFilter === 'out' ? '' : 'out')}>
+                    <p className="mb-1 text-sm font-semibold text-[var(--color-fg-muted)]">Hết hàng</p>
+                    <div className="text-2xl font-bold text-red-300">{inventoryStats.out}</div>
                 </button>
             </div>
 
-            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-200 p-4">
+            <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                <div className="border-b border-[var(--color-border)] p-4">
                     <form onSubmit={handleSearch} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_240px_auto]">
                         <input
                             type="text"
@@ -396,7 +396,7 @@ const Products = () => {
                             <option value="">Tất cả danh mục</option>
                             {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
-                        <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]">
                             <i className="fas fa-search"></i>
                             Tìm kiếm
                         </button>
@@ -405,11 +405,11 @@ const Products = () => {
 
                 <div className="p-4">
                     {loading ? (
-                        <div className="py-12 text-center text-sm font-medium text-admin-muted">Đang tải sản phẩm...</div>
+                        <div className="py-12 text-center text-sm font-medium text-[var(--color-fg-muted)]">Đang tải sản phẩm...</div>
                     ) : (
-                        <div className="overflow-x-auto rounded-md border border-slate-200">
-                            <table className="min-w-[900px] table-fixed divide-y divide-slate-200 text-sm">
-                                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                        <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
+                            <table className="min-w-[900px] table-fixed divide-y divide-[var(--color-border)] text-sm">
+                                <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                     <tr>
                                         <th className="w-[380px] px-4 py-3">Sản phẩm</th>
                                         <th className="w-[180px] px-4 py-3">Danh mục</th>
@@ -418,31 +418,31 @@ const Products = () => {
                                         {isAdmin() && <th className="w-[130px] px-4 py-3 text-right">Thao tác</th>}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-[var(--color-border)]">
                                     {visibleProducts.length === 0 ? (
                                         <tr>
-                                            <td colSpan={isAdmin() ? 5 : 4} className="px-4 py-10 text-center text-admin-muted">Không tìm thấy sản phẩm</td>
+                                            <td colSpan={isAdmin() ? 5 : 4} className="px-4 py-10 text-center text-[var(--color-fg-muted)]">Không tìm thấy sản phẩm</td>
                                         </tr>
                                     ) : visibleProducts.map((product) => (
-                                        <tr key={product.id} className="hover:bg-slate-50">
+                                        <tr key={product.id} className="hover:bg-[var(--color-surface-2)]">
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <img src={resolveProductImage(product)} className="h-12 w-12 rounded-md border border-slate-200 object-contain bg-white" alt={product.name} />
+                                                    <img src={resolveProductImage(product)} className="h-12 w-12 rounded-md border border-[var(--color-border)] object-contain bg-[var(--color-surface)]" alt={product.name} />
                                                     <div className="min-w-0">
-                                                        <p className="mb-0 truncate font-semibold text-admin-ink">{product.name}</p>
-                                                        <p className="mb-0 text-xs text-admin-muted">ID #{product.id}</p>
+                                                        <p className="mb-0 truncate font-semibold text-[var(--color-fg)]">{product.name}</p>
+                                                        <p className="mb-0 text-xs text-[var(--color-fg-muted)]">ID #{product.id}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="truncate px-4 py-3 text-admin-muted">{product.category?.name || categories.find((cat) => cat.id === product.categoryId)?.name || 'Chưa phân loại'}</td>
-                                            <td className="whitespace-nowrap px-4 py-3 font-semibold text-admin-ink">{formatCurrency(product.price)}</td>
+                                            <td className="truncate px-4 py-3 text-[var(--color-fg-muted)]">{product.category?.name || categories.find((cat) => cat.id === product.categoryId)?.name || 'Chưa phân loại'}</td>
+                                            <td className="whitespace-nowrap px-4 py-3 font-semibold text-[var(--color-fg)]">{formatCurrency(product.price)}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${stockBadge(product.stock)}`}>{product.stock}</span>
                                             </td>
                                             {isAdmin() && (
                                                 <td className="px-4 py-3">
                                                     <div className="flex justify-end gap-2">
-                                                        <button className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-admin-brand text-white hover:bg-orange-600" onClick={() => openModal(product)}>
+                                                        <button className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]" onClick={() => openModal(product)}>
                                                             <i className="fas fa-edit"></i>
                                                         </button>
                                                         <button className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-rose-600 text-white hover:bg-rose-700" onClick={() => handleDelete(product.id)}>
@@ -459,36 +459,36 @@ const Products = () => {
                     )}
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 border-t border-[var(--color-border)] px-4 py-3 text-sm text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between">
                     <span>Tổng: {totalCount} sản phẩm</span>
                     <div className="flex items-center gap-2">
-                        <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</button>
+                        <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</button>
                         <span>Trang {page}/{totalPages || 1}</span>
-                        <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Sau</button>
+                        <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Sau</button>
                     </div>
                 </div>
             </section>
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-                    <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-md bg-white shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                            <h3 className="mb-0 text-lg font-bold text-admin-ink">{editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}</h3>
-                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" onClick={closeModal}>
+                    <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-md bg-[var(--color-surface)] shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+                            <h3 className="mb-0 text-lg font-bold text-[var(--color-fg)]">{editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}</h3>
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-fg-dim)] hover:bg-[var(--color-surface-3)]" onClick={closeModal}>
                                 <i className="fas fa-times"></i>
                             </button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="max-h-[calc(90vh-140px)] overflow-y-auto p-5">
-                                {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+                                {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>}
                                 <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="md:col-span-2 rounded-md border border-slate-200 p-3">
+                                    <div className="md:col-span-2 rounded-md border border-[var(--color-border)] p-3">
                                         <div className="mb-3 flex items-center justify-between gap-2">
                                             <div>
-                                                <span className="block text-sm font-semibold text-admin-ink">Anh san pham</span>
-                                                <span className="text-xs text-admin-muted">Upload file anh vao thu muc uploads/products. Anh chinh se dung lam banner.</span>
+                                                <span className="block text-sm font-semibold text-[var(--color-fg)]">Anh san pham</span>
+                                                <span className="text-xs text-[var(--color-fg-muted)]">Upload file anh vao thu muc uploads/products. Anh chinh se dung lam banner.</span>
                                             </div>
-                                            <label className="cursor-pointer rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold hover:bg-slate-50">
+                                            <label className="cursor-pointer rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold hover:bg-[var(--color-surface-2)]">
                                                 {uploadingImages ? 'Dang upload...' : 'Upload anh'}
                                                 <input
                                                     type="file"
@@ -504,26 +504,26 @@ const Products = () => {
                                             </label>
                                         </div>
                                         {formData.imageUrl && (
-                                            <div className="mb-4 rounded-md border border-orange-200 bg-orange-50 p-3">
-                                                <div className="mb-2 text-xs font-semibold uppercase text-orange-700">Anh chinh / banner</div>
+                                            <div className="mb-4 rounded-md border border-orange-200 bg-[var(--color-accent)]/10 p-3">
+                                                <div className="mb-2 text-xs font-semibold uppercase text-[var(--color-accent)]">Anh chinh / banner</div>
                                                 <div className="flex items-center gap-3">
-                                                    <img src={resolveProductImage({ imageUrl: formData.imageUrl })} className="h-20 w-20 rounded-md border border-orange-200 bg-white object-contain" alt="Anh chinh" />
+                                                    <img src={resolveProductImage({ imageUrl: formData.imageUrl })} className="h-20 w-20 rounded-md border border-orange-200 bg-[var(--color-surface)] object-contain" alt="Anh chinh" />
                                                     <div className="min-w-0 flex-1">
-                                                        <div className="truncate text-sm font-semibold text-admin-ink">{formData.imageUrl}</div>
+                                                        <div className="truncate text-sm font-semibold text-[var(--color-fg)]">{formData.imageUrl}</div>
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
                                         {(formData.images || []).length === 0 ? (
-                                            <p className="mb-0 text-sm text-admin-muted">Chua co anh. Hay bam "Upload anh".</p>
+                                            <p className="mb-0 text-sm text-[var(--color-fg-muted)]">Chua co anh. Hay bam "Upload anh".</p>
                                         ) : (formData.images || []).map((image, index) => (
-                                            <div key={`image-${index}`} className="mb-3 grid gap-3 rounded-md border border-slate-200 p-3 md:grid-cols-[80px_minmax(0,1fr)_auto_auto] md:items-center">
-                                                <img src={resolveProductImage({ imageUrl: image.imageUrl })} className="h-20 w-20 rounded-md border border-slate-200 bg-white object-contain" alt={image.altText || formData.name || 'Anh san pham'} />
+                                            <div key={`image-${index}`} className="mb-3 grid gap-3 rounded-md border border-[var(--color-border)] p-3 md:grid-cols-[80px_minmax(0,1fr)_auto_auto] md:items-center">
+                                                <img src={resolveProductImage({ imageUrl: image.imageUrl })} className="h-20 w-20 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] object-contain" alt={image.altText || formData.name || 'Anh san pham'} />
                                                 <div className="min-w-0">
-                                                    <div className="truncate text-sm font-semibold text-admin-ink">{image.imageUrl}</div>
+                                                    <div className="truncate text-sm font-semibold text-[var(--color-fg)]">{image.imageUrl}</div>
                                                     <input type="text" className={`${inputClass} mt-2 w-full`} placeholder="Alt text" value={image.altText || ''} onChange={(e) => updateImage(index, { altText: e.target.value })} />
                                                 </div>
-                                                <button type="button" className={`rounded-md px-3 py-2 text-xs font-semibold ${formData.imageUrl === image.imageUrl ? 'bg-admin-brand text-white' : 'border border-slate-200 text-slate-700 hover:bg-slate-50'}`} onClick={() => setPrimaryImage(image.imageUrl)}>
+                                                <button type="button" className={`rounded-md px-3 py-2 text-xs font-semibold ${formData.imageUrl === image.imageUrl ? 'bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] text-white' : 'border border-[var(--color-border)] text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]'}`} onClick={() => setPrimaryImage(image.imageUrl)}>
                                                     {formData.imageUrl === image.imageUrl ? 'Anh chinh' : 'Lam anh chinh'}
                                                 </button>
                                                 <button type="button" className="rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700" onClick={() => removeImage(index)}>
@@ -532,16 +532,16 @@ const Products = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="md:col-span-2 rounded-md border border-slate-200 p-3">
+                                    <div className="md:col-span-2 rounded-md border border-[var(--color-border)] p-3">
                                         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
-                                                <span className="block text-sm font-semibold text-admin-ink">Thong so ky thuat theo danh muc</span>
-                                                <span className="text-xs text-admin-muted">Lay tu bo thong so cua danh muc dang chon, chi luu dong co gia tri.</span>
+                                                <span className="block text-sm font-semibold text-[var(--color-fg)]">Thong so ky thuat theo danh muc</span>
+                                                <span className="text-xs text-[var(--color-fg-muted)]">Lay tu bo thong so cua danh muc dang chon, chi luu dong co gia tri.</span>
                                             </div>
-                                            <span className="text-xs font-semibold text-admin-muted">{specDefinitions.length} thong so</span>
+                                            <span className="text-xs font-semibold text-[var(--color-fg-muted)]">{specDefinitions.length} thong so</span>
                                         </div>
                                         {specDefinitions.length === 0 ? (
-                                            <p className="mb-0 text-sm text-admin-muted">Danh muc nay chua co bo thong so. Hay cau hinh trong trang Danh muc truoc.</p>
+                                            <p className="mb-0 text-sm text-[var(--color-fg-muted)]">Danh muc nay chua co bo thong so. Hay cau hinh trong trang Danh muc truoc.</p>
                                         ) : (
                                             <div className="grid gap-3 md:grid-cols-2">
                                                 {specDefinitions.map((definition) => {
@@ -559,7 +559,7 @@ const Products = () => {
                                                     });
                                                     return (
                                                         <label key={definition.id}>
-                                                            <span className="mb-1 block text-sm font-semibold text-admin-ink">{definition.name}{definition.unit ? ` (${definition.unit})` : ''}</span>
+                                                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">{definition.name}{definition.unit ? ` (${definition.unit})` : ''}</span>
                                                             {dataType === 'boolean' || dataType === 'bool' ? (
                                                                 <select className={`${inputClass} w-full`} value={rawValue ?? ''} onChange={(e) => setSpecValue({ value: e.target.value, specOptionId: '' })}>
                                                                     <option value="">Chua co du lieu</option>
@@ -605,31 +605,31 @@ const Products = () => {
                                         )}
                                     </div>
                                     <label className="md:col-span-2">
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Tên sản phẩm</span>
+                                        <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Tên sản phẩm</span>
                                         <input type="text" className={`${inputClass} w-full`} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                                     </label>
                                     <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Danh mục</span>
+                                        <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Danh mục</span>
                                         <select className={`${inputClass} w-full`} value={formData.categoryId} onChange={(e) => handleCategoryChange(e.target.value)} required>
                                             <option value="">Chọn danh mục</option>
                                             {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                                         </select>
                                     </label>
                                     <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Giá</span>
+                                        <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Giá</span>
                                         <input type="number" className={`${inputClass} w-full`} value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} required min="0" />
                                     </label>
                                     <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Tồn kho</span>
-                                        <input type="number" className={`${inputClass} w-full bg-slate-100 text-slate-600`} value={formData.stock} readOnly />
-                                        <span className="mt-1 block text-xs font-semibold text-admin-muted">Tồn kho được cập nhật qua phiếu nhập kho, không chỉnh trực tiếp tại đây.</span>
+                                        <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Tồn kho</span>
+                                        <input type="number" className={`${inputClass} w-full bg-[var(--color-surface-3)] text-[var(--color-fg-muted)]`} value={formData.stock} readOnly />
+                                        <span className="mt-1 block text-xs font-semibold text-[var(--color-fg-muted)]">Tồn kho được cập nhật qua phiếu nhập kho, không chỉnh trực tiếp tại đây.</span>
                                     </label>
                                     <label className="md:col-span-2">
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Mô tả</span>
+                                        <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Mô tả</span>
                                         <textarea className={`${inputClass} w-full`} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows="4" />
                                     </label>
                                     <label>
-                                        <span className="mb-1 block text-sm font-semibold text-admin-ink">Nha cung cap</span>
+                                        <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Nha cung cap</span>
                                         <select className={`${inputClass} w-full`} value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}>
                                             <option value="">Chua chon</option>
                                             {suppliers.map((supplier) => <option key={supplier.id ?? supplier.Id} value={supplier.id ?? supplier.Id}>{supplier.name ?? supplier.Name}</option>)}
@@ -637,9 +637,9 @@ const Products = () => {
                                     </label>
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
-                                <button type="button" className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={closeModal}>Hủy</button>
-                                <button type="submit" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">{editingProduct ? 'Cập nhật' : 'Tạo mới'}</button>
+                            <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-4">
+                                <button type="button" className="rounded-md border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={closeModal}>Hủy</button>
+                                <button type="submit" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)]">{editingProduct ? 'Cập nhật' : 'Tạo mới'}</button>
                             </div>
                         </form>
                     </div>

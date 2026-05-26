@@ -14,8 +14,8 @@ const Bestseller = () => {
 
     useEffect(() => {
         setPageMeta({
-            title: 'San pham ban chay | Electro',
-            description: 'San pham ban chay cua Electro.',
+            title: 'Sản phẩm bán chạy | TechStore',
+            description: 'Sản phẩm bán chạy của TechStore.',
         });
 
         const loadProducts = async () => {
@@ -33,7 +33,7 @@ const Bestseller = () => {
 
     return (
         <>
-            <PageHero title="San pham ban chay" current="Ban chay" />
+            <PageHero title="Sản phẩm bán chạy" current="Bán chạy" kicker="Top picks" />
             <BestsellerSection products={products} />
         </>
     );

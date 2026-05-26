@@ -148,39 +148,39 @@ const AdminSuppliers = () => {
         <div className="px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Kho hàng</p>
-                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Nhà cung cấp</h2>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Kho hàng</p>
+                    <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Nhà cung cấp</h2>
                 </div>
-                <button type="button" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600" onClick={openCreateForm}>
+                <button type="button" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)]" onClick={openCreateForm}>
                     <i className="fas fa-plus mr-2"></i>
                     Thêm nhà cung cấp
                 </button>
             </div>
 
-            {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div>}
+            {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">{error}</div>}
 
-            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-                    <h3 className="mb-0 text-base font-bold text-admin-ink">Danh sách nhà cung cấp</h3>
+            <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                    <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Danh sách nhà cung cấp</h3>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input
-                            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100 sm:min-w-[320px]"
+                            className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100 sm:min-w-[320px]"
                             placeholder="Tìm nhà cung cấp..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
-                        <button type="button" className="rounded-md border border-admin-brand px-4 py-2 text-sm font-semibold text-admin-brand hover:bg-orange-50 disabled:opacity-60" onClick={loadItems} disabled={loading}>
+                        <button type="button" className="rounded-md border border-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60" onClick={loadItems} disabled={loading}>
                             Lam moi
                         </button>
                     </div>
                 </div>
                 <div className="p-4">
                     {loading ? (
-                        <div className="py-12 text-center text-sm font-semibold text-admin-muted">Đang tải nhà cung cấp...</div>
+                        <div className="py-12 text-center text-sm font-semibold text-[var(--color-fg-muted)]">Đang tải nhà cung cấp...</div>
                     ) : (
-                        <div className="overflow-x-auto rounded-md border border-slate-200">
-                            <table className="w-full table-fixed divide-y divide-slate-200 text-sm">
-                                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                        <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
+                            <table className="w-full table-fixed divide-y divide-[var(--color-border)] text-sm">
+                                <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                     <tr>
                                         <th className="w-[16%] px-4 py-3">Mã</th>
                                         <th className="w-[22%] px-4 py-3">Tên nhà cung cấp</th>
@@ -191,11 +191,11 @@ const AdminSuppliers = () => {
                                         <th className="w-[132px] px-3 py-3 text-right">Thao tác</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-[var(--color-border)]">
                                     {filteredItems.map((item) => (
-                                        <tr key={item.id} className="hover:bg-slate-50">
-                                            <td className="truncate px-4 py-3 font-mono font-bold text-admin-ink">{item.code || '-'}</td>
-                                            <td className="truncate px-4 py-3 font-bold text-admin-ink">{item.name}</td>
+                                        <tr key={item.id} className="hover:bg-[var(--color-surface-2)]">
+                                            <td className="truncate px-4 py-3 font-mono font-bold text-[var(--color-fg)]">{item.code || '-'}</td>
+                                            <td className="truncate px-4 py-3 font-bold text-[var(--color-fg)]">{item.name}</td>
                                             <td className="truncate px-4 py-3">{item.phone || '-'}</td>
                                             <td className="px-4 py-3">
                                                 <span className="block truncate">{item.email || '-'}</span>
@@ -204,13 +204,13 @@ const AdminSuppliers = () => {
                                                 <span className="block truncate">{item.address || '-'}</span>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${item.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                                                <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${item.isActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
                                                     {item.isActive ? ' Hoạt động' : 'Tạm dừng'}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div className="flex justify-end gap-1.5">
-                                                    <button type="button" className="h-8 rounded-md bg-admin-brand px-2.5 text-xs font-semibold text-white hover:bg-orange-600" onClick={() => handleEdit(item)}>
+                                                    <button type="button" className="h-8 rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-2.5 text-xs font-semibold text-white hover:bg-[var(--color-primary)]" onClick={() => handleEdit(item)}>
                                                         Sửa
                                                     </button>
                                                     <button type="button" className={`h-8 rounded-md px-2.5 text-xs font-semibold ${item.isActive ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`} onClick={() => handleToggleActive(item)} disabled={saving}>
@@ -222,7 +222,7 @@ const AdminSuppliers = () => {
                                     ))}
                                     {!filteredItems.length && (
                                         <tr>
-                                            <td colSpan="7" className="px-4 py-8 text-center text-sm font-semibold text-admin-muted">
+                                            <td colSpan="7" className="px-4 py-8 text-center text-sm font-semibold text-[var(--color-fg-muted)]">
                                                 Không có dữ liệu phù hợp.
                                             </td>
                                         </tr>
@@ -235,62 +235,54 @@ const AdminSuppliers = () => {
             </section>
 
             {showForm && (
-                <div className="modal d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(15, 23, 42, 0.55)' }}>
-                    <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
-                        <div className="modal-content">
-                            <form onSubmit={handleSubmit}>
-                                <div className="modal-header">
-                                    <h5 className="modal-title">{form.id ? 'Cập nhật nhà cung cấp' : 'Thêm nhà cung cấp'}</h5>
-                                    <button type="button" className="close" aria-label="Close" onClick={resetForm}>
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                                <div className="modal-body">
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                    <label>Mã nhà cung cấp</label>
-                                    <input className="form-control" value={form.code} onChange={handleChange('code')} placeholder="Bỏ trống để tự tạo" />
-                                </div>
-                                        <div className="form-group col-md-6">
-                                    <label>Tên nhà cung cấp</label>
-                                    <input className="form-control" value={form.name} onChange={handleChange('name')} required />
-                                </div>
-                                    </div>
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                    <label>Điện thoại</label>
-                                    <input className="form-control" value={form.phone} onChange={handleChange('phone')} />
-                                </div>
-                                        <div className="form-group col-md-6">
-                                    <label>Email</label>
-                                    <input className="form-control" value={form.email} onChange={handleChange('email')} />
-                                </div>
-                                    </div>
-                                <div className="form-group">
-                                    <label>Địa chỉ</label>
-                                    <input className="form-control" value={form.address} onChange={handleChange('address')} />
-                                </div>
-                                <div className="form-group">
-                                    <div className="custom-control custom-switch">
-                                        <input
-                                            type="checkbox"
-                                            className="custom-control-input"
-                                            id="supplierIsActive"
-                                            checked={Boolean(form.isActive)}
-                                            onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
-                                        />
-                                        <label className="custom-control-label" htmlFor="supplierIsActive">Kích hoạt</label>
-                                    </div>
-                                </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>Đóng</button>
-                                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                                        {saving ? 'Đang lưu...' : form.id ? 'Cập nhật' : 'Thêm mới'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={resetForm}>
+                    <div className="w-full max-w-2xl overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <form onSubmit={handleSubmit}>
+                            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+                                <h5 className="ts-display text-lg">{form.id ? 'Cập nhật nhà cung cấp' : 'Thêm nhà cung cấp'}</h5>
+                                <button type="button" aria-label="Close" onClick={resetForm} className="text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]">
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
+                                <label className="block">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">Mã nhà cung cấp</span>
+                                    <input className="ts-input" value={form.code} onChange={handleChange('code')} placeholder="Bỏ trống để tự tạo" />
+                                </label>
+                                <label className="block">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">Tên nhà cung cấp *</span>
+                                    <input className="ts-input" value={form.name} onChange={handleChange('name')} required />
+                                </label>
+                                <label className="block">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">Điện thoại</span>
+                                    <input className="ts-input" value={form.phone} onChange={handleChange('phone')} />
+                                </label>
+                                <label className="block">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">Email</span>
+                                    <input className="ts-input" value={form.email} onChange={handleChange('email')} />
+                                </label>
+                                <label className="block md:col-span-2">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">Địa chỉ</span>
+                                    <input className="ts-input" value={form.address} onChange={handleChange('address')} />
+                                </label>
+                                <label className="inline-flex items-center gap-2 md:col-span-2">
+                                    <input
+                                        type="checkbox"
+                                        id="supplierIsActive"
+                                        checked={Boolean(form.isActive)}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+                                        className="h-4 w-4 accent-[var(--color-primary)]"
+                                    />
+                                    <span className="text-sm text-[var(--color-fg)]">Kích hoạt</span>
+                                </label>
+                            </div>
+                            <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-4">
+                                <button type="button" className="ts-btn ts-btn-ghost text-xs" onClick={resetForm}>Đóng</button>
+                                <button type="submit" className="ts-btn ts-btn-primary text-xs" disabled={saving}>
+                                    {saving ? <><i className="fas fa-spinner fa-spin"></i>Đang lưu...</> : form.id ? 'Cập nhật' : 'Thêm mới'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

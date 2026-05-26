@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatCurrency } from '../../utils/store';
 import { getCouponClaimStatus } from '../../utils/couponUtils';
+import { cn } from '../../utils/cn';
 
 const getScopeLabel = (coupon) => (coupon.couponType === 'shipping' ? 'Vận chuyển' : 'Sản phẩm');
 
@@ -28,6 +29,14 @@ const getStatusText = (status, claimStatus) => {
     return claimStatus?.message || 'Chưa đủ điều kiện';
 };
 
+const statusStyles = {
+    available: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+    claimed: 'border-[var(--color-gold)]/40 bg-[var(--color-gold)]/10 text-[var(--color-gold)]',
+    expired: 'border-red-500/40 bg-red-500/10 text-red-300',
+    out_of_stock: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+    locked: 'border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-fg-dim)]',
+};
+
 const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, compact = false, context = {} }) => {
     const claimStatus = getCouponClaimStatus(coupon, context);
     const currentStatus = claimed ? 'claimed' : (status || claimStatus.status);
@@ -37,41 +46,67 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, compact = false,
     const statusText = getStatusText(currentStatus, claimStatus);
 
     return (
-        <div className={`coupon-card coupon-card-compact-v2 ${compact ? 'is-compact' : ''} ${disabled ? 'is-disabled' : ''}`}>
-            <div className="coupon-code-box">
-                <strong>{coupon.code}</strong>
-                <span>{getScopeLabel(coupon)}</span>
+        <div
+            className={cn(
+                "relative flex overflow-hidden rounded-md border bg-[var(--color-surface)] transition-all",
+                disabled ? "border-[var(--color-border)] opacity-60" : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+            )}
+        >
+            {/* Tear-off code box */}
+            <div className="relative flex w-24 shrink-0 flex-col items-center justify-center gap-1 border-r border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-accent)]/15 to-[var(--color-primary)]/15 p-3 text-center">
+                <span aria-hidden className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--color-background)]" />
+                <span aria-hidden className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--color-background)]" />
+                <strong className="ts-mono text-[11px] font-bold uppercase tracking-wider text-[var(--color-accent)]">{coupon.code}</strong>
+                <span className="text-[10px] uppercase tracking-wider text-[var(--color-fg-dim)]">{getScopeLabel(coupon)}</span>
             </div>
 
-            <div className="coupon-content">
-                <div className="d-flex justify-content-between align-items-start gap-2">
+            <div className="flex flex-1 flex-col p-4">
+                <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <h5 className="coupon-title">{getDiscountText(coupon)}</h5>
-                        <p className="coupon-desc">{coupon.description || getShortCondition(coupon, claimStatus)}</p>
+                        <h5 className="text-sm font-semibold text-[var(--color-fg)]">{getDiscountText(coupon)}</h5>
+                        <p className={cn("mt-0.5 text-xs text-[var(--color-fg-muted)]", compact && "line-clamp-1")}>
+                            {coupon.description || getShortCondition(coupon, claimStatus)}
+                        </p>
                     </div>
-                    <span className={`coupon-status-pill status-${currentStatus}`}>{statusText}</span>
+                    <span className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                        statusStyles[currentStatus] || statusStyles.locked
+                    )}>
+                        {statusText}
+                    </span>
                 </div>
 
-                <div className="coupon-meta-row">
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[var(--color-fg-dim)]">
                     <span>{getShortCondition(coupon, claimStatus)}</span>
+                    <span className="text-[var(--color-border-strong)]">·</span>
                     <span>HSD: {coupon.expiresAt ? coupon.expiresAt.split('-').reverse().join('/') : 'Không giới hạn'}</span>
                 </div>
 
-                <div className="coupon-actions">
+                <div className="mt-3 flex items-center gap-2">
                     <button
                         type="button"
-                        className={`btn btn-sm rounded-pill ${isClaimed ? 'btn-outline-primary' : canClaim ? 'btn-primary' : 'btn-outline-secondary'}`}
                         disabled={!canClaim}
                         onClick={() => onClaim?.(coupon)}
+                        className={cn(
+                            "ts-btn px-3 py-1.5 text-[11px]",
+                            isClaimed && "ts-btn-outline",
+                            canClaim && "ts-btn-primary",
+                            !canClaim && !isClaimed && "ts-btn-outline opacity-60"
+                        )}
                     >
                         {isClaimed ? 'Đã nhận' : canClaim ? 'Nhận phiếu' : disabled ? statusText : 'Chưa đủ điều kiện'}
                     </button>
                     {isClaimed ? (
-                        <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill" onClick={() => onCopy?.(coupon)}>
+                        <button
+                            type="button"
+                            onClick={() => onCopy?.(coupon)}
+                            className="ts-btn ts-btn-ghost px-3 py-1.5 text-[11px]"
+                        >
+                            <i className="fas fa-copy text-[10px]"></i>
                             Sao chép
                         </button>
                     ) : (
-                        <span className="coupon-condition-link">Xem điều kiện</span>
+                        <span className="text-[11px] text-[var(--color-fg-dim)] underline-offset-2 hover:underline">Xem điều kiện</span>
                     )}
                 </div>
             </div>

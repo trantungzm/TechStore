@@ -8,16 +8,9 @@ import coupons from '../../data/coupons';
 import { productApi } from '../../services/api';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
 import { formatCurrency, resolveProductImage, t } from '../../utils/store';
+import { cn } from '../../utils/cn';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
-const fallbackHeaderCategories = [
-    { label: 'Điện thoại', slug: 'dien-thoai' },
-    { label: 'Laptop', slug: 'laptop' },
-    { label: 'Phụ kiện', slug: 'phu-kien' },
-    { label: 'Tai nghe', slug: 'tai-nghe' },
-    { label: 'Đồng hồ thông minh', slug: 'dong-ho-thong-minh' },
-    { label: 'Máy ảnh', slug: 'may-anh' },
-];
 
 const categoryNameMap = {
     Smartphone: 'Điện thoại',
@@ -28,27 +21,9 @@ const categoryNameMap = {
     Camera: 'Máy ảnh',
 };
 
-const categorySlugMap = {
-    Smartphone: 'dien-thoai',
-    Laptop: 'laptop',
-    Accessories: 'phu-kien',
-    Audio: 'tai-nghe',
-    Smartwatch: 'dong-ho-thong-minh',
-    Camera: 'may-anh',
-};
-
-const slugifyCategory = (value = '') => String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
 const normalizeSearchText = (value = '') => String(value)
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D')
     .toLowerCase();
@@ -105,6 +80,15 @@ const getProductTrendScore = (product, index) => {
 
 const getProductPath = (product) => `/product/${product?.id}`;
 
+const navItems = [
+    { to: '/', label: 'Trang chủ', end: true },
+    { to: '/shop', label: 'Cửa hàng' },
+    { to: '/bestseller', label: 'Bán chạy' },
+    { to: '/promotion', label: 'Khuyến mãi' },
+    { to: '/warranty', label: 'Bảo hành' },
+    { to: '/contact', label: 'Liên hệ' },
+];
+
 const ElectroHeader = () => {
     const [openDropdown, setOpenDropdown] = useState(null);
     const [keyword, setKeyword] = useState('');
@@ -118,8 +102,10 @@ const ElectroHeader = () => {
         }
     });
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const headerRef = useRef(null);
     const searchRef = useRef(null);
+    const dropdownRef = useRef(null);
     const { user, isAuthenticated, isAdmin, logout } = useAuth();
     const { itemCount } = useCart();
     const { wishlistCount } = useWishlist();
@@ -128,6 +114,7 @@ const ElectroHeader = () => {
     const location = useLocation();
     const dashboardLabel = user?.name || user?.username || t('My Dashboard');
     const trimmedKeyword = keyword.trim();
+
     const suggestedProducts = useMemo(() => {
         const normalizedKeyword = normalizeSearchText(trimmedKeyword);
         if (!normalizedKeyword) return [];
@@ -135,16 +122,18 @@ const ElectroHeader = () => {
             .filter((product) => getProductSearchText(product).includes(normalizedKeyword))
             .slice(0, 6);
     }, [searchProducts, trimmedKeyword]);
+
     const trendingProducts = useMemo(() => searchProducts
         .map((product, index) => ({ product, score: getProductTrendScore(product, index) }))
         .sort((a, b) => b.score - a.score)
         .map(({ product }) => product)
-        .slice(0, 10), [searchProducts]);
+        .slice(0, 8), [searchProducts]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         setKeyword(params.get('search') || params.get('keyword') || '');
         setSearchOpen(false);
+        setMobileNavOpen(false);
     }, [location.pathname, location.search]);
 
     useEffect(() => {
@@ -170,8 +159,15 @@ const ElectroHeader = () => {
     }, []);
 
     useEffect(() => {
+        const onScroll = () => setIsScrolled(window.scrollY > 12);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
         const handleClickOutside = (event) => {
-            if (!event.target.closest('.dropdown')) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setOpenDropdown(null);
             }
             if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -187,6 +183,8 @@ const ElectroHeader = () => {
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') {
                 setSearchOpen(false);
+                setOpenDropdown(null);
+                setMobileNavOpen(false);
             }
         };
 
@@ -219,6 +217,10 @@ const ElectroHeader = () => {
         setSearchHistory(nextHistory);
     };
 
+    const scrollToPageTop = () => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    };
+
     const goToShopSearch = (value) => {
         const nextKeyword = String(value || '').trim();
         if (!nextKeyword) return;
@@ -247,9 +249,7 @@ const ElectroHeader = () => {
         goToShopSearch(keyword);
     };
 
-    const handleSuggestionClick = (product) => {
-        goToProduct(product);
-    };
+    const handleSuggestionClick = (product) => goToProduct(product);
 
     const handleHistoryClick = (item) => {
         const exactProduct = findExactProductByName(item);
@@ -257,7 +257,6 @@ const ElectroHeader = () => {
             goToProduct(exactProduct);
             return;
         }
-
         goToShopSearch(item);
     };
 
@@ -273,10 +272,6 @@ const ElectroHeader = () => {
         scrollToPageTop();
     };
 
-    const scrollToPageTop = () => {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-    };
-
     const closeMainMenus = () => {
         setMobileNavOpen(false);
         setOpenDropdown(null);
@@ -284,202 +279,330 @@ const ElectroHeader = () => {
         scrollToPageTop();
     };
 
+    const iconButtonClass = "relative flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)]/40 text-[var(--color-fg-muted)] transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]";
+    const badgeClass = "absolute -top-1.5 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-1 text-[10px] font-semibold leading-none text-white shadow-md";
+
     return (
-        <header className="electro-sticky-header" ref={headerRef}>
-            <div className="container-fluid px-3 px-lg-5 py-2 bg-white">
-                <div className="row gx-0 align-items-center text-center">
-                    <div className="col-md-4 col-lg-3 text-center text-lg-start d-flex align-items-center justify-content-center justify-content-lg-start">
-                        <Link to="/" className="navbar-brand p-0 d-inline-flex align-items-center" onClick={closeMainMenus}>
-                            <h1 className="h2 text-primary m-0 electro-header-logo"><i className="fas fa-shopping-bag text-secondary me-2"></i>Electro</h1>
-                        </Link>
-                    </div>
-                    <div className="col-md-4 col-lg-6 text-center">
-                        <div className="electro-search-wrap" ref={searchRef}>
-                            <form onSubmit={handleSearch} className="d-flex border rounded-pill electro-search-form">
-                                <input
-                                    className="form-control border-0 rounded-pill w-100 py-2 ps-4"
-                                    type="text"
-                                    placeholder="Bạn đang tìm gì?"
-                                    value={keyword}
-                                    onFocus={() => setSearchOpen(true)}
-                                    onChange={(event) => {
-                                        setKeyword(event.target.value);
-                                        setSearchOpen(true);
-                                    }}
-                                />
-                                <button type="submit" className="btn btn-primary rounded-pill py-2 px-4" style={{ border: 0 }} aria-label="Tìm kiếm">
-                                    <i className="fas fa-search"></i>
-                                </button>
-                            </form>
+        <header
+            ref={headerRef}
+            className={cn(
+                "sticky top-0 z-50 w-full backdrop-blur-xl transition-all duration-300",
+                isScrolled
+                    ? "border-b border-[var(--color-border)] bg-white/85 shadow-[0_8px_24px_-12px_rgba(192,57,43,0.15)]"
+                    : "border-b border-transparent bg-white/60"
+            )}
+        >
+            <div className="ts-container flex h-20 items-center gap-6">
+                {/* Logo */}
+                <Link
+                    to="/"
+                    onClick={closeMainMenus}
+                    className="group flex shrink-0 items-center gap-2"
+                >
+                    <span className="ts-display text-2xl tracking-tight text-[var(--color-fg)] transition-transform duration-300 group-hover:scale-[1.03]">
+                        Tech<span className="ts-gradient-text">Store</span>
+                    </span>
+                </Link>
 
-                            {searchOpen && (
-                                <div className="electro-search-dropdown">
-                                    {trimmedKeyword ? (
-                                        <>
-                                            <div className="electro-search-section-title">Kết quả gợi ý</div>
-                                            {suggestedProducts.length > 0 ? (
-                                                <div className="electro-search-product-list">
-                                                    {suggestedProducts.map((product) => {
-                                                        const hasSale = Number(product.oldPrice || 0) > Number(product.price || 0) || product.badge === 'Sale';
-                                                        const hasCoupon = getAvailableCouponsForProduct(product, coupons).length > 0;
-                                                        const inStock = Number(product.stock || 0) > 0;
-                                                        return (
-                                                            <button
-                                                                type="button"
-                                                                className="electro-search-product"
-                                                                key={product.id}
-                                                                onClick={() => handleSuggestionClick(product)}
-                                                            >
-                                                                <img src={resolveProductImage(product)} alt={product.name || 'Sản phẩm'} />
-                                                                <span className="electro-search-product-info">
-                                                                    <strong>{product.name || product.title}</strong>
-                                                                    <small>{formatCurrency(product.price)} · {getCategoryLabel(product)}</small>
-                                                                    <span className="electro-search-badges">
-                                                                        <span className={inStock ? 'is-stock' : 'is-out'}>{inStock ? 'Còn hàng' : 'Hết hàng'}</span>
-                                                                        {hasSale && <span className="is-sale">Đang giảm giá</span>}
-                                                                        {hasCoupon && <span className="is-coupon">Có phiếu</span>}
-                                                                    </span>
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                <div className="electro-search-empty">
-                                                    <p>Không tìm thấy sản phẩm phù hợp</p>
-                                                    <button type="button" className="btn btn-sm btn-outline-primary rounded-pill" onClick={() => goToShopSearch(trimmedKeyword)}>
-                                                        Xem tất cả sản phẩm
-                                                    </button>
-                                                </div>
-                                            )}
-                                            <button type="button" className="electro-search-view-all" onClick={() => goToShopSearch(trimmedKeyword)}>
-                                                Xem tất cả kết quả cho “{trimmedKeyword}”
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="electro-search-section">
-                                                <div className="electro-search-section-title-row">
-                                                    <span className="electro-search-section-title">Lịch sử tìm kiếm</span>
-                                                    {searchHistory.length > 0 && <button type="button" onClick={clearSearchHistory}>Xóa tất cả</button>}
-                                                </div>
-                                                {searchHistory.length > 0 && (
-                                                    <div className="electro-search-history-list">
-                                                        {searchHistory.slice(0, 5).map((item) => (
-                                                            <button type="button" className="electro-search-history-item" key={item} onClick={() => handleHistoryClick(item)}>
-                                                                <i className="fas fa-history"></i>
-                                                                <span>{item}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
+                {/* Desktop nav */}
+                <nav className="ml-6 hidden items-center gap-1 lg:flex">
+                    {navItems.map((item) => (
+                        <NavLink
+                            key={item.to}
+                            to={item.to}
+                            end={item.end}
+                            onClick={closeMainMenus}
+                            className={({ isActive }) => cn(
+                                "relative px-3 py-2 text-sm font-medium tracking-wide transition-colors",
+                                isActive
+                                    ? "text-[var(--color-fg)]"
+                                    : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                            )}
+                        >
+                            {({ isActive }) => (
+                                <>
+                                    {item.label}
+                                    <span
+                                        className={cn(
+                                            "absolute inset-x-3 -bottom-px h-px transition-all",
+                                            isActive
+                                                ? "bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)] opacity-100"
+                                                : "bg-[var(--color-primary)] opacity-0"
+                                        )}
+                                    />
+                                </>
+                            )}
+                        </NavLink>
+                    ))}
+                </nav>
 
-                                            <div className="electro-search-section">
-                                                <div className="electro-search-section-title">
-                                                    <i className="fas fa-fire me-2"></i>Xu hướng tìm kiếm
-                                                </div>
-                                                <div className="electro-search-product-list is-trending-grid">
-                                                    {trendingProducts.map((product) => (
+                {/* Search */}
+                <div ref={searchRef} className="relative ml-auto hidden flex-1 max-w-md md:block">
+                    <form
+                        onSubmit={handleSearch}
+                        className={cn(
+                            "flex h-10 items-center gap-2 rounded-md border bg-[var(--color-surface)] px-3 transition-colors",
+                            searchOpen
+                                ? "border-[var(--color-primary)] shadow-[0_0_0_3px_var(--color-primary-soft)]"
+                                : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                        )}
+                    >
+                        <i className="fas fa-search text-xs text-[var(--color-fg-dim)]"></i>
+                        <input
+                            type="text"
+                            placeholder="Tìm sản phẩm, thương hiệu..."
+                            value={keyword}
+                            onFocus={() => setSearchOpen(true)}
+                            onChange={(event) => {
+                                setKeyword(event.target.value);
+                                setSearchOpen(true);
+                            }}
+                            className="flex-1 bg-transparent text-sm text-[var(--color-fg)] placeholder:text-[var(--color-fg-faint)] focus:outline-none"
+                        />
+                        {keyword && (
+                            <button
+                                type="button"
+                                onClick={() => { setKeyword(''); }}
+                                className="text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                                aria-label="Xóa"
+                            >
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
+                        )}
+                    </form>
+
+                    {searchOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-2 max-h-[78vh] overflow-y-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ts-anim-fade-up">
+                            {trimmedKeyword ? (
+                                <div className="p-4">
+                                    <p className="ts-eyebrow mb-3 text-[var(--color-accent)]">Kết quả gợi ý</p>
+                                    {suggestedProducts.length > 0 ? (
+                                        <ul className="space-y-1">
+                                            {suggestedProducts.map((product) => {
+                                                const hasSale = Number(product.oldPrice || 0) > Number(product.price || 0) || product.badge === 'Sale';
+                                                const hasCoupon = getAvailableCouponsForProduct(product, coupons).length > 0;
+                                                const inStock = Number(product.stock || 0) > 0;
+                                                return (
+                                                    <li key={product.id}>
                                                         <button
                                                             type="button"
-                                                            className="electro-search-product"
-                                                            key={product.id}
-                                                            onClick={() => goToProduct(product)}
+                                                            onClick={() => handleSuggestionClick(product)}
+                                                            className="flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-[var(--color-surface-2)]"
                                                         >
-                                                            <img src={resolveProductImage(product)} alt={product.name || 'Sản phẩm'} />
-                                                            <span className="electro-search-product-info">
-                                                                <strong>{product.name || product.title}</strong>
-                                                                {product.price != null && <small>{formatCurrency(product.price)}</small>}
-                                                            </span>
+                                                            <img
+                                                                src={resolveProductImage(product)}
+                                                                alt={product.name || 'Sản phẩm'}
+                                                                className="h-12 w-12 shrink-0 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] object-cover"
+                                                            />
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="truncate text-sm font-medium text-[var(--color-fg)]">{product.name || product.title}</p>
+                                                                <p className="ts-mono mt-0.5 text-xs text-[var(--color-accent)]">{formatCurrency(product.price)}</p>
+                                                                <div className="mt-1 flex flex-wrap gap-1">
+                                                                    <span className={cn(
+                                                                        "rounded-full px-1.5 py-0.5 text-[10px]",
+                                                                        inStock ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                                                                    )}>
+                                                                        {inStock ? 'Còn hàng' : 'Hết hàng'}
+                                                                    </span>
+                                                                    {hasSale && <span className="rounded-full bg-[var(--color-primary)]/15 px-1.5 py-0.5 text-[10px] text-[var(--color-primary)]">Sale</span>}
+                                                                    {hasCoupon && <span className="rounded-full bg-[var(--color-gold)]/15 px-1.5 py-0.5 text-[10px] text-[var(--color-gold)]">Voucher</span>}
+                                                                </div>
+                                                            </div>
                                                         </button>
-                                                    ))}
-                                                </div>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    ) : (
+                                        <div className="py-6 text-center text-sm text-[var(--color-fg-dim)]">
+                                            Không tìm thấy sản phẩm phù hợp.
+                                        </div>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => goToShopSearch(trimmedKeyword)}
+                                        className="mt-3 block w-full border-t border-[var(--color-border)] py-3 text-center text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] hover:text-[var(--color-primary)]"
+                                    >
+                                        Xem tất cả kết quả cho "{trimmedKeyword}"
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-[var(--color-border)] p-4">
+                                    {searchHistory.length > 0 && (
+                                        <div className="pb-4">
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <p className="ts-eyebrow">Lịch sử tìm kiếm</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={clearSearchHistory}
+                                                    className="text-[11px] text-[var(--color-fg-dim)] hover:text-[var(--color-primary)]"
+                                                >
+                                                    Xóa tất cả
+                                                </button>
                                             </div>
-                                        </>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {searchHistory.slice(0, 6).map((item) => (
+                                                    <button
+                                                        key={item}
+                                                        type="button"
+                                                        onClick={() => handleHistoryClick(item)}
+                                                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-xs text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]"
+                                                    >
+                                                        <i className="fas fa-history text-[10px]"></i>
+                                                        {item}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {trendingProducts.length > 0 && (
+                                        <div className={cn(searchHistory.length > 0 ? "pt-4" : "")}>
+                                            <p className="ts-eyebrow mb-3 text-[var(--color-accent)]">
+                                                <i className="fas fa-fire mr-1.5"></i>Xu hướng
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-1">
+                                                {trendingProducts.map((product) => (
+                                                    <button
+                                                        key={product.id}
+                                                        type="button"
+                                                        onClick={() => goToProduct(product)}
+                                                        className="flex items-center gap-2 rounded-md p-1.5 text-left transition-colors hover:bg-[var(--color-surface-2)]"
+                                                    >
+                                                        <img
+                                                            src={resolveProductImage(product)}
+                                                            alt={product.name}
+                                                            className="h-10 w-10 shrink-0 rounded border border-[var(--color-border)] bg-[var(--color-background)] object-cover"
+                                                        />
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-xs font-medium text-[var(--color-fg)]">{product.name || product.title}</p>
+                                                            {product.price != null && (
+                                                                <p className="ts-mono text-[11px] text-[var(--color-accent)]">{formatCurrency(product.price)}</p>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             )}
                         </div>
-                    </div>
-                    <div className="col-md-4 col-lg-3 text-center text-lg-end">
-                        <div className="d-inline-flex align-items-center">
-                            <NavLink to="/compare" className="text-muted d-flex align-items-center justify-content-center me-3 position-relative" onClick={scrollToPageTop}>
-                                <span className="rounded-circle btn-md-square border electro-header-icon"><i className="fas fa-random"></i></span>
-                                {compareCount > 0 && <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{compareCount}</span>}
-                            </NavLink>
-                            <NavLink to="/wishlist" className="text-muted d-flex align-items-center justify-content-center me-3 position-relative" onClick={scrollToPageTop}>
-                                <span className="rounded-circle btn-md-square border electro-header-icon"><i className="fas fa-heart"></i></span>
-                                {wishlistCount > 0 && <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{wishlistCount}</span>}
-                            </NavLink>
-                            <NavLink to="/cart" className="text-muted d-flex align-items-center justify-content-center position-relative" onClick={scrollToPageTop}>
-                                <span className="rounded-circle btn-md-square border electro-header-icon"><i className="fas fa-shopping-cart"></i></span>
-                                {itemCount > 0 && <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{itemCount}</span>}
-                            </NavLink>
-                            <div className="dropdown position-relative ms-3">
-                                <button
-                                    type="button"
-                                    className="text-muted d-flex align-items-center justify-content-center btn btn-link p-0 border-0"
-                                    onClick={() => setOpenDropdown(openDropdown === 'dashboard' ? null : 'dashboard')}
-                                    aria-label={dashboardLabel}
-                                >
-                                    <span className={`rounded-circle btn-md-square border electro-header-icon ${isAuthenticated ? 'text-primary' : ''}`}>
-                                        <i className="fas fa-user"></i>
-                                    </span>
-                                </button>
-                                <div className={`dropdown-menu dropdown-menu-end rounded shadow ${openDropdown === 'dashboard' ? 'show' : ''}`} style={{ position: 'absolute', right: 0, left: 'auto', marginTop: 10 }}>
-                                    <h6 className="dropdown-header">{dashboardLabel}</h6>
-                                    {isAuthenticated ? (
-                                        <>
-                                            <Link to="/orders" className="dropdown-item" onClick={closeMainMenus}>Đơn hàng của tôi</Link>
-                                            <Link to="/promotion" className="dropdown-item" onClick={closeMainMenus}>Phiếu giảm giá của tôi</Link>
-                                            <Link to="/wishlist" className="dropdown-item" onClick={closeMainMenus}>Sản phẩm yêu thích</Link>
-                                            <Link to="/compare" className="dropdown-item" onClick={closeMainMenus}>So sánh sản phẩm</Link>
-                                            {isAdmin() && <Link to="/admin" className="dropdown-item" onClick={closeMainMenus}>Trang quản trị</Link>}
-                                            <div className="dropdown-divider"></div>
-                                            <button type="button" className="dropdown-item text-danger" onClick={handleLogout}>Đăng xuất</button>
-                                        </>
-                                    ) : (
-                                        <div className="electro-account-guest is-compact">
-                                            <Link to="/login" className="electro-account-link" onClick={closeMainMenus}>
-                                                <i className="fas fa-sign-in-alt"></i>
-                                                <span>Đăng nhập</span>
-                                            </Link>
-                                        </div>
-                                    )}
+                    )}
+                </div>
+
+                {/* Icons */}
+                <div className="flex items-center gap-2 md:ml-0 ml-auto">
+                    <NavLink to="/compare" onClick={scrollToPageTop} className={iconButtonClass} aria-label="So sánh">
+                        <i className="fas fa-random text-sm"></i>
+                        {compareCount > 0 && <span className={badgeClass}>{compareCount}</span>}
+                    </NavLink>
+                    <NavLink to="/wishlist" onClick={scrollToPageTop} className={iconButtonClass} aria-label="Yêu thích">
+                        <i className="fas fa-heart text-sm"></i>
+                        {wishlistCount > 0 && <span className={badgeClass}>{wishlistCount}</span>}
+                    </NavLink>
+                    <NavLink to="/cart" onClick={scrollToPageTop} className={iconButtonClass} aria-label="Giỏ hàng">
+                        <i className="fas fa-shopping-cart text-sm"></i>
+                        {itemCount > 0 && <span className={badgeClass}>{itemCount}</span>}
+                    </NavLink>
+
+                    <div ref={dropdownRef} className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setOpenDropdown(openDropdown === 'dashboard' ? null : 'dashboard')}
+                            className={cn(iconButtonClass, isAuthenticated && "border-[var(--color-primary)]/60 text-[var(--color-fg)]")}
+                            aria-label={dashboardLabel}
+                        >
+                            <i className="fas fa-user text-sm"></i>
+                        </button>
+                        {openDropdown === 'dashboard' && (
+                            <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ts-anim-fade-up">
+                                <div className="border-b border-[var(--color-border)] px-4 py-3">
+                                    <p className="ts-eyebrow">Tài khoản</p>
+                                    <p className="mt-1 truncate text-sm font-medium text-[var(--color-fg)]">{dashboardLabel}</p>
                                 </div>
+                                {isAuthenticated ? (
+                                    <div className="p-1">
+                                        <Link to="/orders" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Đơn hàng của tôi</Link>
+                                        <Link to="/promotion" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Phiếu giảm giá</Link>
+                                        <Link to="/wishlist" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Sản phẩm yêu thích</Link>
+                                        <Link to="/compare" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">So sánh sản phẩm</Link>
+                                        {isAdmin() && <Link to="/admin" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-accent)] hover:bg-[var(--color-surface-2)]">Trang quản trị</Link>}
+                                        <div className="my-1 h-px bg-[var(--color-border)]" />
+                                        <button type="button" onClick={handleLogout} className="block w-full rounded-sm px-3 py-2 text-left text-sm text-[var(--color-danger)] hover:bg-[var(--color-surface-2)]">
+                                            Đăng xuất
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="p-3">
+                                        <Link
+                                            to="/login"
+                                            onClick={closeMainMenus}
+                                            className="ts-btn ts-btn-primary w-full"
+                                        >
+                                            <i className="fas fa-sign-in-alt"></i>
+                                            Đăng nhập
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
-                        </div>
+                        )}
                     </div>
+
+                    {/* Mobile menu toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setMobileNavOpen((v) => !v)}
+                        className={cn(iconButtonClass, "lg:hidden")}
+                        aria-label="Menu"
+                    >
+                        <i className={cn("fas", mobileNavOpen ? "fa-times" : "fa-bars", "text-sm")}></i>
+                    </button>
                 </div>
             </div>
 
-            <div className="container-fluid nav-bar p-0">
-                <div className="row gx-0 electro-main-nav px-3 px-lg-5 align-items-center">
-                    <div className="col-12">
-                        <nav className="navbar navbar-expand-lg navbar-light bg-primary">
-                            <Link to="/" className="navbar-brand d-block d-lg-none" onClick={closeMainMenus}>
-                                <h1 className="h2 text-secondary m-0 electro-header-logo"><i className="fas fa-shopping-bag text-white me-2"></i>Electro</h1>
-                            </Link>
-                            <button className="navbar-toggler ms-auto" type="button" onClick={() => setMobileNavOpen((value) => !value)}>
-                                <span className="fa fa-bars fa-1x"></span>
-                            </button>
-                            <div className={`collapse navbar-collapse justify-content-center ${mobileNavOpen ? 'show' : ''}`}>
-                                <div className="navbar-nav mx-auto py-0">
-                                    <NavLink to="/" end className="nav-item nav-link" onClick={closeMainMenus}>Trang chủ</NavLink>
-                                    <NavLink to="/shop" className="nav-item nav-link" onClick={closeMainMenus}>Cửa hàng</NavLink>
-                                    <NavLink to="/promotion" className="nav-item nav-link" onClick={closeMainMenus}>Phiếu giảm giá</NavLink>
-                                    <NavLink to="/warranty" className="nav-item nav-link" onClick={closeMainMenus}>Bảo hành</NavLink>
-                                    <NavLink to="/contact" className="nav-item nav-link me-2" onClick={closeMainMenus}>Liên hệ</NavLink>
-                                </div>
-                                <a href="tel:+01234567890" className="btn btn-secondary rounded-pill py-2 px-3 mb-3 mb-md-3 mb-lg-0 electro-header-phone">
-                                    <i className="fa fa-mobile-alt me-2"></i> +0123 456 7890
-                                </a>
-                            </div>
+            {/* Mobile drawer */}
+            {mobileNavOpen && (
+                <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)] lg:hidden">
+                    <div className="ts-container py-4">
+                        <form onSubmit={handleSearch} className="mb-4 flex h-10 items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 md:hidden">
+                            <i className="fas fa-search text-xs text-[var(--color-fg-dim)]"></i>
+                            <input
+                                type="text"
+                                placeholder="Tìm sản phẩm..."
+                                value={keyword}
+                                onChange={(e) => setKeyword(e.target.value)}
+                                className="flex-1 bg-transparent text-sm text-[var(--color-fg)] placeholder:text-[var(--color-fg-faint)] focus:outline-none"
+                            />
+                        </form>
+                        <nav className="flex flex-col">
+                            {navItems.map((item) => (
+                                <NavLink
+                                    key={item.to}
+                                    to={item.to}
+                                    end={item.end}
+                                    onClick={closeMainMenus}
+                                    className={({ isActive }) => cn(
+                                        "border-b border-[var(--color-border)] px-1 py-3 text-sm font-medium tracking-wide transition-colors",
+                                        isActive
+                                            ? "text-[var(--color-primary)]"
+                                            : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                                    )}
+                                >
+                                    {item.label}
+                                </NavLink>
+                            ))}
                         </nav>
+                        <a
+                            href="tel:+01234567890"
+                            className="ts-btn ts-btn-outline mt-4 w-full"
+                        >
+                            <i className="fas fa-mobile-alt"></i>
+                            +0123 456 7890
+                        </a>
                     </div>
                 </div>
-            </div>
+            )}
         </header>
     );
 };

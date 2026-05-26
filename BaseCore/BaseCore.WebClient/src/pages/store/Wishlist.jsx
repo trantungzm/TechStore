@@ -12,73 +12,61 @@ const Wishlist = () => {
 
     useEffect(() => {
         setPageMeta({
-            title: `${t('Wishlist')} | Electro`,
+            title: `${t('Wishlist')} | TechStore`,
             description: t('Wishlist meta description'),
         });
     }, []);
 
     const handleAddAll = () => {
-        const inStock = wishlistItems.filter(p => p.stock > 0);
+        const inStock = wishlistItems.filter((p) => p.stock > 0);
         if (inStock.length === 0) {
-            toast('Tất cả sản phẩm trong wishlist đã hết hàng.', 'danger');
+            toast('Tất cả sản phẩm đã hết hàng.', 'danger');
             return;
         }
-        inStock.forEach(p => addItem(p, 1));
+        inStock.forEach((p) => addItem(p, 1));
         toast(`Đã thêm ${inStock.length} sản phẩm vào giỏ hàng!`, 'success');
     };
 
     return (
         <>
-            <PageHero title={t('Wishlist')} current={t('Wishlist')} />
-            <div className="container-fluid py-5">
-                <div className="container py-5">
-                    {wishlistItems.length === 0 ? (
-                        <div className="text-center py-5">
-                            <i className="fas fa-heart fa-4x text-muted mb-4"></i>
-                            <h4 className="mb-3 text-muted">{t('Your wishlist is empty')}</h4>
-                            <Link to="/shop" className="btn btn-primary rounded-pill py-3 px-5">
-                                {t('Continue Shopping')}
-                            </Link>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Toolbar */}
-                            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                                <p className="text-muted mb-0">
-                                    <i className="fas fa-heart text-danger me-2"></i>
-                                    {wishlistItems.length} sản phẩm trong danh sách yêu thích
-                                </p>
-                                <div className="d-flex gap-2">
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary rounded-pill px-4"
-                                        onClick={handleAddAll}
-                                    >
-                                        <i className="fas fa-shopping-cart me-2"></i>Thêm tất cả vào giỏ
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-danger rounded-pill px-4"
-                                        onClick={() => {
-                                            if (window.confirm('Xóa toàn bộ danh sách yêu thích?')) clearWishlist();
-                                        }}
-                                    >
-                                        <i className="fas fa-trash me-2"></i>Xóa tất cả
-                                    </button>
-                                </div>
-                            </div>
+            <PageHero title={t('Wishlist')} current={t('Wishlist')} kicker="Saved for later" />
 
-                            <div className="row g-4">
-                                {wishlistItems.map((product) => (
-                                    <div key={product.id} className="col-md-6 col-lg-4 col-xl-3 wow fadeInUp" data-wow-delay="0.1s">
-                                        <ProductCard product={product} />
-                                    </div>
-                                ))}
+            <section className="ts-container py-12">
+                {wishlistItems.length === 0 ? (
+                    <div className="flex flex-col items-center rounded-md border border-dashed border-[var(--color-border)] py-20 text-center">
+                        <i className="far fa-heart text-4xl text-[var(--color-fg-dim)]"></i>
+                        <h4 className="ts-display mt-6 text-2xl">{t('Your wishlist is empty')}</h4>
+                        <p className="mt-2 text-sm text-[var(--color-fg-muted)]">Hãy thêm sản phẩm bạn yêu thích để lưu lại cho sau.</p>
+                        <Link to="/shop" className="ts-btn ts-btn-primary mt-6">{t('Continue Shopping')}</Link>
+                    </div>
+                ) : (
+                    <>
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                            <p className="text-sm text-[var(--color-fg-muted)]">
+                                <i className="fas fa-heart mr-2 text-[var(--color-primary)]"></i>
+                                <strong className="text-[var(--color-fg)]">{wishlistItems.length}</strong> sản phẩm yêu thích
+                            </p>
+                            <div className="flex gap-2">
+                                <button onClick={handleAddAll} className="ts-btn ts-btn-primary text-xs">
+                                    <i className="fas fa-shopping-cart"></i>Thêm tất cả vào giỏ
+                                </button>
+                                <button
+                                    onClick={() => { if (window.confirm('Xóa toàn bộ danh sách yêu thích?')) clearWishlist(); }}
+                                    className="ts-btn ts-btn-outline text-xs"
+                                >
+                                    <i className="fas fa-trash"></i>Xóa tất cả
+                                </button>
                             </div>
-                        </>
-                    )}
-                </div>
-            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+                            {wishlistItems.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))}
+                        </div>
+                    </>
+                )}
+            </section>
         </>
     );
 };

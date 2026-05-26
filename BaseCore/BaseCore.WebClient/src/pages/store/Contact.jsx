@@ -2,136 +2,88 @@ import React, { useEffect } from 'react';
 import PageHero from '../../components/store/PageHero';
 import { setPageMeta, t } from '../../utils/store';
 
+const contactItems = [
+    { icon: 'fas fa-map-marker-alt', title: 'Address', text: '236 Hoàng Quốc Việt, Hà Nội' },
+    { icon: 'fas fa-envelope', title: 'Mail Us', text: 'info@techstore.example.com' },
+    { icon: 'fas fa-phone-alt', title: 'Telephone', text: '(+84) 327 188 459' },
+    { icon: 'fas fa-globe', title: 'Website', text: 'techstore.example.com' },
+];
+
 const Contact = () => {
     useEffect(() => {
         setPageMeta({
-            title: `${t('Contact Us')} | Electro`,
+            title: `${t('Contact Us')} | TechStore`,
             description: t('Contact meta description'),
         });
     }, []);
 
     return (
         <>
-            <PageHero title={t('Contact Us')} current={t('Contact')} />
-            <div className="container-fluid contact py-5">
-                <div className="container py-5">
-                    <div className="p-5 bg-light rounded">
-                        <div className="row g-4">
-                            <div className="col-12">
-                                <div className="text-center mx-auto wow fadeInUp" data-wow-delay="0.1s" style={{ maxWidth: 900 }}>
-                                    <h4 className="text-primary border-bottom border-primary border-2 d-inline-block pb-2">{t('Get in touch')}</h4>
-                                    <p className="mb-5 fs-5 text-dark">{t('We are here for you!')}</p>
-                                </div>
-                            </div>
-                            <div className="col-lg-7">
-                                <h5 className="text-primary wow fadeInUp" data-wow-delay="0.1s">{t("Let's Connect")}</h5>
-                                <h1 className="display-5 mb-4 wow fadeInUp" data-wow-delay="0.3s">{t('Send Your Message')}</h1>
-                                <form className="row g-4 wow fadeInUp" data-wow-delay="0.1s">
-                                    <div className="col-lg-12 col-xl-6">
-                                        <div className="form-floating">
-                                            <input type="text" className="form-control" id="name" placeholder={t('Your Name')} />
-                                            <label htmlFor="name">{t('Your Name')}</label>
-                                        </div>
+            <PageHero title={t('Contact Us')} current={t('Contact')} kicker="Get in touch" />
+
+            <section className="ts-container py-12">
+                <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">
+                    {/* Form */}
+                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-8">
+                        <p className="ts-eyebrow text-[var(--color-accent)]">{t("Let's Connect")}</p>
+                        <h2 className="ts-display mt-3 text-3xl text-[var(--color-fg)]">{t('Send Your Message')}</h2>
+                        <p className="mt-2 text-sm text-[var(--color-fg-muted)]">{t('We are here for you!')}</p>
+
+                        <form onSubmit={(e) => e.preventDefault()} className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <label>
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">{t('Your Name')}</span>
+                                <input type="text" className="ts-input" placeholder="Nguyễn Văn A" />
+                            </label>
+                            <label>
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">{t('Your Email')}</span>
+                                <input type="email" className="ts-input" placeholder="email@example.com" />
+                            </label>
+                            <label>
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">{t('Your Phone')}</span>
+                                <input type="tel" className="ts-input" placeholder="0327 188 459" />
+                            </label>
+                            <label>
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">{t('Subject')}</span>
+                                <input type="text" className="ts-input" placeholder="Chủ đề..." />
+                            </label>
+                            <label className="md:col-span-2">
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">{t('Message')}</span>
+                                <textarea rows="6" className="ts-input resize-none" placeholder="Nội dung của bạn..."></textarea>
+                            </label>
+                            <button type="submit" className="ts-btn ts-btn-primary md:col-span-2">
+                                <i className="fas fa-paper-plane"></i>{t('Send Message')}
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* Map + contact */}
+                    <div className="space-y-6">
+                        <div className="overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                            <iframe
+                                className="h-72 w-full grayscale [filter:invert(0.92)_hue-rotate(180deg)_grayscale(0.8)]"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.0!2d105.7!3d21.05!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0!2sHanoi%20Vietnam!5e0!3m2!1sen!2svn!4v1694259649153!5m2!1sen!2svn"
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="TechStore map"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {contactItems.map((item) => (
+                                <div key={item.title} className="flex items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-colors hover:border-[var(--color-border-strong)]">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+                                        <i className={item.icon}></i>
                                     </div>
-                                    <div className="col-lg-12 col-xl-6">
-                                        <div className="form-floating">
-                                            <input type="email" className="form-control" id="email" placeholder={t('Your Email')} />
-                                            <label htmlFor="email">{t('Your Email')}</label>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-12 col-xl-6">
-                                        <div className="form-floating">
-                                            <input type="tel" className="form-control" id="phone" placeholder={t('Your Phone')} />
-                                            <label htmlFor="phone">{t('Your Phone')}</label>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-12 col-xl-6">
-                                        <div className="form-floating">
-                                            <input type="text" className="form-control" id="project" placeholder={t('Your Project')} />
-                                            <label htmlFor="project">{t('Your Project')}</label>
-                                        </div>
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="form-floating">
-                                            <input type="text" className="form-control" id="subject" placeholder={t('Subject')} />
-                                            <label htmlFor="subject">{t('Subject')}</label>
-                                        </div>
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="form-floating">
-                                            <textarea className="form-control" id="message" placeholder={t('Message')} style={{ height: 160 }}></textarea>
-                                            <label htmlFor="message">{t('Message')}</label>
-                                        </div>
-                                    </div>
-                                    <div className="col-12">
-                                        <button className="btn btn-primary w-100 py-3">{t('Send Message')}</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div className="col-lg-5 wow fadeInUp" data-wow-delay="0.2s">
-                                <div className="h-100 rounded">
-                                    <iframe
-                                        className="rounded w-100"
-                                        style={{ height: '100%' }}
-                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387191.33750346623!2d-73.97968099999999!3d40.6974881!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sbd!4v1694259649153!5m2!1sen!2sbd"
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                        title="map"
-                                    ></iframe>
-                                </div>
-                            </div>
-                            <div className="col-lg-12">
-                                <div className="row g-4 align-items-center justify-content-center">
-                                    <div className="col-md-6 col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.1s">
-                                        <div className="rounded p-4">
-                                            <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mb-4" style={{ width: 70, height: 70 }}>
-                                                <i className="fas fa-map-marker-alt fa-2x text-primary"></i>
-                                            </div>
-                                            <div>
-                                                <h4>{t('Address')}</h4>
-                                                <p className="mb-2">123 Street New York.USA</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6 col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.3s">
-                                        <div className="rounded p-4">
-                                            <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mb-4" style={{ width: 70, height: 70 }}>
-                                                <i className="fas fa-envelope fa-2x text-primary"></i>
-                                            </div>
-                                            <div>
-                                                <h4>{t('Mail Us')}</h4>
-                                                <p className="mb-2">info@example.com</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6 col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.5s">
-                                        <div className="rounded p-4">
-                                            <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mb-4" style={{ width: 70, height: 70 }}>
-                                                <i className="fa fa-phone-alt fa-2x text-primary"></i>
-                                            </div>
-                                            <div>
-                                                <h4>{t('Telephone')}</h4>
-                                                <p className="mb-2">(+012) 3456 7890</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6 col-lg-6 col-xl-3 wow fadeInUp" data-wow-delay="0.7s">
-                                        <div className="rounded p-4">
-                                            <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mb-4" style={{ width: 70, height: 70 }}>
-                                                <i className="fab fa-firefox-browser fa-2x text-primary"></i>
-                                            </div>
-                                            <div>
-                                                <h4>Yoursite@ex.com</h4>
-                                                <p className="mb-2">(+012) 3456 7890</p>
-                                            </div>
-                                        </div>
+                                    <div className="min-w-0">
+                                        <p className="ts-eyebrow text-[10px]">{t(item.title)}</p>
+                                        <p className="mt-0.5 truncate text-sm text-[var(--color-fg)]">{item.text}</p>
                                     </div>
                                 </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </>
     );
 };

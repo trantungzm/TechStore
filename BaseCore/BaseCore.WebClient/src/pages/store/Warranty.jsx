@@ -1,123 +1,38 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import PageHero from '../../components/store/PageHero';
 import { setPageMeta } from '../../utils/store';
+import { cn } from '../../utils/cn';
 
 const policyGroups = [
-    {
-        icon: 'fa-shield-alt',
-        title: 'Sản phẩm được bảo hành',
-        items: [
-            'Sản phẩm mua tại CNTHHT hoặc có thông tin đơn hàng hợp lệ',
-            'Sản phẩm còn trong thời hạn bảo hành',
-            'Lỗi phát sinh do nhà sản xuất',
-            'Sản phẩm còn tem, số serial hoặc thông tin nhận diện hợp lệ nếu có',
-        ],
-    },
-    {
-        icon: 'fa-clipboard-check',
-        title: 'Điều kiện bảo hành',
-        items: [
-            'Thời gian bảo hành tùy theo từng sản phẩm và hãng sản xuất',
-            'Khách hàng cần cung cấp số điện thoại mua hàng, mã đơn hàng hoặc serial sản phẩm',
-            'Sản phẩm cần còn nguyên trạng, không bị can thiệp sửa chữa trái phép',
-            'Phụ kiện đi kèm được bảo hành theo chính sách riêng của từng hãng nếu có',
-        ],
-    },
-    {
-        icon: 'fa-exclamation-triangle',
-        title: 'Trường hợp không được bảo hành',
-        items: [
-            'Sản phẩm bị rơi vỡ, móp méo, cong vênh',
-            'Sản phẩm bị vào nước, ẩm mốc, cháy nổ',
-            'Sản phẩm bị lỗi do sử dụng sai hướng dẫn',
-            'Sản phẩm đã bị tự ý tháo mở hoặc sửa chữa bên ngoài',
-            'Hết thời hạn bảo hành',
-            'Không xác minh được thông tin mua hàng hoặc serial sản phẩm',
-        ],
-    },
+    { icon: 'fa-shield-alt', title: 'Sản phẩm được bảo hành', items: ['Sản phẩm mua tại TechStore hoặc có thông tin đơn hàng hợp lệ', 'Sản phẩm còn trong thời hạn bảo hành', 'Lỗi phát sinh do nhà sản xuất', 'Sản phẩm còn tem, số serial hợp lệ'] },
+    { icon: 'fa-clipboard-check', title: 'Điều kiện bảo hành', items: ['Thời gian bảo hành tùy theo từng sản phẩm và hãng sản xuất', 'Cần cung cấp số điện thoại, mã đơn hàng hoặc serial', 'Sản phẩm còn nguyên trạng, không bị can thiệp', 'Phụ kiện đi kèm theo chính sách riêng'] },
+    { icon: 'fa-exclamation-triangle', title: 'Không được bảo hành', items: ['Sản phẩm bị rơi vỡ, móp méo, cong vênh', 'Sản phẩm bị vào nước, ẩm mốc, cháy nổ', 'Sản phẩm bị sử dụng sai hướng dẫn', 'Đã bị tự ý tháo mở hoặc sửa chữa', 'Hết thời hạn bảo hành'] },
 ];
 
 const warrantySteps = [
-    ['Tra cứu thông tin bảo hành', 'Khách hàng nhập số điện thoại, mã đơn hàng hoặc serial để kiểm tra sản phẩm.'],
-    ['Gửi yêu cầu bảo hành', 'Khách hàng mô tả lỗi, chọn sản phẩm cần bảo hành và cung cấp thông tin liên hệ.'],
-    ['Tiếp nhận sản phẩm', 'Khách hàng mang sản phẩm đến cửa hàng hoặc gửi qua đơn vị vận chuyển.'],
-    ['Kỹ thuật kiểm tra', 'Bộ phận kỹ thuật kiểm tra tình trạng sản phẩm, xác định lỗi và điều kiện bảo hành.'],
-    ['Hoàn tất xử lý', 'Sản phẩm được bảo hành, sửa chữa, đổi mới hoặc thông báo phương án xử lý phù hợp.'],
-];
-
-const warrantyStatuses = [
-    ['Chờ tiếp nhận', 'Yêu cầu đã được gửi, chờ nhân viên xác nhận'],
-    ['Đã tiếp nhận', 'Sản phẩm đã được cửa hàng tiếp nhận'],
-    ['Đang kiểm tra', 'Kỹ thuật đang kiểm tra lỗi'],
-    ['Đang gửi hãng', 'Sản phẩm được gửi đến trung tâm bảo hành hãng'],
-    ['Đang xử lý', 'Sản phẩm đang được sửa chữa hoặc chờ linh kiện'],
-    ['Hoàn tất', 'Sản phẩm đã xử lý xong'],
-    ['Từ chối bảo hành', 'Sản phẩm không đủ điều kiện bảo hành miễn phí'],
-];
-
-const returnPolicies = [
-    {
-        icon: 'fa-sync-alt',
-        title: 'Đổi trả trong 7 ngày',
-        items: [
-            'Áp dụng với sản phẩm lỗi do nhà sản xuất',
-            'Sản phẩm còn đầy đủ hộp, phụ kiện, hóa đơn hoặc thông tin mua hàng nếu có',
-            'Sản phẩm không bị trầy xước, rơi vỡ, vào nước do người dùng',
-        ],
-    },
-    {
-        icon: 'fa-ban',
-        title: 'Không áp dụng đổi trả',
-        items: [
-            'Sản phẩm bị lỗi do người dùng sử dụng sai cách',
-            'Sản phẩm bị rơi vỡ, cong vênh, vào nước, cháy nổ',
-            'Sản phẩm thiếu phụ kiện, hộp hoặc có dấu hiệu can thiệp sửa chữa',
-            'Sản phẩm thuộc nhóm không áp dụng đổi trả theo chính sách riêng nếu có',
-        ],
-    },
-    {
-        icon: 'fa-tools',
-        title: 'Hỗ trợ sau thời gian đổi trả',
-        items: [
-            'Nếu quá thời gian đổi trả, sản phẩm sẽ được tiếp nhận theo chính sách bảo hành',
-            'CNTHHT hỗ trợ kiểm tra và tư vấn phương án sửa chữa phù hợp',
-            'Chi phí sửa chữa nếu có sẽ được thông báo trước cho khách hàng',
-        ],
-    },
+    ['Tra cứu thông tin bảo hành', 'Nhập số điện thoại, mã đơn hoặc serial để kiểm tra.'],
+    ['Gửi yêu cầu bảo hành', 'Mô tả lỗi, chọn sản phẩm và cung cấp thông tin liên hệ.'],
+    ['Tiếp nhận sản phẩm', 'Mang đến cửa hàng hoặc gửi qua đơn vị vận chuyển.'],
+    ['Kỹ thuật kiểm tra', 'Bộ phận kỹ thuật kiểm tra và xác định lỗi.'],
+    ['Hoàn tất xử lý', 'Sản phẩm được bảo hành, sửa chữa hoặc đổi mới.'],
 ];
 
 const faqs = [
-    ['Sản phẩm được bảo hành trong bao lâu?', 'Thời gian bảo hành phụ thuộc vào từng sản phẩm và chính sách của hãng sản xuất. Thông tin chi tiết được ghi nhận theo đơn hàng hoặc serial sản phẩm.'],
-    ['Tôi cần chuẩn bị gì khi gửi bảo hành?', 'Bạn cần cung cấp số điện thoại mua hàng, mã đơn hàng hoặc serial sản phẩm. Nếu có hộp, phụ kiện và hóa đơn, vui lòng mang theo để quá trình xử lý nhanh hơn.'],
-    ['Sản phẩm bị rơi vỡ có được bảo hành không?', 'Các lỗi do rơi vỡ, vào nước, cháy nổ hoặc sử dụng sai cách thường không thuộc phạm vi bảo hành miễn phí.'],
-    ['Tôi có thể gửi bảo hành qua chuyển phát không?', 'Có. Bạn có thể gửi sản phẩm qua đơn vị vận chuyển sau khi liên hệ bộ phận hỗ trợ để được hướng dẫn đóng gói và cung cấp thông tin tiếp nhận.'],
-    ['Thời gian xử lý bảo hành mất bao lâu?', 'Thời gian xử lý phụ thuộc vào tình trạng sản phẩm và chính sách của hãng. Chúng tôi sẽ cập nhật thông tin cho khách hàng trong quá trình xử lý.'],
-    ['Tôi có được đổi sản phẩm mới không?', 'Nếu sản phẩm đủ điều kiện đổi trả hoặc hãng xác nhận lỗi cần đổi mới, chúng tôi sẽ hỗ trợ theo chính sách hiện hành.'],
-    ['Nếu hết hạn bảo hành thì sao?', 'Nếu sản phẩm hết hạn bảo hành, CNTHHT vẫn có thể hỗ trợ kiểm tra và tư vấn phương án sửa chữa có phí nếu khách hàng đồng ý.'],
+    ['Sản phẩm được bảo hành trong bao lâu?', 'Thời gian bảo hành tùy thuộc vào từng sản phẩm và chính sách của hãng sản xuất.'],
+    ['Tôi cần chuẩn bị gì khi gửi bảo hành?', 'Cung cấp số điện thoại mua hàng, mã đơn hoặc serial. Nếu có hộp/phụ kiện vui lòng mang theo.'],
+    ['Sản phẩm bị rơi vỡ có được bảo hành không?', 'Các lỗi do rơi vỡ, vào nước, cháy nổ thường không thuộc bảo hành miễn phí.'],
+    ['Thời gian xử lý bảo hành mất bao lâu?', 'Phụ thuộc vào tình trạng sản phẩm và chính sách hãng. Chúng tôi sẽ cập nhật trong quá trình xử lý.'],
+    ['Nếu hết hạn bảo hành thì sao?', 'TechStore vẫn hỗ trợ kiểm tra và tư vấn phương án sửa chữa có phí nếu khách đồng ý.'],
 ];
 
-const initialForm = {
-    name: '',
-    phone: '',
-    email: '',
-    code: '',
-    product: '',
-    issue: '',
-    method: '',
-    returnAddress: '',
-};
+const initialForm = { name: '', phone: '', email: '', code: '', product: '', issue: '', method: '', returnAddress: '' };
 
-const scrollToSection = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
+const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
 const buildRequestCode = () => {
     const now = new Date();
-    const date = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0'),
-    ].join('');
+    const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('');
     return `BH-${date}-${Math.floor(1000 + Math.random() * 9000)}`;
 };
 
@@ -133,342 +48,285 @@ const Warranty = () => {
     const [openFaq, setOpenFaq] = useState(0);
 
     useEffect(() => {
-        setPageMeta({
-            title: 'Bảo hành & hỗ trợ sản phẩm | Electro',
-            description: 'Tra cứu bảo hành, gửi yêu cầu hỗ trợ, xem chính sách đổi trả và quy trình xử lý sản phẩm gặp sự cố.',
-        });
+        setPageMeta({ title: 'Bảo hành & hỗ trợ | TechStore', description: 'Tra cứu bảo hành, gửi yêu cầu hỗ trợ và xem chính sách đổi trả.' });
     }, []);
 
-    useEffect(() => () => {
-        imagePreviews.forEach((image) => URL.revokeObjectURL(image.url));
-    }, [imagePreviews]);
+    useEffect(() => () => imagePreviews.forEach((i) => URL.revokeObjectURL(i.url)), [imagePreviews]);
 
-    const lookupStatusClass = useMemo(() => (
-        lookupResult?.status === 'Còn bảo hành' ? 'is-active' : 'is-expired'
-    ), [lookupResult]);
+    const lookupActive = useMemo(() => lookupResult?.status === 'Còn bảo hành', [lookupResult]);
 
-    const handleLookup = (event) => {
-        event.preventDefault();
+    const handleLookup = (e) => {
+        e.preventDefault();
         const keyword = lookupValue.trim();
-        if (!keyword) {
-            setLookupError('Vui lòng nhập thông tin cần tra cứu.');
-            setLookupResult(null);
-            return;
-        }
-        if (keyword.length < 5) {
-            setLookupError('Thông tin tra cứu chưa hợp lệ.');
-            setLookupResult(null);
-            return;
-        }
-
-        const normalized = keyword.toLowerCase();
-        const expired = normalized.includes('0002') || normalized.includes('expired') || normalized.includes('het-han');
+        if (!keyword) { setLookupError('Vui lòng nhập thông tin cần tra cứu.'); setLookupResult(null); return; }
+        if (keyword.length < 5) { setLookupError('Thông tin tra cứu chưa hợp lệ.'); setLookupResult(null); return; }
+        const expired = keyword.toLowerCase().includes('0002') || keyword.toLowerCase().includes('expired');
         setLookupError('');
         setLookupResult(expired ? {
-            product: 'MacBook Air M3 13 inch',
-            orderCode: 'CNTHHT-2025-0002',
-            serial: 'MBA-M3-DEMO',
-            purchaseDate: '10/02/2025',
-            warrantyPeriod: '12 tháng',
-            status: 'Hết hạn bảo hành',
-            warrantyUntil: '10/02/2026',
-            suggestion: 'Vui lòng liên hệ hỗ trợ để được tư vấn phương án sửa chữa.',
+            product: 'MacBook Air M3 13 inch', orderCode: 'TS-2025-0002', serial: 'MBA-M3-DEMO',
+            purchaseDate: '10/02/2025', warrantyPeriod: '12 tháng', status: 'Hết hạn bảo hành',
+            warrantyUntil: '10/02/2026', suggestion: 'Vui lòng liên hệ hỗ trợ để được tư vấn sửa chữa.',
         } : {
-            product: 'iPhone 17 Series 256GB',
-            orderCode: 'CNTHHT-2026-0001',
-            serial: 'IP17-256-DEMO',
-            purchaseDate: '12/05/2026',
-            warrantyPeriod: '12 tháng',
-            status: 'Còn bảo hành',
+            product: 'iPhone 17 Series 256GB', orderCode: 'TS-2026-0001', serial: 'IP17-256-DEMO',
+            purchaseDate: '12/05/2026', warrantyPeriod: '12 tháng', status: 'Còn bảo hành',
             warrantyUntil: '12/05/2027',
         });
     };
 
-    const handleFormChange = (event) => {
-        const { name, value } = event.target;
-        setFormData((current) => ({ ...current, [name]: value }));
-        setFormErrors((current) => ({ ...current, [name]: '' }));
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((c) => ({ ...c, [name]: value }));
+        setFormErrors((c) => ({ ...c, [name]: '' }));
     };
 
-    const handleImageChange = (event) => {
-        const files = Array.from(event.target.files || []).slice(0, 3);
-        imagePreviews.forEach((image) => URL.revokeObjectURL(image.url));
-        setImagePreviews(files.map((file) => ({
-            name: file.name,
-            url: URL.createObjectURL(file),
-        })));
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files || []).slice(0, 3);
+        imagePreviews.forEach((i) => URL.revokeObjectURL(i.url));
+        setImagePreviews(files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })));
     };
 
-    const validateRequest = () => {
-        const nextErrors = {};
-        if (!formData.name.trim()) nextErrors.name = 'Vui lòng nhập họ và tên.';
-        if (!formData.phone.trim()) nextErrors.phone = 'Vui lòng nhập số điện thoại.';
-        if (!formData.code.trim()) nextErrors.code = 'Vui lòng nhập mã đơn hàng hoặc serial sản phẩm.';
-        if (formData.issue.trim().length < 15) nextErrors.issue = 'Vui lòng mô tả lỗi tối thiểu 15 ký tự.';
-        if (!formData.method) nextErrors.method = 'Vui lòng chọn hình thức gửi bảo hành.';
-        setFormErrors(nextErrors);
-        return Object.keys(nextErrors).length === 0;
-    };
-
-    const handleRequestSubmit = (event) => {
-        event.preventDefault();
-        setRequestMessage('');
-        setRequestCode('');
-        if (!validateRequest()) return;
-
+    const handleRequestSubmit = (e) => {
+        e.preventDefault();
+        const errs = {};
+        if (!formData.name.trim()) errs.name = 'Vui lòng nhập họ và tên.';
+        if (!formData.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại.';
+        if (!formData.code.trim()) errs.code = 'Vui lòng nhập mã đơn hoặc serial.';
+        if (formData.issue.trim().length < 15) errs.issue = 'Mô tả lỗi tối thiểu 15 ký tự.';
+        if (!formData.method) errs.method = 'Vui lòng chọn hình thức gửi.';
+        setFormErrors(errs);
+        if (Object.keys(errs).length) return;
         setRequestCode(buildRequestCode());
-        setRequestMessage('Yêu cầu bảo hành của bạn đã được gửi. Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất.');
+        setRequestMessage('Yêu cầu bảo hành đã được gửi. Chúng tôi sẽ liên hệ trong thời gian sớm nhất.');
         setFormData(initialForm);
-        imagePreviews.forEach((image) => URL.revokeObjectURL(image.url));
+        imagePreviews.forEach((i) => URL.revokeObjectURL(i.url));
         setImagePreviews([]);
     };
 
     return (
-        <div className="warranty-page">
-            <section className="warranty-hero">
-                <div className="container">
-                    <div className="warranty-hero-card">
-                        <span className="warranty-eyebrow">CNTHHT Care</span>
-                        <h1>Bảo hành & hỗ trợ sản phẩm</h1>
-                        <p>CNTHHT hỗ trợ bảo hành chính hãng, đổi trả theo chính sách và tư vấn nhanh khi sản phẩm gặp sự cố.</p>
-                        <div className="warranty-hero-actions">
-                            <button type="button" className="btn btn-primary rounded-pill px-4" onClick={() => scrollToSection('warranty-lookup')}>Tra cứu bảo hành</button>
-                            <button type="button" className="btn btn-outline-primary rounded-pill px-4" onClick={() => scrollToSection('warranty-request')}>Gửi yêu cầu hỗ trợ</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <>
+            <PageHero title="Bảo hành & Hỗ trợ" current="Bảo hành" kicker="TechStore Care" />
 
-            <main className="container warranty-content">
-                <section id="warranty-policy" className="warranty-section">
-                    <div className="warranty-section-heading">
-                        <h2>Chính sách bảo hành</h2>
-                        <p>Giúp khách hàng hiểu sản phẩm nào được bảo hành, điều kiện bảo hành và trường hợp không được bảo hành.</p>
+            <section className="ts-container py-12">
+                {/* Quick actions */}
+                <div className="mb-12 flex flex-wrap items-center justify-center gap-3">
+                    <button onClick={() => scrollToSection('warranty-lookup')} className="ts-btn ts-btn-primary">
+                        <i className="fas fa-search"></i>Tra cứu bảo hành
+                    </button>
+                    <button onClick={() => scrollToSection('warranty-request')} className="ts-btn ts-btn-outline">
+                        <i className="fas fa-paper-plane"></i>Gửi yêu cầu
+                    </button>
+                </div>
+
+                {/* Policy */}
+                <section className="mb-16">
+                    <div className="mb-8 text-center">
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Policy</p>
+                        <h2 className="ts-display mt-3 text-2xl md:text-3xl">Chính sách bảo hành</h2>
                     </div>
-                    <div className="warranty-card-grid">
-                        {policyGroups.map((group) => (
-                            <article className="warranty-info-card" key={group.title}>
-                                <i className={`fas ${group.icon}`}></i>
-                                <h3>{group.title}</h3>
-                                <ul>
-                                    {group.items.map((item) => <li key={item}>{item}</li>)}
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                        {policyGroups.map((g) => (
+                            <article key={g.title} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                <i className={`fas ${g.icon} text-2xl text-[var(--color-accent)]`}></i>
+                                <h3 className="ts-display mt-4 text-lg">{g.title}</h3>
+                                <ul className="mt-4 space-y-2 text-sm text-[var(--color-fg-muted)]">
+                                    {g.items.map((item) => (
+                                        <li key={item} className="flex gap-2">
+                                            <i className="fas fa-check mt-1 text-[10px] text-[var(--color-gold)]"></i>
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
                                 </ul>
                             </article>
                         ))}
                     </div>
-                    <p className="warranty-note">Chính sách cụ thể có thể thay đổi tùy theo từng hãng sản xuất và tình trạng thực tế của sản phẩm.</p>
                 </section>
 
-                <section id="warranty-lookup" className="warranty-section">
-                    <div className="warranty-section-heading">
-                        <h2>Tra cứu bảo hành</h2>
-                        <p>Nhập số điện thoại, mã đơn hàng hoặc số serial sản phẩm để kiểm tra thời hạn bảo hành.</p>
+                {/* Lookup */}
+                <section id="warranty-lookup" className="mb-16">
+                    <div className="mb-8 text-center">
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Lookup</p>
+                        <h2 className="ts-display mt-3 text-2xl md:text-3xl">Tra cứu bảo hành</h2>
                     </div>
-                    <div className="warranty-lookup-card">
-                        <form className="warranty-lookup-form" onSubmit={handleLookup}>
+                    <div className="mx-auto max-w-2xl rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                        <form onSubmit={handleLookup} className="flex flex-col gap-3 md:flex-row">
                             <input
                                 type="text"
                                 value={lookupValue}
-                                onChange={(event) => setLookupValue(event.target.value)}
-                                placeholder="Nhập số điện thoại, mã đơn hàng hoặc số serial sản phẩm"
+                                onChange={(e) => setLookupValue(e.target.value)}
+                                placeholder="Số điện thoại, mã đơn hàng hoặc serial..."
+                                className="ts-input md:flex-1"
                             />
-                            <button type="submit" className="btn btn-primary">Tra cứu</button>
+                            <button type="submit" className="ts-btn ts-btn-primary">Tra cứu</button>
                         </form>
-                        {lookupError && <div className="warranty-error">{lookupError}</div>}
+                        {lookupError && <p className="mt-3 text-xs text-red-400">{lookupError}</p>}
                         {lookupResult && (
-                            <div className="warranty-result">
-                                <div className="warranty-result-head">
+                            <div className="mt-5 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                <div className="mb-4 flex items-center justify-between gap-3">
                                     <div>
-                                        <span>Sản phẩm</span>
-                                        <strong>{lookupResult.product}</strong>
+                                        <p className="ts-eyebrow text-[10px]">Sản phẩm</p>
+                                        <strong className="text-sm text-[var(--color-fg)]">{lookupResult.product}</strong>
                                     </div>
-                                    <span className={`warranty-status ${lookupStatusClass}`}>{lookupResult.status}</span>
+                                    <span className={cn(
+                                        "rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                                        lookupActive ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-red-500/40 bg-red-500/10 text-red-300"
+                                    )}>
+                                        {lookupResult.status}
+                                    </span>
                                 </div>
-                                <div className="warranty-result-grid">
-                                    <p><span>Mã đơn hàng</span>{lookupResult.orderCode}</p>
-                                    <p><span>Serial</span>{lookupResult.serial}</p>
-                                    <p><span>Ngày mua</span>{lookupResult.purchaseDate}</p>
-                                    <p><span>Thời hạn bảo hành</span>{lookupResult.warrantyPeriod}</p>
-                                    <p><span>Hạn bảo hành đến</span>{lookupResult.warrantyUntil}</p>
+                                <div className="grid grid-cols-1 gap-3 text-xs text-[var(--color-fg-muted)] sm:grid-cols-2">
+                                    <p><span className="ts-eyebrow block text-[10px]">Mã đơn</span>{lookupResult.orderCode}</p>
+                                    <p><span className="ts-eyebrow block text-[10px]">Serial</span>{lookupResult.serial}</p>
+                                    <p><span className="ts-eyebrow block text-[10px]">Ngày mua</span>{lookupResult.purchaseDate}</p>
+                                    <p><span className="ts-eyebrow block text-[10px]">Hạn đến</span>{lookupResult.warrantyUntil}</p>
                                 </div>
-                                {lookupResult.status === 'Còn bảo hành' ? (
-                                    <button type="button" className="btn btn-primary rounded-pill" onClick={() => scrollToSection('warranty-request')}>Gửi yêu cầu bảo hành</button>
+                                {lookupActive ? (
+                                    <button onClick={() => scrollToSection('warranty-request')} className="ts-btn ts-btn-primary mt-4 text-xs">Gửi yêu cầu bảo hành</button>
                                 ) : (
-                                    <p className="warranty-suggestion">{lookupResult.suggestion}</p>
+                                    <p className="mt-4 text-xs italic text-[var(--color-fg-dim)]">{lookupResult.suggestion}</p>
                                 )}
                             </div>
                         )}
                     </div>
-
-                    <div className="warranty-status-board">
-                        <h3>Trạng thái bảo hành</h3>
-                        <div className="warranty-status-grid">
-                            {warrantyStatuses.map(([status, description]) => (
-                                <div className="warranty-status-item" key={status}>
-                                    <strong>{status}</strong>
-                                    <span>{description}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </section>
 
-                <section className="warranty-section">
-                    <div className="warranty-section-heading">
-                        <h2>Quy trình gửi bảo hành</h2>
-                        <p>Luồng tiếp nhận và xử lý sản phẩm gặp sự cố tại CNTHHT.</p>
+                {/* Process */}
+                <section className="mb-16">
+                    <div className="mb-8 text-center">
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Process</p>
+                        <h2 className="ts-display mt-3 text-2xl md:text-3xl">Quy trình bảo hành</h2>
                     </div>
-                    <div className="warranty-timeline">
-                        {warrantySteps.map(([title, description], index) => (
-                            <article className="warranty-step" key={title}>
-                                <span>{index + 1}</span>
-                                <h3>{title}</h3>
-                                <p>{description}</p>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+                        {warrantySteps.map(([title, desc], i) => (
+                            <article key={title} className="relative rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                <span className="ts-display text-3xl text-[var(--color-accent)]">0{i + 1}</span>
+                                <h3 className="mt-3 text-sm font-semibold text-[var(--color-fg)]">{title}</h3>
+                                <p className="mt-1 text-xs text-[var(--color-fg-muted)]">{desc}</p>
                             </article>
                         ))}
                     </div>
+                </section>
 
-                    <div id="warranty-request" className="warranty-request-card">
-                        <div className="warranty-section-heading is-compact">
-                            <h2>Gửi yêu cầu bảo hành</h2>
-                            <p>Điền thông tin để CNTHHT tiếp nhận và liên hệ hướng dẫn gửi sản phẩm.</p>
-                        </div>
+                {/* Request form */}
+                <section id="warranty-request" className="mb-16">
+                    <div className="mb-8 text-center">
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Submit Request</p>
+                        <h2 className="ts-display mt-3 text-2xl md:text-3xl">Gửi yêu cầu bảo hành</h2>
+                    </div>
+
+                    <div className="mx-auto max-w-3xl rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
                         {requestMessage && (
-                            <div className="warranty-success">
-                                <strong>{requestMessage}</strong>
-                                <span>Mã yêu cầu: {requestCode}</span>
+                            <div className="mb-5 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
+                                <strong className="text-sm text-emerald-300">{requestMessage}</strong>
+                                <p className="mt-1 ts-mono text-xs text-[var(--color-fg-muted)]">Mã yêu cầu: <strong className="text-[var(--color-accent)]">{requestCode}</strong></p>
                             </div>
                         )}
-                        <form className="warranty-request-form" onSubmit={handleRequestSubmit}>
-                            <label>
-                                Họ và tên
-                                <input name="name" value={formData.name} onChange={handleFormChange} />
-                                {formErrors.name && <span>{formErrors.name}</span>}
-                            </label>
-                            <label>
-                                Số điện thoại
-                                <input name="phone" value={formData.phone} onChange={handleFormChange} />
-                                {formErrors.phone && <span>{formErrors.phone}</span>}
-                            </label>
-                            <label>
-                                Email nếu có
-                                <input type="email" name="email" value={formData.email} onChange={handleFormChange} />
-                            </label>
-                            <label>
-                                Mã đơn hàng / Serial sản phẩm
-                                <input name="code" value={formData.code} onChange={handleFormChange} />
-                                {formErrors.code && <span>{formErrors.code}</span>}
-                            </label>
-                            <label>
-                                Sản phẩm cần bảo hành
-                                <input name="product" value={formData.product} onChange={handleFormChange} />
-                            </label>
-                            <label className="is-wide">
-                                Mô tả lỗi gặp phải
-                                <textarea name="issue" value={formData.issue} onChange={handleFormChange} rows={4}></textarea>
-                                {formErrors.issue && <span>{formErrors.issue}</span>}
-                            </label>
-                            <div className="warranty-method is-wide">
-                                <strong>Hình thức gửi bảo hành</strong>
-                                <div>
-                                    <label>
-                                        <input type="radio" name="method" value="store" checked={formData.method === 'store'} onChange={handleFormChange} />
-                                        Mang đến cửa hàng
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="method" value="shipping" checked={formData.method === 'shipping'} onChange={handleFormChange} />
-                                        Gửi chuyển phát
-                                    </label>
-                                </div>
-                                {formErrors.method && <span>{formErrors.method}</span>}
-                            </div>
-                            {formData.method === 'shipping' && (
-                                <label className="is-wide">
-                                    Địa chỉ nhận lại sản phẩm
-                                    <input name="returnAddress" value={formData.returnAddress} onChange={handleFormChange} />
+                        <form onSubmit={handleRequestSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {[
+                                ['name', 'Họ và tên', 'text'],
+                                ['phone', 'Số điện thoại', 'tel'],
+                                ['email', 'Email (nếu có)', 'email'],
+                                ['code', 'Mã đơn / Serial', 'text'],
+                                ['product', 'Sản phẩm cần bảo hành', 'text'],
+                            ].map(([field, label, type]) => (
+                                <label key={field} className="block">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">{label}</span>
+                                    <input name={field} type={type} value={formData[field]} onChange={handleFormChange} className="ts-input" />
+                                    {formErrors[field] && <span className="mt-1 block text-[11px] text-red-400">{formErrors[field]}</span>}
                                 </label>
-                            )}
-                            <label className="warranty-upload is-wide">
-                                <i className="fas fa-camera"></i>
-                                <strong>Upload hình ảnh lỗi</strong>
-                                <small>Tối đa 3 ảnh, chỉ preview local</small>
-                                <input type="file" accept="image/*" multiple onChange={handleImageChange} />
+                            ))}
+                            <label className="block md:col-span-2">
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">Mô tả lỗi</span>
+                                <textarea name="issue" value={formData.issue} onChange={handleFormChange} rows={4} className="ts-input resize-none" />
+                                {formErrors.issue && <span className="mt-1 block text-[11px] text-red-400">{formErrors.issue}</span>}
                             </label>
-                            {imagePreviews.length > 0 && (
-                                <div className="warranty-preview-list is-wide">
-                                    {imagePreviews.map((image) => (
-                                        <img src={image.url} alt={image.name} key={image.url} />
+                            <div className="md:col-span-2">
+                                <p className="ts-eyebrow mb-2 text-[10px]">Hình thức gửi</p>
+                                <div className="flex gap-3">
+                                    {[['store', 'Đến cửa hàng'], ['shipping', 'Chuyển phát']].map(([val, label]) => (
+                                        <label key={val} className={cn(
+                                            "flex flex-1 cursor-pointer items-center gap-2 rounded-sm border px-4 py-2.5 text-sm transition-colors",
+                                            formData.method === val
+                                                ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-fg)]"
+                                                : "border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)]"
+                                        )}>
+                                            <input type="radio" name="method" value={val} checked={formData.method === val} onChange={handleFormChange} className="accent-[var(--color-primary)]" />
+                                            {label}
+                                        </label>
                                     ))}
                                 </div>
+                                {formErrors.method && <span className="mt-1 block text-[11px] text-red-400">{formErrors.method}</span>}
+                            </div>
+                            {formData.method === 'shipping' && (
+                                <label className="block md:col-span-2">
+                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">Địa chỉ nhận lại</span>
+                                    <input name="returnAddress" value={formData.returnAddress} onChange={handleFormChange} className="ts-input" />
+                                </label>
                             )}
-                            <button type="submit" className="btn btn-primary warranty-submit">Gửi yêu cầu bảo hành</button>
+                            <label className="block md:col-span-2">
+                                <span className="ts-eyebrow mb-1.5 block text-[10px]">Hình ảnh lỗi (tối đa 3)</span>
+                                <div className="flex items-center gap-3 rounded-sm border border-dashed border-[var(--color-border)] p-4">
+                                    <i className="fas fa-camera text-[var(--color-fg-dim)]"></i>
+                                    <input type="file" accept="image/*" multiple onChange={handleImageChange} className="text-xs text-[var(--color-fg-muted)] file:mr-3 file:rounded-sm file:border file:border-[var(--color-border)] file:bg-[var(--color-surface-2)] file:px-3 file:py-1 file:text-xs file:text-[var(--color-fg)]" />
+                                </div>
+                                {imagePreviews.length > 0 && (
+                                    <div className="mt-3 flex gap-2">
+                                        {imagePreviews.map((image) => (
+                                            <img key={image.url} src={image.url} alt={image.name} className="h-16 w-16 rounded-sm object-cover" />
+                                        ))}
+                                    </div>
+                                )}
+                            </label>
+                            <button type="submit" className="ts-btn ts-btn-primary md:col-span-2">Gửi yêu cầu bảo hành</button>
                         </form>
                     </div>
                 </section>
 
-                <section className="warranty-section">
-                    <div className="warranty-section-heading">
-                        <h2>Chính sách đổi trả</h2>
-                        <p>Đổi trả áp dụng theo điều kiện riêng và khác với quy trình bảo hành sản phẩm.</p>
+                {/* FAQ */}
+                <section className="mb-16">
+                    <div className="mb-8 text-center">
+                        <p className="ts-eyebrow text-[var(--color-accent)]">FAQ</p>
+                        <h2 className="ts-display mt-3 text-2xl md:text-3xl">Câu hỏi thường gặp</h2>
                     </div>
-                    <div className="warranty-card-grid">
-                        {returnPolicies.map((policy) => (
-                            <article className="warranty-info-card" key={policy.title}>
-                                <i className={`fas ${policy.icon}`}></i>
-                                <h3>{policy.title}</h3>
-                                <ul>
-                                    {policy.items.map((item) => <li key={item}>{item}</li>)}
-                                </ul>
-                            </article>
-                        ))}
-                    </div>
-                    <p className="warranty-note">Thời gian đổi trả và điều kiện áp dụng có thể thay đổi theo từng nhóm sản phẩm.</p>
-                </section>
-
-                <section id="warranty-faq" className="warranty-section">
-                    <div className="warranty-section-heading">
-                        <h2>Câu hỏi thường gặp</h2>
-                        <p>Những thông tin khách hàng thường cần biết trước khi gửi sản phẩm bảo hành.</p>
-                    </div>
-                    <div className="warranty-faq-list">
-                        {faqs.map(([question, answer], index) => (
-                            <article className={`warranty-faq-item ${openFaq === index ? 'is-open' : ''}`} key={question}>
-                                <button type="button" onClick={() => setOpenFaq(openFaq === index ? -1 : index)}>
-                                    <span>{question}</span>
-                                    <i className="fas fa-chevron-down"></i>
+                    <div className="mx-auto max-w-3xl space-y-3">
+                        {faqs.map(([q, a], i) => (
+                            <article key={q} className="overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
+                                    className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left text-sm font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]"
+                                >
+                                    <span>{q}</span>
+                                    <i className={cn("fas fa-chevron-down text-xs text-[var(--color-fg-dim)] transition-transform", openFaq === i && "rotate-180")}></i>
                                 </button>
-                                {openFaq === index && <p>{answer}</p>}
+                                {openFaq === i && (
+                                    <p className="border-t border-[var(--color-border)] px-5 py-4 text-sm text-[var(--color-fg-muted)]">{a}</p>
+                                )}
                             </article>
                         ))}
                     </div>
                 </section>
 
-                <section className="warranty-section warranty-contact-section">
-                    <div className="warranty-contact-card">
+                {/* Contact */}
+                <section className="rounded-md border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] p-8 md:p-12">
+                    <div className="grid gap-8 md:grid-cols-2">
                         <div>
-                            <span className="warranty-eyebrow">Hỗ trợ nhanh</span>
-                            <h2>Thông tin liên hệ hỗ trợ</h2>
-                            <p>Liên hệ CNTHHT để được tư vấn quy trình bảo hành, đổi trả hoặc gửi chuyển phát.</p>
+                            <p className="ts-eyebrow text-[var(--color-accent)]">Quick Support</p>
+                            <h2 className="ts-display mt-3 text-2xl">Cần hỗ trợ thêm?</h2>
+                            <p className="mt-3 text-sm text-[var(--color-fg-muted)]">Liên hệ TechStore để được tư vấn quy trình bảo hành, đổi trả hoặc gửi chuyển phát.</p>
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                <a href="tel:0327188459" className="ts-btn ts-btn-primary"><i className="fas fa-phone"></i>Gọi hỗ trợ</a>
+                                <Link to="/contact" className="ts-btn ts-btn-ghost">Liên hệ ngay</Link>
+                            </div>
                         </div>
-                        <div className="warranty-contact-grid">
-                            <p><i className="fas fa-phone-alt"></i><span>Hotline</span><strong>0327 188 459</strong></p>
-                            <p><i className="fas fa-envelope"></i><span>Email</span><strong>support@cnthht.vn</strong></p>
-                            <p><i className="fas fa-clock"></i><span>Thời gian hỗ trợ</span><strong>8:00 - 22:00 mỗi ngày</strong></p>
-                        </div>
-                        <div className="warranty-addresses">
-                            <strong>Địa chỉ tiếp nhận bảo hành</strong>
-                            <span>CNTHHT Store - 123 Nguyễn Trãi, Hà Nội</span>
-                            <span>CNTHHT Store - 45 Cầu Giấy, Hà Nội</span>
-                            <span>CNTHHT Store - 88 Lê Văn Lương, Hà Nội</span>
-                        </div>
-                        <div className="warranty-contact-actions">
-                            <a className="btn btn-primary rounded-pill px-4" href="tel:0327188459">Gọi hỗ trợ</a>
-                            <Link className="btn btn-outline-primary rounded-pill px-4" to="/contact">Liên hệ ngay</Link>
+                        <div className="space-y-3 text-sm">
+                            <p className="flex items-center gap-3"><i className="fas fa-phone-alt w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Hotline:</span><strong className="ts-mono text-[var(--color-fg)]">0327 188 459</strong></p>
+                            <p className="flex items-center gap-3"><i className="fas fa-envelope w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Email:</span><strong className="text-[var(--color-fg)]">support@techstore.vn</strong></p>
+                            <p className="flex items-center gap-3"><i className="fas fa-clock w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Giờ:</span><strong className="text-[var(--color-fg)]">8:00 - 22:00 mỗi ngày</strong></p>
                         </div>
                     </div>
                 </section>
-            </main>
-        </div>
+            </section>
+        </>
     );
 };
 

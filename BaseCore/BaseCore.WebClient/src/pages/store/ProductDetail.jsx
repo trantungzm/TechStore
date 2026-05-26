@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
 import { productApi } from '../../services/api';
@@ -9,8 +9,8 @@ import PageHero from '../../components/store/PageHero';
 import ProductCard from '../../components/store/ProductCard';
 import coupons from '../../data/coupons';
 import { canClaimCoupon, claimCoupon, getAvailableCouponsForProduct, getClaimedCoupons, getCouponClaimStatus, isCouponClaimed } from '../../utils/couponUtils';
-import { fadeInUp, motionTransition } from '../../utils/motionVariants';
 import { formatCurrency, resolveProductImage, setPageMeta, t } from '../../utils/store';
+import { cn } from '../../utils/cn';
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedProducts';
 const PRODUCT_DETAIL_CACHE_KEY = 'electro_product_detail_cache';
@@ -21,36 +21,15 @@ const safeParseJson = (value, fallback) => {
 
 const normalizeText = (value) => String(value || '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/Ä‘/g, 'd')
-    .replace(/Ä/g, 'D')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
     .toLowerCase();
 
-const singleViewport = { once: true, amount: 0.05, margin: '0px 0px 100px 0px' };
-const singleTransition = { ...motionTransition, duration: 0.9 };
-
-const Rating = ({ small = false }) => (
-    <div className={`electro-rating ${small ? 'mini' : ''}`} aria-label="4 star rating">
-        <i className="fas fa-star"></i>
-        <i className="fas fa-star"></i>
-        <i className="fas fa-star"></i>
-        <i className="fas fa-star"></i>
-        <i className="fas fa-star text-muted"></i>
-    </div>
-);
-
-const normalizeRecentProduct = (product) => {
-    if (!product) return null;
-    return {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        imageUrl: product.imageUrl,
-        categoryId: product.categoryId,
-        category: product.category,
-        brand: product.brand,
-    };
-};
+const normalizeRecentProduct = (p) => p ? ({
+    id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl,
+    categoryId: p.categoryId, category: p.category, brand: p.brand,
+}) : null;
 
 const getProductDetailCache = () => {
     const cached = safeParseJson(sessionStorage.getItem(PRODUCT_DETAIL_CACHE_KEY) || '{}', {});
@@ -60,10 +39,7 @@ const getProductDetailCache = () => {
 const cacheProductDetail = (product) => {
     if (!product?.id) return;
     const cached = getProductDetailCache();
-    sessionStorage.setItem(PRODUCT_DETAIL_CACHE_KEY, JSON.stringify({
-        ...cached,
-        [product.id]: product,
-    }));
+    sessionStorage.setItem(PRODUCT_DETAIL_CACHE_KEY, JSON.stringify({ ...cached, [product.id]: product }));
 };
 
 const getInstantProduct = (productId) => {
@@ -82,9 +58,8 @@ const getRelatedProductsFromLocalCatalog = (product) => {
 const rememberRecentProduct = (product) => {
     const normalized = normalizeRecentProduct(product);
     if (!normalized?.id) return;
-
     const current = safeParseJson(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]', []);
-    const withoutDup = Array.isArray(current) ? current.filter(p => p?.id !== normalized.id) : [];
+    const withoutDup = Array.isArray(current) ? current.filter((p) => p?.id !== normalized.id) : [];
     localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify([normalized, ...withoutDup].slice(0, 6)));
 };
 
@@ -92,157 +67,43 @@ const compactValue = (value) => {
     if (value == null) return '';
     if (Array.isArray(value)) return value.map(compactValue).filter(Boolean).join(', ');
     if (typeof value === 'object') {
-        return Object.entries(value)
-            .map(([itemKey, itemValue]) => {
-                const text = compactValue(itemValue);
-                return text ? `${itemKey}: ${text}` : '';
-            })
-            .filter(Boolean)
-            .join(', ');
+        return Object.entries(value).map(([k, v]) => {
+            const text = compactValue(v);
+            return text ? `${k}: ${text}` : '';
+        }).filter(Boolean).join(', ');
     }
     return String(value).trim();
 };
 
-const cp1252ByteMap = {
-    0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
-    0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E,
-    0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
-    0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F,
-};
-
-const fixText = (value) => {
-    const text = compactValue(value);
-    if (!/[ÃÂÄáºá»]/.test(text)) return text;
-    try {
-        const bytes = Uint8Array.from(Array.from(text, (ch) => {
-            const code = ch.charCodeAt(0);
-            return cp1252ByteMap[code] ?? (code <= 255 ? code : 63);
-        }));
-        const decoded = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
-        return decoded && decoded !== text ? decoded : text;
-    } catch {
-        return text;
-    }
-};
+const fixText = (value) => compactValue(value);
 
 const inferBrandFromName = (name) => {
     const text = String(name || '').toLowerCase();
     const brands = ['Apple', 'Samsung', 'Xiaomi', 'Dell', 'Asus', 'HP', 'Lenovo', 'Canon', 'Sony', 'JBL', 'Bose', 'OnePlus', 'Nothing'];
-    return brands.find((brand) => text.includes(brand.toLowerCase())) || '';
+    return brands.find((b) => text.includes(b.toLowerCase())) || '';
 };
 
 const getCategoryType = (product) => {
-    const categoryText = normalizeText(`${product?.category?.name || ''} ${product?.categoryName || ''} ${product?.category || ''} ${product?.categorySlug || ''} ${product?.slug || ''}`);
+    const cat = normalizeText(`${product?.category?.name || ''} ${product?.categoryName || ''} ${product?.category || ''}`);
     const name = normalizeText(product?.name);
-    if (categoryText.includes('dien thoai') || categoryText.includes('dien-thoai') || categoryText.includes('phone') || categoryText.includes('smartphone') || name.includes('iphone') || name.includes('galaxy') || name.includes('phone')) return 'phone';
-    if (categoryText.includes('laptop') || name.includes('laptop') || name.includes('macbook') || name.includes('thinkpad') || name.includes('xps') || name.includes('vivobook')) return 'laptop';
-    if (categoryText.includes('tablet') || categoryText.includes('may tinh bang') || categoryText.includes('may-tinh-bang') || name.includes('ipad') || name.includes('tab ')) return 'tablet';
-    if (categoryText.includes('dong ho thong minh') || categoryText.includes('dong-ho-thong-minh') || categoryText.includes('smartwatch') || categoryText.includes('watch') || name.includes('watch')) return 'smartwatch';
-    if (categoryText.includes('may anh') || categoryText.includes('may-anh') || categoryText.includes('camera') || categoryText.includes('action-camera') || name.includes('camera') || name.includes('eos') || name.includes('a7')) return 'camera';
-    if (categoryText.includes('tai nghe') || categoryText.includes('tai-nghe') || categoryText.includes('headphone') || categoryText.includes('earphone') || categoryText.includes('audio') || name.includes('airpods') || name.includes('earbud') || name.includes('earphone') || name.includes('headphone') || name.includes('quietcomfort')) return 'headphone';
+    if (cat.includes('dien thoai') || cat.includes('phone') || name.includes('iphone')) return 'phone';
+    if (cat.includes('laptop') || name.includes('macbook')) return 'laptop';
+    if (cat.includes('tablet') || name.includes('ipad')) return 'tablet';
+    if (cat.includes('smartwatch') || cat.includes('watch')) return 'smartwatch';
+    if (cat.includes('camera') || name.includes('eos')) return 'camera';
+    if (cat.includes('headphone') || cat.includes('tai nghe') || name.includes('airpods')) return 'headphone';
     return 'default';
 };
 
-const getFallbackProductSpecs = (product) => {
-    const name = normalizeText(product?.name);
-    const categoryType = getCategoryType(product);
-    if (name.includes('iphone')) {
-        return [
-            { label: 'Kích thước màn hình', value: '6.3 inches' },
-            { label: 'Công nghệ màn hình', value: 'Super Retina XDR' },
-            { label: 'Camera sau', value: 'Chính 48MP f/1.6 OIS; góc siêu rộng 48MP f/2.2; telephoto 48MP f/2.8' },
-            { label: 'Camera trước', value: 'Camera 18MP Center Stage f/1.9' },
-            { label: 'Chipset', value: 'Chip A19 Pro' },
-            { label: 'Bộ nhớ trong', value: '256 GB' },
-            { label: 'Thẻ SIM', value: 'Sim kép (nano-SIM và eSIM), hỗ trợ 2 eSIM' },
-            { label: 'Hệ điều hành', value: 'iOS 26' },
-            { label: 'Độ phân giải màn hình', value: '2622 x 1206 pixels' },
-            { label: 'Tính năng màn hình', value: 'Always-On, ProMotion 120Hz, HDR, True Tone, P3, 3000 nits ngoài trời' },
-        ];
-    }
-    if (name.includes('samsung') || name.includes('galaxy')) {
-        return [
-            { label: 'Kích thước màn hình', value: '6.9 inches' },
-            { label: 'Công nghệ màn hình', value: 'Dynamic AMOLED 2X' },
-            { label: 'Camera sau', value: 'Camera siêu rộng 50MP; camera góc rộng 200MP; tele 5x 50MP; tele 3x 10MP' },
-            { label: 'Camera trước', value: '12MP' },
-            { label: 'Chipset', value: 'Snapdragon 8 Elite Gen 5 dành cho Galaxy (3nm)' },
-            { label: 'Dung lượng RAM', value: '12 GB' },
-            { label: 'Bộ nhớ trong', value: '256 GB' },
-            { label: 'Pin', value: '5000 mAh' },
-            { label: 'Độ phân giải màn hình', value: '3120 x 1440 pixels (Quad HD+)' },
-        ];
-    }
-    if (name.includes('macbook')) {
-        return [
-            { label: 'Loại card đồ họa', value: 'GPU 5 lõi, Neural Engine 16 lõi' },
-            { label: 'Dung lượng RAM', value: '8GB' },
-            { label: 'Ổ cứng', value: '256GB' },
-            { label: 'Kích thước màn hình', value: '13 inches' },
-            { label: 'Công nghệ màn hình', value: 'Liquid Retina, LED, 500 nit, hỗ trợ 1 tỷ màu' },
-            { label: 'Pin', value: 'Xem video trực tuyến đến 16 giờ; pin 36.5Wh' },
-            { label: 'Hệ điều hành', value: 'macOS' },
-            { label: 'Độ phân giải màn hình', value: '2408 x 1506 pixels' },
-            { label: 'Loại CPU', value: 'Chip Apple A18 Pro' },
-        ];
-    }
-    if (name.includes('dell') || name.includes('xps')) {
-        return [
-            { label: 'Loại card đồ họa', value: 'NVIDIA GeForce RTX 3050 6GB GDDR6' },
-            { label: 'Dung lượng RAM', value: '16GB' },
-            { label: 'Ổ cứng', value: '512GB M.2 NVMe PCIe SSD' },
-            { label: 'Kích thước màn hình', value: '15.6 inches' },
-            { label: 'Công nghệ màn hình', value: 'FHD+, 100% sRGB, chống chói' },
-            { label: 'Pin', value: 'Pin 4-cell 54Wh' },
-            { label: 'Hệ điều hành', value: 'Windows 11 Home' },
-            { label: 'Loại CPU', value: 'Intel Core i5-13420H' },
-        ];
-    }
-    if (name.includes('ipad') || categoryType === 'tablet') {
-        return [
-            { label: 'Kích thước màn hình', value: '12.1 inches' },
-            { label: 'Công nghệ màn hình', value: 'Liquid Retina' },
-            { label: 'Camera sau', value: 'Camera góc rộng 12MP' },
-            { label: 'Camera trước', value: '12MP f/2.4' },
-            { label: 'Chipset', value: 'Chip A16' },
-            { label: 'Bộ nhớ trong', value: '512 GB' },
-            { label: 'Pin', value: 'Pin Li-Po 28.93Wh' },
-            { label: 'Hệ điều hành', value: 'iPadOS 18' },
-        ];
-    }
-    if (name.includes('airpods') || categoryType === 'headphone') {
-        return [
-            { label: 'Công nghệ âm thanh', value: 'Adaptive EQ, Spatial Audio cá nhân hóa, chống ồn chủ động' },
-            { label: 'Micro', value: 'Có' },
-            { label: 'Thời lượng sử dụng pin', value: 'Tai nghe 5 giờ; đàm thoại 4.5 giờ' },
-            { label: 'Chipset', value: 'Chip tai nghe H2' },
-            { label: 'Tính năng khác', value: 'Kháng nước và bụi IP54' },
-        ];
-    }
-    return [];
-};
-
-export const getProductSpecs = (product, options = {}) => {
+export const getProductSpecs = (product) => {
     if (!product) return [];
-    const specs = Array.isArray(product.specs)
-        ? product.specs
-        : Array.isArray(product.specValues)
-            ? product.specValues
-            : Array.isArray(product.productSpecValues)
-                ? product.productSpecValues
-                : [];
-    const mappedSpecs = specs
-        .map((item) => ({
-            label: fixText(item.name || item.label || item.specName || item.code || ''),
-            value: item.value ?? item.optionValue ?? item.valueText ?? item.valueNumber ?? item.valueBool,
-            unit: item.unit || '',
-        }))
-        .filter((item) => item.label && compactValue(item.value))
-        .map((item) => ({
-            label: item.label,
-            value: item.unit ? `${fixText(item.value)} ${fixText(item.unit)}` : fixText(item.value),
-        }));
-    return mappedSpecs.length > 0 ? mappedSpecs : getFallbackProductSpecs(product);
+    const specs = Array.isArray(product.specs) ? product.specs
+        : Array.isArray(product.specValues) ? product.specValues
+        : Array.isArray(product.productSpecValues) ? product.productSpecValues : [];
+    return specs.map((item) => ({
+        label: fixText(item.name || item.label || item.specName || ''),
+        value: item.unit ? `${fixText(item.value ?? item.optionValue ?? '')} ${fixText(item.unit)}` : fixText(item.value ?? item.optionValue ?? ''),
+    })).filter((s) => s.label && s.value);
 };
 
 const getProductDescriptionParts = (product) => {
@@ -261,23 +122,10 @@ const getProductDescriptionParts = (product) => {
     return parts;
 };
 
-const getBoughtTogetherProducts = (product, catalog) => {
-    const categoryType = getCategoryType(product);
-    const accessoryFirst = ['phone', 'laptop', 'tablet'].includes(categoryType);
-    const others = catalog.filter((item) => item.id !== product?.id);
-    const isAccessory = (item) => {
-        const text = `${item.category?.name || ''} ${item.name || ''}`.toLowerCase();
-        return item.categoryId === 3 || text.includes('accessor') || text.includes('hub') || text.includes('stand') || text.includes('keyboard') || text.includes('mouse') || text.includes('airpods');
-    };
-    const preferred = accessoryFirst ? others.filter(isAccessory) : others.filter((item) => item.categoryId !== product?.categoryId);
-    return [...preferred, ...others.filter((item) => !preferred.some((preferredItem) => preferredItem.id === item.id))].slice(0, 4);
-};
-
 const getRelatedProducts = (product, catalog) => {
     const brand = product?.brand || inferBrandFromName(product?.name);
     const price = Number(product?.price || 0);
-    return catalog
-        .filter((item) => item.id !== product?.id)
+    return catalog.filter((item) => item.id !== product?.id)
         .map((item) => {
             const itemBrand = item.brand || inferBrandFromName(item.name);
             const itemPrice = Number(item.price || 0);
@@ -293,70 +141,49 @@ const getRelatedProducts = (product, catalog) => {
         .slice(0, 4);
 };
 
-const generalRatingLabels = {
-    1: 'Rất tệ',
-    2: 'Tệ',
-    3: 'Bình thường',
-    4: 'Tốt',
-    5: 'Tuyệt vời',
-};
+const ratingLabels = { 1: 'Rất tệ', 2: 'Tệ', 3: 'Bình thường', 4: 'Tốt', 5: 'Tuyệt vời' };
 
-const experienceRatingLabels = {
-    1: 'Rất kém',
-    2: 'Chưa tốt',
-    3: 'Tạm ổn',
-    4: 'Tốt',
-    5: 'Rất tốt',
+const reviewCriteria = {
+    phone: ['Hiệu năng', 'Pin', 'Camera'],
+    laptop: ['Hiệu năng', 'Màn hình', 'Pin'],
+    tablet: ['Màn hình', 'Pin', 'Hiệu năng'],
+    headphone: ['Âm thanh', 'Chống ồn', 'Pin'],
+    smartwatch: ['Sức khỏe', 'Pin', 'Thiết kế'],
+    camera: ['Hình ảnh', 'Quay video', 'Tiện dụng'],
+    default: ['Chất lượng', 'Trải nghiệm', 'Thiết kế'],
 };
-
-const reviewExperienceCriteria = {
-    phone: ['Hiệu năng', 'Thời lượng pin', 'Chất lượng camera'],
-    laptop: ['Hiệu năng', 'Màn hình', 'Thời lượng pin', 'Bàn phím / touchpad'],
-    tablet: ['Màn hình', 'Thời lượng pin', 'Hiệu năng', 'Học tập / giải trí'],
-    headphone: ['Chất lượng âm thanh', 'Chống ồn', 'Thời lượng pin', 'Độ thoải mái khi đeo'],
-    smartwatch: ['Theo dõi sức khỏe', 'Thời lượng pin', 'Độ chính xác', 'Thiết kế'],
-    camera: ['Chất lượng hình ảnh', 'Chống rung', 'Quay video', 'Tính tiện dụng'],
-    default: ['Chất lượng sản phẩm', 'Trải nghiệm sử dụng', 'Thiết kế'],
-};
-
-const getReviewExperienceCriteria = (product) => reviewExperienceCriteria[getCategoryType(product)] || reviewExperienceCriteria.default;
 
 const normalizeReview = (review, index = 0) => {
-    const rating = Math.max(1, Math.min(5, Number(review?.rating || review?.stars || review?.score || 5)));
+    const rating = Math.max(1, Math.min(5, Number(review?.rating || review?.stars || 5)));
     return {
         id: review?.id || `review-${index}`,
-        customerName: fixText(review?.customerName || review?.userName || review?.name || 'Khách hàng'),
+        customerName: fixText(review?.customerName || review?.userName || 'Khách hàng'),
         rating,
-        date: fixText(review?.date || review?.createdAt || review?.time || 'Gần đây'),
-        content: fixText(review?.content || review?.comment || review?.message || review?.experience),
+        date: fixText(review?.date || 'Gần đây'),
+        content: fixText(review?.content || review?.comment || review?.message || ''),
         experienceRatings: review?.experienceRatings && typeof review.experienceRatings === 'object' ? review.experienceRatings : {},
         images: Array.isArray(review?.images) ? review.images.filter(Boolean) : [],
         tags: Array.isArray(review?.tags) ? review.tags.filter(Boolean) : [],
     };
 };
 
-const getProductReviews = (product, temporaryReviews = []) => {
-    const rawReviews = Array.isArray(product?.reviews) ? product.reviews : [];
-    return [...temporaryReviews, ...rawReviews.map(normalizeReview)]
-        .filter((review) => review.content);
-};
-
-const getReviewSummary = (reviews) => {
-    const total = reviews.length;
-    if (!total) {
-        return {
-            average: 0,
-            total: 0,
-            distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-        };
-    }
-    const distribution = reviews.reduce((acc, review) => {
-        const star = Math.round(review.rating);
-        acc[star] = (acc[star] || 0) + 1;
-        return acc;
-    }, { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
-    const average = reviews.reduce((sum, review) => sum + review.rating, 0) / total;
-    return { average, total, distribution };
+const normalizeQuestion = (item, index = 0) => {
+    if (!item) return null;
+    const rawAnswer = item.answer || item.reply || (Array.isArray(item.answers) ? item.answers[0] : null);
+    const answer = rawAnswer ? {
+        adminName: fixText(rawAnswer.adminName || 'Quản trị viên'),
+        content: fixText(rawAnswer.content || rawAnswer.answer || rawAnswer),
+        createdAt: rawAnswer.createdAt || rawAnswer.date,
+    } : null;
+    const question = compactValue(item.question || item.content || item.message);
+    if (!question) return null;
+    return {
+        id: item.id || `question-${index}`,
+        customerName: fixText(item.customerName || 'Khách hàng'),
+        question: fixText(question),
+        createdAt: item.createdAt || item.date,
+        answer: answer?.content ? answer : null,
+    };
 };
 
 const formatRelativeTime = (value) => {
@@ -364,71 +191,11 @@ const formatRelativeTime = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return String(value);
     const diffMs = Date.now() - date.getTime();
-    if (diffMs < 60 * 1000) return 'Vừa xong';
-    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+    if (diffMs < 60_000) return 'Vừa xong';
+    const hours = Math.floor(diffMs / 3_600_000);
     if (hours < 24) return `${Math.max(1, hours)} giờ trước`;
-    const days = Math.floor(hours / 24);
-    return `${Math.max(1, days)} ngày trước`;
+    return `${Math.max(1, Math.floor(hours / 24))} ngày trước`;
 };
-
-const normalizeQuestion = (item, index = 0) => {
-    if (!item) return null;
-    const rawAnswer = item.answer || item.reply || item.response || (Array.isArray(item.answers) ? item.answers[0] : null);
-    const answer = rawAnswer
-        ? {
-            adminName: fixText(rawAnswer.adminName || rawAnswer.authorName || rawAnswer.name || 'Quản trị viên'),
-            content: fixText(rawAnswer.content || rawAnswer.answer || rawAnswer.message || rawAnswer.reply || rawAnswer),
-            createdAt: rawAnswer.createdAt || rawAnswer.date || rawAnswer.time,
-        }
-        : null;
-    const question = compactValue(item.question || item.content || item.message || item.text);
-    if (!question) return null;
-    return {
-        id: item.id || item.questionId || `question-${index}`,
-        customerName: fixText(item.customerName || item.userName || item.name || 'Khách hàng'),
-        question: fixText(question),
-        createdAt: item.createdAt || item.date || item.time,
-        answer: answer?.content ? answer : null,
-    };
-};
-
-const getProductQuestions = (product, temporaryQuestions = []) => {
-    const rawQuestions = Array.isArray(product?.questions)
-        ? product.questions
-        : Array.isArray(product?.qna)
-            ? product.qna
-            : [];
-    return [...temporaryQuestions, ...rawQuestions.map(normalizeQuestion).filter(Boolean)];
-};
-
-const getAvatarInitial = (name) => String(name || 'K').trim().charAt(0).toUpperCase() || 'K';
-
-const StarRating = ({ value = 0, small = false }) => (
-    <span className={`product-review-stars ${small ? 'is-small' : ''}`} aria-label={`${value} sao`}>
-        {Array.from({ length: 5 }).map((_, index) => (
-            <i key={`star-${index}`} className={`fas fa-star ${index < Math.round(value) ? '' : 'text-muted'}`}></i>
-        ))}
-    </span>
-);
-
-const ReviewStarPicker = ({ value, labels = experienceRatingLabels, onChange, compact = false }) => (
-    <div className={`review-star-picker ${compact ? 'is-compact' : ''}`}>
-        <div className="review-star-buttons" role="radiogroup" aria-label="Chọn số sao">
-            {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                    key={star}
-                    type="button"
-                    className={star <= value ? 'is-active' : ''}
-                    onClick={() => onChange(star)}
-                    aria-label={`${star} sao`}
-                >
-                    <i className="fas fa-star"></i>
-                </button>
-            ))}
-        </div>
-        <span>{value ? labels[value] : 'Chưa chọn'}</span>
-    </div>
-);
 
 const getOptionLabel = (option, fallback = '') => fixText(
     typeof option === 'object'
@@ -437,47 +204,26 @@ const getOptionLabel = (option, fallback = '') => fixText(
 );
 
 const normalizeVersionOption = (option, index = 0) => {
-    if (typeof option === 'string' || typeof option === 'number') {
-        return { id: `version-${option}`, label: String(option) };
-    }
+    if (typeof option === 'string' || typeof option === 'number') return { id: `version-${option}`, label: String(option) };
     if (!option || typeof option !== 'object') return null;
-    const label = getOptionLabel(option, option.id || `Phiên bản ${index + 1}`);
+    const label = getOptionLabel(option, `Phiên bản ${index + 1}`);
     if (!label) return null;
-    return {
-        id: option.id || option.sku || `version-${label}`,
-        label,
-        price: option.price,
-        oldPrice: option.oldPrice,
-        stock: option.stock,
-        sku: option.sku,
-        image: option.image || option.imageUrl,
-    };
+    return { id: option.id || option.sku || `version-${label}`, label, price: option.price, oldPrice: option.oldPrice, stock: option.stock, sku: option.sku, image: option.image || option.imageUrl };
 };
 
 const normalizeColorOption = (option, index = 0) => {
-    if (typeof option === 'string' || typeof option === 'number') {
-        return { id: `color-${option}`, label: String(option) };
-    }
+    if (typeof option === 'string' || typeof option === 'number') return { id: `color-${option}`, label: String(option) };
     if (!option || typeof option !== 'object') return null;
-    const label = getOptionLabel(option, option.color || option.id || `Màu ${index + 1}`);
+    const label = getOptionLabel(option, `Màu ${index + 1}`);
     if (!label) return null;
-    return {
-        id: option.id || option.sku || `color-${label}`,
-        label,
-        colorCode: option.colorCode || option.hex || option.code,
-        price: option.price,
-        oldPrice: option.oldPrice,
-        stock: option.stock,
-        sku: option.sku,
-        image: option.image || option.imageUrl || option.thumbnail,
-    };
+    return { id: option.id || option.sku || `color-${label}`, label, colorCode: option.colorCode || option.hex, price: option.price, oldPrice: option.oldPrice, stock: option.stock, sku: option.sku, image: option.image || option.imageUrl };
 };
 
 const uniqueOptions = (options) => {
     const seen = new Set();
-    return options.filter((option) => {
-        if (!option?.label) return false;
-        const key = normalizeText(option.label);
+    return options.filter((o) => {
+        if (!o?.label) return false;
+        const key = normalizeText(o.label);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -486,38 +232,55 @@ const uniqueOptions = (options) => {
 
 const getProductVersions = (product) => {
     const variants = Array.isArray(product?.variants) ? product.variants : [];
-    return uniqueOptions(variants
-        .map((variant, index) => normalizeVersionOption({
-            ...variant,
-            label: variant.variantName || variant.version || variant.storage || variant.internalStorage || variant.label || variant.name,
-        }, index))
-        .filter(Boolean));
+    return uniqueOptions(variants.map((v, i) => normalizeVersionOption({ ...v, label: v.variantName || v.version || v.storage || v.label || v.name }, i)).filter(Boolean));
 };
 
 const getProductColors = (product) => {
     const variants = Array.isArray(product?.variants) ? product.variants : [];
-    return uniqueOptions(variants
-        .map((variant, index) => normalizeColorOption({
-            ...variant,
-            label: variant.colorName || variant.color || variant.label || variant.name,
-        }, index))
-        .filter(Boolean));
+    return uniqueOptions(variants.map((v, i) => normalizeColorOption({ ...v, label: v.colorName || v.color || v.label || v.name }, i)).filter(Boolean));
 };
 
-const findSelectedVariant = (product, selectedVersion, selectedColor) => {
+const findSelectedVariant = (product, sv, sc) => {
     const variants = Array.isArray(product?.variants) ? product.variants : [];
     if (!variants.length) return null;
-    const versionText = normalizeText(selectedVersion?.label);
-    const colorText = normalizeText(selectedColor?.label);
-    const matches = (variant) => {
-        const variantVersion = normalizeText(variant.variantName || variant.version || variant.storage || variant.internalStorage || variant.label || variant.name);
-        const variantColor = normalizeText(variant.colorName || variant.color);
-        const versionOk = !versionText || variantVersion === versionText;
-        const colorOk = !colorText || variantColor === colorText;
-        return versionOk && colorOk;
-    };
-    return variants.find(matches) || null;
+    const versionText = normalizeText(sv?.label);
+    const colorText = normalizeText(sc?.label);
+    return variants.find((v) => {
+        const vVer = normalizeText(v.variantName || v.version || v.storage || v.label || v.name);
+        const vCol = normalizeText(v.colorName || v.color);
+        return (!versionText || vVer === versionText) && (!colorText || vCol === colorText);
+    }) || null;
 };
+
+const Stars = ({ value = 5, size = 'sm' }) => (
+    <div className={cn("inline-flex items-center gap-0.5", size === 'sm' ? "text-xs" : "text-base")} aria-label={`${value} star rating`}>
+        {Array.from({ length: 5 }).map((_, i) => (
+            <i key={i} className={cn(i < Math.round(value) ? "fas fa-star text-[var(--color-gold)]" : "far fa-star text-[var(--color-fg-dim)]")}></i>
+        ))}
+    </div>
+);
+
+const StarPicker = ({ value, onChange, labels = ratingLabels }) => (
+    <div className="flex items-center gap-3">
+        <div role="radiogroup" className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                    key={star}
+                    type="button"
+                    aria-label={`${star} sao`}
+                    onClick={() => onChange(star)}
+                    className={cn(
+                        "text-lg transition-colors",
+                        star <= value ? "text-[var(--color-gold)]" : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg-muted)]"
+                    )}
+                >
+                    <i className="fas fa-star"></i>
+                </button>
+            ))}
+        </div>
+        <span className="text-xs text-[var(--color-fg-muted)]">{value ? labels[value] : 'Chưa chọn'}</span>
+    </div>
+);
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -535,6 +298,7 @@ const ProductDetail = () => {
     const [activeImage, setActiveImage] = useState('');
     const [claimedCouponIds, setClaimedCouponIds] = useState([]);
     const [couponMsg, setCouponMsg] = useState('');
+    const [activeTab, setActiveTab] = useState('description');
     const [showAllReviews, setShowAllReviews] = useState(false);
     const [temporaryReviews, setTemporaryReviews] = useState([]);
     const [reviewMsg, setReviewMsg] = useState('');
@@ -562,10 +326,7 @@ const ProductDetail = () => {
     const productCategoryName = fixText(product?.category?.name || product?.categoryName || product?.category || 'Electronics');
     const productVersions = useMemo(() => getProductVersions(product), [product]);
     const productColors = useMemo(() => getProductColors(product), [product]);
-    const selectedVariant = useMemo(
-        () => findSelectedVariant(product, selectedVersion, selectedColor),
-        [product, selectedVersion, selectedColor]
-    );
+    const selectedVariant = useMemo(() => findSelectedVariant(product, selectedVersion, selectedColor), [product, selectedVersion, selectedColor]);
     const productStock = Number(selectedVariant?.stock ?? selectedVersion?.stock ?? selectedColor?.stock ?? product?.stock ?? 0);
     const productPrice = Number(selectedVariant?.price ?? selectedVersion?.price ?? selectedColor?.price ?? product?.price ?? 0);
     const productDescription = fixText(product?.longDescription || product?.description);
@@ -574,48 +335,52 @@ const ProductDetail = () => {
     const selectedImage = selectedVariant?.imageUrl || selectedVariant?.image || selectedColor?.image || selectedVersion?.image || '';
     const displayImage = selectedImage ? resolveProductImage({ id: product?.id, imageUrl: selectedImage }) : productImage;
     const galleryImages = useMemo(() => {
-        const productImages = Array.isArray(product?.images) ? product.images.map((image) => image.imageUrl || image.url) : [];
-        const variantImages = Array.isArray(product?.variants) ? product.variants.map((variant) => variant.imageUrl || variant.image) : [];
+        const productImages = Array.isArray(product?.images) ? product.images.map((i) => i.imageUrl || i.url) : [];
+        const variantImages = Array.isArray(product?.variants) ? product.variants.map((v) => v.imageUrl || v.image) : [];
         const images = [
-            displayImage,
-            productImage,
-            ...productImages.map((imageUrl) => resolveProductImage({ id: product?.id, imageUrl })),
-            ...variantImages.map((imageUrl) => resolveProductImage({ id: product?.id, imageUrl })),
+            displayImage, productImage,
+            ...productImages.map((u) => resolveProductImage({ id: product?.id, imageUrl: u })),
+            ...variantImages.map((u) => resolveProductImage({ id: product?.id, imageUrl: u })),
         ];
         return [...new Set(images.filter(Boolean))];
-    }, [displayImage, productImage]);
+    }, [displayImage, productImage, product]);
     const localCatalog = useMemo(() => productApi.getLocalCatalog?.() || [], [product?.id]);
     const productSpecifications = useMemo(() => getProductSpecs(product), [product]);
     const descriptionParts = useMemo(() => getProductDescriptionParts(product), [product]);
-    const reviewExperienceItems = useMemo(() => getReviewExperienceCriteria(product), [product]);
-    const productReviews = useMemo(() => getProductReviews(product, temporaryReviews), [product, temporaryReviews]);
-    const reviewSummary = useMemo(() => getReviewSummary(productReviews), [productReviews]);
+    const reviewExperienceItems = useMemo(() => reviewCriteria[getCategoryType(product)] || reviewCriteria.default, [product]);
+    const productReviews = useMemo(() => {
+        const raw = Array.isArray(product?.reviews) ? product.reviews : [];
+        return [...temporaryReviews, ...raw.map(normalizeReview)].filter((r) => r.content);
+    }, [product, temporaryReviews]);
+    const reviewSummary = useMemo(() => {
+        if (!productReviews.length) return { average: 0, total: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } };
+        const distribution = productReviews.reduce((acc, r) => {
+            const s = Math.round(r.rating);
+            acc[s] = (acc[s] || 0) + 1;
+            return acc;
+        }, { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+        const average = productReviews.reduce((s, r) => s + r.rating, 0) / productReviews.length;
+        return { average, total: productReviews.length, distribution };
+    }, [productReviews]);
     const visibleReviews = showAllReviews ? productReviews : productReviews.slice(0, 3);
-    const productQuestions = useMemo(() => getProductQuestions(product, temporaryQuestions), [product, temporaryQuestions]);
-    const computedRelatedProducts = useMemo(
-        () => {
-            const scoredProducts = getRelatedProducts(product, localCatalog);
-            return scoredProducts.length ? scoredProducts : relatedProducts.slice(0, 4);
-        },
-        [product, localCatalog, relatedProducts]
-    );
+    const productQuestions = useMemo(() => {
+        const raw = Array.isArray(product?.questions) ? product.questions : Array.isArray(product?.qna) ? product.qna : [];
+        return [...temporaryQuestions, ...raw.map(normalizeQuestion).filter(Boolean)];
+    }, [product, temporaryQuestions]);
+    const computedRelatedProducts = useMemo(() => {
+        const scored = getRelatedProducts(product, localCatalog);
+        return scored.length ? scored : relatedProducts.slice(0, 4);
+    }, [product, localCatalog, relatedProducts]);
     const productCouponContext = useMemo(() => ({
-        product,
-        subtotal: productPrice,
+        product, subtotal: productPrice,
         cartItems: product ? [{ product, quantity: 1 }] : [],
         currentHour: new Date().getHours(),
     }), [product, productPrice]);
-    const productCoupons = useMemo(
-        () => getAvailableCouponsForProduct(product, coupons, productCouponContext),
-        [product, productCouponContext]
-    );
+    const productCoupons = useMemo(() => getAvailableCouponsForProduct(product, coupons, productCouponContext), [product, productCouponContext]);
     const visibleProductCoupons = productCoupons.slice(0, 3);
 
     useEffect(() => {
-        setPageMeta({
-            title: `${t('Product Details')} | Electro`,
-            description: t('Product meta description'),
-        });
+        setPageMeta({ title: `${t('Product Details')} | TechStore`, description: t('Product meta description') });
         setClaimedCouponIds(getClaimedCoupons());
     }, []);
 
@@ -630,32 +395,20 @@ const ProductDetail = () => {
         let cancelled = false;
         const instantProduct = getInstantProduct(numericId);
 
-        setError('');
-        setQuantity(1);
-        setAddedMsg('');
-        setCouponMsg('');
-        setShowAllReviews(false);
-        setReviewMsg('');
-        setReviewModalOpen(false);
-        setReviewRating(0);
-        setExperienceRatings({});
-        setReviewContent('');
-        setReviewImages([]);
-        setReviewError('');
-        setTemporaryReviews([]);
-        setTemporaryQuestions([]);
-        setQuestionInput('');
-        setQuestionError('');
-        setQuestionMsg('');
-        setExpandedQuestionIds([]);
-        setSelectedVersion(null);
-        setSelectedColor(null);
+        setError(''); setQuantity(1); setAddedMsg(''); setCouponMsg('');
+        setShowAllReviews(false); setReviewMsg(''); setReviewModalOpen(false);
+        setReviewRating(0); setExperienceRatings({}); setReviewContent('');
+        setReviewImages([]); setReviewError(''); setTemporaryReviews([]);
+        setTemporaryQuestions([]); setQuestionInput(''); setQuestionError('');
+        setQuestionMsg(''); setExpandedQuestionIds([]);
+        setSelectedVersion(null); setSelectedColor(null);
+        setActiveTab('description');
 
         if (instantProduct) {
             setProduct(instantProduct);
             setRelatedProducts(getRelatedProductsFromLocalCatalog(instantProduct));
             rememberRecentProduct(instantProduct);
-            setRecentlyViewedProducts(safeParseJson(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]', []).filter((item) => item?.id !== instantProduct.id).slice(0, 4));
+            setRecentlyViewedProducts(safeParseJson(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]', []).filter((i) => i?.id !== instantProduct.id).slice(0, 4));
             cacheProductDetail(instantProduct);
         }
 
@@ -671,11 +424,10 @@ const ProductDetail = () => {
                     setRelatedProducts([]);
                     return;
                 }
-
                 setProduct(data);
                 setRelatedProducts(getRelatedProductsFromLocalCatalog(data));
                 rememberRecentProduct(data);
-                setRecentlyViewedProducts(safeParseJson(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]', []).filter((item) => item?.id !== data.id).slice(0, 4));
+                setRecentlyViewedProducts(safeParseJson(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]', []).filter((i) => i?.id !== data.id).slice(0, 4));
                 cacheProductDetail(data);
             } catch (e) {
                 if (cancelled) return;
@@ -689,27 +441,16 @@ const ProductDetail = () => {
         };
 
         loadProduct();
-
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [numericId]);
 
-    useEffect(() => {
-        setActiveImage(displayImage);
-    }, [displayImage]);
+    useEffect(() => { setActiveImage(displayImage); }, [displayImage]);
 
     useEffect(() => {
         if (!reviewModalOpen) return undefined;
-        const handleEscape = (event) => {
-            if (event.key === 'Escape') setReviewModalOpen(false);
-        };
+        const handleEscape = (e) => { if (e.key === 'Escape') setReviewModalOpen(false); };
         document.addEventListener('keydown', handleEscape);
-        document.body.classList.add('review-modal-open');
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.classList.remove('review-modal-open');
-        };
+        return () => document.removeEventListener('keydown', handleEscape);
     }, [reviewModalOpen]);
 
     const handleAddToCart = () => {
@@ -725,26 +466,20 @@ const ProductDetail = () => {
             return;
         }
         addItem({
-            ...product,
-            id: product.id,
-            productId: product.id,
+            ...product, id: product.id, productId: product.id,
             variantId: selectedVariant?.id,
             selectedVersion: selectedVersion?.label || '',
             selectedColor: selectedColor?.label || '',
-            price: productPrice,
-            oldPrice,
-            stock: productStock,
-            sku: displaySku,
-            image: displayImage,
-            imageUrl: displayImage,
+            price: productPrice, oldPrice, stock: productStock,
+            sku: displaySku, image: displayImage, imageUrl: displayImage,
             name: [product.name, selectedVersion?.label, selectedColor?.label].filter(Boolean).join(' - '),
         }, quantity);
-        setAddedMsg(`Thêm vào giỏ hàng: ${quantity}`);
+        setAddedMsg(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
         setTimeout(() => setAddedMsg(''), 2500);
     };
 
-    const showCouponMessage = (message) => {
-        setCouponMsg(message);
+    const showCouponMessage = (msg) => {
+        setCouponMsg(msg);
         setTimeout(() => setCouponMsg(''), 2500);
     };
 
@@ -758,15 +493,6 @@ const ProductDetail = () => {
         showCouponMessage(result.success ? 'Đã lưu phiếu vào ví' : fixText(result.message));
     };
 
-    const handleCopyCoupon = async (coupon) => {
-        if (!isCouponClaimed(coupon.id)) {
-            showCouponMessage('Bạn cần nhận phiếu trước khi sử dụng');
-            return;
-        }
-        await navigator.clipboard?.writeText(coupon.code);
-        showCouponMessage('Đã sao chép');
-    };
-
     const changeActiveImage = (direction) => {
         const currentIndex = Math.max(0, galleryImages.indexOf(activeImage));
         const nextIndex = (currentIndex + direction + galleryImages.length) % galleryImages.length;
@@ -774,113 +500,81 @@ const ProductDetail = () => {
     };
 
     const openReviewModal = () => {
-        setReviewError('');
-        setReviewMsg('');
+        setReviewError(''); setReviewMsg('');
         setReviewModalOpen(true);
     };
 
     const handleReviewImageChange = (event) => {
         const files = Array.from(event.target.files || []).slice(0, Math.max(0, 3 - reviewImages.length));
-        const nextImages = files.map((file) => ({
-            id: `${file.name}-${file.lastModified}-${Date.now()}`,
-            name: file.name,
-            preview: URL.createObjectURL(file),
-        }));
-        setReviewImages((current) => [...current, ...nextImages].slice(0, 3));
+        const nextImages = files.map((f) => ({ id: `${f.name}-${f.lastModified}-${Date.now()}`, name: f.name, preview: URL.createObjectURL(f) }));
+        setReviewImages((c) => [...c, ...nextImages].slice(0, 3));
         event.target.value = '';
     };
 
     const removeReviewImage = (imageId) => {
         setReviewImages((current) => {
-            const removed = current.find((image) => image.id === imageId);
+            const removed = current.find((i) => i.id === imageId);
             if (removed?.preview) URL.revokeObjectURL(removed.preview);
-            return current.filter((image) => image.id !== imageId);
+            return current.filter((i) => i.id !== imageId);
         });
     };
 
-    const handleSubmitReview = (event) => {
-        event.preventDefault();
+    const handleSubmitReview = (e) => {
+        e.preventDefault();
         const content = reviewContent.trim();
-        if (!reviewRating) {
-            setReviewError('Vui lòng chọn đánh giá chung.');
-            return;
-        }
-        if (content.length < 15) {
-            setReviewError('Vui lòng nhập nhận xét tối thiểu 15 ký tự.');
-            return;
-        }
+        if (!reviewRating) return setReviewError('Vui lòng chọn đánh giá chung.');
+        if (content.length < 15) return setReviewError('Vui lòng nhập nhận xét tối thiểu 15 ký tự.');
         const newReview = normalizeReview({
             id: `temp-review-${Date.now()}`,
             customerName: 'Khách hàng',
             rating: reviewRating,
             date: new Date().toLocaleDateString('vi-VN'),
             createdAt: new Date().toISOString(),
-            content,
-            experienceRatings,
-            images: reviewImages.map((image) => image.preview),
+            content, experienceRatings,
+            images: reviewImages.map((i) => i.preview),
         });
-        setTemporaryReviews((current) => [newReview, ...current]);
-        setReviewRating(0);
-        setExperienceRatings({});
-        setReviewContent('');
-        setReviewImages([]);
-        setReviewError('');
-        setReviewModalOpen(false);
+        setTemporaryReviews((c) => [newReview, ...c]);
+        setReviewRating(0); setExperienceRatings({}); setReviewContent('');
+        setReviewImages([]); setReviewError(''); setReviewModalOpen(false);
         setReviewMsg('Cảm ơn bạn đã gửi đánh giá.');
     };
 
-    const toggleQuestionAnswer = (questionId) => {
-        setExpandedQuestionIds((current) => (
-            current.includes(questionId)
-                ? current.filter((item) => item !== questionId)
-                : [...current, questionId]
-        ));
+    const toggleQuestionAnswer = (id) => {
+        setExpandedQuestionIds((c) => c.includes(id) ? c.filter((i) => i !== id) : [...c, id]);
     };
 
-    const handleSubmitQuestion = (event) => {
-        event.preventDefault();
+    const handleSubmitQuestion = (e) => {
+        e.preventDefault();
         const question = questionInput.trim();
         if (question.length < 10) {
             setQuestionError('Vui lòng nhập câu hỏi tối thiểu 10 ký tự.');
             setQuestionMsg('');
             return;
         }
-        setTemporaryQuestions((current) => [{
+        setTemporaryQuestions((c) => [{
             id: `temp-question-${Date.now()}`,
             customerName: 'Khách hàng',
-            question,
-            createdAt: new Date().toISOString(),
+            question, createdAt: new Date().toISOString(),
             answer: null,
-        }, ...current]);
-        setQuestionInput('');
-        setQuestionError('');
+        }, ...c]);
+        setQuestionInput(''); setQuestionError('');
         setQuestionMsg('Câu hỏi của bạn đã được gửi.');
     };
 
     if (loading) {
         return (
             <>
-                <PageHero title={t('Product Details')} current={t('Product Details')} />
-                <div className="container py-5">
-                    <div className="row g-4 align-items-start placeholder-glow">
-                        <div className="col-md-5">
-                            <div className="placeholder w-100" style={{ height: 360 }}></div>
-                        </div>
-                        <div className="col-md-7">
-                            <div className="placeholder col-8 mb-3" style={{ height: 32 }}></div>
-                            <div className="placeholder col-5 mb-2"></div>
-                            <div className="placeholder col-4 mb-4"></div>
-                            <div className="placeholder col-3 mb-4" style={{ height: 48 }}></div>
-                            <div className="row g-3">
-                                {Array.from({ length: 6 }).map((_, index) => (
-                                    <div className="col-sm-6" key={`spec-loading-${index}`}>
-                                        <div className="placeholder col-10"></div>
-                                    </div>
-                                ))}
-                            </div>
+                <PageHero title={t('Product Details')} current={t('Product Details')} kicker="Product" />
+                <section className="ts-container py-12">
+                    <div className="grid gap-8 lg:grid-cols-2">
+                        <div className="aspect-square animate-pulse rounded-md bg-[var(--color-surface)]" />
+                        <div className="space-y-4">
+                            <div className="h-8 w-2/3 animate-pulse rounded bg-[var(--color-surface)]" />
+                            <div className="h-4 w-1/3 animate-pulse rounded bg-[var(--color-surface)]" />
+                            <div className="h-12 w-1/4 animate-pulse rounded bg-[var(--color-surface)]" />
                         </div>
                     </div>
-                </div>
+                </section>
             </>
         );
     }
@@ -888,719 +582,592 @@ const ProductDetail = () => {
     if (error || !product) {
         return (
             <>
-                <PageHero title={t('Product Details')} current={t('Product Details')} />
-                <div className="container py-5 text-center">
-                    <i className="fas fa-exclamation-circle fa-4x text-muted mb-4"></i>
-                    <div className="alert alert-light border d-inline-block">{error || t('Product not found')}</div>
-                    <br />
-                    <Link to="/shop" className="btn btn-outline-primary mt-3">{t('Back to Shop')}</Link>
-                </div>
+                <PageHero title={t('Product Details')} current={t('Product Details')} kicker="Product" />
+                <section className="ts-container flex flex-col items-center py-20 text-center">
+                    <i className="fas fa-exclamation-circle text-4xl text-[var(--color-fg-dim)]"></i>
+                    <p className="mt-6 text-sm text-[var(--color-fg-muted)]">{error || t('Product not found')}</p>
+                    <Link to="/shop" className="ts-btn ts-btn-primary mt-6">{t('Back to Shop')}</Link>
+                </section>
             </>
         );
     }
 
     return (
         <>
-            <PageHero title={t('Product Details')} current={productName || t('Product Details')} />
-            <div className="container-fluid single-product-page py-5">
-                <div className="container">
-                    <nav aria-label="breadcrumb" className="mb-4">
-                        <ol className="breadcrumb">
-                            <li className="breadcrumb-item"><Link to="/">{t('Home')}</Link></li>
-                            <li className="breadcrumb-item">
-                                <Link to={`/shop?categoryId=${product.categoryId || ''}`}>{productCategoryName}</Link>
-                            </li>
-                            <li className="breadcrumb-item active text-truncate" style={{ maxWidth: 220 }}>{productName}</li>
-                        </ol>
-                    </nav>
+            <PageHero title={t('Product Details')} current={productName || t('Product Details')} kicker="Product" />
 
-                    <div className="row g-5">
-                        <main className="col-12">
-                            <motion.div
-                                className="row g-4 align-items-start mb-5"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <div className="col-lg-5">
-                                    <div className="bg-light rounded text-center p-4 position-relative">
-                                        <button type="button" className="btn btn-link position-absolute top-50 start-0 translate-middle-y text-primary" onClick={() => changeActiveImage(-1)}>
-                                            <i className="fas fa-long-arrow-alt-left"></i>
-                                        </button>
-                                        <img src={activeImage || productImage} className="img-fluid" alt={productName} style={{ height: 290, objectFit: 'contain' }} />
-                                        <button type="button" className="btn btn-link position-absolute top-50 end-0 translate-middle-y text-primary" onClick={() => changeActiveImage(1)}>
-                                            <i className="fas fa-long-arrow-alt-right"></i>
-                                        </button>
-                                    </div>
-                                    <div className="d-flex justify-content-center gap-3 mt-4 flex-wrap">
-                                        {galleryImages.map((image) => (
-                                            <button
-                                                key={image}
-                                                type="button"
-                                                className={`btn rounded-circle p-2 ${activeImage === image ? 'border-primary border-2' : 'border-primary'}`}
-                                                onClick={() => setActiveImage(image)}
-                                                style={{ width: 66, height: 66 }}
-                                            >
-                                                <img src={image} alt="" className="img-fluid" style={{ width: 46, height: 46, objectFit: 'contain' }} />
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+            <section className="ts-container py-12">
+                {/* Breadcrumb */}
+                <nav aria-label="breadcrumb" className="mb-8 flex items-center gap-2 text-xs text-[var(--color-fg-dim)]">
+                    <Link to="/" className="hover:text-[var(--color-accent)]">{t('Home')}</Link>
+                    <span className="text-[var(--color-border-strong)]">·</span>
+                    <Link to={`/shop?categoryId=${product.categoryId || ''}`} className="hover:text-[var(--color-accent)]">{productCategoryName}</Link>
+                    <span className="text-[var(--color-border-strong)]">·</span>
+                    <span className="truncate text-[var(--color-fg)]">{productName}</span>
+                </nav>
 
-                                <div className="col-lg-7">
-                                    <h4 className="fw-bold mb-3">{productName}</h4>
-                                    <p className="text-muted mb-3">{t('Category')}: {productCategoryName}</p>
-                                    <div className="d-flex align-items-baseline gap-2 mb-3">
-                                        <h5 className="fw-bold mb-0">{formatCurrency(productPrice)}</h5>
-                                        {oldPrice > productPrice && <del className="text-danger">{formatCurrency(oldPrice)}</del>}
-                                    </div>
-                                    <Rating />
-                                    <div className="d-flex gap-3 my-4 flex-wrap">
-                                        <button type="button" className={`btn rounded px-4 ${isInCompare(product.id) ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => toggleCompare(product)}>
-                                            <i className="fas fa-random me-2"></i>{t('Compare')}
-                                        </button>
-                                        <button type="button" className={`btn rounded px-4 ${isInWishlist(product.id) ? 'btn-danger' : 'btn-outline-danger'}`} onClick={() => toggleWishlist(product)}>
-                                            <i className="fas fa-heart me-2"></i>{t('Wishlist')}
-                                        </button>
-                                    </div>
-                                    <p className="text-muted mb-0">Mã sản phẩm: {displaySku}</p>
-                                    <p className="text-muted">
-                                        {t('Availability')}: {' '}
-                                        <span className={`fw-bold ${productStock > 0 ? 'text-primary' : 'text-secondary'}`}>
-                                            {productStock > 0 ? `${t('In Stock')} (${productStock})` : t('Out of Stock')}
-                                        </span>
-                                    </p>
-                                    {productVersions.length > 0 && (
-                                        <div className="product-option-group">
-                                            <div className="product-option-title">Phiên bản</div>
-                                            <div className="product-version-grid">
-                                                {productVersions.map((version) => {
-                                                    const active = selectedVersion?.id === version.id;
-                                                    return (
-                                                        <button
-                                                            key={version.id}
-                                                            type="button"
-                                                            className={`product-version-option ${active ? 'is-active' : ''}`}
-                                                            onClick={() => setSelectedVersion(version)}
-                                                        >
-                                                            <strong>{version.label}</strong>
-                                                            {version.price != null && <span>{formatCurrency(version.price)}</span>}
-                                                            {version.stock === 0 && <em>Hết hàng</em>}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {productColors.length > 0 && (
-                                        <div className="product-option-group">
-                                            <div className="product-option-title">Màu sắc</div>
-                                            <div className="product-color-grid">
-                                                {productColors.map((color) => {
-                                                    const active = selectedColor?.id === color.id;
-                                                    const colorImage = color.image ? resolveProductImage({ id: product.id, imageUrl: color.image }) : '';
-                                                    return (
-                                                        <button
-                                                            key={color.id}
-                                                            type="button"
-                                                            className={`product-color-option ${active ? 'is-active' : ''}`}
-                                                            onClick={() => {
-                                                                setSelectedColor(color);
-                                                                if (colorImage) setActiveImage(colorImage);
-                                                            }}
-                                                        >
-                                                            {colorImage ? (
-                                                                <img src={colorImage} alt="" />
-                                                            ) : (
-                                                                <span className="product-color-swatch" style={{ backgroundColor: color.colorCode || '#f1f3f5' }}></span>
-                                                            )}
-                                                            <span>
-                                                                <strong>{color.label}</strong>
-                                                                {color.price != null && <small>{formatCurrency(color.price)}</small>}
-                                                                {color.stock === 0 && <em>Hết hàng</em>}
-                                                            </span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {productVersions.length === 0 && productColors.length === 0 && (
-                                        <div className="product-detail-empty mb-3">Chưa có dữ liệu</div>
-                                    )}
-                                    <p className="text-muted">{productDescription || t('No description')}</p>
-
-                                    <div className="d-flex align-items-center gap-3 my-4">
-                                        <button type="button" className="btn btn-sm btn-light rounded-circle" onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1}>
-                                            <i className="fas fa-minus"></i>
-                                        </button>
-                                        <span>{quantity}</span>
-                                        <button type="button" className="btn btn-sm btn-light rounded-circle" onClick={() => setQuantity((value) => Math.min(productStock, value + 1))} disabled={productStock <= 0 || quantity >= productStock}>
-                                            <i className="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-
-                                    {addedMsg && (
-                                        <div className="alert alert-success py-2 mb-3 d-flex align-items-center gap-2">
-                                            <i className="fas fa-check-circle"></i>{addedMsg}
-                                        </div>
-                                    )}
-
-                                    <button type="button" className="btn btn-primary rounded-pill px-4 py-2" onClick={handleAddToCart} disabled={productStock <= 0}>
-                                        <i className="fas fa-shopping-bag me-2"></i>{t('Add To Cart')}
+                {/* Main grid */}
+                <div className="grid gap-10 lg:grid-cols-[1.05fr_1fr]">
+                    {/* Gallery */}
+                    <div>
+                        <div className="relative aspect-square overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                            <img src={activeImage || productImage} alt={productName} className="h-full w-full object-contain p-12" />
+                            {galleryImages.length > 1 && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => changeActiveImage(-1)}
+                                        aria-label="Ảnh trước"
+                                        className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-background)]/80 text-[var(--color-fg-muted)] backdrop-blur-md transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                                    >
+                                        <i className="fas fa-chevron-left text-xs"></i>
                                     </button>
-
-                                    {productCoupons.length > 0 && (
-                                        <div className="product-coupon-mini-box border rounded mt-4 bg-white">
-                                            <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
-                                                <h5 className="fw-bold mb-0">Phiếu giảm giá</h5>
-                                                <Link to="/promotion" className="small text-primary">Xem thêm phiếu</Link>
-                                            </div>
-                                            {couponMsg && <div className="alert alert-primary py-2 mb-3">{couponMsg}</div>}
-                                            <div className="product-coupon-mini-list">
-                                                {visibleProductCoupons.map(({ coupon, claimStatus }) => {
-                                                    const status = claimedCouponIds.includes(coupon.id) ? 'claimed' : claimStatus.status;
-                                                    const canReceive = status === 'available';
-                                                    return (
-                                                        <div className="product-coupon-mini" key={`product-coupon-${coupon.id}`}>
-                                                            <span className="product-coupon-mini-code">{coupon.code}</span>
-                                                            <span className="product-coupon-mini-desc">{coupon.title}</span>
-                                                            <button
-                                                                type="button"
-                                                                className={`btn btn-sm rounded-pill ${status === 'claimed' ? 'btn-outline-primary' : canReceive ? 'btn-primary' : 'btn-outline-secondary'}`}
-                                                                disabled={!canReceive}
-                                                                onClick={() => handleClaimCoupon(coupon)}
-                                                            >
-                                                                {status === 'claimed' ? 'Đã nhận' : canReceive ? 'Nhận' : 'Chưa đủ'}
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                            {productCoupons.length > 3 && (
-                                                <Link to="/promotion" className="btn btn-sm btn-outline-primary rounded-pill mt-3">Xem thêm phiếu</Link>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <div className="d-none">
-                                        <div className="d-flex align-items-center justify-content-between mb-3">
-                                            <h5 className="fw-bold mb-0">Thông số kỹ thuật</h5>
-                                            <span className="badge bg-light text-dark border">{productSpecifications.length} mục</span>
-                                        </div>
-                                        <div className="row g-0">
-                                            {productSpecifications.slice(0, 8).map(({ label, value }) => (
-                                                <div className="col-sm-6 border-top py-2 pe-sm-3" key={`summary-spec-${label}`}>
-                                                    <div className="small text-muted">{label}</div>
-                                                    <div className="fw-semibold text-dark">{String(value)}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            <motion.section
-                                className="product-detail-section product-spec-section"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <div className="product-detail-card">
-                                    <div className="product-detail-section-head">
-                                        <div>
-                                            <h4>Thông số kỹ thuật</h4>
-                                        </div>
-                                    </div>
-                                    {productSpecifications.length > 0 ? (
-                                        <div className="product-spec-table-wrap">
-                                            <table className="product-spec-table">
-                                                <tbody>
-                                                    {productSpecifications.map(({ label, value }) => (
-                                                        <tr key={`detail-spec-${label}`}>
-                                                            <th scope="row">{label}</th>
-                                                            <td>{String(value)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="product-detail-empty">Chưa có dữ liệu</div>
-                                    )}
-                                </div>
-                            </motion.section>
-
-                            <motion.section
-                                className="product-detail-section"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <div className="product-detail-card">
-                                    <div className="product-detail-section-head">
-                                        <h4>Mô tả sản phẩm</h4>
-                                    </div>
-                                    {descriptionParts.length > 0 ? (
-                                        <div className="product-description-block">
-                                            {descriptionParts.map((part, index) => (
-                                                Array.isArray(part) ? (
-                                                    <ul key={`description-part-${index}`}>
-                                                        {part.map((item) => <li key={item}>{item}</li>)}
-                                                    </ul>
-                                                ) : (
-                                                    <p key={`description-part-${index}`}>{part}</p>
-                                                )
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="product-detail-empty">Mô tả sản phẩm đang được cập nhật.</div>
-                                    )}
-                                </div>
-                            </motion.section>
-
-                            <motion.section
-                                className="product-detail-section"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <div className="product-detail-card">
-                                    <div className="product-detail-section-head">
-                                        <div>
-                                            <h4>Đánh giá của khách hàng</h4>
-                                            {reviewMsg && <p className="product-review-success">{reviewMsg}</p>}
-                                        </div>
-                                        {productReviews.length > 0 && (
-                                            <button type="button" className="btn btn-primary rounded-pill px-4" onClick={openReviewModal}>
-                                                Viết đánh giá
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {productReviews.length > 0 ? (
-                                        <div className="product-review-layout">
-                                            <div className="product-review-summary">
-                                                <div className="product-review-score">{reviewSummary.average.toFixed(1)}/5</div>
-                                                <StarRating value={reviewSummary.average} />
-                                                <p>{reviewSummary.total} đánh giá</p>
-                                                <div className="product-review-bars">
-                                                    {[5, 4, 3, 2, 1].map((star) => (
-                                                        <div className="product-review-bar-row" key={`review-bar-${star}`}>
-                                                            <span>{star} sao</span>
-                                                            <div><i style={{ width: `${reviewSummary.total ? (reviewSummary.distribution[star] / reviewSummary.total) * 100 : 0}%` }}></i></div>
-                                                            <strong>{reviewSummary.distribution[star]}</strong>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="product-review-list">
-                                                <div className="product-review-criteria">
-                                                    {reviewExperienceItems.map((criterion) => <span key={criterion}>{criterion}</span>)}
-                                                </div>
-                                                {visibleReviews.map((review) => (
-                                                    <article className="product-review-item" key={review.id}>
-                                                        <div className="product-review-item-head">
-                                                            <div>
-                                                                <h5>{review.customerName}</h5>
-                                                                <span>{review.date}</span>
-                                                            </div>
-                                                            <StarRating value={review.rating} small />
-                                                        </div>
-                                                        <p>{review.content}</p>
-                                                        {Object.keys(review.experienceRatings || {}).length > 0 && (
-                                                            <div className="product-review-experience">
-                                                                <strong>Trải nghiệm:</strong>
-                                                                {Object.entries(review.experienceRatings).map(([criterion, score]) => (
-                                                                    <span key={`${review.id}-${criterion}`}>{criterion}: {score}/5</span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        {review.images?.length > 0 && (
-                                                            <div className="product-review-images">
-                                                                {review.images.map((image, index) => (
-                                                                    <img key={`${review.id}-image-${index}`} src={image} alt={`Ảnh đánh giá ${index + 1}`} />
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        {review.tags.length > 0 && (
-                                                            <div className="product-review-tags">
-                                                                {review.tags.map((tag) => <span key={tag}>{tag}</span>)}
-                                                            </div>
-                                                        )}
-                                                    </article>
-                                                ))}
-                                                {productReviews.length > 3 && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-outline-primary rounded-pill px-4"
-                                                        onClick={() => setShowAllReviews((value) => !value)}
-                                                    >
-                                                        {showAllReviews ? 'Thu gọn' : 'Xem thêm đánh giá'}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="product-detail-empty product-review-empty">
-                                            Chưa có đánh giá nào cho sản phẩm này.
-                                            <button type="button" className="btn btn-primary rounded-pill px-4 mt-3" onClick={openReviewModal}>
-                                                Viết đánh giá đầu tiên
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.section>
-
-                            {reviewModalOpen && (
-                                <div className="review-modal-overlay" role="presentation" onMouseDown={() => setReviewModalOpen(false)}>
-                                    <div className="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-modal-title" onMouseDown={(event) => event.stopPropagation()}>
-                                        <div className="review-modal-header">
-                                            <h4 id="review-modal-title">Đánh giá & nhận xét</h4>
-                                            <button type="button" className="review-modal-close" aria-label="Đóng" onClick={() => setReviewModalOpen(false)}>
-                                                <i className="fas fa-times"></i>
-                                            </button>
-                                        </div>
-
-                                        <form className="review-modal-body" onSubmit={handleSubmitReview}>
-                                            <div className="review-modal-product">
-                                                <img src={displayImage || productImage} alt={productName} />
-                                                <strong>{productName}</strong>
-                                            </div>
-
-                                            <section className="review-modal-group">
-                                                <h5>Đánh giá chung</h5>
-                                                <ReviewStarPicker
-                                                    value={reviewRating}
-                                                    labels={generalRatingLabels}
-                                                    onChange={(rating) => {
-                                                        setReviewRating(rating);
-                                                        setReviewError('');
-                                                    }}
-                                                />
-                                            </section>
-
-                                            <section className="review-modal-group">
-                                                <h5>Theo trải nghiệm</h5>
-                                                <div className="review-experience-list">
-                                                    {reviewExperienceItems.map((criterion) => (
-                                                        <div className="review-experience-row" key={criterion}>
-                                                            <span>{criterion}</span>
-                                                            <ReviewStarPicker
-                                                                value={experienceRatings[criterion] || 0}
-                                                                onChange={(rating) => setExperienceRatings((current) => ({ ...current, [criterion]: rating }))}
-                                                                compact
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </section>
-
-                                            <section className="review-modal-group">
-                                                <textarea
-                                                    className="review-modal-textarea"
-                                                    rows="5"
-                                                    value={reviewContent}
-                                                    onChange={(event) => {
-                                                        setReviewContent(event.target.value);
-                                                        setReviewError('');
-                                                    }}
-                                                    placeholder="Xin mời chia sẻ một số cảm nhận về sản phẩm (nhập tối thiểu 15 ký tự)"
-                                                ></textarea>
-                                            </section>
-
-                                            <section className="review-modal-group">
-                                                <label className="review-image-picker">
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        multiple
-                                                        onChange={handleReviewImageChange}
-                                                        disabled={reviewImages.length >= 3}
-                                                    />
-                                                    <i className="fas fa-camera"></i>
-                                                    <span>Thêm hình ảnh</span>
-                                                </label>
-                                                {reviewImages.length > 0 && (
-                                                    <div className="review-image-preview-list">
-                                                        {reviewImages.map((image) => (
-                                                            <div className="review-image-preview" key={image.id}>
-                                                                <img src={image.preview} alt={image.name} />
-                                                                <button type="button" aria-label="Xóa ảnh" onClick={() => removeReviewImage(image.id)}>
-                                                                    <i className="fas fa-times"></i>
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </section>
-
-                                            {reviewError && <div className="review-modal-error">{reviewError}</div>}
-
-                                            <div className="review-modal-footer">
-                                                <button type="submit" className="btn btn-danger review-submit-button">Gửi đánh giá</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => changeActiveImage(1)}
+                                        aria-label="Ảnh sau"
+                                        className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-background)]/80 text-[var(--color-fg-muted)] backdrop-blur-md transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                                    >
+                                        <i className="fas fa-chevron-right text-xs"></i>
+                                    </button>
+                                </>
                             )}
-
-                            <motion.section
-                                className="product-detail-section product-qna-section"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <div className="product-detail-card">
-                                    <div className="product-detail-section-head">
-                                        <h4>Hỏi và đáp</h4>
-                                    </div>
-                                    <div className="product-qna-body">
-                                        <div className="product-qna-ask-card">
-                                            <div className="product-qna-icon">
-                                                <i className="fas fa-comments"></i>
-                                            </div>
-                                            <div className="product-qna-ask-content">
-                                                <h5>Hãy đặt câu hỏi cho chúng tôi</h5>
-                                                <p>Chúng tôi sẽ phản hồi trong thời gian sớm nhất. Vui lòng đặt câu hỏi để nhận được thông tin cập nhật mới nhất về sản phẩm.</p>
-                                                <form className="product-qna-form" onSubmit={handleSubmitQuestion}>
-                                                    <textarea
-                                                        value={questionInput}
-                                                        onChange={(event) => {
-                                                            setQuestionInput(event.target.value);
-                                                            setQuestionError('');
-                                                        }}
-                                                        rows="2"
-                                                        placeholder="Viết câu hỏi của bạn tại đây"
-                                                    ></textarea>
-                                                    <button type="submit" className="btn btn-primary">Gửi câu hỏi</button>
-                                                </form>
-                                                {questionError && <div className="product-qna-error">{questionError}</div>}
-                                                {questionMsg && <div className="product-qna-success">{questionMsg}</div>}
-                                            </div>
-                                        </div>
-
-                                        {productQuestions.length > 0 ? (
-                                            <div className="product-qna-list">
-                                                {productQuestions.map((item) => {
-                                                    const hasAnswer = Boolean(item.answer?.content);
-                                                    const expanded = expandedQuestionIds.includes(item.id);
-                                                    return (
-                                                        <article className="product-qna-item" key={item.id}>
-                                                            <div className="product-qna-question">
-                                                                <div className="product-qna-avatar">{getAvatarInitial(item.customerName)}</div>
-                                                                <div className="product-qna-content">
-                                                                    <div className="product-qna-meta">
-                                                                        <strong>{item.customerName}</strong>
-                                                                        <span>{formatRelativeTime(item.createdAt)}</span>
-                                                                    </div>
-                                                                    <p>{item.question}</p>
-                                                                    <div className="product-qna-actions">
-                                                                        <button type="button">Phản hồi</button>
-                                                                        {hasAnswer ? (
-                                                                            <button type="button" onClick={() => toggleQuestionAnswer(item.id)}>
-                                                                                {expanded ? 'Thu gọn phản hồi' : 'Xem phản hồi'}
-                                                                            </button>
-                                                                        ) : (
-                                                                            <span>Đang chờ phản hồi</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            {hasAnswer && expanded && (
-                                                                <div className="product-qna-answer">
-                                                                    <div className="product-qna-admin-avatar">
-                                                                        <i className="fas fa-user-shield"></i>
-                                                                    </div>
-                                                                    <div className="product-qna-content">
-                                                                        <div className="product-qna-meta">
-                                                                            <strong>{item.answer.adminName || 'Quản trị viên'}</strong>
-                                                                            <em>QTV</em>
-                                                                            <span>{formatRelativeTime(item.answer.createdAt)}</span>
-                                                                        </div>
-                                                                        <p>{item.answer.content}</p>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </article>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <div className="product-detail-empty product-qna-empty">Chưa có câu hỏi nào cho sản phẩm này.</div>
+                        </div>
+                        {galleryImages.length > 1 && (
+                            <div className="mt-4 flex gap-2 overflow-x-auto">
+                                {galleryImages.map((image) => (
+                                    <button
+                                        key={image}
+                                        type="button"
+                                        onClick={() => setActiveImage(image)}
+                                        className={cn(
+                                            "h-20 w-20 shrink-0 overflow-hidden rounded-sm border-2 bg-[var(--color-surface)] p-1 transition-all",
+                                            activeImage === image ? "border-[var(--color-primary)]" : "border-[var(--color-border)] opacity-60 hover:opacity-100"
                                         )}
-                                    </div>
+                                    >
+                                        <img src={image} alt="" className="h-full w-full object-contain" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Info */}
+                    <div>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">{productCategoryName}</p>
+                        <h1 className="ts-display mt-3 text-3xl text-[var(--color-fg)] md:text-4xl">{productName}</h1>
+
+                        <div className="mt-4 flex items-center gap-3">
+                            <Stars value={reviewSummary.average || 4} />
+                            <span className="text-xs text-[var(--color-fg-dim)]">
+                                {reviewSummary.total > 0 ? `${reviewSummary.total} đánh giá` : 'Chưa có đánh giá'}
+                            </span>
+                        </div>
+
+                        <div className="mt-6 flex items-baseline gap-3">
+                            <span className="ts-mono text-4xl font-semibold ts-gradient-text">{formatCurrency(productPrice)}</span>
+                            {oldPrice > productPrice && (
+                                <del className="ts-mono text-base text-[var(--color-fg-dim)]">{formatCurrency(oldPrice)}</del>
+                            )}
+                        </div>
+
+                        <div className="mt-6 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-4 text-xs">
+                            <div>
+                                <p className="ts-eyebrow text-[10px]">SKU</p>
+                                <p className="ts-mono mt-1 text-[var(--color-fg-muted)]">{displaySku}</p>
+                            </div>
+                            <div>
+                                <p className="ts-eyebrow text-[10px]">Tình trạng</p>
+                                <p className={cn("mt-1 font-medium", productStock > 0 ? "text-emerald-400" : "text-red-400")}>
+                                    {productStock > 0 ? `${t('In Stock')} (${productStock})` : t('Out of Stock')}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Versions */}
+                        {productVersions.length > 0 && (
+                            <div className="mt-6">
+                                <p className="ts-eyebrow mb-3 text-[10px]">Phiên bản</p>
+                                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                                    {productVersions.map((version) => {
+                                        const active = selectedVersion?.id === version.id;
+                                        const oos = version.stock === 0;
+                                        return (
+                                            <button
+                                                key={version.id}
+                                                type="button"
+                                                onClick={() => setSelectedVersion(version)}
+                                                disabled={oos}
+                                                className={cn(
+                                                    "flex flex-col items-start rounded-sm border p-3 text-left transition-all",
+                                                    active
+                                                        ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                                                        : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]",
+                                                    oos && "opacity-50"
+                                                )}
+                                            >
+                                                <strong className="text-sm text-[var(--color-fg)]">{version.label}</strong>
+                                                {version.price != null && (
+                                                    <span className="ts-mono mt-1 text-xs text-[var(--color-accent)]">{formatCurrency(version.price)}</span>
+                                                )}
+                                                {oos && <em className="mt-1 text-[10px] not-italic text-red-400">Hết hàng</em>}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-                            </motion.section>
+                            </div>
+                        )}
 
-                            {false && (
-                            <>
-                            <motion.ul
-                                className="nav border-bottom mb-3"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <li className="nav-item">
-                                    <button className="nav-link active text-dark border-0 bg-transparent border-bottom border-primary rounded-0" type="button">{t('Description')}</button>
-                                </li>
-                                <li className="nav-item">
-                                    <button className="nav-link text-primary border-0 bg-transparent rounded-0" type="button">Thông số</button>
-                                </li>
-                                <li className="nav-item">
-                                    <button className="nav-link text-primary border-0 bg-transparent rounded-0" type="button">Reviews</button>
-                                </li>
-                            </motion.ul>
+                        {/* Colors */}
+                        {productColors.length > 0 && (
+                            <div className="mt-6">
+                                <p className="ts-eyebrow mb-3 text-[10px]">Màu sắc</p>
+                                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                                    {productColors.map((color) => {
+                                        const active = selectedColor?.id === color.id;
+                                        const colorImage = color.image ? resolveProductImage({ id: product.id, imageUrl: color.image }) : '';
+                                        return (
+                                            <button
+                                                key={color.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedColor(color);
+                                                    if (colorImage) setActiveImage(colorImage);
+                                                }}
+                                                className={cn(
+                                                    "flex items-center gap-2 rounded-sm border p-2 text-left transition-all",
+                                                    active ? "border-[var(--color-primary)]" : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                                                )}
+                                            >
+                                                {colorImage ? (
+                                                    <img src={colorImage} alt="" className="h-8 w-8 rounded-sm object-contain" />
+                                                ) : (
+                                                    <span className="h-6 w-6 rounded-sm border border-[var(--color-border)]" style={{ backgroundColor: color.colorCode || '#333' }} />
+                                                )}
+                                                <span className="min-w-0">
+                                                    <strong className="block truncate text-xs text-[var(--color-fg)]">{color.label}</strong>
+                                                    {color.price != null && <small className="ts-mono block text-[10px] text-[var(--color-accent)]">{formatCurrency(color.price)}</small>}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
-                            <motion.div
-                                className="text-muted mb-5"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
+                        {/* Quantity + Add to Cart */}
+                        <div className="mt-8 flex items-center gap-3">
+                            <div className="flex items-center rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)]">
+                                <button
+                                    type="button"
+                                    onClick={() => setQuantity((v) => Math.max(1, v - 1))}
+                                    disabled={quantity <= 1}
+                                    aria-label="Giảm"
+                                    className="flex h-11 w-11 items-center justify-center text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] disabled:opacity-40"
+                                >
+                                    <i className="fas fa-minus text-xs"></i>
+                                </button>
+                                <span className="ts-mono w-12 text-center text-sm font-semibold text-[var(--color-fg)]">{quantity}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setQuantity((v) => Math.min(productStock, v + 1))}
+                                    disabled={productStock <= 0 || quantity >= productStock}
+                                    aria-label="Tăng"
+                                    className="flex h-11 w-11 items-center justify-center text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] disabled:opacity-40"
+                                >
+                                    <i className="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleAddToCart}
+                                disabled={productStock <= 0}
+                                className="ts-btn ts-btn-primary h-11 flex-1 px-6 text-sm"
                             >
-                                <p>{productDescription || t('No description')}</p>
-                                <p><strong>{t('Features')}:</strong><br />{t('Category')}: {productCategoryName}. {t('Availability')}: {productStock > 0 ? t('In Stock') : t('Out of Stock')}.</p>
-                                <p><strong>{t('Warranty')}:</strong><br />Products are supported according to the store warranty and return policy.</p>
-                            </motion.div>
+                                <i className="fas fa-shopping-cart"></i>
+                                {t('Add To Cart')}
+                            </button>
+                        </div>
 
-                            <motion.div
-                                className="mb-5"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
+                        {addedMsg && (
+                            <div className="mt-3 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-300">
+                                <i className="fas fa-check-circle mr-2"></i>{addedMsg}
+                            </div>
+                        )}
+
+                        <div className="mt-4 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => toggleWishlist(product)}
+                                className={cn(
+                                    "ts-btn flex-1 text-xs",
+                                    isInWishlist(product.id) ? "ts-btn-primary" : "ts-btn-outline"
+                                )}
                             >
-                                <h4 className="fw-bold mb-4">Thông số chi tiết</h4>
-                                <div className="table-responsive border rounded">
-                                    <table className="table table-striped mb-0 align-middle">
-                                        <tbody>
-                                            {productSpecifications.map(([label, value]) => (
-                                                <tr key={`detail-spec-${label}`}>
-                                                    <th scope="row" className="text-muted fw-semibold" style={{ width: '32%' }}>{label}</th>
-                                                    <td>{String(value)}</td>
+                                <i className={isInWishlist(product.id) ? "fas fa-heart" : "far fa-heart"}></i>
+                                {t('Wishlist')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => toggleCompare(product)}
+                                className={cn(
+                                    "ts-btn flex-1 text-xs",
+                                    isInCompare(product.id) ? "ts-btn-primary" : "ts-btn-outline"
+                                )}
+                            >
+                                <i className="fas fa-random"></i>
+                                {t('Compare')}
+                            </button>
+                        </div>
+
+                        {/* Coupons */}
+                        {productCoupons.length > 0 && (
+                            <div className="mt-8 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <p className="ts-eyebrow text-[var(--color-accent)]">Phiếu giảm giá</p>
+                                    <Link to="/promotion" className="text-[11px] text-[var(--color-fg-dim)] hover:text-[var(--color-accent)]">Xem thêm</Link>
+                                </div>
+                                {couponMsg && (
+                                    <div className="mb-3 rounded-sm border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 px-3 py-2 text-xs text-[var(--color-fg)]">{couponMsg}</div>
+                                )}
+                                <div className="space-y-2">
+                                    {visibleProductCoupons.map(({ coupon, claimStatus }) => {
+                                        const status = claimedCouponIds.includes(coupon.id) ? 'claimed' : claimStatus.status;
+                                        const canReceive = status === 'available';
+                                        const isClaimed = status === 'claimed';
+                                        return (
+                                            <div key={coupon.id} className="flex items-center gap-3 rounded-sm border border-dashed border-[var(--color-border)] p-3">
+                                                <span className="ts-mono shrink-0 rounded-sm bg-[var(--color-accent)]/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)]">{coupon.code}</span>
+                                                <span className="min-w-0 flex-1 truncate text-xs text-[var(--color-fg-muted)]">{coupon.title}</span>
+                                                <button
+                                                    type="button"
+                                                    disabled={!canReceive}
+                                                    onClick={() => handleClaimCoupon(coupon)}
+                                                    className={cn(
+                                                        "shrink-0 rounded-sm px-3 py-1 text-[11px] font-medium",
+                                                        isClaimed && "border border-[var(--color-gold)]/40 bg-[var(--color-gold)]/10 text-[var(--color-gold)]",
+                                                        canReceive && "bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)] text-white",
+                                                        !canReceive && !isClaimed && "border border-[var(--color-border)] text-[var(--color-fg-dim)]"
+                                                    )}
+                                                >
+                                                    {isClaimed ? 'Đã nhận' : canReceive ? 'Nhận' : 'Chưa đủ'}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Tabs: Description / Specs / Reviews / QnA */}
+                <div className="mt-16">
+                    <div className="flex gap-6 border-b border-[var(--color-border)] overflow-x-auto">
+                        {[
+                            { id: 'description', label: 'Mô tả' },
+                            { id: 'specs', label: 'Thông số' },
+                            { id: 'reviews', label: `Đánh giá${reviewSummary.total ? ` (${reviewSummary.total})` : ''}` },
+                            { id: 'qna', label: 'Hỏi & Đáp' },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    "relative whitespace-nowrap pb-4 text-sm font-medium tracking-wide transition-colors",
+                                    activeTab === tab.id ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg-muted)]"
+                                )}
+                            >
+                                {tab.label}
+                                {activeTab === tab.id && (
+                                    <span className="absolute inset-x-0 -bottom-px h-0.5 bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)]" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="mt-8">
+                        {activeTab === 'description' && (
+                            <div className="prose-luxury max-w-3xl space-y-4 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+                                {descriptionParts.length > 0 ? descriptionParts.map((part, i) => (
+                                    Array.isArray(part) ? (
+                                        <ul key={i} className="list-disc space-y-1 pl-6">
+                                            {part.map((item) => <li key={item}>{item}</li>)}
+                                        </ul>
+                                    ) : <p key={i}>{part}</p>
+                                )) : <p className="italic">{t('No description')}</p>}
+                            </div>
+                        )}
+
+                        {activeTab === 'specs' && (
+                            <div className="max-w-3xl overflow-hidden rounded-md border border-[var(--color-border)]">
+                                {productSpecifications.length > 0 ? (
+                                    <table className="w-full text-sm">
+                                        <tbody className="divide-y divide-[var(--color-border)]">
+                                            {productSpecifications.map(({ label, value }) => (
+                                                <tr key={label}>
+                                                    <th scope="row" className="w-1/3 bg-[var(--color-surface-2)] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-fg-dim)]">{label}</th>
+                                                    <td className="px-4 py-3 text-[var(--color-fg)]">{String(value)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
-                                </div>
-                            </motion.div>
+                                ) : (
+                                    <p className="p-8 text-center text-sm text-[var(--color-fg-dim)]">Chưa có thông số.</p>
+                                )}
+                            </div>
+                        )}
 
-                            <motion.div
-                                className="mb-5"
-                                variants={fadeInUp}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={singleViewport}
-                                transition={singleTransition}
-                            >
-                                <h4 className="fw-bold mb-4">Leave a review</h4>
-                                <div className="row g-4">
-                                    <div className="col-md-6">
-                                        <input type="text" className="form-control border-0 border-bottom rounded-0 px-0" placeholder={`${t('Your Name')} *`} />
+                        {activeTab === 'reviews' && (
+                            <div>
+                                {reviewMsg && (
+                                    <div className="mb-4 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-300">{reviewMsg}</div>
+                                )}
+                                {productReviews.length > 0 ? (
+                                    <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+                                        <aside className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                            <p className="ts-display text-4xl">{reviewSummary.average.toFixed(1)}<span className="text-base text-[var(--color-fg-dim)]">/5</span></p>
+                                            <Stars value={reviewSummary.average} />
+                                            <p className="mt-2 text-xs text-[var(--color-fg-muted)]">{reviewSummary.total} đánh giá</p>
+                                            <div className="mt-4 space-y-2">
+                                                {[5, 4, 3, 2, 1].map((star) => (
+                                                    <div key={star} className="flex items-center gap-2 text-xs">
+                                                        <span className="ts-mono w-6 text-[var(--color-fg-dim)]">{star}★</span>
+                                                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
+                                                            <div
+                                                                className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)]"
+                                                                style={{ width: `${reviewSummary.total ? (reviewSummary.distribution[star] / reviewSummary.total) * 100 : 0}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="ts-mono w-6 text-right text-[var(--color-fg-muted)]">{reviewSummary.distribution[star]}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button type="button" onClick={openReviewModal} className="ts-btn ts-btn-primary mt-5 w-full text-xs">Viết đánh giá</button>
+                                        </aside>
+
+                                        <div className="space-y-4">
+                                            {visibleReviews.map((review) => (
+                                                <article key={review.id} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div>
+                                                            <h5 className="text-sm font-semibold text-[var(--color-fg)]">{review.customerName}</h5>
+                                                            <span className="text-[11px] text-[var(--color-fg-dim)]">{review.date}</span>
+                                                        </div>
+                                                        <Stars value={review.rating} />
+                                                    </div>
+                                                    <p className="mt-3 text-sm leading-relaxed text-[var(--color-fg-muted)]">{review.content}</p>
+                                                    {Object.keys(review.experienceRatings || {}).length > 0 && (
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            {Object.entries(review.experienceRatings).map(([k, v]) => (
+                                                                <span key={k} className="ts-pill">{k}: {v}/5</span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {review.images?.length > 0 && (
+                                                        <div className="mt-3 flex gap-2">
+                                                            {review.images.map((image, i) => (
+                                                                <img key={i} src={image} alt="" className="h-20 w-20 rounded-sm object-cover" />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </article>
+                                            ))}
+                                            {productReviews.length > 3 && (
+                                                <button type="button" onClick={() => setShowAllReviews((v) => !v)} className="ts-btn ts-btn-ghost w-full text-xs">
+                                                    {showAllReviews ? 'Thu gọn' : `Xem thêm ${productReviews.length - 3} đánh giá`}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="col-md-6">
-                                        <input type="email" className="form-control border-0 border-bottom rounded-0 px-0" placeholder={`${t('Your Email')} *`} />
+                                ) : (
+                                    <div className="flex flex-col items-center rounded-md border border-dashed border-[var(--color-border)] py-16 text-center">
+                                        <i className="far fa-comment text-3xl text-[var(--color-fg-dim)]"></i>
+                                        <p className="mt-4 text-sm text-[var(--color-fg-muted)]">Chưa có đánh giá nào cho sản phẩm này.</p>
+                                        <button type="button" onClick={openReviewModal} className="ts-btn ts-btn-primary mt-4 text-xs">Viết đánh giá đầu tiên</button>
                                     </div>
-                                    <div className="col-12">
-                                        <textarea className="form-control border-0 border-bottom rounded-0 px-0" rows="6" placeholder={`${t('Message')} *`}></textarea>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'qna' && (
+                            <div className="space-y-6">
+                                <form onSubmit={handleSubmitQuestion} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                    <p className="ts-eyebrow text-[var(--color-accent)]">Hỏi chúng tôi</p>
+                                    <h4 className="ts-display mt-2 text-lg">Đặt câu hỏi về sản phẩm</h4>
+                                    <textarea
+                                        rows="3"
+                                        value={questionInput}
+                                        onChange={(e) => { setQuestionInput(e.target.value); setQuestionError(''); }}
+                                        placeholder="Viết câu hỏi của bạn..."
+                                        className="ts-input mt-3 resize-none"
+                                    />
+                                    {questionError && <p className="mt-2 text-xs text-red-400">{questionError}</p>}
+                                    {questionMsg && <p className="mt-2 text-xs text-emerald-400">{questionMsg}</p>}
+                                    <button type="submit" className="ts-btn ts-btn-primary mt-3 text-xs">Gửi câu hỏi</button>
+                                </form>
+
+                                {productQuestions.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {productQuestions.map((item) => {
+                                            const expanded = expandedQuestionIds.includes(item.id);
+                                            const hasAnswer = Boolean(item.answer?.content);
+                                            return (
+                                                <article key={item.id} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                                    <div className="flex gap-3">
+                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-2)] text-xs font-bold text-[var(--color-fg-muted)]">
+                                                            {String(item.customerName || 'K')[0].toUpperCase()}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-baseline gap-2">
+                                                                <strong className="text-sm text-[var(--color-fg)]">{item.customerName}</strong>
+                                                                <span className="text-[11px] text-[var(--color-fg-dim)]">{formatRelativeTime(item.createdAt)}</span>
+                                                            </div>
+                                                            <p className="mt-1 text-sm text-[var(--color-fg-muted)]">{item.question}</p>
+                                                            <div className="mt-2 flex items-center gap-3 text-[11px]">
+                                                                {hasAnswer ? (
+                                                                    <button type="button" onClick={() => toggleQuestionAnswer(item.id)} className="text-[var(--color-accent)] hover:underline">
+                                                                        {expanded ? 'Thu gọn phản hồi' : 'Xem phản hồi'}
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="text-[var(--color-fg-dim)]">Đang chờ phản hồi</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {hasAnswer && expanded && (
+                                                        <div className="mt-3 flex gap-3 rounded-sm border-l-2 border-[var(--color-accent)] bg-[var(--color-surface-2)] p-3 ml-12">
+                                                            <i className="fas fa-user-shield mt-1 text-[var(--color-accent)]"></i>
+                                                            <div className="min-w-0">
+                                                                <div className="flex items-baseline gap-2">
+                                                                    <strong className="text-xs text-[var(--color-fg)]">{item.answer.adminName}</strong>
+                                                                    <span className="rounded bg-[var(--color-accent)]/20 px-1 py-0.5 text-[9px] font-bold text-[var(--color-accent)]">QTV</span>
+                                                                    <span className="text-[11px] text-[var(--color-fg-dim)]">{formatRelativeTime(item.answer.createdAt)}</span>
+                                                                </div>
+                                                                <p className="mt-1 text-xs text-[var(--color-fg-muted)]">{item.answer.content}</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </article>
+                                            );
+                                        })}
                                     </div>
-                                    <div className="col-md-6 d-flex align-items-center gap-3">
-                                        <span className="text-muted">Rating:</span>
-                                        <Rating small />
-                                    </div>
-                                    <div className="col-md-6 text-md-end">
-                                        <button type="button" className="btn btn-primary rounded-pill px-4 py-3">{t('Send Message')}</button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                            </>
-                            )}
-                        </main>
+                                ) : (
+                                    <p className="rounded-md border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-fg-dim)]">Chưa có câu hỏi nào cho sản phẩm này.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
-
-                    {false && boughtTogetherProducts.length > 0 && (
-                        <motion.section
-                            className="product-detail-section"
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={singleViewport}
-                            transition={singleTransition}
-                        >
-                            <div className="product-detail-section-head">
-                                <h4>Sản phẩm thường mua cùng</h4>
-                            </div>
-                            <div className="row g-4 product-detail-grid">
-                                {boughtTogetherProducts.map((item) => (
-                                    <div key={`bought-together-${item.id}`} className="col-6 col-md-6 col-lg-3">
-                                        <ProductCard product={item} />
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.section>
-                    )}
-
-                    {computedRelatedProducts.length > 0 && (
-                        <motion.section
-                            className="product-detail-section"
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={singleViewport}
-                            transition={singleTransition}
-                        >
-                            <div className="product-detail-section-head">
-                                <h4>Sản phẩm liên quan</h4>
-                            </div>
-                            <div className="row g-4 product-detail-grid">
-                                {computedRelatedProducts.map((item) => (
-                                    <div key={`related-${item.id}`} className="col-6 col-md-6 col-lg-3">
-                                        <ProductCard product={item} />
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.section>
-                    )}
-
-                    {recentlyViewedProducts.length > 0 && (
-                        <motion.section
-                            className="product-detail-section"
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={singleViewport}
-                            transition={singleTransition}
-                        >
-                            <div className="product-detail-section-head">
-                                <h4>Sản phẩm đã xem gần đây</h4>
-                            </div>
-                            <div className="row g-4 product-detail-grid">
-                                {recentlyViewedProducts.map((item) => (
-                                    <div key={`recently-viewed-${item.id}`} className="col-6 col-md-6 col-lg-3">
-                                        <ProductCard product={item} />
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.section>
-                    )}
                 </div>
-            </div>
+
+                {/* Review Modal */}
+                {reviewModalOpen && (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" onClick={() => setReviewModalOpen(false)}>
+                        <div className="w-full max-w-lg overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+                                <h4 className="ts-display text-lg">Đánh giá & nhận xét</h4>
+                                <button
+                                    type="button"
+                                    onClick={() => setReviewModalOpen(false)}
+                                    aria-label="Đóng"
+                                    className="text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                                >
+                                    <i className="fas fa-times text-sm"></i>
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmitReview} className="max-h-[70vh] overflow-y-auto p-5">
+                                <div className="mb-4 flex items-center gap-3 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-2">
+                                    <img src={displayImage || productImage} alt={productName} className="h-12 w-12 rounded-sm object-contain" />
+                                    <strong className="text-sm text-[var(--color-fg)]">{productName}</strong>
+                                </div>
+
+                                <div className="mb-5">
+                                    <p className="ts-eyebrow mb-2 text-[10px]">Đánh giá chung</p>
+                                    <StarPicker value={reviewRating} onChange={(r) => { setReviewRating(r); setReviewError(''); }} />
+                                </div>
+
+                                <div className="mb-5">
+                                    <p className="ts-eyebrow mb-2 text-[10px]">Theo trải nghiệm</p>
+                                    <div className="space-y-2">
+                                        {reviewExperienceItems.map((criterion) => (
+                                            <div key={criterion} className="flex items-center justify-between gap-3 rounded-sm border border-[var(--color-border)] px-3 py-2">
+                                                <span className="text-xs text-[var(--color-fg-muted)]">{criterion}</span>
+                                                <StarPicker
+                                                    value={experienceRatings[criterion] || 0}
+                                                    onChange={(r) => setExperienceRatings((c) => ({ ...c, [criterion]: r }))}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mb-5">
+                                    <textarea
+                                        rows="4"
+                                        value={reviewContent}
+                                        onChange={(e) => { setReviewContent(e.target.value); setReviewError(''); }}
+                                        placeholder="Chia sẻ cảm nhận về sản phẩm (tối thiểu 15 ký tự)"
+                                        className="ts-input resize-none"
+                                    />
+                                </div>
+
+                                <div className="mb-5">
+                                    <label className="ts-btn ts-btn-outline inline-flex cursor-pointer text-xs">
+                                        <input type="file" accept="image/*" multiple onChange={handleReviewImageChange} disabled={reviewImages.length >= 3} className="hidden" />
+                                        <i className="fas fa-camera"></i>Thêm hình ảnh
+                                    </label>
+                                    {reviewImages.length > 0 && (
+                                        <div className="mt-3 flex gap-2">
+                                            {reviewImages.map((image) => (
+                                                <div key={image.id} className="relative">
+                                                    <img src={image.preview} alt={image.name} className="h-16 w-16 rounded-sm object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeReviewImage(image.id)}
+                                                        aria-label="Xóa ảnh"
+                                                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-danger)] text-[10px] text-white"
+                                                    >
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {reviewError && <p className="mb-4 rounded-sm border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">{reviewError}</p>}
+
+                                <button type="submit" className="ts-btn ts-btn-primary w-full">Gửi đánh giá</button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Related */}
+                {computedRelatedProducts.length > 0 && (
+                    <section className="mt-20">
+                        <h3 className="ts-display mb-8 text-2xl">Sản phẩm liên quan</h3>
+                        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+                            {computedRelatedProducts.map((item) => (
+                                <ProductCard key={item.id} product={item} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Recently viewed */}
+                {recentlyViewedProducts.length > 0 && (
+                    <section className="mt-20">
+                        <h3 className="ts-display mb-8 text-2xl">Sản phẩm đã xem gần đây</h3>
+                        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+                            {recentlyViewedProducts.map((item) => (
+                                <ProductCard key={item.id} product={item} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </section>
         </>
     );
 };

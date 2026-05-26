@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { settingsApi } from '../services/api';
 
-const inputClass = 'rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100';
+const inputClass = 'rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
 const emptyForm = {
     storeName: '',
@@ -101,69 +101,69 @@ const Settings = () => {
     return (
         <div className="px-4 py-6 lg:px-8">
             <div className="mb-6">
-                <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Hệ thống</p>
-                <h2 className="mb-0 text-2xl font-bold text-admin-ink">Cấu hình</h2>
+                <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Hệ thống</p>
+                <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Cấu hình</h2>
             </div>
 
             {error && (
-                <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">
                     {error}
                 </div>
             )}
             {success && (
-                <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300">
                     {success}
                 </div>
             )}
 
-            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-200 px-4 py-3">
-                    <h3 className="mb-0 text-base font-bold text-admin-ink">Thông tin cửa hàng</h3>
+            <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                <div className="border-b border-[var(--color-border)] px-4 py-3">
+                    <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Thông tin cửa hàng</h3>
                 </div>
                 {loading ? (
-                    <div className="p-8 text-center text-sm font-medium text-admin-muted">Đang tải cấu hình...</div>
+                    <div className="p-8 text-center text-sm font-medium text-[var(--color-fg-muted)]">Đang tải cấu hình...</div>
                 ) : (
                     <form onSubmit={handleSubmit} className="grid gap-5 p-4 lg:grid-cols-2">
                         <label className="block">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Tên cửa hàng</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Tên cửa hàng</span>
                             <input className={`${inputClass} w-full`} value={formData.storeName} onChange={(e) => updateField('storeName', e.target.value)} required />
                         </label>
                         <label className="block">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Hotline</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Hotline</span>
                             <input className={`${inputClass} w-full`} value={formData.hotline} onChange={(e) => updateField('hotline', e.target.value)} required />
                         </label>
                         <label className="block">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Email hỗ trợ</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Email hỗ trợ</span>
                             <input type="email" className={`${inputClass} w-full`} value={formData.supportEmail} onChange={(e) => updateField('supportEmail', e.target.value)} />
                         </label>
                         <label className="block">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Thời gian hỗ trợ</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Thời gian hỗ trợ</span>
                             <input className={`${inputClass} w-full`} value={formData.supportTime} onChange={(e) => updateField('supportTime', e.target.value)} />
                         </label>
                         <label className="block lg:col-span-2">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Địa chỉ</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Địa chỉ</span>
                             <textarea className={`${inputClass} min-h-24 w-full resize-y`} value={formData.address} onChange={(e) => updateField('address', e.target.value)} />
                         </label>
                         <label className="block lg:col-span-2">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Địa chỉ tiếp nhận bảo hành</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Địa chỉ tiếp nhận bảo hành</span>
                             <textarea className={`${inputClass} min-h-24 w-full resize-y`} value={formData.warrantyAddress} onChange={(e) => updateField('warrantyAddress', e.target.value)} />
                         </label>
                         <label className="block">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Phí vận chuyển mặc định</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Phí vận chuyển mặc định</span>
                             <input type="number" min="0" className={`${inputClass} w-full`} value={formData.defaultShippingFee} onChange={(e) => updateField('defaultShippingFee', e.target.value)} />
                         </label>
                         <label className="block">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Miễn phí vận chuyển từ</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Miễn phí vận chuyển từ</span>
                             <input type="number" min="0" className={`${inputClass} w-full`} value={formData.freeShippingThreshold} onChange={(e) => updateField('freeShippingThreshold', e.target.value)} />
                         </label>
                         <label className="block lg:col-span-2">
-                            <span className="mb-1 block text-sm font-semibold text-admin-ink">Logo URL</span>
+                            <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Logo URL</span>
                             <input type="url" className={`${inputClass} w-full`} value={formData.logoUrl} onChange={(e) => updateField('logoUrl', e.target.value)} />
                         </label>
                         <div className="flex justify-end lg:col-span-2">
                             <button
                                 type="submit"
-                                className="rounded-md bg-admin-brand px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+                                className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60"
                                 disabled={saving}
                             >
                                 {saving ? 'Đang lưu...' : 'Lưu cấu hình'}

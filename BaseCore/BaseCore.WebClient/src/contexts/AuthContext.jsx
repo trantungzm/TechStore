@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../services/api';
+import { BYPASS_AUTH } from '../config/authBypass';
+
+const DEV_BYPASS_USER = {
+    userId: '0',
+    username: 'dev-bypass',
+    fullName: 'Dev (auth bypass)',
+    role: 'Admin',
+};
 
 const AuthContext = createContext(null);
 
@@ -28,6 +36,12 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (BYPASS_AUTH) {
+            setUser(DEV_BYPASS_USER);
+            setLoading(false);
+            return;
+        }
+
         try {
             const storedUser = localStorage.getItem('user');
             const token = localStorage.getItem('token');

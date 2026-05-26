@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { formatCurrency, resolveProductImage, t } from '../../utils/store';
+import { motion } from 'framer-motion';
+import { formatCurrency, resolveProductImage } from '../../utils/store';
 import { useCart } from '../../contexts/CartContext';
+import { cn } from '../../utils/cn';
 
 const ProductQuickView = ({ product, onClose }) => {
     const { addItem } = useCart();
@@ -23,7 +24,6 @@ const ProductQuickView = ({ product, onClose }) => {
         if (onClose) onClose();
     };
 
-    // Dummy thumbnails for demonstration as per screenshot
     const thumbnails = [
         resolveProductImage(product),
         '/electro/img/product-1.png',
@@ -33,120 +33,135 @@ const ProductQuickView = ({ product, onClose }) => {
     ];
 
     return (
-        <motion.div 
-            className="electro-quickview-overlay"
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
         >
-            <motion.div 
-                className="electro-quickview-content"
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
+                className="relative grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl lg:grid-cols-2"
             >
-                <button className="electro-quickview-close" onClick={onClose}>
-                    <i className="fas fa-times"></i>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Đóng"
+                    className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-background)]/80 text-[var(--color-fg-muted)] backdrop-blur-md transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]"
+                >
+                    <i className="fas fa-times text-xs"></i>
                 </button>
 
-                <div className="row g-0">
-                    {/* Left: Images */}
-                    <div className="col-lg-6 border-end">
-                        <div className="p-4 d-flex flex-column h-100">
-                            <div className="electro-quickview-main-img mb-4">
-                                <img src={mainImage} alt={product.name} className="img-fluid" />
-                                <button className="nav-btn prev"><i className="fas fa-chevron-left"></i></button>
-                                <button className="nav-btn next"><i className="fas fa-chevron-right"></i></button>
-                            </div>
-                            <div className="electro-quickview-thumbnails d-flex gap-2 justify-content-center mt-auto">
-                                {thumbnails.map((thumb, idx) => (
-                                    <div 
-                                        key={idx} 
-                                        className={`thumb-item ${mainImage === thumb ? 'active' : ''}`}
-                                        onClick={() => setMainImage(thumb)}
-                                    >
-                                        <img src={thumb} alt="thumb" />
-                                    </div>
-                                ))}
-                            </div>
+                {/* Left: image */}
+                <div className="flex flex-col gap-4 border-b border-[var(--color-border)] bg-[var(--color-background)] p-6 lg:border-b-0 lg:border-r">
+                    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                        <img src={mainImage} alt={product.name} className="h-full w-full object-contain p-8" />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto">
+                        {thumbnails.map((thumb, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setMainImage(thumb)}
+                                className={cn(
+                                    "h-16 w-16 shrink-0 overflow-hidden rounded-sm border-2 bg-[var(--color-surface)] p-1 transition-all",
+                                    mainImage === thumb ? "border-[var(--color-primary)]" : "border-[var(--color-border)] opacity-60 hover:opacity-100"
+                                )}
+                            >
+                                <img src={thumb} alt="thumb" className="h-full w-full object-contain" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right: info */}
+                <div className="flex max-h-[80vh] flex-col overflow-y-auto p-6 lg:p-8">
+                    <p className="ts-eyebrow text-[var(--color-accent)]">{product.category?.name || 'Electronics'}</p>
+                    <h2 className="ts-display mt-2 text-2xl text-[var(--color-fg)] md:text-3xl">{product.name}</h2>
+
+                    <div className="mt-3 flex items-center gap-1 text-xs text-[var(--color-gold)]">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <i key={i} className={i < 4 ? 'fas fa-star' : 'far fa-star'}></i>
+                        ))}
+                        <span className="ml-2 text-[var(--color-fg-dim)]">(4.0)</span>
+                    </div>
+
+                    <p className="ts-mono mt-5 text-3xl font-semibold">
+                        <span className="ts-gradient-text">{formatCurrency(product.price)}</span>
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 border-y border-[var(--color-border)] py-4 text-xs">
+                        <div>
+                            <p className="ts-eyebrow text-[10px]">SKU</p>
+                            <p className="mt-1 text-[var(--color-fg-muted)]">{product.sku || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="ts-eyebrow text-[10px]">Tồn kho</p>
+                            <p className="mt-1 text-[var(--color-fg)]">{product.stock} sản phẩm</p>
                         </div>
                     </div>
 
-                    {/* Right: Info */}
-                    <div className="col-lg-6">
-                        <div className="p-4">
-                            <h2 className="electro-quickview-title">{product.name}</h2>
-                            <p className="text-muted mb-2">Category: <span className="text-primary">{product.category?.name || 'Electronics'}</span></p>
-                            
-                            <div className="h3 text-primary fw-bold mb-3">{formatCurrency(product.price)}</div>
-                            
-                            <div className="electro-rating mb-4">
-                                <i className="fas fa-star text-primary"></i>
-                                <i className="fas fa-star text-primary"></i>
-                                <i className="fas fa-star text-primary"></i>
-                                <i className="fas fa-star text-primary"></i>
-                                <i className="fas fa-star text-muted"></i>
-                            </div>
+                    <p className="mt-4 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+                        {product.description || "Sản phẩm chính hãng, bảo hành đầy đủ theo tiêu chuẩn nhà sản xuất."}
+                    </p>
 
-                            <div className="d-flex gap-2 mb-4">
-                                <button className="btn btn-facebook flex-fill text-white" style={{ backgroundColor: '#3b5998' }}>
-                                    <i className="fab fa-facebook-f me-2"></i>Share
-                                </button>
-                                <button className="btn btn-twitter flex-fill text-white" style={{ backgroundColor: '#1da1f2' }}>
-                                    <i className="fab fa-twitter me-2"></i>Share
-                                </button>
-                            </div>
-
-                            <div className="mb-4">
-                                <p className="mb-1 text-muted">Product SKU: <span className="text-dark">N/A</span></p>
-                                <p className="mb-0 text-muted">Available: <span className="text-secondary fw-bold">{product.stock} items in stock</span></p>
-                            </div>
-
-                            <p className="electro-quickview-desc text-muted mb-4">
-                                {product.description || "The generated Lorem Ipsum is therefore always free from repetition injected humour, or non-characteristic words etc."}
-                            </p>
-
-                            <div className="d-flex align-items-center gap-3 mb-4">
-                                <div className="input-group" style={{ width: '120px' }}>
-                                    <button className="btn btn-outline-secondary btn-sm" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
-                                        <i className="fas fa-minus"></i>
-                                    </button>
-                                    <input type="text" className="form-control form-control-sm text-center border-secondary" value={quantity} readOnly />
-                                    <button className="btn btn-outline-secondary btn-sm" onClick={() => setQuantity(quantity + 1)}>
-                                        <i className="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button className="btn btn-primary rounded-pill py-2 px-5 fw-bold w-100 mb-4" onClick={handleAddToCart}>
-                                <i className="fas fa-shopping-cart me-2"></i>Add to cart
+                    <div className="mt-6 flex items-center gap-3">
+                        <div className="flex items-center rounded-sm border border-[var(--color-border)] bg-[var(--color-background)]">
+                            <button
+                                type="button"
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                className="flex h-10 w-10 items-center justify-center text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                                aria-label="Giảm"
+                            >
+                                <i className="fas fa-minus text-xs"></i>
                             </button>
+                            <span className="ts-mono w-10 text-center text-sm text-[var(--color-fg)]">{quantity}</span>
+                            <button
+                                type="button"
+                                onClick={() => setQuantity(quantity + 1)}
+                                className="flex h-10 w-10 items-center justify-center text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                                aria-label="Tăng"
+                            >
+                                <i className="fas fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            className="ts-btn ts-btn-primary flex-1"
+                        >
+                            <i className="fas fa-shopping-cart"></i>
+                            Thêm vào giỏ
+                        </button>
+                    </div>
 
-                            <div className="electro-quickview-tabs">
-                                <div className="tabs-header d-flex border-bottom mb-3">
-                                    <button 
-                                        className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('description')}
-                                    >
-                                        Description
-                                    </button>
-                                    <button 
-                                        className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
-                                        onClick={() => setActiveTab('reviews')}
-                                    >
-                                        Reviews
-                                    </button>
-                                </div>
-                                <div className="tabs-content text-muted small">
-                                    {activeTab === 'description' ? (
-                                        <p>Our new products are designed to power up your digital life. High quality materials and state of the art technology.</p>
-                                    ) : (
-                                        <p>No reviews yet. Be the first to review this product!</p>
+                    <div className="mt-6 border-t border-[var(--color-border)] pt-5">
+                        <div className="flex gap-6 border-b border-[var(--color-border)]">
+                            {['description', 'reviews'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab)}
+                                    className={cn(
+                                        "relative pb-3 text-xs font-medium uppercase tracking-wider transition-colors",
+                                        activeTab === tab ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg-muted)]"
                                     )}
-                                </div>
-                            </div>
+                                >
+                                    {tab === 'description' ? 'Mô tả' : 'Đánh giá'}
+                                    {activeTab === tab && (
+                                        <span className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)]" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-4 text-xs leading-relaxed text-[var(--color-fg-muted)]">
+                            {activeTab === 'description'
+                                ? 'Sản phẩm được tuyển chọn kỹ càng, đảm bảo nguồn gốc, chất lượng cao và bảo hành chính hãng.'
+                                : 'Chưa có đánh giá nào. Hãy là người đầu tiên chia sẻ trải nghiệm của bạn!'}
                         </div>
                     </div>
                 </div>

@@ -35,17 +35,17 @@ nextActions.Shipping = nextActions.Shipped;
 nextActions.CancelRequested = [{ status: 'Cancelled', label: 'Duyet huy', icon: 'fas fa-rotate-left', tone: 'rose' }];
 
 const statusClass = (status) => {
-    if (status?.includes('Cancel')) return 'bg-rose-50 text-rose-700 ring-rose-100';
-    if (status === 'Completed') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-    if (status === 'Shipping' || status === 'Shipped') return 'bg-blue-50 text-blue-700 ring-blue-100';
-    if (status === 'Confirmed' || status === 'Processing') return 'bg-amber-50 text-amber-700 ring-amber-100';
-    return 'bg-slate-100 text-slate-700 ring-slate-200';
+    if (status?.includes('Cancel')) return 'bg-red-500/10 text-red-300 ring-red-500/30';
+    if (status === 'Completed') return 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30';
+    if (status === 'Shipping' || status === 'Shipped') return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] ring-blue-100';
+    if (status === 'Confirmed' || status === 'Processing') return 'bg-[var(--color-surface-2)] text-amber-300 ring-[var(--color-border)]';
+    return 'bg-[var(--color-surface-3)] text-[var(--color-fg)] ring-slate-200';
 };
 
 const actionClass = (tone) => {
     const classes = {
-        blue: 'bg-admin-brand hover:bg-orange-600',
-        amber: 'bg-amber-500 hover:bg-amber-600',
+        blue: 'bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] hover:bg-[var(--color-primary)]',
+        amber: 'bg-[var(--color-surface-2)]0 hover:bg-amber-600',
         green: 'bg-emerald-600 hover:bg-emerald-700',
         rose: 'bg-rose-600 hover:bg-rose-700',
     };
@@ -167,10 +167,10 @@ const AdminOrders = () => {
         <div className="px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-admin-muted">Vận hành</p>
-                    <h2 className="mb-0 text-2xl font-bold text-admin-ink">Quản lý đơn hàng</h2>
+                    <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Vận hành</p>
+                    <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Quản lý đơn hàng</h2>
                 </div>
-                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50" onClick={loadData}>
+                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)]  hover:bg-[var(--color-surface-2)]" onClick={loadData}>
                     <i className="fas fa-rotate"></i>
                     Làm mới
                 </button>
@@ -181,20 +181,20 @@ const AdminOrders = () => {
                     <button
                         key={status}
                         type="button"
-                        className={`rounded-md border p-4 text-left shadow-sm transition ${filterStatus === status ? 'border-admin-brand bg-orange-50' : 'border-slate-200 bg-white hover:bg-orange-50'}`}
+                        className={`rounded-md border p-4 text-left  transition ${filterStatus === status ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-accent)]/10'}`}
                         onClick={() => updateFilterStatus(filterStatus === status ? '' : status)}
                     >
-                        <div className="text-sm font-semibold text-admin-muted">{statusLabel(status)}</div>
-                        <div className="mt-1 text-2xl font-bold text-admin-ink">{statusCounts[status] || 0}</div>
+                        <div className="text-sm font-semibold text-[var(--color-fg-muted)]">{statusLabel(status)}</div>
+                        <div className="mt-1 text-2xl font-bold text-[var(--color-fg)]">{statusCounts[status] || 0}</div>
                     </button>
                 ))}
             </div>
 
-            <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-200 p-4">
+            <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
+                <div className="border-b border-[var(--color-border)] p-4">
                     <div className="grid gap-3 lg:grid-cols-[1fr_1fr_220px_220px]">
                         <input
-                            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100"
+                            className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100"
                             placeholder="Tìm mã đơn hàng..."
                             value={keyword}
                             onChange={(e) => {
@@ -203,7 +203,7 @@ const AdminOrders = () => {
                             }}
                         />
                         <input
-                            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100"
+                            className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100"
                             placeholder="Tìm khách hàng..."
                             value={customerKeyword}
                             onChange={(e) => {
@@ -212,7 +212,7 @@ const AdminOrders = () => {
                             }}
                         />
                         <select
-                            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100"
+                            className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100"
                             value={filterStatus}
                             onChange={(e) => updateFilterStatus(e.target.value)}
                         >
@@ -220,7 +220,7 @@ const AdminOrders = () => {
                             {statuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
                         </select>
                         <select
-                            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-admin-brand focus:ring-2 focus:ring-blue-100"
+                            className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100"
                             value={sortOrder}
                             onChange={(e) => setSortOrder(e.target.value)}
                         >
@@ -233,15 +233,15 @@ const AdminOrders = () => {
                 </div>
 
                 <div className="p-4">
-                    {error && <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+                    {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>}
                     {loading ? (
-                        <div className="py-12 text-center text-sm font-medium text-admin-muted">Đang tải đơn hàng...</div>
+                        <div className="py-12 text-center text-sm font-medium text-[var(--color-fg-muted)]">Đang tải đơn hàng...</div>
                     ) : orders.length === 0 ? (
-                        <div className="rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-admin-muted">Không tìm thấy đơn hàng.</div>
+                        <div className="rounded-md border border-dashed border-[var(--color-border-strong)] p-8 text-center text-sm text-[var(--color-fg-muted)]">Không tìm thấy đơn hàng.</div>
                     ) : (
                         <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                        <table className="min-w-full divide-y divide-[var(--color-border)] text-sm">
+                                <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                     <tr>
                                          <th className="px-4 py-3">Đơn hàng</th>
                                         <th className="px-4 py-3">Khách hàng</th>
@@ -252,22 +252,22 @@ const AdminOrders = () => {
                                         <th className="px-4 py-3 text-right">Thao tác</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-[var(--color-border)]">
                                     {orders.map((order) => (
-                                        <tr key={order.id} className="hover:bg-slate-50">
-                                            <td className="px-4 py-3 font-bold text-admin-ink">#{order.id}</td>
-                                            <td className="px-4 py-3 text-admin-ink">{getUserName(order.userId)}</td>
-                                            <td className="px-4 py-3 text-admin-muted">{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
-                                            <td className="px-4 py-3 font-semibold text-admin-ink">{formatCurrency(order.totalAmount)}</td>
+                                        <tr key={order.id} className="hover:bg-[var(--color-surface-2)]">
+                                            <td className="px-4 py-3 font-bold text-[var(--color-fg)]">#{order.id}</td>
+                                            <td className="px-4 py-3 text-[var(--color-fg)]">{getUserName(order.userId)}</td>
+                                            <td className="px-4 py-3 text-[var(--color-fg-muted)]">{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
+                                            <td className="px-4 py-3 font-semibold text-[var(--color-fg)]">{formatCurrency(order.totalAmount)}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusClass(order.status)}`}>
                                                     {statusLabel(order.status)}
                                                 </span>
                                             </td>
-                                             <td className="max-w-[220px] truncate px-4 py-3 text-admin-muted">{order.shippingAddress || order.deliveryAddress || 'Chưa có địa chỉ'}</td>
+                                             <td className="max-w-[220px] truncate px-4 py-3 text-[var(--color-fg-muted)]">{order.shippingAddress || order.deliveryAddress || 'Chưa có địa chỉ'}</td>
                                             <td className="px-4 py-3">
                                                 <div className="flex justify-end gap-2">
-                                                    <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100" onClick={() => handleViewDetails(order.id)} title="Xem chi tiết">
+                                                    <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-fg)] hover:bg-[var(--color-surface-3)]" onClick={() => handleViewDetails(order.id)} title="Xem chi tiết">
                                                         <i className="fas fa-eye"></i>
                                                     </button>
                                                     {(nextActions[order.status] || []).map((action) => (
@@ -297,42 +297,42 @@ const AdminOrders = () => {
                     )}
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-sm text-admin-muted sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 border-t border-[var(--color-border)] px-4 py-3 text-sm text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between">
                     <span>Hiển thị {orders.length ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, filteredOrders.length)} trong {filteredOrders.length} đơn hàng</span>
                     <div className="flex items-center gap-2">
-                        <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</button>
+                        <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</button>
                         <span>Trang {page}/{totalPages}</span>
-                        <button type="button" className="rounded-md border border-slate-200 px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Sau</button>
+                        <button type="button" className="rounded-md border border-[var(--color-border)] px-3 py-1.5 font-semibold disabled:opacity-50" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Sau</button>
                     </div>
                 </div>
             </section>
 
             {orderDetails && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-                    <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-md bg-white shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                    <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-md bg-[var(--color-surface)] shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
                             <div>
-                                <h3 className="mb-0 text-lg font-bold text-admin-ink">Đơn hàng #{orderDetails.order.id}</h3>
-                                <p className="mb-0 text-sm text-admin-muted">{new Date(orderDetails.order.orderDate).toLocaleString('vi-VN')}</p>
+                                <h3 className="mb-0 text-lg font-bold text-[var(--color-fg)]">Đơn hàng #{orderDetails.order.id}</h3>
+                                <p className="mb-0 text-sm text-[var(--color-fg-muted)]">{new Date(orderDetails.order.orderDate).toLocaleString('vi-VN')}</p>
                             </div>
-                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" onClick={() => setOrderDetails(null)}>
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-fg-dim)] hover:bg-[var(--color-surface-3)]" onClick={() => setOrderDetails(null)}>
                                 <i className="fas fa-times"></i>
                             </button>
                         </div>
                         <div className="max-h-[calc(90vh-140px)] overflow-y-auto p-5">
                             <div className="mb-5 grid gap-4 md:grid-cols-3">
-                                <div className="rounded-md bg-slate-50 p-4">
-                                    <h4 className="text-sm font-bold text-admin-ink">Khách hàng</h4>
+                                <div className="rounded-md bg-[var(--color-surface-2)] p-4">
+                                    <h4 className="text-sm font-bold text-[var(--color-fg)]">Khách hàng</h4>
                                     <p className="mb-1 text-sm">{orderDetails.order.customerName || getUserName(orderDetails.order.userId)}</p>
-                                    <p className="mb-1 text-sm text-admin-muted">{orderDetails.order.customerPhone || 'Không có'}</p>
-                                    <p className="mb-0 text-sm text-admin-muted">{orderDetails.order.customerEmail || 'Không có'}</p>
+                                    <p className="mb-1 text-sm text-[var(--color-fg-muted)]">{orderDetails.order.customerPhone || 'Không có'}</p>
+                                    <p className="mb-0 text-sm text-[var(--color-fg-muted)]">{orderDetails.order.customerEmail || 'Không có'}</p>
                                 </div>
-                                <div className="rounded-md bg-slate-50 p-4">
-                                    <h4 className="text-sm font-bold text-admin-ink">Giao hàng</h4>
-                                    <p className="mb-0 text-sm text-admin-muted">{orderDetails.order.shippingAddress || orderDetails.order.deliveryAddress || 'Chưa có địa chỉ'}</p>
+                                <div className="rounded-md bg-[var(--color-surface-2)] p-4">
+                                    <h4 className="text-sm font-bold text-[var(--color-fg)]">Giao hàng</h4>
+                                    <p className="mb-0 text-sm text-[var(--color-fg-muted)]">{orderDetails.order.shippingAddress || orderDetails.order.deliveryAddress || 'Chưa có địa chỉ'}</p>
                                 </div>
-                                <div className="rounded-md bg-slate-50 p-4">
-                                    <h4 className="text-sm font-bold text-admin-ink">Thanh toán</h4>
+                                <div className="rounded-md bg-[var(--color-surface-2)] p-4">
+                                    <h4 className="text-sm font-bold text-[var(--color-fg)]">Thanh toán</h4>
                                     <p className="mb-1 text-sm">{orderDetails.order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'Online / Chuyển khoản'}</p>
                                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusClass(orderDetails.order.status)}`}>
                                         {statusLabel(orderDetails.order.status)}
@@ -340,9 +340,9 @@ const AdminOrders = () => {
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto rounded-md border border-slate-200">
-                                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-admin-muted">
+                            <div className="overflow-x-auto rounded-md border border-[var(--color-border)]">
+                                <table className="min-w-full divide-y divide-[var(--color-border)] text-sm">
+                                    <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
                                         <tr>
                                             <th className="px-4 py-3">Sản phẩm</th>
                                             <th className="px-4 py-3 text-center">SL</th>
@@ -350,30 +350,30 @@ const AdminOrders = () => {
                                             <th className="px-4 py-3 text-right">Thành tiền</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-[var(--color-border)]">
                                         {(orderDetails.details || []).map((item, index) => (
                                             <tr key={item.id || index}>
-                                                <td className="px-4 py-3 font-semibold text-admin-ink">{item.productName || item.product?.name || `Sản phẩm #${item.productId}`}</td>
+                                                <td className="px-4 py-3 font-semibold text-[var(--color-fg)]">{item.productName || item.product?.name || `Sản phẩm #${item.productId}`}</td>
                                                 <td className="px-4 py-3 text-center">{item.quantity}</td>
                                                 <td className="px-4 py-3 text-right">{formatCurrency(item.unitPrice)}</td>
                                                 <td className="px-4 py-3 text-right font-semibold">{formatCurrency(Number(item.unitPrice || 0) * Number(item.quantity || 0))}</td>
                                             </tr>
                                         ))}
                                     </tbody>
-                                    <tfoot className="bg-slate-50">
+                                    <tfoot className="bg-[var(--color-surface-2)]">
                                         <tr>
                                             <th colSpan="3" className="px-4 py-3 text-right">Tổng cộng</th>
-                                            <th className="px-4 py-3 text-right text-lg text-admin-brand">{formatCurrency(orderDetails.order.totalAmount)}</th>
+                                            <th className="px-4 py-3 text-right text-lg text-[var(--color-accent)]">{formatCurrency(orderDetails.order.totalAmount)}</th>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
-                        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
-                            <button type="button" className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => window.print()}>
+                        <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-4">
+                            <button type="button" className="rounded-md border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={() => window.print()}>
                                 <i className="fas fa-print mr-2"></i>In hóa đơn
                             </button>
-                            <button type="button" className="rounded-md bg-admin-brand px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600" onClick={() => setOrderDetails(null)}>
+                            <button type="button" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)]" onClick={() => setOrderDetails(null)}>
                                 Đóng
                             </button>
                         </div>

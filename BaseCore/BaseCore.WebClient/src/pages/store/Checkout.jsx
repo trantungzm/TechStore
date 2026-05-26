@@ -13,25 +13,20 @@ import {
     getSelectedUsableCouponsForCart,
     validateSelectedCouponForCart,
 } from '../../utils/couponUtils';
+import { cn } from '../../utils/cn';
 
 const CHECKOUT_SELECTION_KEY = 'store_checkout_selected_items';
 const SHIPPING_FEE = 30000;
 
-const pickupStores = [
-    'TechStore - 236 Hoàng Quốc Việt, Nghĩa Đô, Hà Nội',
-];
+const pickupStores = ['TechStore — 236 Hoàng Quốc Việt, Nghĩa Đô, Hà Nội'];
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const buildOrderCode = () => {
     const now = new Date();
-    const date = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0'),
-    ].join('');
+    const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('');
     const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
-    return `CNTHHT-${date}-${suffix}`;
+    return `TS-${date}-${suffix}`;
 };
 
 const getCouponDescription = (coupon) => {
@@ -41,23 +36,19 @@ const getCouponDescription = (coupon) => {
         const cap = coupon.maxDiscount ? `, tối đa ${formatCurrency(coupon.maxDiscount)}` : '';
         return `Giảm ${coupon.value}% cho đơn từ ${formatCurrency(coupon.minOrder || 0)}${cap}`;
     }
-    return `Điều kiện đơn từ ${formatCurrency(coupon.minOrder || 0)}`;
+    return `Đơn từ ${formatCurrency(coupon.minOrder || 0)}`;
 };
 
 const getPaymentLabel = (method) => ({
     store: 'Thanh toán tại cửa hàng',
-    bank: 'Chuyển khoản ngân hàng qua mã QR',
+    bank: 'Chuyển khoản ngân hàng',
     momo: 'MoMo',
     shopeepay: 'ShopeePay',
     applepay: 'Apple Pay',
 }[method] || 'Chưa chọn');
 
 const toApiPaymentMethod = (method) => ({
-    store: 'StorePayment',
-    bank: 'BankTransfer',
-    momo: 'Momo',
-    shopeepay: 'ShopeePay',
-    applepay: 'ApplePay',
+    store: 'StorePayment', bank: 'BankTransfer', momo: 'Momo', shopeepay: 'ShopeePay', applepay: 'ApplePay',
 }[method] || 'BankTransfer');
 
 const toPaymentStatus = (method) => (
@@ -65,7 +56,15 @@ const toPaymentStatus = (method) => (
 );
 
 const getCreatedOrder = (payload) => payload?.order || payload || {};
-const getCreatedOrderItems = (payload, fallbackItems) => payload?.items || payload?.details || fallbackItems;
+const getCreatedOrderItems = (payload, fallback) => payload?.items || payload?.details || fallback;
+
+const paymentOptions = [
+    { value: 'store', label: 'Tại cửa hàng', desc: 'Thanh toán khi nhận sản phẩm', icon: 'fa-store' },
+    { value: 'bank', label: 'Chuyển khoản', desc: 'Chuyển khoản qua mã QR', icon: 'fa-university' },
+    { value: 'momo', label: 'MoMo', desc: 'Thanh toán qua ví MoMo', icon: 'fa-wallet' },
+    { value: 'shopeepay', label: 'ShopeePay', desc: 'Thanh toán qua ShopeePay', icon: 'fa-wallet' },
+    { value: 'applepay', label: 'Apple Pay', desc: 'Thanh toán qua Apple Pay', icon: 'fa-apple-pay' },
+];
 
 const Checkout = () => {
     const { items, removeItem } = useCart();
@@ -75,71 +74,48 @@ const Checkout = () => {
     const [formErrors, setFormErrors] = useState({});
     const [orderSuccess, setOrderSuccess] = useState(null);
     const [submittingOrder, setSubmittingOrder] = useState(false);
-    const [customerInfo, setCustomerInfo] = useState({
-        fullName: '',
-        phone: '',
-        email: '',
-        notes: '',
-    });
+    const [customerInfo, setCustomerInfo] = useState({ fullName: '', phone: '', email: '', notes: '' });
     const [deliveryMethod, setDeliveryMethod] = useState('pickup');
     const [storePickupInfo, setStorePickupInfo] = useState({
         store: pickupStores[0],
         expectedTime: 'Trong 2 giờ sau khi xác nhận đơn hàng',
     });
-    const [shippingAddress, setShippingAddress] = useState({
-        province: '',
-        district: '',
-        ward: '',
-        address: '',
-    });
+    const [shippingAddress, setShippingAddress] = useState({ province: '', district: '', ward: '', address: '' });
     const [invoiceRequired, setInvoiceRequired] = useState(false);
-    const [invoiceInfo, setInvoiceInfo] = useState({
-        name: '',
-        taxCode: '',
-        address: '',
-        email: '',
-    });
+    const [invoiceInfo, setInvoiceInfo] = useState({ name: '', taxCode: '', address: '', email: '' });
     const [paymentMethod, setPaymentMethod] = useState('store');
     const [appliedProductCoupon, setAppliedProductCoupon] = useState(null);
     const [appliedShippingCoupon, setAppliedShippingCoupon] = useState(null);
     const [couponMessage, setCouponMessage] = useState('');
 
     useEffect(() => {
-        setPageMeta({
-            title: `${t('Checkout')} | Electro`,
-            description: t('Checkout meta description'),
-        });
+        setPageMeta({ title: `${t('Checkout')} | TechStore`, description: t('Checkout meta description') });
     }, []);
 
     useEffect(() => {
         if (!user) return;
-        setCustomerInfo((current) => ({
-            ...current,
-            phone: current.phone || user.phone || '',
-        }));
+        setCustomerInfo((c) => ({ ...c, phone: c.phone || user.phone || '', fullName: c.fullName || user.name || '' }));
     }, [user]);
 
     useEffect(() => {
-        setPaymentMethod((current) => {
-            if (deliveryMethod === 'pickup' && (!current || current === 'bank')) return 'store';
-            if (deliveryMethod === 'shipping' && current === 'store') return 'bank';
-            return current || (deliveryMethod === 'pickup' ? 'store' : 'bank');
+        setPaymentMethod((c) => {
+            if (deliveryMethod === 'pickup' && (!c || c === 'bank')) return 'store';
+            if (deliveryMethod === 'shipping' && c === 'store') return 'bank';
+            return c || (deliveryMethod === 'pickup' ? 'store' : 'bank');
         });
     }, [deliveryMethod]);
 
     const checkoutSelectionIds = useMemo(() => {
         try {
-            const storedItems = JSON.parse(sessionStorage.getItem(CHECKOUT_SELECTION_KEY) || '[]');
-            return Array.isArray(storedItems) ? storedItems.map((item) => String(item.productId)) : [];
-        } catch {
-            return [];
-        }
+            const stored = JSON.parse(sessionStorage.getItem(CHECKOUT_SELECTION_KEY) || '[]');
+            return Array.isArray(stored) ? stored.map((i) => String(i.productId)) : [];
+        } catch { return []; }
     }, []);
 
     const selectedCartItems = useMemo(() => {
         if (checkoutSelectionIds.length === 0) return items;
-        const selectedSet = new Set(checkoutSelectionIds);
-        return items.filter((item) => selectedSet.has(String(item.productId)));
+        const sel = new Set(checkoutSelectionIds);
+        return items.filter((i) => sel.has(String(i.productId)));
     }, [items, checkoutSelectionIds]);
 
     const productSubtotal = useMemo(() => getCartSubtotal(selectedCartItems), [selectedCartItems]);
@@ -152,70 +128,63 @@ const Checkout = () => {
     const shippingCouponOptions = couponOptions.filter(({ coupon }) => coupon.couponType === 'shipping');
 
     const productValidation = appliedProductCoupon
-        ? validateSelectedCouponForCart(appliedProductCoupon.code, selectedCartItems, productSubtotal, shippingFee, coupons)
-        : null;
+        ? validateSelectedCouponForCart(appliedProductCoupon.code, selectedCartItems, productSubtotal, shippingFee, coupons) : null;
     const shippingValidation = appliedShippingCoupon
-        ? validateSelectedCouponForCart(appliedShippingCoupon.code, selectedCartItems, productSubtotal, shippingFee, coupons)
-        : null;
+        ? validateSelectedCouponForCart(appliedShippingCoupon.code, selectedCartItems, productSubtotal, shippingFee, coupons) : null;
 
-    const productDiscount = productValidation?.valid
-        ? calculateProductCouponDiscount(appliedProductCoupon, selectedCartItems, productSubtotal)
-        : 0;
-    const shippingDiscount = shippingValidation?.valid
-        ? calculateShippingCouponDiscount(appliedShippingCoupon, shippingFee)
-        : 0;
+    const productDiscount = productValidation?.valid ? calculateProductCouponDiscount(appliedProductCoupon, selectedCartItems, productSubtotal) : 0;
+    const shippingDiscount = shippingValidation?.valid ? calculateShippingCouponDiscount(appliedShippingCoupon, shippingFee) : 0;
     const finalShippingFee = Math.max(0, shippingFee - shippingDiscount);
     const totalPayment = Math.max(0, productSubtotal - productDiscount + finalShippingFee);
+
+    const fullShippingAddress = [shippingAddress.address, shippingAddress.ward, shippingAddress.district, shippingAddress.province].filter(Boolean).join(', ');
 
     useEffect(() => {
         if (appliedProductCoupon && !productValidation?.valid) {
             setAppliedProductCoupon(null);
-            setCouponMessage('Phiếu sản phẩm đang áp dụng không còn phù hợp.');
+            setCouponMessage('Phiếu sản phẩm không còn phù hợp.');
         }
         if (appliedShippingCoupon && !shippingValidation?.valid) {
             setAppliedShippingCoupon(null);
-            setCouponMessage('Phiếu vận chuyển đang áp dụng không còn phù hợp.');
+            setCouponMessage('Phiếu vận chuyển không còn phù hợp.');
         }
     }, [appliedProductCoupon, appliedShippingCoupon, productValidation, shippingValidation]);
 
-    const updateCustomerInfo = (field) => (event) => {
-        setCustomerInfo((current) => ({ ...current, [field]: event.target.value }));
-        setFormErrors((current) => ({ ...current, [field]: '' }));
+    const updateCustomerInfo = (field) => (e) => {
+        setCustomerInfo((c) => ({ ...c, [field]: e.target.value }));
+        setFormErrors((c) => ({ ...c, [field]: '' }));
     };
-
-    const updateShippingAddress = (field) => (event) => {
-        setShippingAddress((current) => ({ ...current, [field]: event.target.value }));
-        setFormErrors((current) => ({ ...current, [`shipping.${field}`]: '' }));
+    const updateShippingAddress = (field) => (e) => {
+        setShippingAddress((c) => ({ ...c, [field]: e.target.value }));
+        setFormErrors((c) => ({ ...c, [`shipping.${field}`]: '' }));
     };
-
-    const updateInvoiceInfo = (field) => (event) => {
-        setInvoiceInfo((current) => ({ ...current, [field]: event.target.value }));
-        setFormErrors((current) => ({ ...current, [`invoice.${field}`]: '' }));
+    const updateInvoiceInfo = (field) => (e) => {
+        setInvoiceInfo((c) => ({ ...c, [field]: e.target.value }));
+        setFormErrors((c) => ({ ...c, [`invoice.${field}`]: '' }));
     };
 
     const validateStepOne = () => {
-        const nextErrors = {};
-        if (!customerInfo.fullName.trim()) nextErrors.fullName = 'Vui lòng nhập họ và tên.';
-        if (!customerInfo.phone.trim()) nextErrors.phone = 'Vui lòng nhập số điện thoại.';
-        if (customerInfo.email.trim() && !emailPattern.test(customerInfo.email.trim())) nextErrors.email = 'Email chưa đúng định dạng.';
+        const errs = {};
+        if (!customerInfo.fullName.trim()) errs.fullName = 'Vui lòng nhập họ và tên.';
+        if (!customerInfo.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại.';
+        if (customerInfo.email.trim() && !emailPattern.test(customerInfo.email.trim())) errs.email = 'Email chưa đúng định dạng.';
 
         if (deliveryMethod === 'pickup') {
-            if (!storePickupInfo.store) nextErrors.pickupStore = 'Vui lòng chọn cửa hàng nhận hàng.';
+            if (!storePickupInfo.store) errs.pickupStore = 'Vui lòng chọn cửa hàng.';
         } else {
-            if (!shippingAddress.province.trim()) nextErrors['shipping.province'] = 'Vui lòng nhập tỉnh / thành phố.';
-            if (!shippingAddress.district.trim()) nextErrors['shipping.district'] = 'Vui lòng nhập quận / huyện.';
-            if (!shippingAddress.ward.trim()) nextErrors['shipping.ward'] = 'Vui lòng nhập phường / xã.';
-            if (!shippingAddress.address.trim()) nextErrors['shipping.address'] = 'Vui lòng nhập địa chỉ cụ thể.';
+            if (!shippingAddress.province.trim()) errs['shipping.province'] = 'Bắt buộc.';
+            if (!shippingAddress.district.trim()) errs['shipping.district'] = 'Bắt buộc.';
+            if (!shippingAddress.ward.trim()) errs['shipping.ward'] = 'Bắt buộc.';
+            if (!shippingAddress.address.trim()) errs['shipping.address'] = 'Bắt buộc.';
         }
 
         if (invoiceRequired) {
-            if (!invoiceInfo.name.trim()) nextErrors['invoice.name'] = 'Vui lòng nhập tên công ty / cá nhân.';
-            if (!invoiceInfo.taxCode.trim()) nextErrors['invoice.taxCode'] = 'Vui lòng nhập mã số thuế.';
-            if (invoiceInfo.email.trim() && !emailPattern.test(invoiceInfo.email.trim())) nextErrors['invoice.email'] = 'Email nhận hóa đơn chưa đúng định dạng.';
+            if (!invoiceInfo.name.trim()) errs['invoice.name'] = 'Bắt buộc.';
+            if (!invoiceInfo.taxCode.trim()) errs['invoice.taxCode'] = 'Bắt buộc.';
+            if (invoiceInfo.email.trim() && !emailPattern.test(invoiceInfo.email.trim())) errs['invoice.email'] = 'Email chưa đúng định dạng.';
         }
-
-        setFormErrors(nextErrors);
-        return Object.keys(nextErrors).length === 0;
+        setFormErrors(errs);
+        return Object.keys(errs).length === 0;
     };
 
     const goToPaymentStep = () => {
@@ -225,44 +194,30 @@ const Checkout = () => {
     };
 
     const applyCoupon = (coupon) => {
-        const validation = validateSelectedCouponForCart(coupon.code, selectedCartItems, productSubtotal, shippingFee, coupons);
-        if (!validation.valid) {
-            const missing = validation.missingAmount > 0 ? ` Còn thiếu ${formatCurrency(validation.missingAmount)}.` : '';
-            setCouponMessage(`${validation.message}.${missing}`);
+        const v = validateSelectedCouponForCart(coupon.code, selectedCartItems, productSubtotal, shippingFee, coupons);
+        if (!v.valid) {
+            const missing = v.missingAmount > 0 ? ` Còn thiếu ${formatCurrency(v.missingAmount)}.` : '';
+            setCouponMessage(`${v.message}.${missing}`);
             return;
         }
         if (coupon.couponType === 'product') {
             setAppliedProductCoupon(coupon);
             setCouponMessage(`Đã áp dụng phiếu sản phẩm ${coupon.code}.`);
-            return;
+        } else {
+            setAppliedShippingCoupon(coupon);
+            setCouponMessage(`Đã áp dụng phiếu vận chuyển ${coupon.code}.`);
         }
-        setAppliedShippingCoupon(coupon);
-        setCouponMessage(`Đã áp dụng phiếu vận chuyển ${coupon.code}.`);
     };
 
     const removeCoupon = (type) => {
-        if (type === 'product') {
-            setAppliedProductCoupon(null);
-            setCouponMessage('Đã bỏ áp dụng phiếu sản phẩm.');
-            return;
-        }
-        setAppliedShippingCoupon(null);
-        setCouponMessage('Đã bỏ áp dụng phiếu vận chuyển.');
+        if (type === 'product') { setAppliedProductCoupon(null); setCouponMessage('Đã bỏ phiếu sản phẩm.'); }
+        else { setAppliedShippingCoupon(null); setCouponMessage('Đã bỏ phiếu vận chuyển.'); }
     };
 
     const placeOrder = async () => {
-        if (!validateStepOne()) {
-            setCurrentStep(1);
-            return;
-        }
-        if (selectedCartItems.length === 0) {
-            setFormErrors({ order: 'Không có sản phẩm nào để thanh toán.' });
-            return;
-        }
-        if (!paymentMethod) {
-            setFormErrors({ paymentMethod: 'Vui lòng chọn phương thức thanh toán.' });
-            return;
-        }
+        if (!validateStepOne()) { setCurrentStep(1); return; }
+        if (selectedCartItems.length === 0) { setFormErrors({ order: 'Không có sản phẩm nào để thanh toán.' }); return; }
+        if (!paymentMethod) { setFormErrors({ paymentMethod: 'Vui lòng chọn phương thức thanh toán.' }); return; }
 
         const payload = {
             customerName: customerInfo.fullName.trim(),
@@ -293,104 +248,75 @@ const Checkout = () => {
         };
 
         setSubmittingOrder(true);
-        setFormErrors((current) => ({ ...current, order: '' }));
+        setFormErrors((c) => ({ ...c, order: '' }));
         try {
             const response = await orderApi.create(payload);
-            const createdOrder = getCreatedOrder(response.data);
+            const created = getCreatedOrder(response.data);
             const createdItems = getCreatedOrderItems(response.data, selectedCartItems);
-            selectedCartItems.forEach((item) => removeItem(item.productId));
+            selectedCartItems.forEach((i) => removeItem(i.productId));
             sessionStorage.removeItem(CHECKOUT_SELECTION_KEY);
             setOrderSuccess({
-                ...createdOrder,
-                code: createdOrder.orderCode || createdOrder.code || buildOrderCode(),
+                ...created,
+                code: created.orderCode || created.code || buildOrderCode(),
                 items: createdItems,
-                totalPayment: createdOrder.totalAmount ?? totalPayment,
+                totalPayment: created.totalAmount ?? totalPayment,
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (requestError) {
-            const data = requestError.response?.data;
-            setFormErrors((current) => ({
-                ...current,
-                order: data?.message || data?.detail || data?.title || 'KhÃ´ng thá»ƒ táº¡o Ä‘Æ¡n hÃ ng. Vui lÃ²ng thá»­ láº¡i.',
-            }));
+        } catch (e) {
+            const data = e.response?.data;
+            setFormErrors((c) => ({ ...c, order: data?.message || data?.detail || data?.title || 'Không thể tạo đơn hàng. Vui lòng thử lại.' }));
         } finally {
             setSubmittingOrder(false);
         }
     };
 
-    const fullShippingAddress = [
-        shippingAddress.address,
-        shippingAddress.ward,
-        shippingAddress.district,
-        shippingAddress.province,
-    ].filter(Boolean).join(', ');
+    const fieldErr = (key) => formErrors[key] ? <span className="mt-1 block text-[11px] text-red-400">{formErrors[key]}</span> : null;
 
-    const renderFieldError = (key) => formErrors[key] ? <div className="text-danger small mt-1">{formErrors[key]}</div> : null;
-
-    const renderCouponCard = ({ coupon, valid, message, missingAmount, productDiscount: previewProductDiscount, shippingDiscount: previewShippingDiscount }) => {
-        const isApplied = coupon.couponType === 'product'
-            ? appliedProductCoupon?.id === coupon.id
-            : appliedShippingCoupon?.id === coupon.id;
-        const discountPreview = coupon.couponType === 'product' ? previewProductDiscount : previewShippingDiscount;
-        const unavailableText = missingAmount > 0 ? `Còn thiếu ${formatCurrency(missingAmount)}` : message;
-
+    const renderCouponCard = ({ coupon, valid, message, missingAmount, productDiscount: ppd, shippingDiscount: psd }) => {
+        const isApplied = coupon.couponType === 'product' ? appliedProductCoupon?.id === coupon.id : appliedShippingCoupon?.id === coupon.id;
+        const discountPreview = coupon.couponType === 'product' ? ppd : psd;
         return (
-            <div className={`cart-coupon-card ${isApplied ? 'is-applied' : ''} ${!valid ? 'is-disabled' : ''}`} key={coupon.id}>
-                <div className="d-flex justify-content-between gap-3">
-                    <div>
-                        <div className="cart-coupon-code">{coupon.code}</div>
-                        <div className="fw-semibold text-dark">{getCouponDescription(coupon)}</div>
-                        <div className="text-muted small">Điều kiện: đơn từ {formatCurrency(coupon.minOrder || 0)}</div>
-                        {discountPreview > 0 && valid && (
-                            <div className="text-success small mt-1">Dự kiến giảm {formatCurrency(discountPreview)}</div>
-                        )}
-                    </div>
-                    <span className={`cart-coupon-status ${valid ? 'is-usable' : 'is-unavailable'}`}>
-                        {isApplied ? 'Đang áp dụng' : message}
-                    </span>
+            <div
+                key={coupon.id}
+                className={cn(
+                    "flex flex-col gap-2 rounded-md border p-4 transition-colors md:flex-row md:items-center",
+                    isApplied ? "border-[var(--color-accent)]/60 bg-[var(--color-accent)]/5" : "border-[var(--color-border)] bg-[var(--color-surface-2)]",
+                    !valid && "opacity-60"
+                )}
+            >
+                <div className="min-w-0 flex-1">
+                    <span className="ts-mono rounded-sm bg-[var(--color-accent)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)]">{coupon.code}</span>
+                    <p className="mt-2 text-sm font-medium text-[var(--color-fg)]">{getCouponDescription(coupon)}</p>
+                    {discountPreview > 0 && valid && <p className="mt-1 text-[11px] text-emerald-400">Dự kiến giảm {formatCurrency(discountPreview)}</p>}
+                    {!valid && <p className="mt-1 text-[11px] text-red-400">{missingAmount > 0 ? `Còn thiếu ${formatCurrency(missingAmount)}` : message}</p>}
                 </div>
-                {!valid && <div className="text-danger small mt-2">{unavailableText}</div>}
-                <div className="mt-3">
-                    {isApplied ? (
-                        <button type="button" className="btn btn-outline-primary rounded-pill btn-sm" onClick={() => removeCoupon(coupon.couponType)}>
-                            Bỏ áp dụng
-                        </button>
-                    ) : (
-                        <button type="button" className="btn btn-primary rounded-pill btn-sm" disabled={!valid} onClick={() => applyCoupon(coupon)}>
-                            Áp dụng
-                        </button>
-                    )}
-                </div>
+                {isApplied ? (
+                    <button onClick={() => removeCoupon(coupon.couponType)} className="ts-btn ts-btn-outline px-3 py-1.5 text-xs">Bỏ</button>
+                ) : (
+                    <button onClick={() => applyCoupon(coupon)} disabled={!valid} className="ts-btn ts-btn-primary px-3 py-1.5 text-xs">Áp dụng</button>
+                )}
             </div>
         );
     };
 
-    const renderOrderSummary = () => (
-        <div className="checkout-summary bg-white border rounded p-4">
-            <h4 className="mb-4">Tóm tắt thanh toán</h4>
-            <div className="d-flex justify-content-between mb-3">
-                <span>Sản phẩm đã chọn</span>
-                <strong>{selectedCartItems.length}</strong>
+    const summary = (
+        <div className="sticky top-24 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+            <div className="border-b border-[var(--color-border)] px-6 py-4">
+                <p className="ts-eyebrow text-[var(--color-accent)]">Order Summary</p>
+                <h4 className="ts-display mt-1 text-xl">Tóm tắt thanh toán</h4>
             </div>
-            <div className="d-flex justify-content-between mb-3">
-                <span>Tạm tính sản phẩm</span>
-                <strong>{formatCurrency(productSubtotal)}</strong>
+            <div className="space-y-3 px-6 py-5 text-sm">
+                <div className="flex justify-between text-[var(--color-fg-muted)]"><span>Sản phẩm</span><span className="ts-mono">{selectedCartItems.length}</span></div>
+                <div className="flex justify-between text-[var(--color-fg-muted)]"><span>Tạm tính</span><span className="ts-mono">{formatCurrency(productSubtotal)}</span></div>
+                {productDiscount > 0 && <div className="flex justify-between text-emerald-400"><span>Giảm sản phẩm</span><span className="ts-mono">−{formatCurrency(productDiscount)}</span></div>}
+                <div className="flex justify-between text-[var(--color-fg-muted)]"><span>Phí vận chuyển</span><span className="ts-mono">{formatCurrency(shippingFee)}</span></div>
+                {shippingDiscount > 0 && <div className="flex justify-between text-emerald-400"><span>Giảm vận chuyển</span><span className="ts-mono">−{formatCurrency(shippingDiscount)}</span></div>}
             </div>
-            <div className="d-flex justify-content-between mb-3">
-                <span>Giảm giá sản phẩm</span>
-                <strong className="text-danger">-{formatCurrency(productDiscount)}</strong>
-            </div>
-            <div className="d-flex justify-content-between mb-3">
-                <span>Phí vận chuyển</span>
-                <strong>{formatCurrency(shippingFee)}</strong>
-            </div>
-            <div className="d-flex justify-content-between mb-3">
-                <span>Giảm phí vận chuyển</span>
-                <strong className="text-danger">-{formatCurrency(shippingDiscount)}</strong>
-            </div>
-            <div className="border-top pt-3 d-flex justify-content-between fs-5">
-                <span className="fw-semibold">Tổng thanh toán</span>
-                <strong className="text-primary">{formatCurrency(totalPayment)}</strong>
+            <div className="border-t border-[var(--color-border)] px-6 py-5">
+                <div className="flex items-baseline justify-between">
+                    <span className="ts-eyebrow text-[10px]">Tổng thanh toán</span>
+                    <span className="ts-mono text-2xl font-bold ts-gradient-text">{formatCurrency(totalPayment)}</span>
+                </div>
             </div>
         </div>
     );
@@ -398,43 +324,28 @@ const Checkout = () => {
     if (orderSuccess) {
         return (
             <>
-                <PageHero title="Đặt hàng thành công" current="Đặt hàng thành công" />
-                <div className="container py-5">
-                    <div className="bg-white border rounded p-4 p-lg-5 text-center">
-                        <div className="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-4" style={{ width: 84, height: 84 }}>
-                            <i className="fas fa-check fa-2x text-white"></i>
+                <PageHero title="Đặt hàng thành công" current="Order success" kicker="Thank you" />
+                <section className="ts-container py-12">
+                    <div className="mx-auto max-w-2xl rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center md:p-12">
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-500/10">
+                            <i className="fas fa-check text-2xl text-emerald-400"></i>
                         </div>
-                        <h2 className="mb-2">Đặt hàng thành công</h2>
-                        <p className="text-muted mb-4">Cảm ơn bạn đã mua hàng tại CNTHHT Store</p>
-                        <div className="row g-3 text-start justify-content-center mb-4">
-                            <div className="col-md-8 col-lg-6">
-                                <div className="border rounded p-3">
-                                    <div className="d-flex justify-content-between mb-2"><span>Mã đơn hàng</span><strong>{orderSuccess.code}</strong></div>
-                                    <div className="d-flex justify-content-between mb-2"><span>Phương thức nhận hàng</span><strong>{deliveryMethod === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao hàng tận nơi'}</strong></div>
-                                    <div className="d-flex justify-content-between mb-2"><span>Phương thức thanh toán</span><strong>{getPaymentLabel(paymentMethod)}</strong></div>
-                                    <div className="d-flex justify-content-between"><span>Tổng thanh toán</span><strong className="text-primary">{formatCurrency(totalPayment)}</strong></div>
-                                </div>
-                            </div>
+                        <h2 className="ts-display mt-6 text-3xl">Đặt hàng thành công</h2>
+                        <p className="mt-2 text-sm text-[var(--color-fg-muted)]">Cảm ơn bạn đã mua hàng tại TechStore.</p>
+
+                        <div className="mt-8 space-y-3 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-5 text-left text-sm">
+                            <div className="flex justify-between"><span className="text-[var(--color-fg-dim)]">Mã đơn</span><strong className="ts-mono text-[var(--color-accent)]">{orderSuccess.code}</strong></div>
+                            <div className="flex justify-between"><span className="text-[var(--color-fg-dim)]">Nhận hàng</span><strong className="text-[var(--color-fg)]">{deliveryMethod === 'pickup' ? 'Tại cửa hàng' : 'Giao tận nơi'}</strong></div>
+                            <div className="flex justify-between"><span className="text-[var(--color-fg-dim)]">Thanh toán</span><strong className="text-[var(--color-fg)]">{getPaymentLabel(paymentMethod)}</strong></div>
+                            <div className="flex justify-between border-t border-[var(--color-border)] pt-3"><span className="text-[var(--color-fg-dim)]">Tổng</span><strong className="ts-mono text-[var(--color-fg)]">{formatCurrency(totalPayment)}</strong></div>
                         </div>
-                        <div className="table-responsive mb-4">
-                            <table className="table align-middle">
-                                <tbody>
-                                    {orderSuccess.items.map((item, index) => (
-                                        <tr key={item.id || item.productId || index}>
-                                            <td className="text-start">{item.product?.name || item.productName || 'Sáº£n pháº©m'}</td>
-                                            <td>x{item.quantity}</td>
-                                            <td className="text-end">{formatCurrency(item.totalPrice ?? (item.product?.price || item.unitPrice || 0) * item.quantity)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="d-flex gap-3 justify-content-center flex-wrap">
-                            <Link to="/shop" className="btn btn-primary rounded-pill px-4">Tiếp tục mua sắm</Link>
-                            <Link to="/orders" className="btn btn-outline-primary rounded-pill px-4">Xem đơn hàng của tôi</Link>
+
+                        <div className="mt-8 flex flex-wrap justify-center gap-3">
+                            <Link to="/shop" className="ts-btn ts-btn-primary">Tiếp tục mua sắm</Link>
+                            <Link to="/orders" className="ts-btn ts-btn-outline">Xem đơn hàng</Link>
                         </div>
                     </div>
-                </div>
+                </section>
             </>
         );
     }
@@ -442,299 +353,297 @@ const Checkout = () => {
     if (selectedCartItems.length === 0) {
         return (
             <>
-                <PageHero title={t('Checkout')} current={t('Checkout')} />
-                <div className="container py-5 text-center">
-                    <i className="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
-                    <h4 className="text-muted mb-3">Không có sản phẩm nào để thanh toán</h4>
-                    <Link to="/cart" className="btn btn-primary rounded-pill px-5 py-3">Quay lại giỏ hàng</Link>
-                </div>
+                <PageHero title={t('Checkout')} current={t('Checkout')} kicker="Checkout" />
+                <section className="ts-container flex flex-col items-center py-20 text-center">
+                    <i className="fas fa-shopping-cart text-4xl text-[var(--color-fg-dim)]"></i>
+                    <p className="mt-6 text-sm text-[var(--color-fg-muted)]">Không có sản phẩm nào để thanh toán.</p>
+                    <Link to="/cart" className="ts-btn ts-btn-primary mt-6">Quay lại giỏ hàng</Link>
+                </section>
             </>
         );
     }
 
     return (
         <>
-            <PageHero title={t('Checkout')} current={t('Checkout')} />
-            <div className="container-fluid bg-light py-5">
-                <div className="container py-4">
-                    <div className="checkout-stepper mb-4">
-                        <div className={`checkout-step ${currentStep >= 1 ? 'is-active' : ''}`}>
-                            <span>1</span>
-                            <strong>Nhập thông tin</strong>
-                        </div>
-                        <div className={`checkout-step ${currentStep >= 2 ? 'is-active' : ''}`}>
-                            <span>2</span>
-                            <strong>Thanh toán</strong>
-                        </div>
-                    </div>
+            <PageHero title={t('Checkout')} current={t('Checkout')} kicker="Checkout" />
 
-                    <div className="row g-4 align-items-start">
-                        <div className="col-lg-8">
-                            {currentStep === 1 ? (
-                                <div className="checkout-panel bg-white border rounded p-4">
-                                    <h3 className="mb-4">Nhập thông tin</h3>
+            <section className="ts-container py-12">
+                {/* Stepper */}
+                <div className="mb-10 flex items-center justify-center gap-4">
+                    {[1, 2].map((step, i) => (
+                        <React.Fragment key={step}>
+                            <div className={cn("flex items-center gap-2 text-sm", currentStep >= step ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)]")}>
+                                <span className={cn(
+                                    "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold",
+                                    currentStep >= step
+                                        ? "border-[var(--color-primary)] bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] text-white"
+                                        : "border-[var(--color-border)]"
+                                )}>
+                                    {step}
+                                </span>
+                                <strong>{step === 1 ? 'Thông tin' : 'Thanh toán'}</strong>
+                            </div>
+                            {i === 0 && <span className="h-px w-12 bg-[var(--color-border)]" />}
+                        </React.Fragment>
+                    ))}
+                </div>
 
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Thông tin khách hàng</h5>
-                                        <div className="row g-3">
-                                            <div className="col-md-6">
-                                                <label className="form-label">Họ và tên <sup className="text-danger">*</sup></label>
-                                                <input className="form-control" value={customerInfo.fullName} onChange={updateCustomerInfo('fullName')} />
-                                                {renderFieldError('fullName')}
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Số điện thoại <sup className="text-danger">*</sup></label>
-                                                <input className="form-control" value={customerInfo.phone} onChange={updateCustomerInfo('phone')} />
-                                                {renderFieldError('phone')}
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Email</label>
-                                                <input className="form-control" value={customerInfo.email} onChange={updateCustomerInfo('email')} />
-                                                {renderFieldError('email')}
-                                            </div>
-                                            <div className="col-12">
-                                                <label className="form-label">Ghi chú đơn hàng</label>
-                                                <textarea className="form-control" rows="3" value={customerInfo.notes} onChange={updateCustomerInfo('notes')}></textarea>
-                                            </div>
-                                        </div>
-                                    </section>
-
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Thông tin nhận hàng</h5>
-                                        <div className="checkout-radio-grid mb-3">
-                                            <label className={`checkout-option ${deliveryMethod === 'pickup' ? 'is-selected' : ''}`}>
-                                                <input type="radio" name="delivery" checked={deliveryMethod === 'pickup'} onChange={() => setDeliveryMethod('pickup')} />
-                                                <span>Nhận tại cửa hàng</span>
-                                            </label>
-                                            <label className={`checkout-option ${deliveryMethod === 'shipping' ? 'is-selected' : ''}`}>
-                                                <input type="radio" name="delivery" checked={deliveryMethod === 'shipping'} onChange={() => setDeliveryMethod('shipping')} />
-                                                <span>Giao hàng tận nơi</span>
-                                            </label>
-                                        </div>
-
-                                        {deliveryMethod === 'pickup' ? (
-                                            <div className="row g-3">
-                                                <div className="col-12">
-                                                    <label className="form-label">Chọn cửa hàng nhận hàng <sup className="text-danger">*</sup></label>
-                                                    <select className="form-select" value={storePickupInfo.store} onChange={(event) => setStorePickupInfo((current) => ({ ...current, store: event.target.value }))}>
-                                                        {pickupStores.map((store) => <option value={store} key={store}>{store}</option>)}
-                                                    </select>
-                                                    {renderFieldError('pickupStore')}
-                                                </div>
-                                                <div className="col-12">
-                                                    <label className="form-label">Thời gian dự kiến nhận hàng</label>
-                                                    <input className="form-control" value={storePickupInfo.expectedTime} onChange={(event) => setStorePickupInfo((current) => ({ ...current, expectedTime: event.target.value }))} />
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="row g-3">
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Tỉnh / Thành phố <sup className="text-danger">*</sup></label>
-                                                    <input className="form-control" value={shippingAddress.province} onChange={updateShippingAddress('province')} />
-                                                    {renderFieldError('shipping.province')}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Quận / Huyện <sup className="text-danger">*</sup></label>
-                                                    <input className="form-control" value={shippingAddress.district} onChange={updateShippingAddress('district')} />
-                                                    {renderFieldError('shipping.district')}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Phường / Xã <sup className="text-danger">*</sup></label>
-                                                    <input className="form-control" value={shippingAddress.ward} onChange={updateShippingAddress('ward')} />
-                                                    {renderFieldError('shipping.ward')}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Địa chỉ cụ thể <sup className="text-danger">*</sup></label>
-                                                    <input className="form-control" value={shippingAddress.address} onChange={updateShippingAddress('address')} />
-                                                    {renderFieldError('shipping.address')}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </section>
-
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Khách hàng muốn xuất hóa đơn không?</h5>
-                                        <div className="checkout-radio-grid mb-3">
-                                            <label className={`checkout-option ${!invoiceRequired ? 'is-selected' : ''}`}>
-                                                <input type="radio" name="invoice" checked={!invoiceRequired} onChange={() => setInvoiceRequired(false)} />
-                                                <span>Không</span>
-                                            </label>
-                                            <label className={`checkout-option ${invoiceRequired ? 'is-selected' : ''}`}>
-                                                <input type="radio" name="invoice" checked={invoiceRequired} onChange={() => setInvoiceRequired(true)} />
-                                                <span>Có</span>
-                                            </label>
-                                        </div>
-
-                                        {invoiceRequired && (
-                                            <div className="row g-3">
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Tên công ty / cá nhân <sup className="text-danger">*</sup></label>
-                                                    <input className="form-control" value={invoiceInfo.name} onChange={updateInvoiceInfo('name')} />
-                                                    {renderFieldError('invoice.name')}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Mã số thuế <sup className="text-danger">*</sup></label>
-                                                    <input className="form-control" value={invoiceInfo.taxCode} onChange={updateInvoiceInfo('taxCode')} />
-                                                    {renderFieldError('invoice.taxCode')}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Địa chỉ xuất hóa đơn</label>
-                                                    <input className="form-control" value={invoiceInfo.address} onChange={updateInvoiceInfo('address')} />
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Email nhận hóa đơn</label>
-                                                    <input className="form-control" value={invoiceInfo.email} onChange={updateInvoiceInfo('email')} />
-                                                    {renderFieldError('invoice.email')}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </section>
-
-                                    <div className="d-flex justify-content-between gap-3 flex-wrap">
-                                        <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => navigate('/cart')}>Quay lại giỏ hàng</button>
-                                        <button type="button" className="btn btn-primary rounded-pill px-4" onClick={goToPaymentStep}>Tiếp tục thanh toán</button>
+                <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+                    <div>
+                        {currentStep === 1 ? (
+                            <div className="space-y-8">
+                                {/* Customer */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <p className="ts-eyebrow text-[var(--color-accent)]">Step 1.1</p>
+                                    <h3 className="ts-display mt-1 text-xl">Thông tin khách hàng</h3>
+                                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <label>
+                                            <span className="ts-eyebrow mb-1.5 block text-[10px]">Họ tên *</span>
+                                            <input className="ts-input" value={customerInfo.fullName} onChange={updateCustomerInfo('fullName')} />
+                                            {fieldErr('fullName')}
+                                        </label>
+                                        <label>
+                                            <span className="ts-eyebrow mb-1.5 block text-[10px]">Số điện thoại *</span>
+                                            <input className="ts-input" value={customerInfo.phone} onChange={updateCustomerInfo('phone')} />
+                                            {fieldErr('phone')}
+                                        </label>
+                                        <label className="md:col-span-2">
+                                            <span className="ts-eyebrow mb-1.5 block text-[10px]">Email</span>
+                                            <input className="ts-input" value={customerInfo.email} onChange={updateCustomerInfo('email')} />
+                                            {fieldErr('email')}
+                                        </label>
+                                        <label className="md:col-span-2">
+                                            <span className="ts-eyebrow mb-1.5 block text-[10px]">Ghi chú đơn hàng</span>
+                                            <textarea className="ts-input resize-none" rows={3} value={customerInfo.notes} onChange={updateCustomerInfo('notes')} />
+                                        </label>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="checkout-panel bg-white border rounded p-4">
-                                    <div className="d-flex justify-content-between align-items-start gap-3 mb-4">
-                                        <div>
-                                            <h3 className="mb-1">Thanh toán</h3>
-                                            <p className="text-muted mb-0">Kiểm tra thông tin và chọn phương thức thanh toán.</p>
-                                        </div>
-                                        <button type="button" className="btn btn-outline-primary rounded-pill" onClick={() => setCurrentStep(1)}>Chỉnh sửa thông tin</button>
+                                </section>
+
+                                {/* Delivery */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <p className="ts-eyebrow text-[var(--color-accent)]">Step 1.2</p>
+                                    <h3 className="ts-display mt-1 text-xl">Phương thức nhận hàng</h3>
+                                    <div className="mt-5 grid grid-cols-2 gap-3">
+                                        {[['pickup', 'Tại cửa hàng', 'fa-store'], ['shipping', 'Giao tận nơi', 'fa-truck']].map(([val, label, icon]) => (
+                                            <label key={val} className={cn(
+                                                "flex cursor-pointer flex-col items-center gap-2 rounded-sm border p-4 transition-colors",
+                                                deliveryMethod === val
+                                                    ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-fg)]"
+                                                    : "border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)]"
+                                            )}>
+                                                <input type="radio" name="delivery" checked={deliveryMethod === val} onChange={() => setDeliveryMethod(val)} className="hidden" />
+                                                <i className={`fas ${icon} text-lg ${deliveryMethod === val ? 'text-[var(--color-accent)]' : ''}`}></i>
+                                                <span className="text-sm font-medium">{label}</span>
+                                            </label>
+                                        ))}
                                     </div>
 
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Thông tin nhận hàng</h5>
-                                        <div className="checkout-review-grid">
-                                            <div><span>Họ tên</span><strong>{customerInfo.fullName}</strong></div>
-                                            <div><span>Số điện thoại</span><strong>{customerInfo.phone}</strong></div>
-                                            <div><span>Email</span><strong>{customerInfo.email || 'Không cung cấp'}</strong></div>
-                                            <div><span>Hình thức nhận hàng</span><strong>{deliveryMethod === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao hàng tận nơi'}</strong></div>
-                                            {deliveryMethod === 'pickup' ? (
-                                                <>
-                                                    <div><span>Cửa hàng nhận hàng</span><strong>{storePickupInfo.store}</strong></div>
-                                                    <div><span>Thời gian dự kiến nhận hàng</span><strong>{storePickupInfo.expectedTime}</strong></div>
-                                                </>
-                                            ) : (
-                                                <div><span>Địa chỉ nhận hàng</span><strong>{fullShippingAddress}</strong></div>
-                                            )}
-                                            <div><span>Ghi chú đơn hàng</span><strong>{customerInfo.notes || 'Không có'}</strong></div>
-                                            <div><span>Xuất hóa đơn</span><strong>{invoiceRequired ? 'Có' : 'Không'}</strong></div>
-                                            {invoiceRequired && (
-                                                <>
-                                                    <div><span>Tên công ty / cá nhân</span><strong>{invoiceInfo.name}</strong></div>
-                                                    <div><span>Mã số thuế</span><strong>{invoiceInfo.taxCode}</strong></div>
-                                                    <div><span>Địa chỉ xuất hóa đơn</span><strong>{invoiceInfo.address || 'Không cung cấp'}</strong></div>
-                                                    <div><span>Email nhận hóa đơn</span><strong>{invoiceInfo.email || 'Không cung cấp'}</strong></div>
-                                                </>
-                                            )}
+                                    {deliveryMethod === 'pickup' ? (
+                                        <div className="mt-5 space-y-3">
+                                            <label>
+                                                <span className="ts-eyebrow mb-1.5 block text-[10px]">Chọn cửa hàng *</span>
+                                                <select className="ts-input" value={storePickupInfo.store} onChange={(e) => setStorePickupInfo((c) => ({ ...c, store: e.target.value }))}>
+                                                    {pickupStores.map((s) => <option key={s} value={s}>{s}</option>)}
+                                                </select>
+                                                {fieldErr('pickupStore')}
+                                            </label>
+                                            <label>
+                                                <span className="ts-eyebrow mb-1.5 block text-[10px]">Thời gian dự kiến</span>
+                                                <input className="ts-input" value={storePickupInfo.expectedTime} onChange={(e) => setStorePickupInfo((c) => ({ ...c, expectedTime: e.target.value }))} />
+                                            </label>
                                         </div>
-                                    </section>
-
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Sản phẩm thanh toán</h5>
-                                        <div className="table-responsive">
-                                            <table className="table align-middle">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Sản phẩm</th>
-                                                        <th className="text-center">Số lượng</th>
-                                                        <th className="text-end">Đơn giá</th>
-                                                        <th className="text-end">Thành tiền</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {selectedCartItems.map((item) => (
-                                                        <tr key={item.productId}>
-                                                            <td>
-                                                                <div className="d-flex align-items-center gap-3">
-                                                                    <img src={resolveProductImage(item.product)} alt={item.product.name} className="electro-cart-thumb rounded" />
-                                                                    <strong>{item.product.name}</strong>
-                                                                </div>
-                                                            </td>
-                                                            <td className="text-center">x{item.quantity}</td>
-                                                            <td className="text-end">{formatCurrency(item.product.price)}</td>
-                                                            <td className="text-end">{formatCurrency(item.product.price * item.quantity)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </section>
-
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Phiếu giảm giá của bạn</h5>
-                                        {couponMessage && <div className="alert alert-info py-2">{couponMessage}</div>}
-                                        <h6 className="text-uppercase text-muted mb-3">Phiếu sản phẩm</h6>
-                                        <div className="cart-coupon-list mb-4">
-                                            {productCouponOptions.length
-                                                ? productCouponOptions.map(renderCouponCard)
-                                                : <div className="alert alert-light border mb-0">Bạn chưa có phiếu sản phẩm.</div>}
-                                        </div>
-                                        <h6 className="text-uppercase text-muted mb-3">Phiếu vận chuyển</h6>
-                                        <div className="cart-coupon-list">
-                                            {shippingCouponOptions.length
-                                                ? shippingCouponOptions.map(renderCouponCard)
-                                                : <div className="alert alert-light border mb-0">Bạn chưa có phiếu vận chuyển.</div>}
-                                        </div>
-                                    </section>
-
-                                    <section className="mb-4">
-                                        <h5 className="mb-3">Phương thức thanh toán</h5>
-                                        {formErrors.paymentMethod && <div className="alert alert-danger py-2">{formErrors.paymentMethod}</div>}
-                                        <div className="checkout-payment-grid">
+                                    ) : (
+                                        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
                                             {[
-                                                { value: 'store', label: 'Thanh toán tại cửa hàng', desc: 'Bạn sẽ thanh toán khi đến cửa hàng nhận sản phẩm.', disabled: deliveryMethod !== 'pickup' },
-                                                { value: 'bank', label: 'Chuyển khoản ngân hàng qua mã QR', desc: 'Chuyển khoản trước khi đơn hàng được xử lý.' },
-                                                { value: 'momo', label: 'MoMo', desc: 'Thanh toán qua ví MoMo.' },
-                                                { value: 'shopeepay', label: 'ShopeePay', desc: 'Thanh toán qua ShopeePay.' },
-                                                { value: 'applepay', label: 'Apple Pay', desc: 'Thanh toán qua Apple Pay.' },
-                                            ].map((option) => (
-                                                <label className={`checkout-payment-card ${paymentMethod === option.value ? 'is-selected' : ''} ${option.disabled ? 'is-disabled' : ''}`} key={option.value}>
-                                                    <input type="radio" name="paymentMethod" checked={paymentMethod === option.value} disabled={option.disabled} onChange={() => setPaymentMethod(option.value)} />
-                                                    <span>
-                                                        <strong>{option.label}</strong>
-                                                        <small>{option.desc}</small>
-                                                    </span>
+                                                ['province', 'Tỉnh / TP *'],
+                                                ['district', 'Quận / Huyện *'],
+                                                ['ward', 'Phường / Xã *'],
+                                                ['address', 'Địa chỉ cụ thể *'],
+                                            ].map(([field, label]) => (
+                                                <label key={field} className={field === 'address' ? 'md:col-span-2' : ''}>
+                                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">{label}</span>
+                                                    <input className="ts-input" value={shippingAddress[field]} onChange={updateShippingAddress(field)} />
+                                                    {fieldErr(`shipping.${field}`)}
                                                 </label>
                                             ))}
                                         </div>
+                                    )}
+                                </section>
 
-                                        {paymentMethod === 'bank' && (
-                                            <div className="checkout-bank-box mt-3">
-                                                <div>
-                                                    <h6>Thông tin chuyển khoản</h6>
-                                                    <p className="mb-1">Ngân hàng: <strong>Vietcombank</strong></p>
-                                                    <p className="mb-1">Số tài khoản: <strong>0123456789</strong></p>
-                                                    <p className="mb-1">Chủ tài khoản: <strong>CNTHHT STORE</strong></p>
-                                                    <p className="mb-1">Nội dung chuyển khoản: <strong>CNTHHT {customerInfo.phone || 'SODIENTHOAI'}</strong></p>
-                                                    <p className="mb-0">Số tiền cần thanh toán: <strong className="text-primary">{formatCurrency(totalPayment)}</strong></p>
-                                                </div>
-                                                <div className="checkout-qr-placeholder">QR thanh toán</div>
-                                            </div>
-                                        )}
-                                        {paymentMethod === 'momo' && <div className="alert alert-light border mt-3">Thanh toán qua ví MoMo <button type="button" className="btn btn-sm btn-primary ms-2">Xác nhận thanh toán MoMo</button></div>}
-                                        {paymentMethod === 'shopeepay' && <div className="alert alert-light border mt-3">Thanh toán qua ShopeePay <button type="button" className="btn btn-sm btn-primary ms-2">Xác nhận thanh toán ShopeePay</button></div>}
-                                        {paymentMethod === 'applepay' && <div className="alert alert-light border mt-3">Thanh toán qua Apple Pay <button type="button" className="btn btn-sm btn-primary ms-2">Xác nhận Apple Pay</button></div>}
-                                    </section>
-
-                                    {formErrors.order && <div className="alert alert-danger">{formErrors.order}</div>}
-                                    <div className="d-flex justify-content-between gap-3 flex-wrap">
-                                        <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => setCurrentStep(1)}>Quay lại</button>
-                                        <button type="button" className="btn btn-primary rounded-pill px-5" onClick={placeOrder}>Đặt hàng</button>
+                                {/* Invoice */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <p className="ts-eyebrow text-[var(--color-accent)]">Step 1.3</p>
+                                    <h3 className="ts-display mt-1 text-xl">Xuất hóa đơn?</h3>
+                                    <div className="mt-5 grid grid-cols-2 gap-3">
+                                        {[[false, 'Không'], [true, 'Có']].map(([val, label]) => (
+                                            <label key={String(val)} className={cn(
+                                                "flex cursor-pointer items-center justify-center gap-2 rounded-sm border p-3 transition-colors",
+                                                invoiceRequired === val
+                                                    ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-fg)]"
+                                                    : "border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)]"
+                                            )}>
+                                                <input type="radio" name="invoice" checked={invoiceRequired === val} onChange={() => setInvoiceRequired(val)} className="hidden" />
+                                                {label}
+                                            </label>
+                                        ))}
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                    {invoiceRequired && (
+                                        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                            {[
+                                                ['name', 'Tên công ty *'],
+                                                ['taxCode', 'Mã số thuế *'],
+                                                ['address', 'Địa chỉ'],
+                                                ['email', 'Email nhận hóa đơn'],
+                                            ].map(([field, label]) => (
+                                                <label key={field}>
+                                                    <span className="ts-eyebrow mb-1.5 block text-[10px]">{label}</span>
+                                                    <input className="ts-input" value={invoiceInfo[field]} onChange={updateInvoiceInfo(field)} />
+                                                    {fieldErr(`invoice.${field}`)}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
 
-                        <div className="col-lg-4">
-                            {renderOrderSummary()}
-                        </div>
+                                <div className="flex justify-between gap-3">
+                                    <button onClick={() => navigate('/cart')} className="ts-btn ts-btn-ghost">
+                                        <i className="fas fa-arrow-left text-[10px]"></i>Quay lại giỏ hàng
+                                    </button>
+                                    <button onClick={goToPaymentStep} className="ts-btn ts-btn-primary px-6">
+                                        Tiếp tục <i className="fas fa-arrow-right text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-8">
+                                {/* Review */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <div className="mb-5 flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="ts-eyebrow text-[var(--color-accent)]">Review</p>
+                                            <h3 className="ts-display mt-1 text-xl">Thông tin nhận hàng</h3>
+                                        </div>
+                                        <button onClick={() => setCurrentStep(1)} className="ts-btn ts-btn-outline text-xs">Chỉnh sửa</button>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+                                        {[
+                                            ['Họ tên', customerInfo.fullName],
+                                            ['Điện thoại', customerInfo.phone],
+                                            ['Email', customerInfo.email || '—'],
+                                            ['Phương thức', deliveryMethod === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao tận nơi'],
+                                            deliveryMethod === 'pickup' ? ['Cửa hàng', storePickupInfo.store] : ['Địa chỉ', fullShippingAddress],
+                                            ['Ghi chú', customerInfo.notes || '—'],
+                                        ].map(([label, value]) => (
+                                            <div key={label} className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-3">
+                                                <p className="ts-eyebrow text-[10px]">{label}</p>
+                                                <p className="mt-1 text-[var(--color-fg)]">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                {/* Items */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <h3 className="ts-display mb-5 text-xl">Sản phẩm thanh toán</h3>
+                                    <ul className="divide-y divide-[var(--color-border)]">
+                                        {selectedCartItems.map((item) => (
+                                            <li key={item.productId} className="flex items-center gap-3 py-3">
+                                                <img src={resolveProductImage(item.product)} alt="" className="h-14 w-14 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] object-contain p-1" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="line-clamp-1 text-sm font-medium text-[var(--color-fg)]">{item.product.name}</p>
+                                                    <p className="ts-mono mt-0.5 text-xs text-[var(--color-fg-dim)]">×{item.quantity} · {formatCurrency(item.product.price)}</p>
+                                                </div>
+                                                <p className="ts-mono text-sm font-semibold text-[var(--color-fg)]">{formatCurrency(item.product.price * item.quantity)}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
+
+                                {/* Coupons */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <h3 className="ts-display mb-5 text-xl">Phiếu giảm giá</h3>
+                                    {couponMessage && (
+                                        <div className="mb-4 rounded-sm border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 px-3 py-2 text-xs text-[var(--color-fg)]">{couponMessage}</div>
+                                    )}
+                                    {productCouponOptions.length > 0 && (
+                                        <div className="mb-4">
+                                            <p className="ts-eyebrow mb-2 text-[10px]">Phiếu sản phẩm</p>
+                                            <div className="space-y-2">{productCouponOptions.map(renderCouponCard)}</div>
+                                        </div>
+                                    )}
+                                    {shippingCouponOptions.length > 0 && (
+                                        <div>
+                                            <p className="ts-eyebrow mb-2 text-[10px]">Phiếu vận chuyển</p>
+                                            <div className="space-y-2">{shippingCouponOptions.map(renderCouponCard)}</div>
+                                        </div>
+                                    )}
+                                    {productCouponOptions.length === 0 && shippingCouponOptions.length === 0 && (
+                                        <p className="rounded-sm border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-fg-dim)]">Không có phiếu nào áp dụng cho đơn này.</p>
+                                    )}
+                                </section>
+
+                                {/* Payment */}
+                                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                                    <p className="ts-eyebrow text-[var(--color-accent)]">Payment</p>
+                                    <h3 className="ts-display mt-1 mb-5 text-xl">Phương thức thanh toán</h3>
+                                    {formErrors.paymentMethod && <p className="mb-3 rounded-sm border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">{formErrors.paymentMethod}</p>}
+                                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                        {paymentOptions.map((opt) => {
+                                            const disabled = opt.value === 'store' && deliveryMethod !== 'pickup';
+                                            return (
+                                                <label
+                                                    key={opt.value}
+                                                    className={cn(
+                                                        "flex cursor-pointer items-start gap-3 rounded-sm border p-3 transition-colors",
+                                                        paymentMethod === opt.value
+                                                            ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                                                            : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]",
+                                                        disabled && "pointer-events-none opacity-40"
+                                                    )}
+                                                >
+                                                    <input type="radio" name="paymentMethod" checked={paymentMethod === opt.value} disabled={disabled} onChange={() => setPaymentMethod(opt.value)} className="mt-1 accent-[var(--color-primary)]" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-[var(--color-fg)]">{opt.label}</p>
+                                                        <p className="mt-0.5 text-[11px] text-[var(--color-fg-dim)]">{opt.desc}</p>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {paymentMethod === 'bank' && (
+                                        <div className="mt-4 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                            <p className="ts-eyebrow mb-2 text-[10px]">Thông tin chuyển khoản</p>
+                                            <div className="space-y-1 text-sm">
+                                                <p>Ngân hàng: <strong className="text-[var(--color-fg)]">Vietcombank</strong></p>
+                                                <p>Số tài khoản: <strong className="ts-mono text-[var(--color-fg)]">0123456789</strong></p>
+                                                <p>Chủ tài khoản: <strong className="text-[var(--color-fg)]">TECHSTORE</strong></p>
+                                                <p>Nội dung: <strong className="ts-mono text-[var(--color-accent)]">TECHSTORE {customerInfo.phone || 'SODIENTHOAI'}</strong></p>
+                                                <p className="mt-2 border-t border-[var(--color-border)] pt-2">Tổng: <strong className="ts-mono text-[var(--color-accent)]">{formatCurrency(totalPayment)}</strong></p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </section>
+
+                                {formErrors.order && (
+                                    <div className="rounded-sm border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">{formErrors.order}</div>
+                                )}
+
+                                <div className="flex justify-between gap-3">
+                                    <button onClick={() => setCurrentStep(1)} className="ts-btn ts-btn-ghost">
+                                        <i className="fas fa-arrow-left text-[10px]"></i>Quay lại
+                                    </button>
+                                    <button onClick={placeOrder} disabled={submittingOrder} className="ts-btn ts-btn-primary px-6">
+                                        {submittingOrder ? <><i className="fas fa-spinner fa-spin"></i>Đang xử lý...</> : <>Đặt hàng<i className="fas fa-arrow-right text-[10px]"></i></>}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
+
+                    <aside>{summary}</aside>
                 </div>
-            </div>
+            </section>
         </>
     );
 };
