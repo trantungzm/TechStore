@@ -1,0 +1,16 @@
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: techstore-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Trantung09112005@"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - techstore-sqlserver-data:/var/opt/mssql
+
+volumes:
+  techstore-sqlserver-data:

@@ -1,0 +1,8 @@
+{
+  "category": "Product",
+  "relatedProductId": 50,
+  "subject": "Test ticket",
+  "description": "This is a test ticket description",
+  "customerName": "Test User",
+  "customerPhone": "0123456789"
+}
