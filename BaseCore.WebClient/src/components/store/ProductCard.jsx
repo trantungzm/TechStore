@@ -9,6 +9,20 @@ import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
 import { cn } from '../../utils/cn';
 
+const getProductOldPrice = (product) => {
+    const oldPrice = Number(product?.originalPrice ?? product?.OriginalPrice ?? product?.oldPrice ?? product?.OldPrice ?? 0);
+    const price = Number(product?.price ?? product?.Price ?? 0);
+    return oldPrice > price ? oldPrice : 0;
+};
+
+const hasScopedProductCoupon = (product, coupons = []) => (
+    getAvailableCouponsForProduct(product, coupons).some(({ coupon }) => (
+        coupon?.couponType === 'product' &&
+        coupon?.appliesTo !== 'all' &&
+        coupon?.appliesTo !== 'shipping'
+    ))
+);
+
 const getProductRating = (product) => {
     const value = Number(
         product?.ratingAverage ??
@@ -40,11 +54,14 @@ const ProductCard = ({ product, onAddToCart }) => {
     const { toggleCompare, isInCompare } = useCompare();
     const { coupons } = usePublicCoupons();
     const badge = product.badge || '';
-    const oldPrice = product.oldPrice || Math.round(Number(product.price || 0) * 1.19);
-    const hasCoupon = getAvailableCouponsForProduct(product, coupons).length > 0;
+    const price = Number(product.price ?? product.Price ?? 0);
+    const oldPrice = getProductOldPrice(product);
+    const hasCoupon = hasScopedProductCoupon(product, coupons);
     const categoryName = getProductCategoryName(product);
     const outOfStock = product.stock !== undefined && product.stock !== null && product.stock <= 0;
+    const hasVariants = Array.isArray(product?.variants) && product.variants.some((variant) => variant?.isActive !== false);
     const rating = getProductRating(product);
+    const productImage = resolveProductImage(product);
     const handleAdd = (e) => {
         e?.preventDefault();
         e?.stopPropagation();
@@ -88,12 +105,19 @@ const ProductCard = ({ product, onAddToCart }) => {
                     aria-hidden
                     className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(230,126,34,0.18),transparent_60%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                 />
-                <motion.img
-                    src={resolveProductImage(product)}
-                    alt={product.name}
-                    className="relative h-full w-full object-contain p-6 transition-transform duration-700"
-                    animate={{ scale: isHovered ? 1.08 : 1, rotate: isHovered ? -1.5 : 0 }}
-                />
+                {productImage ? (
+                    <motion.img
+                        src={productImage}
+                        alt={product.name}
+                        className="relative h-full w-full object-contain p-6 transition-transform duration-700"
+                        animate={{ scale: isHovered ? 1.08 : 1, rotate: isHovered ? -1.5 : 0 }}
+                    />
+                ) : (
+                    <div className="relative flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center text-[var(--color-fg-dim)]">
+                        <i className="far fa-image text-3xl"></i>
+                        <span className="text-xs font-semibold">Chưa có ảnh</span>
+                    </div>
+                )}
                 {outOfStock && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-[2px]">
                         <span className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 ts-eyebrow text-[var(--color-fg-muted)]">Hết hàng</span>
@@ -134,7 +158,7 @@ const ProductCard = ({ product, onAddToCart }) => {
                     <span className="ts-mono text-base font-semibold text-[var(--color-fg)]">
                         {formatCurrency(product.price)}
                     </span>
-                    {oldPrice > product.price && (
+                    {oldPrice > price && (
                         <del className="ts-mono text-xs text-[var(--color-fg-dim)]">{formatCurrency(oldPrice)}</del>
                     )}
                 </div>
@@ -149,11 +173,11 @@ const ProductCard = ({ product, onAddToCart }) => {
                             className={cn(
                                 "flex h-7 w-7 items-center justify-center rounded-sm text-xs transition-colors",
                                 isInCompare(product.id)
-                                    ? "text-[var(--color-primary)]"
-                                    : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                                    ? "text-black"
+                                    : "text-[var(--color-fg-muted)] hover:text-black"
                             )}
                         >
-                            <i className="fas fa-random"></i>
+                            <i className={isInCompare(product.id) ? "fas fa-clone" : "far fa-clone"}></i>
                         </button>
                         <button
                             type="button"
@@ -162,8 +186,8 @@ const ProductCard = ({ product, onAddToCart }) => {
                             className={cn(
                                 "flex h-7 w-7 items-center justify-center rounded-sm text-xs transition-colors",
                                 isInWishlist(product.id)
-                                    ? "text-[var(--color-primary)]"
-                                    : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                                    ? "text-black"
+                                    : "text-[var(--color-fg-muted)] hover:text-black"
                             )}
                         >
                             <i className={isInWishlist(product.id) ? "fas fa-heart" : "far fa-heart"}></i>
@@ -171,18 +195,25 @@ const ProductCard = ({ product, onAddToCart }) => {
                     </div>
                 </div>
 
-                <button
-                    type="button"
-                    disabled={outOfStock}
-                    onClick={handleAdd}
-                    className={cn(
-                        "ts-btn ts-btn-primary group/btn mt-2 w-full text-xs",
-                        outOfStock && "from-[var(--color-surface-3)] to-[var(--color-surface-3)] hover:shadow-none"
-                    )}
-                >
-                    <i className="fas fa-shopping-cart text-[11px] transition-transform duration-300 group-hover/btn:-translate-x-0.5 group-hover/btn:rotate-[-8deg]"></i>
-                    {t('Add To Cart')}
-                </button>
+                {hasVariants ? (
+                    <Link to={`/product/${product.id}`} className="ts-btn ts-btn-primary group/btn mt-2 w-full text-xs">
+                        <i className="fas fa-sliders-h text-[11px]"></i>
+                        Chọn phiên bản
+                    </Link>
+                ) : (
+                    <button
+                        type="button"
+                        disabled={outOfStock}
+                        onClick={handleAdd}
+                        className={cn(
+                            "ts-btn ts-btn-primary group/btn mt-2 w-full text-xs",
+                            outOfStock && "from-[var(--color-surface-3)] to-[var(--color-surface-3)] hover:shadow-none"
+                        )}
+                    >
+                        <i className="fas fa-shopping-cart text-[11px] transition-transform duration-300 group-hover/btn:-translate-x-0.5 group-hover/btn:rotate-[-8deg]"></i>
+                        {t('Add To Cart')}
+                    </button>
+                )}
             </div>
         </motion.article>
     );

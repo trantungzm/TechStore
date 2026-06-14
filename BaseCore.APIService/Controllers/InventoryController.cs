@@ -21,15 +21,26 @@ namespace BaseCore.APIService.Controllers
         [HttpPost("receipts")]
         public async Task<IActionResult> CreateReceipt([FromBody] CreateGoodsReceiptDto dto)
         {
-            if (!HasAnyRole("Admin", "Warehouse")) return Forbid();
-            var result = await _inventoryService.CreateReceiptAsync(dto, CurrentUserId());
-            return CreatedAtAction(nameof(GetReceipt), new { id = result.Id }, result);
+            if (!HasAnyRole("Warehouse")) return Forbid();
+            try
+            {
+                var result = await _inventoryService.CreateReceiptAsync(dto, CurrentUserId());
+                return CreatedAtAction(nameof(GetReceipt), new { id = result.Id }, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
         }
 
         [HttpPost("opening-stock")]
         public async Task<IActionResult> CreateOpeningStock([FromBody] CreateOpeningStockDto dto)
         {
-            if (!HasAnyRole("Admin", "Warehouse")) return Forbid();
+            if (!HasAnyRole("Warehouse")) return Forbid();
             try
             {
                 var result = await _inventoryService.CreateOpeningStockAsync(dto, CurrentUserId());
@@ -50,6 +61,36 @@ namespace BaseCore.APIService.Controllers
         {
             var hasOpeningStock = await _inventoryService.HasOpeningStockAsync(productId);
             return Ok(new { hasOpeningStock });
+        }
+
+        [HttpPost("reconcile-stock")]
+        public async Task<IActionResult> ReconcileStock([FromBody] ReconcileStockRequestDto? dto)
+        {
+            if (!HasAnyRole("Warehouse")) return Forbid();
+            try
+            {
+                var result = await _inventoryService.ReconcileStockAsync(dto?.BackfillTags ?? false, CurrentUserId());
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("backfill-internal-codes")]
+        public async Task<IActionResult> BackfillInternalCodes()
+        {
+            if (!HasAnyRole("Warehouse")) return Forbid();
+            try
+            {
+                var result = await _inventoryService.BackfillInternalCodesAsync(CurrentUserId());
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet("receipts")]
@@ -95,7 +136,7 @@ namespace BaseCore.APIService.Controllers
         [HttpPut("stock-items/{id}/status")]
         public async Task<IActionResult> UpdateStockItemStatus(int id, [FromBody] UpdateStockItemStatusDto dto)
         {
-            if (!HasAnyRole("Admin", "Warehouse")) return Forbid();
+            if (!HasAnyRole("Warehouse")) return Forbid();
             var result = await _inventoryService.UpdateStockItemStatusAsync(id, dto, CurrentUserId());
             return result == null ? NotFound(new { message = "Stock item not found" }) : Ok(result);
         }
@@ -103,7 +144,7 @@ namespace BaseCore.APIService.Controllers
         [HttpPost("assign-stock-items")]
         public async Task<IActionResult> AssignStockItems([FromBody] AssignStockItemsDto dto)
         {
-            if (!HasAnyRole("Admin", "Warehouse")) return Forbid();
+            if (!HasAnyRole("Warehouse")) return Forbid();
             return Ok(await _inventoryService.AssignStockItemsAsync(dto, CurrentUserId()));
         }
 
@@ -118,7 +159,7 @@ namespace BaseCore.APIService.Controllers
         [HttpPost("returns")]
         public async Task<IActionResult> CreateReturn([FromBody] CreateInventoryReturnDto dto)
         {
-            if (!HasAnyRole("Admin", "Technical")) return Forbid();
+            if (!HasAnyRole("Technical")) return Forbid();
             var result = await _inventoryService.CreateReturnAsync(dto, CurrentUserId());
             return CreatedAtAction(nameof(GetReturn), new { id = result.Id }, result);
         }
@@ -142,7 +183,7 @@ namespace BaseCore.APIService.Controllers
         [HttpPut("returns/{id}/review")]
         public async Task<IActionResult> ReviewReturn(int id, [FromBody] ReviewInventoryReturnDto dto)
         {
-            if (!HasAnyRole("Admin", "Technical")) return Forbid();
+            if (!HasAnyRole("Technical")) return Forbid();
             var result = await _inventoryService.ReviewReturnAsync(id, dto, CurrentUserId());
             return result == null ? NotFound(new { message = "Return not found" }) : Ok(result);
         }
@@ -150,7 +191,7 @@ namespace BaseCore.APIService.Controllers
         [HttpPut("returns/{id}/restock")]
         public async Task<IActionResult> RestockReturn(int id, [FromBody] RestockReturnDto dto)
         {
-            if (!HasAnyRole("Admin", "Technical")) return Forbid();
+            if (!HasAnyRole("Technical")) return Forbid();
             var result = await _inventoryService.RestockReturnAsync(id, dto, CurrentUserId());
             return result == null ? NotFound(new { message = "Return not found" }) : Ok(result);
         }

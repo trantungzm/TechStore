@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { orderApi, userApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { toast, confirmDialog, promptDialog } from '../utils/notify';
 import { formatCurrency } from '../utils/store';
 
 // Chuẩn hóa toàn bộ danh sách trạng thái có trong hệ thống backend
@@ -10,16 +11,29 @@ const statusLabels = {
     Pending: 'Chờ xác nhận',
     Confirmed: 'Đã xác nhận',
     Processing: 'Đang xử lý',
-    ReadyForPickup: 'Sẵn sàng nhận',
-    Shipping: 'Đang vận chuyển',
-    Shipped: 'Đã giao đối tác',
-    Completed: 'Hoàn tất',
+    ReadyForPickup: 'Sẵn sàng nhận hàng',
+    Shipping: 'Đang giao hàng',
+    Shipped: 'Đã gửi hàng',
+    Delivered: 'Đã giao hàng',
+    Completed: 'Hoàn thành',
     Cancelled: 'Đã hủy',
     CancelRequested: 'Yêu cầu hủy',
     'Cancel Requested': 'Yêu cầu hủy',
     'Cancelled & Refunded': 'Đã hủy & hoàn tiền',
-    CancelRejected: 'Từ chối yêu cầu hủy'
+    CancelRejected: 'Từ chối hủy',
+    Failed: 'Thất bại',
+    Returned: 'Đã trả hàng'
 };
+
+const paymentStatusLabels = {
+    Unpaid: 'Chưa thanh toán',
+    Paid: 'Đã thanh toán',
+    Refunded: 'Đã hoàn tiền',
+    Failed: 'Thanh toán thất bại',
+    Cancelled: 'Đã hủy thanh toán'
+};
+
+const paymentStatusLabel = (status) => paymentStatusLabels[status] || status || 'Chưa thanh toán';
 
 const statusLabel = (status) => statusLabels[status] || status || 'Chờ xác nhận';
 
@@ -47,11 +61,11 @@ const deliveryNextActions = {
 };
 
 const statusClass = (status) => {
-    if (status?.includes('Cancel')) return 'bg-rose-500/10 text-rose-300 ring-rose-500/20';
-    if (status === 'Completed') return 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20';
-    if (status === 'ReadyForPickup') return 'bg-amber-500/10 text-amber-300 ring-amber-500/20';
-    if (status === 'Shipping' || status === 'Shipped') return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] ring-[var(--color-accent)]/20';
-    if (status === 'Confirmed' || status === 'Processing') return 'bg-amber-500/10 text-amber-300 ring-amber-500/20';
+    if (status?.includes('Cancel')) return 'bg-rose-500/10 text-rose-600 ring-rose-500/20';
+    if (status === 'Completed') return 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20';
+    if (status === 'ReadyForPickup') return 'bg-amber-500/10 text-amber-600 ring-amber-500/20';
+    if (status === 'Shipping' || status === 'Shipped' || status === 'Delivered') return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] ring-[var(--color-accent)]/20';
+    if (status === 'Confirmed' || status === 'Processing') return 'bg-amber-500/10 text-amber-600 ring-amber-500/20';
     return 'bg-[var(--color-surface-3)] text-[var(--color-fg)] ring-[var(--color-border)]';
 };
 
@@ -186,7 +200,7 @@ const AdminOrders = () => {
     const handleQuickAction = async (orderId, action) => {
         const status = action?.status;
         if (!status) return;
-        if (!window.confirm(`Xác nhận chuyển đơn hàng sang trạng thái [${statusLabel(status)}]?`)) return;
+        if (!(await confirmDialog(`Xác nhận chuyển đơn hàng sang trạng thái [${statusLabel(status)}]?`))) return;
         setProcessingActionId(orderId);
         try {
             const currentOrder = allOrders.find((order) => order.id === orderId);
@@ -198,7 +212,7 @@ const AdminOrders = () => {
                 });
             } else {
                 if (pickup && String(currentOrder?.status) === 'ReadyForPickup' && status === 'Completed') {
-                    const pin = window.prompt('Nhập mã PIN nhận hàng (khách hàng cung cấp):', '');
+                    const pin = await promptDialog('Nhập mã PIN nhận hàng (khách hàng cung cấp):', '');
                     if (!pin) return;
                     await orderApi.updateStatus(orderId, { status, paymentStatus: 'Paid', pickupVerificationPin: String(pin).trim() });
                 } else {
@@ -212,7 +226,7 @@ const AdminOrders = () => {
             }
         } catch (err) {
             const data = err.response?.data;
-            alert(data?.message || data?.detail || data?.title || 'Không thể cập nhật trạng thái đơn hàng');
+            toast.error(data?.message || data?.detail || data?.title || 'Không thể cập nhật trạng thái đơn hàng');
         } finally {
             setProcessingActionId(null);
         }
@@ -223,7 +237,7 @@ const AdminOrders = () => {
             const response = await orderApi.getById(orderId);
             setOrderDetails({ order: response.data, details: response.data?.items || response.data?.details || [] });
         } catch (err) {
-            alert('Không thể tải chi tiết đơn hàng');
+            toast.error('Không thể tải chi tiết đơn hàng');
         }
     };
 
@@ -274,7 +288,7 @@ const AdminOrders = () => {
                             onChange={(e) => { setCustomerKeyword(e.target.value); setPage(1); }}
                         />
                         <select
-                            className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-500/20 text-[var(--color-fg)]"
+                            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] py-2 pl-3 pr-9 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-500/20 text-[var(--color-fg)]"
                             value={filterStatus}
                             onChange={(e) => updateFilterStatus(e.target.value)}
                         >
@@ -282,7 +296,7 @@ const AdminOrders = () => {
                             {statuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
                         </select>
                         <select
-                            className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-500/20 text-[var(--color-fg)]"
+                            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] py-2 pl-3 pr-9 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-500/20 text-[var(--color-fg)]"
                             value={filterShippingMethod}
                             onChange={(e) => { setFilterShippingMethod(e.target.value); setPage(1); }}
                         >
@@ -291,7 +305,7 @@ const AdminOrders = () => {
                             <option value="StorePickup">Nhận tại cửa hàng</option>
                         </select>
                         <select
-                            className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-500/20 text-[var(--color-fg)]"
+                            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] py-2 pl-3 pr-9 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-500/20 text-[var(--color-fg)]"
                             value={sortOrder}
                             onChange={(e) => { setSortOrder(e.target.value); setPage(1); }}
                         >
@@ -319,19 +333,19 @@ const AdminOrders = () => {
                             <table className="w-full text-sm text-left border-collapse">
                                 <thead className="bg-[var(--color-surface-2)] border-b border-[var(--color-border)] text-xs font-bold uppercase tracking-wider text-[var(--color-fg-muted)]">
                                     <tr>
-                                        <th className="px-4 py-3 w-24">Đơn hàng</th>
-                                        <th className="px-4 py-3 ts-table-hide-mobile">Khách hàng</th>
-                                        <th className="px-4 py-3 ts-table-hide-mobile">Ngày đặt</th>
-                                        <th className="px-4 py-3">Giá trị</th>
-                                        <th className="px-4 py-3">Trạng thái</th>
-                                        <th className="px-4 py-3 ts-table-hide-tablet">Địa chỉ</th>
-                                        <th className="px-4 py-3 text-right w-44">Thao tác</th>
+                                        <th className="px-3 py-3 w-24">Đơn hàng</th>
+                                        <th className="px-3 py-3 ts-table-hide-mobile">Khách hàng</th>
+                                        <th className="px-3 py-3 ts-table-hide-mobile">Ngày đặt</th>
+                                        <th className="px-3 py-3">Giá trị</th>
+                                        <th className="px-3 py-3">Trạng thái</th>
+                                        <th className="px-3 py-3 ts-table-hide-tablet">Địa chỉ</th>
+                                        <th className="px-3 py-3 text-right w-56 whitespace-nowrap">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
                                     {orders.map((order) => (
                                         <tr key={order.id} className="hover:bg-[var(--color-surface-2)]/40 transition-colors">
-                                            <td className="px-4 py-3.5 font-bold text-[var(--color-fg)]">
+                                            <td className="px-3 py-3.5 font-bold text-[var(--color-fg)]">
                                                 <div className="flex items-center gap-2">
                                                     <span>#{order.id}</span>
                                                     {isPickupOrder(order) && (
@@ -341,20 +355,20 @@ const AdminOrders = () => {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3.5 ts-table-hide-mobile text-[var(--color-fg)]">{getUserName(order.userId)}</td>
-                                            <td className="px-4 py-3.5 ts-table-hide-mobile text-[var(--color-fg-muted)]">{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
-                                            <td className="px-4 py-3.5 font-semibold text-[var(--color-fg)]">{formatCurrency(order.totalAmount)}</td>
-                                            <td className="px-4 py-3.5">
+                                            <td className="px-3 py-3.5 ts-table-hide-mobile text-[var(--color-fg)]">{getUserName(order.userId)}</td>
+                                            <td className="px-3 py-3.5 ts-table-hide-mobile text-[var(--color-fg-muted)]">{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
+                                            <td className="px-3 py-3.5 font-semibold text-[var(--color-fg)]">{formatCurrency(order.totalAmount)}</td>
+                                            <td className="px-3 py-3.5">
                                                 <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${statusClass(order.status)}`}>
                                                     {statusLabel(order.status)}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3.5 ts-table-hide-tablet max-w-[200px] truncate text-[var(--color-fg-muted)]">
+                                            <td className="px-3 py-3.5 ts-table-hide-tablet max-w-[200px] truncate text-[var(--color-fg-muted)]">
                                                 {isPickupOrder(order)
                                                     ? `[Tại cửa hàng] - ${order.storePickupLocation || order.shippingAddress || 'Chưa có chi nhánh'}`
                                                     : (order.shippingAddress || order.deliveryAddress || 'Chưa có địa chỉ')}
                                             </td>
-                                            <td className="px-4 py-3.5 text-right">
+                                            <td className="px-3 py-3.5 text-right">
                                                 <div className="flex justify-end gap-1.5">
                                                     <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-fg)] hover:bg-[var(--color-surface-3)] transition-colors" onClick={() => handleViewDetails(order.id)} title="Xem chi tiết">
                                                         <i className="fas fa-eye text-xs"></i>
@@ -363,7 +377,7 @@ const AdminOrders = () => {
                                                         <button
                                                             key={action.status}
                                                             type="button"
-                                                            className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold text-white shadow-sm transition-opacity ${actionClass(action.tone)}`}
+                                                            className={`inline-flex h-8 w-28 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-bold text-white shadow-sm transition-opacity ${actionClass(action.tone)}`}
                                                             onClick={() => handleQuickAction(order.id, action)}
                                                             disabled={processingActionId === order.id}
                                                         >
@@ -387,7 +401,7 @@ const AdminOrders = () => {
                 </div>
 
                 {/* Phân trang */}
-                <div className="flex flex-col gap-3 border-t border-[var(--color-border)] px-4 py-3.5 text-sm text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between bg-[var(--color-surface-2)]/10">
+                <div className="flex flex-col gap-3 border-t border-[var(--color-border)] px-3 py-3.5 text-sm text-[var(--color-fg-muted)] sm:flex-row sm:items-center sm:justify-between bg-[var(--color-surface-2)]/10">
                     <span>Hiển thị {orders.length ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, filteredOrders.length)} trong {filteredOrders.length} đơn hàng</span>
                     <div className="flex items-center gap-2">
                         <button type="button" className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 font-semibold disabled:opacity-40 hover:bg-[var(--color-surface-2)] transition-colors" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</button>
@@ -432,7 +446,8 @@ const AdminOrders = () => {
                                 </div>
                                 <div className="rounded-xl bg-[var(--color-surface-2)]/60 p-4 border border-[var(--color-border)]/50">
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--color-fg-muted)] mb-2">Thanh toán</h4>
-                                    <p className="mb-2 text-xs font-medium text-[var(--color-fg)]">{paymentLabel(orderDetails.order.paymentMethod)}</p>
+                                    <p className="mb-1 text-xs font-medium text-[var(--color-fg)]">{paymentLabel(orderDetails.order.paymentMethod)}</p>
+                                    <p className="mb-2 text-xs text-[var(--color-fg-muted)]">Trạng thái: <span className="font-semibold text-[var(--color-fg)]">{paymentStatusLabel(orderDetails.order.paymentStatus)}</span></p>
                                     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${statusClass(orderDetails.order.status)}`}>
                                         {statusLabel(orderDetails.order.status)}
                                     </span>

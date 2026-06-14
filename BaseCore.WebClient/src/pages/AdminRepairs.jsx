@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { inventoryApi, repairApi, warrantyApi } from '../services/api';
 import AdminFilterDropdown from '../components/AdminFilterDropdown';
+import { useAuth } from '../contexts/AuthContext';
 
 const REPAIR_STATUS_LABELS = {
     Pending: 'Chờ tiếp nhận',
@@ -17,10 +18,24 @@ const REPAIR_STATUS_LABELS = {
     Rejected: 'Từ chối',
 };
 
+const REPAIR_NEXT_STATUSES = {
+    Pending: ['Intake', 'Cancelled'],
+    Intake: ['Diagnosing', 'Cancelled'],
+    Received: ['Diagnosing', 'Cancelled'],
+    Diagnosing: ['WaitingCustomerApproval', 'WaitingParts', 'Repairing', 'Rejected'],
+    WaitingCustomerApproval: ['Repairing', 'Cancelled'],
+    WaitingParts: ['Repairing', 'Cancelled'],
+    Repairing: ['Testing', 'WaitingParts'],
+    Testing: ['Completed', 'Repairing'],
+    Completed: ['Delivered'],
+};
+
 const inputClass = 'w-full rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 const labelClass = 'mb-1 block text-sm font-semibold text-[var(--color-fg)]';
 
 const repairStatusText = (value) => REPAIR_STATUS_LABELS[value] || value || 'Không rõ';
+
+const getNextRepairStatuses = (value) => REPAIR_NEXT_STATUSES[value] || [];
 
 const normalize = (item) => ({
     id: item.id ?? item.Id,
@@ -52,12 +67,31 @@ const statusClass = (value) => {
     return 'bg-[var(--color-surface-3)] text-[var(--color-fg)]';
 };
 
+const actionButtonClass = (value) => {
+    const status = String(value || '').toLowerCase();
+    if (status === 'cancelled' || status === 'rejected') {
+        return 'border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20';
+    }
+    if (status === 'completed' || status === 'delivered') {
+        return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20';
+    }
+    if (status === 'waitingparts' || status === 'waitingcustomerapproval') {
+        return 'border-violet-500/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20';
+    }
+    if (status === 'testing' || status === 'diagnosing') {
+        return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20';
+    }
+    return 'border-[var(--color-accent)]/40 bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20';
+};
+
 const readError = (err, fallback) => {
     const data = err?.response?.data;
     return data?.message || data?.detail || data?.title || err?.message || fallback;
 };
 
 const AdminRepairs = () => {
+    const { user } = useAuth();
+    const canOperate = (user?.role || '') === 'Technical'; // Admin chỉ xem; thao tác do Technical
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -184,14 +218,15 @@ const AdminRepairs = () => {
         }
     };
 
-    const handleUpdate = async (id) => {
+    const handleUpdate = async (id, statusAfter) => {
+        if (!statusAfter) return;
         setUpdatingId(id);
         setError('');
         try {
             const payload = updateById[id] || {};
             await repairApi.update(id, {
                 message: payload.message || null,
-                statusAfter: payload.statusAfter || null,
+                statusAfter,
             });
             setUpdateById((prev) => ({ ...prev, [id]: { message: '', statusAfter: '' } }));
             await load();
@@ -238,6 +273,7 @@ const AdminRepairs = () => {
             {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">{error}</div>}
 
             <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
+                {canOperate ? (
                 <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
                     <div className="border-b border-[var(--color-border)] px-4 py-3">
                         <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Tiếp nhận sửa chữa</h3>
@@ -327,6 +363,18 @@ const AdminRepairs = () => {
                         </form>
                     </div>
                 </section>
+                ) : (
+                <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                    <div className="border-b border-[var(--color-border)] px-4 py-3">
+                        <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Tiếp nhận sửa chữa</h3>
+                    </div>
+                    <div className="p-4">
+                        <div className="rounded-md border border-amber-200 bg-amber-500/10 px-3 py-3 text-sm font-semibold text-amber-400">
+                            Chế độ chỉ xem — thao tác tiếp nhận và cập nhật hồ sơ dành cho nhân viên Kỹ thuật (Technical).
+                        </div>
+                    </div>
+                </section>
+                )}
 
                 <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
                     <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
@@ -373,6 +421,7 @@ const AdminRepairs = () => {
                                             {pagedCases.map((raw) => {
                                                 const item = normalize(raw);
                                                 const local = updateById[item.id] || { message: '', statusAfter: '' };
+                                                const nextStatuses = getNextRepairStatuses(item.status);
                                                 const serial = item.serialOrImei || item.stockItem?.serialOrImei || item.stockItem?.SerialOrImei || item.stockItemId || '-';
                                                 const productName = item.productName || item.stockItem?.product?.name || item.stockItem?.Product?.Name || '-';
                                                 return (
@@ -395,18 +444,34 @@ const AdminRepairs = () => {
                                                                 </div>
                                                             )}
                                                         </td>
+                                                        {canOperate ? (
                                                         <td>
                                                             <div className="space-y-2">
-                                                                <select className={inputClass} value={local.statusAfter} onChange={(e) => setUpdateById((prev) => ({ ...prev, [item.id]: { ...local, statusAfter: e.target.value } }))}>
-                                                                    <option value="">-- Trạng thái --</option>
-                                                                    {Object.entries(REPAIR_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                                                                </select>
                                                                 <input className={inputClass} placeholder="Ghi chú kỹ thuật" value={local.message} onChange={(e) => setUpdateById((prev) => ({ ...prev, [item.id]: { ...local, message: e.target.value } }))} />
-                                                                <button type="button" className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" onClick={() => handleUpdate(item.id)} disabled={updatingId === item.id}>
-                                                                    {updatingId === item.id ? 'Đang cập nhật...' : 'Cập nhật'}
-                                                                </button>
+                                                                {nextStatuses.length ? (
+                                                                    <div className="grid gap-2 sm:grid-cols-2">
+                                                                        {nextStatuses.map((status) => (
+                                                                            <button
+                                                                                key={status}
+                                                                                type="button"
+                                                                                className={`min-h-10 rounded-md border px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${actionButtonClass(status)}`}
+                                                                                onClick={() => handleUpdate(item.id, status)}
+                                                                                disabled={updatingId === item.id}
+                                                                            >
+                                                                                {updatingId === item.id ? 'Đang cập nhật...' : repairStatusText(status)}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-center text-xs font-semibold text-[var(--color-fg-muted)]">
+                                                                        Không còn thao tác tiếp theo
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </td>
+                                                        ) : (
+                                                        <td className="px-4 py-3 text-xs text-[var(--color-fg-dim)]">Chỉ xem</td>
+                                                        )}
                                                     </tr>
                                                 );
                                             })}

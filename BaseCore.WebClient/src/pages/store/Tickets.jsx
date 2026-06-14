@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../../components/store/PageHero';
 import { ticketApi } from '../../services/api';
-import { setPageMeta, t, toast } from '../../utils/store';
+import { isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t, toast } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const formatTime = (value) => {
@@ -26,6 +27,8 @@ const statusLabel = (value) => ({
 const Tickets = () => {
     const navigate = useNavigate();
     const { ticketId } = useParams();
+    const { user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -67,6 +70,7 @@ const Tickets = () => {
 
     const handleSend = async () => {
         if (!selected) return;
+        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         if (!message.trim()) return toast('Vui lòng nhập nội dung.', 'danger');
         setSending(true);
         try {
@@ -86,10 +90,10 @@ const Tickets = () => {
 
     return (
         <>
-            <PageHero title="Ticket hỗ trợ" current="Ticket hỗ trợ" kicker="My account" />
+            <PageHero title="Ticket hỗ trợ" current="Ticket hỗ trợ" kicker="Tài khoản" />
             <section className="ts-container py-12">
                 <div className="mb-8">
-                    <p className="ts-eyebrow text-[var(--color-accent)]">My account</p>
+                    <p className="ts-eyebrow text-[var(--color-accent)]">Tài khoản</p>
                     <h2 className="ts-display mt-2 text-3xl">Trao đổi với hỗ trợ</h2>
                     <p className="mt-1 text-sm text-[var(--color-fg-muted)]">Xem lại ticket và nhắn tin với admin.</p>
                 </div>
@@ -205,4 +209,3 @@ const Tickets = () => {
 };
 
 export default Tickets;
-

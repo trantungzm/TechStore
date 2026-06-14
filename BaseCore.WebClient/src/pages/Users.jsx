@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { userApi } from '../services/api';
+import { toast, confirmDialog } from '../utils/notify';
 
 const inputClass = 'rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
@@ -129,18 +130,18 @@ const Users = () => {
     const handleDelete = async (id) => {
         const user = users.find((item) => item.id === id);
         if (user?.userType === 1) {
-            alert('Khong the xoa admin duy nhat.');
+            toast.error('Không thể xóa admin duy nhất.');
             return;
         }
 
-        if (!window.confirm('Bạn có chắc muốn xóa người dùng này?')) return;
+        if (!(await confirmDialog('Bạn có chắc muốn xóa người dùng này?'))) return;
 
         try {
             await userApi.delete(id);
             loadUsers();
         } catch (err) {
             const data = err.response?.data;
-            alert(data?.message || data?.detail || data?.title || 'Khong the xoa nguoi dung');
+            toast.error(data?.message || data?.detail || data?.title || 'Không thể xóa người dùng');
         }
     };
 

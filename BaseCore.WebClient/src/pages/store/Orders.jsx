@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { orderApi } from '../../services/api';
-import { formatCurrency, setPageMeta, t, toast } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t, toast } from '../../utils/store';
 import PageHero from '../../components/store/PageHero';
 import { Link } from 'react-router-dom';
 import { cn } from '../../utils/cn';
@@ -20,25 +21,103 @@ const getStatusStyle = (status = '') => {
     return statusStyles[status] || statusStyles.Pending;
 };
 
+const ORDER_STATUS_LABELS = {
+    Pending: 'Chờ xác nhận',
+    Confirmed: 'Đã xác nhận',
+    Processing: 'Đang xử lý',
+    ReadyForPickup: 'Sẵn sàng nhận hàng',
+    Shipping: 'Đang giao hàng',
+    Shipped: 'Đã gửi hàng',
+    Delivered: 'Đã giao hàng',
+    Completed: 'Hoàn thành',
+    CancelRequested: 'Yêu cầu hủy',
+    Cancelled: 'Đã hủy',
+    CancelRejected: 'Từ chối hủy',
+    Failed: 'Thất bại',
+    Returned: 'Đã trả hàng',
+};
+const orderStatusLabel = (status) => ORDER_STATUS_LABELS[status] || status || 'Chờ xác nhận';
+
+const PAYMENT_STATUS_LABELS = {
+    Unpaid: 'Chưa thanh toán',
+    Paid: 'Đã thanh toán',
+    Refunded: 'Đã hoàn tiền',
+    Failed: 'Thanh toán thất bại',
+    Cancelled: 'Đã hủy thanh toán',
+};
+const paymentStatusLabel = (status) => PAYMENT_STATUS_LABELS[status] || status || 'Chưa thanh toán';
+
+// Icon + màu theo trạng thái để dễ nhận biết nhanh trong danh sách.
+const STATUS_ICONS = {
+    Pending: { icon: 'fa-clock', color: 'text-amber-500' },
+    Confirmed: { icon: 'fa-circle-check', color: 'text-[var(--color-gold)]' },
+    Processing: { icon: 'fa-box-open', color: 'text-[var(--color-accent)]' },
+    ReadyForPickup: { icon: 'fa-store', color: 'text-amber-600' },
+    Shipping: { icon: 'fa-truck', color: 'text-sky-500' },
+    Shipped: { icon: 'fa-truck-fast', color: 'text-sky-500' },
+    Delivered: { icon: 'fa-box', color: 'text-sky-600' },
+    Completed: { icon: 'fa-circle-check', color: 'text-emerald-500' },
+    CancelRequested: { icon: 'fa-hourglass-half', color: 'text-amber-500' },
+    Cancelled: { icon: 'fa-circle-xmark', color: 'text-red-500' },
+    CancelRejected: { icon: 'fa-ban', color: 'text-red-500' },
+    Returned: { icon: 'fa-rotate-left', color: 'text-red-500' },
+    Failed: { icon: 'fa-triangle-exclamation', color: 'text-red-500' },
+};
+const getStatusIcon = (status) => STATUS_ICONS[status] || STATUS_ICONS.Pending;
+// "Đã cập nhật" = shop đã xử lý nhưng chưa kết thúc -> nhấn mạnh (nhấp nháy).
+const ATTENTION_STATUSES = new Set(['Confirmed', 'Processing', 'ReadyForPickup', 'Shipping', 'Shipped', 'Delivered', 'CancelRequested']);
+const isAttentionStatus = (status) => ATTENTION_STATUSES.has(status);
+
+const getCancellation = (order = {}) => order.cancellation || order.Cancellation || null;
+
+const hasRejectedCancellation = (order = {}) => {
+    const cancellation = getCancellation(order);
+    const cancellationStatus = String(cancellation?.status || cancellation?.Status || '').toLowerCase();
+    if (cancellationStatus === 'rejected') return true;
+    return Boolean(
+        (order.cancelReviewedAt || order.CancelReviewedAt) &&
+        !String(order.status || order.Status || '').toLowerCase().includes('cancel') &&
+        (order.cancelReviewNote || order.CancelReviewNote || order.cancelReason || order.CancelReason)
+    );
+};
+
+const cancelReviewNote = (order = {}) => (
+    order.cancelReviewNote ||
+    order.CancelReviewNote ||
+    getCancellation(order)?.adminNote ||
+    getCancellation(order)?.AdminNote ||
+    ''
+);
+
+const TIMELINE_TITLE_LABELS = {
+    'Don hang duoc tao': 'Đơn hàng được tạo',
+    'Don hang da duoc xac nhan': 'Đơn hàng đã được xác nhận',
+    'Don hang dang duoc chuan bi': 'Đơn hàng đang được chuẩn bị',
+    'Hang san sang nhan tai cua hang': 'Hàng sẵn sàng nhận tại cửa hàng',
+    'Don hang dang duoc giao': 'Đơn hàng đang được giao',
+    'Don hang da hoan tat': 'Đơn hàng đã hoàn tất',
+    'Khach hang yeu cau huy don': 'Khách yêu cầu hủy đơn',
+    'Yeu cau huy don da duoc chap nhan': 'Yêu cầu hủy đơn đã được chấp nhận',
+    'Yeu cau huy don bi tu choi': 'Yêu cầu hủy bị từ chối',
+    'Don hang tiep tuc xu ly': 'Đơn hàng tiếp tục xử lý',
+};
+
+const timelineTitleLabel = (item = {}) => (
+    TIMELINE_TITLE_LABELS[item.title] || item.title || orderStatusLabel(item.status)
+);
+
 const OrderTimeline = ({ timeline = [], status, shippingMethod }) => {
     const isPickup = String(shippingMethod || '').toLowerCase().includes('pickup');
     const steps = isPickup
         ? ['Pending', 'Confirmed', 'ReadyForPickup', 'Completed']
         : ['Pending', 'Confirmed', 'Processing', 'Shipping', 'Completed'];
     const isCancelled = status?.includes('Cancel');
-    const stepLabel = (step) => ({
-        Pending: 'Chờ xác nhận',
-        Confirmed: 'Đã xác nhận',
-        Processing: 'Đang chuẩn bị',
-        Shipping: 'Đang giao',
-        ReadyForPickup: 'Sẵn sàng nhận',
-        Completed: 'Hoàn tất',
-    }[step] || step);
+    const stepLabel = (step) => orderStatusLabel(step);
 
     if (isCancelled) {
         return (
             <div className="my-4 inline-flex items-center gap-2 rounded-sm border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                <i className="fas fa-times-circle"></i>{status}
+                <i className="fas fa-times-circle"></i>{orderStatusLabel(status)}
             </div>
         );
     }
@@ -103,6 +182,8 @@ const paymentLabel = (method) => ({
 }[method] || method || 'Không xác định');
 
 const Orders = () => {
+    const { user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -154,6 +235,7 @@ const Orders = () => {
     };
 
     const handleCancelOrder = async () => {
+        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         if (!cancelReason.trim()) return toast(t('Cancel reason is required'), 'danger');
         setCancelling(true);
         try {
@@ -192,12 +274,12 @@ const Orders = () => {
 
     return (
         <>
-            <PageHero title={t('Order History')} current={t('Order History')} kicker="My Orders" />
+            <PageHero title={t('Order History')} current={t('Order History')} kicker="Đơn của tôi" />
 
             <section className="ts-container py-12">
                 <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <p className="ts-eyebrow text-[var(--color-accent)]">My account</p>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Tài khoản</p>
                         <h2 className="ts-display mt-2 text-3xl">Đơn hàng của tôi</h2>
                         <p className="mt-1 text-sm text-[var(--color-fg-muted)]">{loading ? 'Đang tải...' : `${orders.length} đơn hàng`}</p>
                     </div>
@@ -256,17 +338,39 @@ const Orders = () => {
                                 <p className="ts-eyebrow text-[10px]">Ngày đặt</p>
                                 <p className="ts-eyebrow text-[10px]">Trạng thái</p>
                                 <p className="ts-eyebrow text-[10px]">Tổng</p>
-                                <p className="ts-eyebrow text-[10px] text-right">Action</p>
+                                <p className="ts-eyebrow text-[10px] text-right">Thao tác</p>
                             </div>
                             <ul className="divide-y divide-[var(--color-border)]">
                                 {pagedOrders.map((order) => (
                                     <li key={order.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_140px_160px_140px_100px] md:items-center md:gap-4">
                                         <div>
-                                            <p className="ts-mono text-sm font-semibold text-[var(--color-fg)]">#{order.orderCode || order.id}</p>
+                                            <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                                                <span className="relative inline-flex">
+                                                    <i className={cn('fas', getStatusIcon(order.status).icon, getStatusIcon(order.status).color, isAttentionStatus(order.status) && 'ts-anim-pulse')} title={orderStatusLabel(order.status)}></i>
+                                                    {isAttentionStatus(order.status) && (
+                                                        <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                                    )}
+                                                </span>
+                                                <span className="ts-mono">#{order.orderCode || order.id}</span>
+                                            </p>
+                                            {String(order.shippingMethod || '').toLowerCase().includes('pickup') &&
+                                                String(order.status || '').toLowerCase() === 'readyforpickup' &&
+                                                (order.pickupVerificationPin || order.PickupVerificationPin) && (
+                                                    <p className="mt-1 inline-flex items-center gap-1 rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-300">
+                                                        <i className="fas fa-key text-[10px]"></i>
+                                                        Mã nhận hàng: <span className="ts-mono">{order.pickupVerificationPin || order.PickupVerificationPin}</span>
+                                                    </p>
+                                                )}
+                                            {hasRejectedCancellation(order) && (
+                                                <p className="mt-1 inline-flex items-center gap-1 rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-300">
+                                                    <i className="fas fa-ban text-[10px]"></i>
+                                                    Yêu cầu hủy bị từ chối
+                                                </p>
+                                            )}
                                         </div>
                                         <p className="text-xs text-[var(--color-fg-muted)]">{new Date(order.orderDate).toLocaleString('vi-VN')}</p>
                                         <span className={cn("inline-flex w-fit rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider", getStatusStyle(order.status))}>
-                                            {order.status}
+                                            {orderStatusLabel(order.status)}
                                         </span>
                                         <p className="ts-mono text-sm font-semibold text-[var(--color-accent)]">{formatCurrency(order.totalAmount)}</p>
                                         <button onClick={() => handleViewDetails(order.id)} className="ts-btn ts-btn-outline justify-self-end px-3 py-1.5 text-xs">
@@ -322,6 +426,26 @@ const Orders = () => {
                         <div className="max-h-[70vh] overflow-y-auto p-6">
                             <OrderTimeline timeline={selectedOrder.order.timeline} status={selectedOrder.order.status} shippingMethod={selectedOrder.order.shippingMethod} />
 
+                            {Array.isArray(selectedOrder.order.timeline) && selectedOrder.order.timeline.length > 0 && (
+                                <div className="mb-5 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                    <p className="ts-eyebrow mb-3 text-[10px] text-[var(--color-accent)]">
+                                        <i className="fas fa-list-check mr-1"></i>Nhật ký đơn hàng
+                                    </p>
+                                    <div className="space-y-3">
+                                        {selectedOrder.order.timeline.map((item) => (
+                                            <div key={item.id || `${item.status}-${item.createdAt}`} className="flex gap-3 text-xs">
+                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-accent)]" />
+                                                <div>
+                                                    <p className="font-semibold text-[var(--color-fg)]">{timelineTitleLabel(item)}</p>
+                                                    {item.note && <p className="mt-0.5 text-[var(--color-fg-muted)]">Lý do: {item.note}</p>}
+                                                    {item.createdAt && <p className="mt-0.5 text-[10px] text-[var(--color-fg-dim)]">{new Date(item.createdAt).toLocaleString('vi-VN')}</p>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
                                     {(() => {
@@ -363,11 +487,20 @@ const Orders = () => {
                                 <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
                                     <p className="ts-eyebrow mb-2 text-[10px] text-[var(--color-accent)]"><i className="fas fa-info-circle mr-1"></i>Tình trạng</p>
                                     <span className={cn("inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider", getStatusStyle(selectedOrder.order.status))}>
-                                        {selectedOrder.order.status}
+                                        {orderStatusLabel(selectedOrder.order.status)}
                                     </span>
                                     <p className="mt-3 text-xs text-[var(--color-fg-muted)]">Đặt: {new Date(selectedOrder.order.orderDate).toLocaleString('vi-VN')}</p>
                                     {selectedOrder.order.paymentStatus && (
-                                        <p className="mt-1 text-xs">Thanh toán: <span className={cn("font-semibold", selectedOrder.order.paymentStatus === 'Paid' && "text-emerald-400", selectedOrder.order.paymentStatus === 'Refunded' && "text-sky-400", selectedOrder.order.paymentStatus === 'Unpaid' && "text-amber-400")}>{selectedOrder.order.paymentStatus}</span></p>
+                                        <p className="mt-1 text-xs">Thanh toán: <span className={cn("font-semibold", selectedOrder.order.paymentStatus === 'Paid' && "text-emerald-400", selectedOrder.order.paymentStatus === 'Refunded' && "text-sky-400", selectedOrder.order.paymentStatus === 'Unpaid' && "text-amber-400")}>{paymentStatusLabel(selectedOrder.order.paymentStatus)}</span></p>
+                                    )}
+                                    {hasRejectedCancellation(selectedOrder.order) && (
+                                        <div className="mt-3 rounded-sm border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
+                                            <p className="font-semibold"><i className="fas fa-ban mr-1"></i>Yêu cầu hủy bị từ chối</p>
+                                            <p className="mt-1">Đơn tiếp tục xử lý sau khi yêu cầu hủy bị từ chối.</p>
+                                            {cancelReviewNote(selectedOrder.order) && (
+                                                <p className="mt-1">Lý do: {cancelReviewNote(selectedOrder.order)}</p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

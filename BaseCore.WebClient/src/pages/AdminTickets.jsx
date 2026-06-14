@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ticketApi } from '../services/api';
 import AdminFilterDropdown from '../components/AdminFilterDropdown';
+import { useAuth } from '../contexts/AuthContext';
 
 const TICKET_STATUS_LABELS = {
     Open: 'Mới mở',
@@ -97,6 +98,8 @@ const REPLY_TEMPLATES = {
 };
 
 const AdminTickets = () => {
+    const { user } = useAuth();
+    const canOperate = (user?.role || '') === 'Technical'; // Admin chỉ xem; thao tác do Technical
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -253,6 +256,11 @@ const AdminTickets = () => {
                 </div>
 
                 <div className="p-4">
+                    {!canOperate && (
+                        <div className="mb-4 rounded-md border border-amber-200 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-400">
+                            Chế độ chỉ xem — thao tác nghiệp vụ dành cho nhân viên Hỗ trợ kỹ thuật (Technical).
+                        </div>
+                    )}
                     {error && <div className="mb-4 rounded-md border border-rose-200 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-300">{error}</div>}
                     {loading ? (
                         <div className="py-12 text-center text-sm font-semibold text-[var(--color-fg-muted)]">Đang tải ticket...</div>
@@ -352,30 +360,34 @@ const AdminTickets = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3 text-[var(--color-fg-muted)]">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-'}</td>
-                                                    <td className="px-4 py-3">
-                                                        <div className="space-y-2">
-                                                            <select className={inputClass} value={priorityById[ticket.id] ?? ''} onChange={(e) => setPriorityById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
-                                                                <option value="">-- Độ ưu tiên --</option>
-                                                                {Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                                                            </select>
-                                                            <select className={inputClass} value={statusById[ticket.id] ?? ''} onChange={(e) => setStatusById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
-                                                                <option value="">-- Trạng thái --</option>
-                                                                {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                                                            </select>
-                                                            {REPLY_TEMPLATES[ticket.category] && (
-                                                                <select className={inputClass} value={selectedTemplateById[ticket.id] ?? ''} onChange={(e) => handleTemplateSelect(ticket.id, e.target.value)}>
-                                                                    <option value="">-- Mẫu phản hồi --</option>
-                                                                    {REPLY_TEMPLATES[ticket.category].map((template) => (
-                                                                        <option key={template.id} value={template.id}>{template.label}</option>
-                                                                    ))}
+                                                    {canOperate ? (
+                                                        <td className="px-4 py-3">
+                                                            <div className="space-y-2">
+                                                                <select className={inputClass} value={priorityById[ticket.id] ?? ''} onChange={(e) => setPriorityById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
+                                                                    <option value="">-- Độ ưu tiên --</option>
+                                                                    {Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                                                 </select>
-                                                            )}
-                                                            <input className={inputClass} placeholder="Ghi chú / phản hồi" value={noteById[ticket.id] ?? ''} onChange={(e) => setNoteById((prev) => ({ ...prev, [ticket.id]: e.target.value }))} />
-                                                            <button type="button" className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" onClick={() => handleUpdate(ticket.id)} disabled={updatingId === ticket.id}>
-                                                                {updatingId === ticket.id ? 'Đang cập nhật...' : 'Cập nhật'}
-                                                            </button>
-                                                        </div>
-                                                    </td>
+                                                                <select className={inputClass} value={statusById[ticket.id] ?? ''} onChange={(e) => setStatusById((prev) => ({ ...prev, [ticket.id]: e.target.value }))}>
+                                                                    <option value="">-- Trạng thái --</option>
+                                                                    {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                                                                </select>
+                                                                {REPLY_TEMPLATES[ticket.category] && (
+                                                                    <select className={inputClass} value={selectedTemplateById[ticket.id] ?? ''} onChange={(e) => handleTemplateSelect(ticket.id, e.target.value)}>
+                                                                        <option value="">-- Mẫu phản hồi --</option>
+                                                                        {REPLY_TEMPLATES[ticket.category].map((template) => (
+                                                                            <option key={template.id} value={template.id}>{template.label}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                )}
+                                                                <input className={inputClass} placeholder="Ghi chú / phản hồi" value={noteById[ticket.id] ?? ''} onChange={(e) => setNoteById((prev) => ({ ...prev, [ticket.id]: e.target.value }))} />
+                                                                <button type="button" className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" onClick={() => handleUpdate(ticket.id)} disabled={updatingId === ticket.id}>
+                                                                    {updatingId === ticket.id ? 'Đang cập nhật...' : 'Cập nhật'}
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    ) : (
+                                                        <td className="px-4 py-3 text-xs text-[var(--color-fg-dim)]">Chỉ xem</td>
+                                                    )}
                                                 </tr>
                                             );
                                         })}

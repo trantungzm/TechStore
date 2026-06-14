@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminFilterDropdown from '../components/AdminFilterDropdown';
 import { repairApi, warrantyApi } from '../services/api';
 import { toast } from '../utils/store';
+import { useAuth } from '../contexts/AuthContext';
 
 const inputClass = 'w-full rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
@@ -61,8 +62,91 @@ const CLAIM_STATUS_OPTIONS = [
     { value: 'Cancelled', label: 'Đã hủy' },
 ];
 
+// Nhãn tiếng Việt cho hiển thị (bao cả giá trị không có trong filter options).
+const CLAIM_LABEL_EXTRA = { ReadyToReturn: 'Sẵn sàng trả máy', Delivered: 'Đã trả máy', Approved: 'Đã duyệt', InProgress: 'Đang xử lý' };
+const warrantyStatusLabel = (s) => WARRANTY_STATUS_OPTIONS.find((o) => o.value && o.value === s)?.label || s || '-';
+const claimStatusLabelVi = (s) => CLAIM_STATUS_OPTIONS.find((o) => o.value && o.value === s)?.label || CLAIM_LABEL_EXTRA[s] || s || '-';
+
+// Badge trạng thái — đồng bộ kiểu màu với trang Quản lý đơn hàng (bg/10 · text · ring/20).
+const STATUS_BADGE = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ring-1';
+const warrantyStatusClass = (s) => {
+    if (s === 'Active') return 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20';
+    if (s === 'NotActivated') return 'bg-amber-500/10 text-amber-600 ring-amber-500/20';
+    if (s === 'Expired') return 'bg-rose-500/10 text-rose-600 ring-rose-500/20';
+    return 'bg-[var(--color-surface-3)] text-[var(--color-fg)] ring-[var(--color-border)]';
+};
+const claimStatusClass = (s) => {
+    if (['Rejected', 'Cancelled'].includes(s)) return 'bg-rose-500/10 text-rose-600 ring-rose-500/20';
+    if (['Completed', 'Delivered', 'ReadyToReturn'].includes(s)) return 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20';
+    if (['Pending', 'Diagnosing', 'SentToBrand', 'WaitingParts'].includes(s)) return 'bg-amber-500/10 text-amber-600 ring-amber-500/20';
+    if (['Confirmed', 'Received', 'Repairing', 'InProgress', 'Approved'].includes(s)) return 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] ring-[var(--color-accent)]/20';
+    return 'bg-[var(--color-surface-3)] text-[var(--color-fg)] ring-[var(--color-border)]';
+};
+
 const AdminWarranty = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const claimStatusLabels = {
+        Pending: 'Mới',
+        Confirmed: 'Đã xác nhận',
+        Received: 'Đã tiếp nhận máy',
+        Diagnosing: 'Đang chẩn đoán',
+        SentToBrand: 'Đã gửi hãng',
+        Repairing: 'Đang sửa chữa',
+        WaitingParts: 'Chờ linh kiện',
+        ReadyToReturn: 'Sẵn sàng trả máy',
+        Delivered: 'Đã trả máy',
+        Completed: 'Hoàn tất',
+        Rejected: 'Từ chối',
+        Cancelled: 'Đã hủy',
+    };
+    const claimLabel = (status) => claimStatusLabels[status] || claimStatusLabelVi(status);
+    const nextClaimActions = (status) => ({
+        Pending: [
+            { status: 'Confirmed', label: 'Xác nhận yêu cầu', tone: 'blue' },
+            { status: 'Rejected', label: 'Từ chối', tone: 'rose', requireRejectReason: true },
+            { status: 'Cancelled', label: 'Hủy yêu cầu', tone: 'muted' },
+        ],
+        Confirmed: [
+            { status: 'Received', label: 'Đã nhận máy', tone: 'blue' },
+            { status: 'Rejected', label: 'Từ chối', tone: 'rose', requireRejectReason: true },
+            { status: 'Cancelled', label: 'Hủy yêu cầu', tone: 'muted' },
+        ],
+        Received: [
+            { status: 'Diagnosing', label: 'Bắt đầu chẩn đoán', tone: 'amber' },
+        ],
+        Diagnosing: [
+            { status: 'Repairing', label: 'Đủ điều kiện, sửa chữa', tone: 'blue' },
+            { status: 'SentToBrand', label: 'Gửi hãng', tone: 'amber' },
+            { status: 'Rejected', label: 'Từ chối bảo hành', tone: 'rose', requireRejectReason: true },
+        ],
+        SentToBrand: [
+            { status: 'ReadyToReturn', label: 'Hãng xử lý xong', tone: 'green' },
+            { status: 'WaitingParts', label: 'Chờ linh kiện', tone: 'amber' },
+        ],
+        WaitingParts: [
+            { status: 'Repairing', label: 'Tiếp tục sửa', tone: 'blue' },
+        ],
+        Repairing: [
+            { status: 'ReadyToReturn', label: 'Sẵn sàng trả máy', tone: 'green' },
+            { status: 'WaitingParts', label: 'Chờ linh kiện', tone: 'amber' },
+        ],
+        ReadyToReturn: [
+            { status: 'Delivered', label: 'Đã trả máy', tone: 'green' },
+        ],
+        Delivered: [
+            { status: 'Completed', label: 'Hoàn tất hồ sơ', tone: 'green' },
+        ],
+    }[String(status || '').trim()] || []);
+    const actionButtonClass = (tone) => {
+        const base = 'rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60';
+        if (tone === 'rose') return `${base} border-rose-500/40 text-rose-600 hover:bg-rose-500/10`;
+        if (tone === 'amber') return `${base} border-amber-500/40 text-amber-600 hover:bg-amber-500/10`;
+        if (tone === 'green') return `${base} border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10`;
+        if (tone === 'muted') return `${base} border-[var(--color-border)] text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)]`;
+        return `${base} border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10`;
+    };
+    const canOperate = (user?.role || '') === 'Technical'; // Admin chỉ xem; thao tác do Technical
     const [tab, setTab] = useState('warranties');
     const [warranties, setWarranties] = useState([]);
     const [claims, setClaims] = useState([]);
@@ -225,9 +309,13 @@ const AdminWarranty = () => {
         }
     };
 
-    const handleUpdateClaimStatus = async (id) => {
-        const status = String(claimStatusById[id] || '').trim();
+    const handleUpdateClaimStatus = async (id, status, requireRejectReason = false) => {
+        status = String(status || '').trim();
         if (!status) return;
+        if (requireRejectReason && !String(claimRejectReasonById[id] || '').trim()) {
+            toast('Vui lòng nhập lý do từ chối.', 'warning');
+            return;
+        }
         setUpdatingId(id);
         setError('');
         try {
@@ -236,7 +324,7 @@ const AdminWarranty = () => {
                 note: claimNoteById[id] || null,
                 rejectedReason: claimRejectReasonById[id] || null,
             });
-            toast('Đã cập nhật trạng thái yêu cầu', 'success');
+            toast(`Đã chuyển sang trạng thái ${claimLabel(status)}`, 'success');
             setClaimNoteById((p) => ({ ...p, [id]: '' }));
             setClaimRejectReasonById((p) => ({ ...p, [id]: '' }));
             await load();
@@ -355,28 +443,33 @@ const AdminWarranty = () => {
                 </div>
 
                 <div className="grid gap-3 border-b border-[var(--color-border)] px-4 py-4 md:grid-cols-4">
-                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Tổng bảo hành</div>
                         <div className="mt-1 text-2xl font-bold text-[var(--color-fg)]">{warrantyStats.total}</div>
-                        <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Chưa kích hoạt: {warrantyStats.notActivated} • Active: {warrantyStats.active} • Hết hạn: {warrantyStats.expired}</div>
+                        <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Chưa kích hoạt: {warrantyStats.notActivated} • Đang hiệu lực: {warrantyStats.active} • Hết hạn: {warrantyStats.expired}</div>
                     </div>
-                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Yêu cầu bảo hành</div>
                         <div className="mt-1 text-2xl font-bold text-[var(--color-fg)]">{claimStats.total}</div>
                         <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Mới: {claimStats.pending} • Xác nhận: {claimStats.confirmed} • Từ chối: {claimStats.rejected}</div>
                     </div>
-                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Đang xử lý</div>
                         <div className="mt-1 text-2xl font-bold text-[var(--color-fg)]">{claimStats.repairing}</div>
-                        <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Theo claim status = Repairing</div>
+                        <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Yêu cầu đang sửa chữa</div>
                     </div>
-                    <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
                         <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Hoàn tất</div>
                         <div className="mt-1 text-2xl font-bold text-[var(--color-fg)]">{claimStats.completed}</div>
-                        <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Theo claim status = Completed</div>
+                        <div className="mt-2 text-xs text-[var(--color-fg-muted)]">Yêu cầu đã hoàn tất</div>
                     </div>
                 </div>
 
+                {!canOperate && (
+                    <div className="border-b border-[var(--color-border)] px-4 py-3 text-sm font-semibold text-amber-400 bg-amber-500/10">
+                        Chế độ chỉ xem — thao tác nghiệp vụ dành cho nhân viên Kỹ thuật (Technical).
+                    </div>
+                )}
                 {error && (
                     <div className="border-b border-[var(--color-border)] px-4 py-3 text-sm text-red-400">
                         {error}
@@ -397,12 +490,11 @@ const AdminWarranty = () => {
                                     <th className="px-4 py-3">Kích hoạt</th>
                                     <th className="px-4 py-3">Hết hạn</th>
                                     <th className="px-4 py-3">Trạng thái</th>
-                                    <th className="px-4 py-3 text-right">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--color-border)] text-sm">
                                 {filteredWarranties.length === 0 ? (
-                                    <tr><td colSpan={8} className="px-4 py-6 text-center text-[var(--color-fg-muted)]">Không có dữ liệu.</td></tr>
+                                    <tr><td colSpan={7} className="px-4 py-6 text-center text-[var(--color-fg-muted)]">Không có dữ liệu.</td></tr>
                                 ) : filteredWarranties.map((w) => (
                                     <tr key={w.id} className="hover:bg-[var(--color-surface-2)]/30">
                                         <td className="px-4 py-3 font-semibold">{w.warrantyCode}</td>
@@ -414,21 +506,7 @@ const AdminWarranty = () => {
                                         <td className="px-4 py-3">{w.serialOrImei || '-'}</td>
                                         <td className="px-4 py-3">{formatDate(w.activatedAt)}</td>
                                         <td className="px-4 py-3">{formatDate(w.expiresAt)}</td>
-                                        <td className="px-4 py-3">{w.status || '-'}</td>
-                                        <td className="px-4 py-3 text-right">
-                                            {w.status === 'NotActivated' ? (
-                                                <button
-                                                    type="button"
-                                                    className="rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60"
-                                                    onClick={() => handleActivate(w.id)}
-                                                    disabled={updatingId === w.id}
-                                                >
-                                                    {updatingId === w.id ? 'Đang kích hoạt...' : 'Kích hoạt'}
-                                                </button>
-                                            ) : (
-                                                <span className="text-xs text-[var(--color-fg-dim)]">-</span>
-                                            )}
-                                        </td>
+                                        <td className="px-4 py-3"><span className={`${STATUS_BADGE} ${warrantyStatusClass(w.status)}`}>{warrantyStatusLabel(w.status)}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -466,51 +544,73 @@ const AdminWarranty = () => {
                                             <div className="text-sm font-semibold text-[var(--color-fg)]">{c.customerName || '-'}</div>
                                             <div className="text-xs text-[var(--color-fg-muted)]">{c.customerPhone || '-'}</div>
                                         </td>
-                                        <td className="px-4 py-3">{c.status || '-'}</td>
+                                        <td className="px-4 py-3"><span className={`${STATUS_BADGE} ${claimStatusClass(c.status)}`}>{claimLabel(c.status)}</span></td>
                                         <td className="px-4 py-3">{formatDate(c.createdAt)}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col items-end gap-2">
-                                                <div className="grid w-72 grid-cols-1 gap-2">
-                                                    <select
-                                                        className={inputClass}
-                                                        value={claimStatusById[c.id] ?? ''}
-                                                        onChange={(e) => setClaimStatusById((p) => ({ ...p, [c.id]: e.target.value }))}
-                                                    >
-                                                        <option value="">Chọn trạng thái...</option>
-                                                        {CLAIM_STATUS_OPTIONS.filter((o) => o.value).map((o) => (
-                                                            <option key={o.value} value={o.value}>{o.value}</option>
-                                                        ))}
-                                                    </select>
-                                                    <input
-                                                        className={inputClass}
-                                                        placeholder="Ghi chú"
-                                                        value={claimNoteById[c.id] ?? ''}
-                                                        onChange={(e) => setClaimNoteById((p) => ({ ...p, [c.id]: e.target.value }))}
-                                                    />
-                                                    <input
-                                                        className={inputClass}
-                                                        placeholder="Lý do từ chối (nếu có)"
-                                                        value={claimRejectReasonById[c.id] ?? ''}
-                                                        onChange={(e) => setClaimRejectReasonById((p) => ({ ...p, [c.id]: e.target.value }))}
-                                                    />
-                                                </div>
+                                                {canOperate && (
+                                                    <div className="grid w-72 grid-cols-1 gap-2">
+                                                        <div className="flex flex-wrap justify-end gap-2">
+                                                            {nextClaimActions(c.status).length === 0 ? (
+                                                                <span className="text-xs text-[var(--color-fg-dim)]">Không còn bước xử lý</span>
+                                                            ) : nextClaimActions(c.status).map((action) => (
+                                                                <button
+                                                                    key={action.status}
+                                                                    type="button"
+                                                                    className={actionButtonClass(action.tone)}
+                                                                    onClick={() => handleUpdateClaimStatus(c.id, action.status, action.requireRejectReason)}
+                                                                    disabled={updatingId === c.id}
+                                                                    title={`Chuyển sang ${claimLabel(action.status)}`}
+                                                                >
+                                                                    {updatingId === c.id ? 'Đang lưu...' : action.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        <select
+                                                            className="hidden"
+                                                            value={claimStatusById[c.id] ?? ''}
+                                                            onChange={(e) => setClaimStatusById((p) => ({ ...p, [c.id]: e.target.value }))}
+                                                        >
+                                                            <option value="">Chọn trạng thái...</option>
+                                                            {CLAIM_STATUS_OPTIONS.filter((o) => o.value).map((o) => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </select>
+                                                        <input
+                                                            className={inputClass}
+                                                            placeholder="Ghi chú"
+                                                            value={claimNoteById[c.id] ?? ''}
+                                                            onChange={(e) => setClaimNoteById((p) => ({ ...p, [c.id]: e.target.value }))}
+                                                        />
+                                                        <input
+                                                            className={inputClass}
+                                                            placeholder="Lý do từ chối (nếu có)"
+                                                            value={claimRejectReasonById[c.id] ?? ''}
+                                                            onChange={(e) => setClaimRejectReasonById((p) => ({ ...p, [c.id]: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] disabled:opacity-60"
-                                                        onClick={() => handleUpdateClaimStatus(c.id)}
-                                                        disabled={updatingId === c.id}
-                                                    >
-                                                        {updatingId === c.id ? 'Đang lưu...' : 'Cập nhật'}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60"
-                                                        onClick={() => handleCreateRepair(c)}
-                                                        disabled={creatingRepairId === c.id}
-                                                    >
-                                                        {creatingRepairId === c.id ? 'Đang tạo...' : 'Tạo repair'}
-                                                    </button>
+                                                    {canOperate && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                className="hidden"
+                                                                onClick={() => {}}
+                                                                disabled={updatingId === c.id}
+                                                            >
+                                                                {updatingId === c.id ? 'Đang lưu...' : 'Cập nhật'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60"
+                                                                onClick={() => handleCreateRepair(c)}
+                                                                disabled={creatingRepairId === c.id}
+                                                            >
+                                                                {creatingRepairId === c.id ? 'Đang tạo...' : 'Tạo repair'}
+                                                            </button>
+                                                        </>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)]"

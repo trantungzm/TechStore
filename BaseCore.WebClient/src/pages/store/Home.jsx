@@ -16,7 +16,7 @@ const normalizeHomeProduct = (product, index) => ({
     badge: product.badge || (index % 3 === 0 ? 'New' : index % 3 === 1 ? 'Sale' : ''),
     tab: product.tab || productTags[index % productTags.length],
     category: product.category || (product.categoryName ? { name: product.categoryName } : undefined),
-    imageUrl: product.imageUrl || `/electro/img/product-${(index % 8) + 1}.png`,
+    imageUrl: product.imageUrl || '',
 });
 
 const getImmediateProducts = () => {
@@ -75,22 +75,15 @@ const fetchHomeCatalog = async () => {
     return [...items, ...rest.flatMap((r) => Array.isArray(r.data?.items) ? r.data.items : [])];
 };
 
-const fallbackHeroSlides = [
-    {
-        kicker: 'Giảm đến 10.000.000₫',
-        title: <>Tech tuyển chọn — <span className="ts-gradient-text">refined</span> & chính hãng.</>,
-        sub: 'Áp dụng cho dòng laptop, máy bàn và smartphone được lựa chọn.',
-        cta: { label: t('Shop Laptops'), to: '/shop?categoryId=2' },
-        image: '/electro/img/carousel-1.png',
-    },
-    {
-        kicker: 'Giảm đến 5.000.000₫',
-        title: <>Smartphone tinh tế. <span className="ts-gradient-text">Hiệu năng đỉnh.</span></>,
-        sub: 'Khám phá bộ sưu tập điện thoại cao cấp được bảo hành chính hãng.',
-        cta: { label: t('Shop Smartphones'), to: '/shop?categoryId=1' },
-        image: '/electro/img/carousel-2.png',
-    },
-];
+// Hero hiển thị từ banner backend (/banners/active). Khi chưa có banner nào,
+// dùng default trung tính (không gắn sản phẩm/danh mục cứng) thay vì slide quảng cáo giả.
+const DEFAULT_HERO = {
+    kicker: '',
+    title: <>Khám phá công nghệ <span className="ts-gradient-text">chính hãng</span></>,
+    sub: 'Sản phẩm tuyển chọn, bảo hành minh bạch, dịch vụ tận tâm.',
+    cta: { label: 'Mua sắm ngay', to: '/shop' },
+    image: '',
+};
 
 const serviceItems = [
     { icon: 'fas fa-sync-alt', title: 'Free Return', text: '30 days money back guarantee!' },
@@ -101,10 +94,7 @@ const serviceItems = [
     { icon: 'fas fa-headset', title: 'Online Service', text: 'Free return products in 30 days' },
 ];
 
-const offerCards = [
-    { title: 'Smart Camera', subtitle: 'Tìm camera tốt nhất dành cho bạn', discount: '40%', imageUrl: '/electro/img/product-5.png' },
-    { title: 'Smart Watch', subtitle: 'Đồng hồ thông minh, vạn năng', discount: '20%', imageUrl: '/electro/img/product-6.png' },
-];
+const offerCards = [];
 
 const formatBannerDiscount = (value) => {
     const raw = String(value ?? '').trim();
@@ -144,7 +134,7 @@ const Home = () => {
     const startCarouselTimer = useCallback(() => {
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
-            setHeroIndex((i) => (i + 1) % (heroSlides.length || fallbackHeroSlides.length));
+            setHeroIndex((i) => (i + 1) % (heroSlides.length || 1));
         }, 6500);
     }, [heroSlides.length]);
 
@@ -187,11 +177,11 @@ const Home = () => {
                     }));
                     setHeroSlides(formattedBanners);
                 } else {
-                    setHeroSlides(fallbackHeroSlides);
+                    setHeroSlides([]);
                 }
             } catch (error) {
                 console.error('Failed to load store home data', error);
-                setHeroSlides(fallbackHeroSlides);
+                setHeroSlides([]);
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -206,8 +196,8 @@ const Home = () => {
         };
     }, [startCarouselTimer]);
 
-    const slide = heroSlides[heroIndex] || fallbackHeroSlides[heroIndex % fallbackHeroSlides.length];
-    const slideImage = resolveProductImage({ imageUrl: slide.image, id: heroIndex + 1 });
+    const slide = heroSlides[heroIndex] || DEFAULT_HERO;
+    const slideImage = slide.image ? resolveProductImage({ imageUrl: slide.image }) : '';
     const offerTitleLabel = slide.offerTitle || t('Special Offer');
     const offerDiscountLabel = formatBannerDiscount(slide.offerDiscount);
 
@@ -293,13 +283,15 @@ const Home = () => {
                         className="relative"
                     >
                         <div className="relative aspect-square overflow-hidden rounded-md border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] p-12 shadow-[var(--shadow-lift)] lg:aspect-[4/3]">
-                            <motion.img
-                                src={slideImage}
-                                alt="Banner"
-                                className="h-full w-full object-contain"
-                                animate={{ y: [0, -10, 0] }}
-                                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                            />
+                            {slideImage && (
+                                <motion.img
+                                    src={slideImage}
+                                    alt="Banner"
+                                    className="h-full w-full object-contain"
+                                    animate={{ y: [0, -10, 0] }}
+                                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                                />
+                            )}
                             <span aria-hidden className="absolute right-6 top-6 h-2 w-2 rounded-full bg-[var(--color-accent)]" />
                             <span aria-hidden className="absolute right-12 top-6 h-2 w-2 rounded-full bg-[var(--color-primary)]/40" />
                         </div>
@@ -397,7 +389,7 @@ const Home = () => {
                         transition={{ duration: 0.7 }}
                     >
                         <Link to="/shop" className="group relative block aspect-[16/9] overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)]">
-                            <img src="/electro/img/product-banner.jpg" alt="EOS Rebel T7i" className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110" />
+                            <span className="absolute inset-0 bg-gradient-to-br from-[var(--color-surface-2)] via-[var(--color-surface)] to-[var(--color-background)] transition-transform duration-700 group-hover:scale-110" />
                             <div className="relative z-10 flex h-full flex-col items-start justify-center gap-3 bg-gradient-to-r from-white/90 via-white/60 to-transparent p-8">
                                 <h3 className="ts-display text-3xl text-[var(--color-fg)]">EOS Rebel<br /><span className="ts-gradient-text">T7i Kit</span></h3>
                                 <p className="ts-mono text-xl text-[var(--color-fg-muted)]">$899.99</p>
@@ -412,7 +404,7 @@ const Home = () => {
                         transition={{ duration: 0.7, delay: 0.1 }}
                     >
                         <Link to="/shop" className="group relative block aspect-[16/9] overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)]">
-                            <img src="/electro/img/product-banner-2.jpg" alt="Sale" className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-110" />
+                            <span className="absolute inset-0 bg-gradient-to-br from-[var(--color-background)] via-[var(--color-surface)] to-[var(--color-surface-2)] transition-transform duration-700 group-hover:scale-110" />
                             <div className="relative z-10 flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-r from-transparent via-white/60 to-white/90 p-8 text-center">
                                 <h3 className="ts-display text-4xl text-[var(--color-fg)] tracking-wider">GIẢM <span className="ts-gradient-text">50%</span></h3>
                                 <p className="text-sm uppercase tracking-[0.3em] text-[var(--color-fg-muted)]">Flash Sale</p>

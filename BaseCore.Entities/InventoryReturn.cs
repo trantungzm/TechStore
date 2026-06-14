@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -23,10 +21,8 @@ namespace BaseCore.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? CreatedByUserId { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? ReviewedByUserId { get; set; }
 
         public string? ReviewNote { get; set; }

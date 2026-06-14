@@ -12,8 +12,9 @@ namespace BaseCore.Repository.EFCore
         Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize);
         Task<(List<Product> Products, int TotalCount)> SearchAsync(ProductSearchDto search);
         Task<List<Product>> GetByCategoryAsync(int categoryId);
-        Task<Product?> GetDetailAsync(int id);
+        Task<Product?> GetDetailAsync(int id, bool includeInactive = false);
         Task<bool> HasOrderDetailsAsync(int productId);
+        Task<List<string>> GetBrandsAsync();
     }
 
     public class ProductRepositoryEF : Repository<Product>, IProductRepositoryEF
@@ -44,8 +45,15 @@ namespace BaseCore.Repository.EFCore
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
                 .Include(p => p.BackupSupplier)
-                .Where(p => p.IsActive)
+                .Include(p => p.Variants)
+                .Include(p => p.SpecValues).ThenInclude(sv => sv.SpecDefinition)
+                .Include(p => p.SpecValues).ThenInclude(sv => sv.SpecOption)
                 .AsQueryable();
+
+            if (!search.IncludeInactive)
+            {
+                query = query.Where(p => p.IsActive);
+            }
 
             if (!string.IsNullOrEmpty(search.Keyword))
             {
@@ -76,7 +84,10 @@ namespace BaseCore.Repository.EFCore
 
             if (search.MinPrice.HasValue) query = query.Where(p => p.Price >= search.MinPrice.Value);
             if (search.MaxPrice.HasValue) query = query.Where(p => p.Price <= search.MaxPrice.Value);
-            if (search.InStock == true) query = query.Where(p => p.Stock > 0);
+            if (search.InStock == true)
+            {
+                query = query.Where(p => p.Stock > 0 || p.Variants.Any(v => v.IsActive && v.Stock > 0));
+            }
             if (search.IsFeatured.HasValue) query = query.Where(p => p.IsFeatured == search.IsFeatured.Value);
             if (search.IsBestSeller.HasValue) query = query.Where(p => p.IsBestSeller == search.IsBestSeller.Value);
             if (search.IsNewArrival.HasValue) query = query.Where(p => p.IsNewArrival == search.IsNewArrival.Value);
@@ -111,12 +122,13 @@ namespace BaseCore.Repository.EFCore
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
                 .Include(p => p.BackupSupplier)
+                .Include(p => p.Variants)
                 .ToListAsync();
         }
 
-        public async Task<Product?> GetDetailAsync(int id)
+        public async Task<Product?> GetDetailAsync(int id, bool includeInactive = false)
         {
-            return await _dbSet
+            var query = _dbSet
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
                 .Include(p => p.BackupSupplier)
@@ -129,12 +141,32 @@ namespace BaseCore.Repository.EFCore
                 .Include(p => p.Recommendations)
                     .ThenInclude(r => r.RecommendedProduct)
                         .ThenInclude(rp => rp.Category)
-                .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+                .Include(p => p.Recommendations)
+                    .ThenInclude(r => r.RecommendedProduct)
+                        .ThenInclude(rp => rp.Variants)
+                .AsQueryable();
+
+            if (!includeInactive)
+            {
+                query = query.Where(p => p.IsActive);
+            }
+
+            return await query.FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<bool> HasOrderDetailsAsync(int productId)
         {
             return await _context.OrderDetails.AnyAsync(x => x.ProductId == productId);
+        }
+
+        public async Task<List<string>> GetBrandsAsync()
+        {
+            return await _dbSet
+                .Where(p => p.Brand != null && p.Brand != "")
+                .Select(p => p.Brand!)
+                .Distinct()
+                .OrderBy(b => b)
+                .ToListAsync();
         }
     }
 }

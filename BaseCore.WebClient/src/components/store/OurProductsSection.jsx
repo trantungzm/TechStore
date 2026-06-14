@@ -27,7 +27,7 @@ const OurProductsSection = ({ products, loading, onAddToCart }) => {
                 className="mb-12 flex flex-wrap items-end justify-between gap-6"
             >
                 <div>
-                    <p className="ts-eyebrow text-[var(--color-accent)]">Curated</p>
+                    <p className="ts-eyebrow text-[var(--color-accent)]">Tuyển chọn</p>
                     <h2 className="ts-display mt-3 text-3xl md:text-4xl text-[var(--color-fg)]">{t('Our Products')}</h2>
                     <div className="mt-3 h-px w-16 bg-gradient-to-r from-[var(--color-accent)] to-transparent" />
                 </div>

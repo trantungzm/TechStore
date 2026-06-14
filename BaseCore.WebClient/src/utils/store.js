@@ -236,7 +236,6 @@ const dictionary = {
         'Max stock reached': 'Đã đạt số lượng tối đa',
         'Smartphone': 'Điện thoại',
         'Laptop': 'Máy tính xách tay',
-        'Accessories': 'Phụ kiện',
         'Gaming': 'Đồ chơi game',
         'Tablet': 'Máy tính bảng',
         'Smartwatch': 'Đồng hồ thông minh',
@@ -261,7 +260,6 @@ const dictionary = {
         'Compare': 'So sánh',
         'Wishlist': 'Yêu thích',
         'Add To Cart': 'Thêm vào giỏ',
-        'Electronics': 'Điện tử',
         'Your wishlist is empty': 'Danh sách yêu thích trống',
         'Continue Shopping': 'Tiếp tục mua sắm',
         'Compare Products': 'So sánh sản phẩm',
@@ -398,8 +396,6 @@ const storefrontVi = {
     'Track Your Order': 'Theo dõi đơn hàng',
     'SignUp': 'Đăng ký',
     'Enter your email': 'Nhập email của bạn',
-    'Accessories': 'Phụ kiện',
-    'Electronics & Computer': 'Điện tử & Máy tính',
     'Laptops & Desktops': 'Laptop & Máy bàn',
     'Mobiles & Tablets': 'Điện thoại & Máy tính bảng',
     'SmartPhone & Smart TV': 'Điện thoại & Smart TV',
@@ -448,17 +444,7 @@ export const resolveProductImage = (product) => {
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
             return imageUrl;
         }
-        // For local paths starting with /, check if it's an electro image that exists
-        if (imageUrl.startsWith('/electro/img/product-')) {
-            const match = imageUrl.match(/product-(\d+)\.png$/);
-            if (match) {
-                const imageNum = parseInt(match[1]);
-                // Only return if the image number is within the available range (1-18)
-                if (imageNum >= 1 && imageNum <= 18) {
-                    return imageUrl;
-                }
-            }
-        }
+        if (imageUrl.startsWith('/electro/img/')) return '';
         // For uploaded images under /uploads, try to resolve to the API service when
         // frontend is served from a different origin (common in local dev).
         if (imageUrl.startsWith('/uploads')) {
@@ -487,14 +473,12 @@ export const resolveProductImage = (product) => {
         return `/${imageUrl.replace(/^\/+/, '')}`;
     }
 
-    const fallbackIndex = ((product?.id || 1) - 1) % 18 + 1;
-    return `/electro/img/product-${fallbackIndex}.png`;
+    return '';
 };
 
 const categoryNameById = {
     1: 'Điện thoại',
     2: 'Laptop',
-    3: 'Phụ kiện',
     4: 'Tablet',
     5: 'Đồng hồ thông minh',
     6: 'Máy ảnh',
@@ -522,8 +506,6 @@ const categoryDisplayNameMap = {
     Headphone: 'Tai nghe',
     Headphones: 'Tai nghe',
     'Tai nghe': 'Tai nghe',
-    Accessories: 'Phụ kiện',
-    Accessory: 'Phụ kiện',
     Gaming: 'Gaming',
 };
 
@@ -541,12 +523,24 @@ export const getProductCategoryName = (product, fallback = 'Sản phẩm') => {
     return categoryNameById[Number(product?.categoryId ?? product?.CategoryId)] || fallback;
 };
 
+export const STORE_VIEW_ONLY_ROLES = ['Admin', 'Warehouse', 'Technical'];
+
+export const isStoreViewOnlyUser = (user) => STORE_VIEW_ONLY_ROLES.includes(user?.role);
+
+export const STORE_VIEW_ONLY_MESSAGE = 'Tài khoản nội bộ chỉ được xem cửa hàng, không thể thực hiện thao tác mua hàng.';
+
 export const getPostLoginPath = (user, requestedPath) => {
-    const isAdmin = user?.role === 'Admin';
-    const isStaff = ['Warehouse', 'Technical'].includes(user?.role);
+    const role = user?.role;
+    const isAdmin = role === 'Admin';
+    const isStaff = ['Warehouse', 'Technical', 'Warranty', 'CustomerService'].includes(role);
+    const isAdminArea = requestedPath?.startsWith('/admin');
+
+    if (isAdmin || isStaff) {
+        return requestedPath || '/admin';
+    }
 
     if (requestedPath) {
-        if (requestedPath.startsWith('/admin') && !isAdmin) {
+        if (isAdminArea) {
             return '/';
         }
         return requestedPath;
@@ -576,11 +570,14 @@ export const setPageMeta = ({ title, description }) => {
 };
 
 export const toast = (message, variant = 'primary') => {
+    if (!message) return;
+    // Dùng hệ thống thông báo toàn app (AppNotifications) để hiện ở cả storefront lẫn admin.
+    // Map biến thể cũ 'primary' -> 'info'.
     window.dispatchEvent(
-        new CustomEvent('store:toast', {
+        new CustomEvent('app:toast', {
             detail: {
-                message: String(message || ''),
-                variant,
+                message: String(message),
+                variant: variant === 'primary' ? 'info' : variant,
             },
         })
     );

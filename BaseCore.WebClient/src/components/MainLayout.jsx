@@ -65,7 +65,6 @@ const MainLayout = ({ children }) => {
                 items: [
                     { to: '/admin/users', label: 'Người dùng', icon: 'fas fa-users' },
                     { to: '/admin/roles', label: 'Vai trò / Phân quyền', icon: 'fas fa-user-shield' },
-                    { to: '/admin/settings', label: 'Cấu hình', icon: 'fas fa-cog' },
                 ],
             },
         ]

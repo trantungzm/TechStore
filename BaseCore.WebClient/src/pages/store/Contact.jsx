@@ -2,18 +2,20 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../../components/store/PageHero';
-import { setPageMeta, t } from '../../utils/store';
-
-const contactItems = [
-    { icon: 'fas fa-map-marker-alt', title: 'Address', text: '236 Hoàng Quốc Việt, Hà Nội' },
-    { icon: 'fas fa-envelope', title: 'Mail Us', text: 'info@techstore.example.com' },
-    { icon: 'fas fa-phone-alt', title: 'Telephone', text: '(+84) 327 188 459' },
-    { icon: 'fas fa-globe', title: 'Website', text: 'techstore.example.com' },
-];
+import { isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const Contact = () => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
+    const settings = useStoreSettings();
+    const contactItems = [
+        settings.address && { icon: 'fas fa-map-marker-alt', title: 'Address', text: settings.address },
+        settings.supportEmail && { icon: 'fas fa-envelope', title: 'Mail Us', text: settings.supportEmail },
+        settings.hotline && { icon: 'fas fa-phone-alt', title: 'Telephone', text: settings.hotline },
+        settings.supportTime && { icon: 'fas fa-clock', title: 'Working Hours', text: settings.supportTime },
+    ].filter(Boolean);
     const [formData, setFormData] = React.useState({
         name: '',
         email: '',
@@ -36,6 +38,10 @@ const Contact = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isViewOnly) {
+            setStatus({ loading: false, success: false, error: STORE_VIEW_ONLY_MESSAGE });
+            return;
+        }
         setStatus({ loading: true, success: false, error: '' });
         try {
             const { ticketApi } = await import('../../services/api');
@@ -61,7 +67,7 @@ const Contact = () => {
 
     return (
         <>
-            <PageHero title={t('Contact Us')} current={t('Contact')} kicker="Get in touch" />
+            <PageHero title={t('Contact Us')} current={t('Contact')} kicker="Liên hệ" />
 
             <section className="ts-container py-12">
                 <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">

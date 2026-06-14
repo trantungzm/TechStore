@@ -1,11 +1,20 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
+import { isStoreViewOnlyUser, STORE_VIEW_ONLY_MESSAGE, toast } from '../utils/store';
 
 const CartContext = createContext(null);
 const BASE_STORAGE_KEY = 'store_cart';
 
+export const getCartItemKey = (itemOrProduct) => {
+    const product = itemOrProduct?.product || itemOrProduct || {};
+    const productId = itemOrProduct?.productId ?? product.productId ?? product.id;
+    const variantId = itemOrProduct?.variantId ?? product.variantId ?? product.selectedVariantId;
+    return `${productId}:${variantId !== undefined && variantId !== null && variantId !== '' ? `variant:${variantId}` : 'base'}`;
+};
+
 export const CartProvider = ({ children }) => {
     const { user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const storageKey = user ? `${BASE_STORAGE_KEY}_${user.userId}` : `${BASE_STORAGE_KEY}_guest`;
 
     const [items, setItems] = useState([]);
@@ -13,7 +22,11 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         const stored = localStorage.getItem(storageKey);
-        setItems(stored ? JSON.parse(stored) : []);
+        const parsed = stored ? JSON.parse(stored) : [];
+        setItems(Array.isArray(parsed) ? parsed.map((item) => ({
+            ...item,
+            cartItemKey: item.cartItemKey || getCartItemKey(item),
+        })) : []);
         setLoadedKey(storageKey);
     }, [storageKey]);
 
@@ -24,12 +37,18 @@ export const CartProvider = ({ children }) => {
     }, [items, storageKey, loadedKey]);
 
     const addItem = (product, quantity = 1) => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         setItems((currentItems) => {
-            const existing = currentItems.find((item) => item.productId === product.id);
+            const productId = product.productId || product.id;
+            const cartItemKey = getCartItemKey({ productId, product });
+            const existing = currentItems.find((item) => (item.cartItemKey || getCartItemKey(item)) === cartItemKey);
             if (existing) {
                 return currentItems.map((item) =>
-                    item.productId === product.id
-                        ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock || item.quantity + quantity) }
+                    (item.cartItemKey || getCartItemKey(item)) === cartItemKey
+                        ? { ...item, cartItemKey, quantity: Math.min(item.quantity + quantity, product.stock || item.quantity + quantity) }
                         : item
                 );
             }
@@ -37,7 +56,9 @@ export const CartProvider = ({ children }) => {
             return [
                 ...currentItems,
                 {
-                    productId: product.id,
+                    cartItemKey,
+                    productId,
+                    variantId: product.variantId ?? null,
                     quantity: Math.min(quantity, product.stock || quantity),
                     product,
                 },
@@ -45,11 +66,15 @@ export const CartProvider = ({ children }) => {
         });
     };
 
-    const updateQuantity = (productId, quantity) => {
+    const updateQuantity = (cartItemKey, quantity) => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         setItems((currentItems) =>
             currentItems
                 .map((item) => {
-                    if (item.productId === productId) {
+                    if ((item.cartItemKey || getCartItemKey(item)) === String(cartItemKey)) {
                         const maxStock = item.product?.stock ?? quantity;
                         const validQuantity = Math.min(Math.max(1, quantity), maxStock);
                         return { ...item, quantity: validQuantity };
@@ -60,11 +85,21 @@ export const CartProvider = ({ children }) => {
         );
     };
 
-    const removeItem = (productId) => {
-        setItems((currentItems) => currentItems.filter((item) => item.productId !== productId));
+    const removeItem = (cartItemKey) => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
+        setItems((currentItems) => currentItems.filter((item) => (item.cartItemKey || getCartItemKey(item)) !== String(cartItemKey)));
     };
 
-    const clearCart = () => setItems([]);
+    const clearCart = () => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
+        setItems([]);
+    };
 
     const totals = useMemo(() => {
         const count = items.reduce((sum, item) => sum + item.quantity, 0);

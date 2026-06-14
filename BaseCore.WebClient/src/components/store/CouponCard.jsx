@@ -86,7 +86,11 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
                     <button
                         type="button"
                         disabled={!canClaim || processing}
-                        onClick={() => onClaim?.(coupon)}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onClaim?.(coupon);
+                        }}
                         className={cn(
                             "ts-btn px-3 py-1.5 text-[11px]",
                             isClaimed && "ts-btn-outline",
@@ -99,7 +103,11 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
                     {isClaimed ? (
                         <button
                             type="button"
-                            onClick={() => onCopy?.(coupon)}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                onCopy?.(coupon);
+                            }}
                             className="ts-btn ts-btn-ghost px-3 py-1.5 text-[11px]"
                         >
                             <i className="fas fa-copy text-[10px]"></i>
@@ -108,7 +116,11 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
                     ) : (
                         <button
                             type="button"
-                            onClick={() => onViewCondition?.(coupon)}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                onViewCondition?.(coupon);
+                            }}
                             className="text-[11px] text-[var(--color-fg-dim)] underline-offset-2 hover:underline"
                         >
                             Xem điều kiện

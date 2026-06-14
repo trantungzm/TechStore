@@ -1,4 +1,5 @@
 using BaseCore.DTO.Inventory;
+using BaseCore.DTO.Store;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
 
@@ -6,20 +7,11 @@ namespace BaseCore.Services
 {
     public class InventoryService : IInventoryService
     {
-        private static readonly HashSet<string> StockStatuses = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "InStock", "Reserved", "Sold", "Returned", "Repairing", "Warranty", "Damaged", "Lost"
-        };
+        private static readonly HashSet<string> StockStatuses = new(Common.StatusConstants.StockItemStatuses.All, StringComparer.OrdinalIgnoreCase);
 
-        private static readonly HashSet<string> ReturnStatuses = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "Pending", "Approved", "Rejected", "Restocked", "Damaged"
-        };
+        private static readonly HashSet<string> ReturnStatuses = new(Common.StatusConstants.InventoryReturnStatuses.All, StringComparer.OrdinalIgnoreCase);
 
-        private static readonly HashSet<string> ReturnConditions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "New", "OpenBox", "Used", "Damaged", "Defective"
-        };
+        private static readonly HashSet<string> ReturnConditions = new(Common.StatusConstants.ReturnConditions.All, StringComparer.OrdinalIgnoreCase);
 
         private readonly IWarehouseRepositoryEF _warehouseRepository;
         private readonly IStockItemRepositoryEF _stockItemRepository;
@@ -78,6 +70,7 @@ namespace BaseCore.Services
             if (supplier == null) throw new InvalidOperationException("Supplier is required");
             var products = new Dictionary<int, Product>();
             var seenSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var lineCodes = new Dictionary<CreateGoodsReceiptLineDto, List<StockCode>>();
             var categoryId = dto.CategoryId.GetValueOrDefault();
 
             foreach (var line in dto.Lines)
@@ -91,21 +84,18 @@ namespace BaseCore.Services
 
                 products[product.Id] = product;
                 var variant = GetVariant(product, line.VariantId);
-                var serials = NormalizeSerials(line.Serials);
 
                 if (product.RequiresSerialTracking)
                 {
-                    if (serials.Count != line.Quantity) throw new InvalidOperationException($"Serial count must equal quantity for {product.Name}");
-                    if (serials.Count != serials.Distinct(StringComparer.OrdinalIgnoreCase).Count()) throw new InvalidOperationException("Duplicate serial/IMEI in request");
-                    foreach (var serial in serials)
-                    {
-                        if (!seenSerials.Add(serial)) throw new InvalidOperationException($"Duplicate serial/IMEI in request: {serial}");
-                        if (await _stockItemRepository.AnySerialAsync(serial)) throw new InvalidOperationException($"Serial/IMEI already exists: {serial}");
-                    }
+                    var codeType = NormalizeCodeType(line.CodeType, line.AutoGenerateSerials);
+                    lineCodes[line] = await BuildStockCodesAsync(product, variant, codeType, line.Serials, line.Quantity, seenSerials);
+                    // Tồn của SP serial-tracked được tính lại từ StockItems sau khi tạo (RecomputeStockAsync)
                 }
-
-                if (variant != null) variant.Stock += line.Quantity;
-                else product.Stock += line.Quantity;
+                else
+                {
+                    if (variant != null) variant.Stock += line.Quantity;
+                    else product.Stock += line.Quantity;
+                }
                 product.UpdatedAt = now;
             }
 
@@ -148,7 +138,7 @@ namespace BaseCore.Services
 
                 if (product.RequiresSerialTracking)
                 {
-                    foreach (var serial in NormalizeSerials(lineDto.Serials))
+                    foreach (var code in lineCodes[lineDto])
                     {
                         var stockItem = await _stockItemRepository.AddAsync(new StockItem
                         {
@@ -156,7 +146,11 @@ namespace BaseCore.Services
                             VariantId = variant?.Id,
                             WarehouseId = warehouseId,
                             SupplierId = supplier?.Id,
-                            SerialOrImei = serial,
+                            SerialOrImei = code.SerialOrImei,
+                            SerialNumber = code.SerialNumber,
+                            Imei = code.Imei,
+                            InternalCode = code.InternalCode,
+                            IsAutoTag = code.IsAutoTag,
                             Sku = variant?.Sku ?? product.Sku,
                             Status = "InStock",
                             UnitCost = lineDto.UnitCost,
@@ -169,7 +163,7 @@ namespace BaseCore.Services
                         {
                             GoodsReceiptLineId = line.Id,
                             StockItemId = stockItem.Id,
-                            SerialOrImei = serial,
+                            SerialOrImei = code.SerialOrImei,
                             CreatedAt = now
                         });
 
@@ -180,6 +174,12 @@ namespace BaseCore.Services
                 {
                     await AddMovement(product.Id, variant?.Id, null, warehouseId, "Receipt", lineDto.Quantity, null, "InStock", "GoodsReceipt", receipt.Id, "Nhap hang", userId);
                 }
+            }
+
+            // SP serial-tracked: tồn = số StockItems InStock (StockItems là nguồn sự thật)
+            foreach (var pid in products.Keys.ToList())
+            {
+                await RecomputeStockAsync(pid);
             }
 
             return (await GetReceiptAsync(receipt.Id))!;
@@ -202,7 +202,6 @@ namespace BaseCore.Services
             
             var product = await GetProduct(dto.ProductId);
             var variant = GetVariant(product, dto.VariantId);
-            var serials = NormalizeSerials(dto.Serials);
 
             // Check if product already has opening stock
             if (await _transactionRepository.HasOpeningStockAsync(product.Id))
@@ -210,24 +209,26 @@ namespace BaseCore.Services
                 throw new InvalidOperationException("Opening stock has already been initialized for this product. You can only set opening stock once.");
             }
 
-            if (!product.RequiresSerialTracking && serials.Count > 0)
+            if (!product.RequiresSerialTracking && dto.Serials.Count > 0)
             {
                 throw new InvalidOperationException("Serials are only allowed for products with serial tracking");
             }
 
+            var codes = new List<StockCode>();
             if (product.RequiresSerialTracking)
             {
-                if (serials.Count != dto.Quantity) throw new InvalidOperationException("Serial count must equal quantity");
-                if (serials.Count != serials.Distinct(StringComparer.OrdinalIgnoreCase).Count()) throw new InvalidOperationException("Duplicate serial/IMEI in request");
-                foreach (var serial in serials)
-                {
-                    if (await _stockItemRepository.AnySerialAsync(serial)) throw new InvalidOperationException($"Serial/IMEI already exists: {serial}");
-                }
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var codeType = NormalizeCodeType(dto.CodeType, dto.AutoGenerateSerials);
+                codes = await BuildStockCodesAsync(product, variant, codeType, dto.Serials, dto.Quantity, seen);
             }
 
-            // SET stock instead of ADD stock (Opening Stock = Initial Stock)
-            if (variant != null) variant.Stock = dto.Quantity;
-            else product.Stock = dto.Quantity;
+            // SET stock instead of ADD stock (Opening Stock = Initial Stock).
+            // SP serial-tracked: tồn sẽ được tính lại từ StockItems (RecomputeStockAsync) sau khi tạo.
+            if (!product.RequiresSerialTracking)
+            {
+                if (variant != null) variant.Stock = dto.Quantity;
+                else product.Stock = dto.Quantity;
+            }
             product.UpdatedAt = now;
             await _productRepository.UpdateAsync(product);
 
@@ -276,14 +277,18 @@ namespace BaseCore.Services
 
             if (product.RequiresSerialTracking)
             {
-                foreach (var serial in serials)
+                foreach (var code in codes)
                 {
                     var stockItem = await _stockItemRepository.AddAsync(new StockItem
                     {
                         ProductId = product.Id,
                         VariantId = variant?.Id,
                         WarehouseId = warehouseId,
-                        SerialOrImei = serial,
+                        SerialOrImei = code.SerialOrImei,
+                        SerialNumber = code.SerialNumber,
+                        Imei = code.Imei,
+                        InternalCode = code.InternalCode,
+                        IsAutoTag = code.IsAutoTag,
                         Sku = variant?.Sku ?? product.Sku,
                         Status = "InStock",
                         UnitCost = 0,
@@ -296,7 +301,7 @@ namespace BaseCore.Services
                     {
                         GoodsReceiptLineId = line.Id,
                         StockItemId = stockItem.Id,
-                        SerialOrImei = serial,
+                        SerialOrImei = code.SerialOrImei,
                         CreatedAt = now
                     });
 
@@ -307,6 +312,8 @@ namespace BaseCore.Services
             {
                 await AddMovement(product.Id, variant?.Id, null, warehouseId, "OpeningStock", dto.Quantity, null, "InStock", "OpeningStock", receipt.Id, dto.Note ?? "Opening stock", userId);
             }
+
+            await RecomputeStockAsync(product.Id);
 
             return (await GetReceiptAsync(receipt.Id))!;
         }
@@ -353,6 +360,7 @@ namespace BaseCore.Services
             item.UpdatedAt = DateTime.UtcNow;
             await _stockItemRepository.UpdateAsync(item);
             await AddMovement(item.ProductId, item.VariantId, item.Id, item.WarehouseId, MovementTypeForStatus(status), 1, oldStatus, status, "Manual", null, dto.Note, userId);
+            await RecomputeStockAsync(item.ProductId);
             return ToStockItemDto((await _stockItemRepository.GetDetailAsync(id))!);
         }
 
@@ -397,6 +405,7 @@ namespace BaseCore.Services
 
             detail.SerialOrImei = items.Count == 1 ? items[0].SerialOrImei : string.Join(", ", items.Select(x => x.SerialOrImei));
             await _orderDetailRepository.UpdateAsync(detail);
+            await RecomputeStockAsync(detail.ProductId);
 
             try
             {
@@ -476,6 +485,7 @@ namespace BaseCore.Services
 
                 detail.SerialOrImei = string.Join(", ", serials);
                 await _orderDetailRepository.UpdateAsync(detail);
+                await RecomputeStockAsync(detail.ProductId);
             }
         }
 
@@ -496,6 +506,11 @@ namespace BaseCore.Services
                 item.UpdatedAt = now;
                 await _stockItemRepository.UpdateAsync(item);
                 await AddMovement(item.ProductId, item.VariantId, item.Id, item.WarehouseId, "Sale", 1, oldStatus, "Sold", "Order", order.Id, "Tu dong xuat ban khi don hoan tat", userId);
+            }
+
+            foreach (var pid in items.Select(x => x.ProductId).Distinct())
+            {
+                await RecomputeStockAsync(pid);
             }
 
             try
@@ -610,14 +625,23 @@ namespace BaseCore.Services
 
             if (restockStatus == "InStock")
             {
-                if (variant != null) variant.Stock += 1;
-                else product.Stock += 1;
-                product.UpdatedAt = now;
-                await _productRepository.UpdateAsync(product);
+                // SP serial-tracked: tồn tính lại từ StockItems (item vừa chuyển InStock). SP thường: cộng 1.
+                if (product.RequiresSerialTracking)
+                {
+                    await RecomputeStockAsync(product.Id);
+                }
+                else
+                {
+                    if (variant != null) variant.Stock += 1;
+                    else product.Stock += 1;
+                    product.UpdatedAt = now;
+                    await _productRepository.UpdateAsync(product);
+                }
                 ret.Status = "Restocked";
             }
             else
             {
+                if (product.RequiresSerialTracking) await RecomputeStockAsync(product.Id);
                 ret.Status = "Damaged";
             }
 
@@ -634,9 +658,343 @@ namespace BaseCore.Services
             return (result.Items.Select(ToMovementDto).ToList(), result.TotalCount);
         }
 
+        // Đối soát tồn kho: đặt lại Product.Stock = số StockItems InStock cho mọi SP serial-tracked.
+        // backfillTags: với SP không biến thể có tồn ảo (Stock > thực), sinh mã tem cho phần thiếu.
+        public async Task<StockReconcileResultDto> ReconcileStockAsync(bool backfillTags, Guid? userId)
+        {
+            var result = new StockReconcileResultDto();
+            var counts = (await _stockItemRepository.CountInStockGroupedAsync())
+                .ToDictionary(x => x.ProductId, x => x.Count);
+            var now = DateTime.UtcNow;
+
+            // Lấy toàn bộ sản phẩm (gồm cả ẩn) theo trang
+            var all = new List<Product>();
+            var page = 1;
+            while (true)
+            {
+                var (items, total) = await _productRepository.SearchAsync(new ProductSearchDto
+                {
+                    IncludeInactive = true,
+                    Page = page,
+                    PageSize = 100
+                });
+                all.AddRange(items);
+                if (all.Count >= total || items.Count == 0) break;
+                page++;
+            }
+
+            foreach (var product in all)
+            {
+                if (!product.RequiresSerialTracking) continue;
+                result.ProductsChecked++;
+                var oldStock = product.Stock;
+                var real = counts.TryGetValue(product.Id, out var c) ? c : 0;
+                var backfilled = 0;
+
+                var activeVariants = product.Variants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+                var hasVariants = activeVariants.Count > 0;
+                if (backfillTags && oldStock > real)
+                {
+                    // Sinh tem nội bộ cho phần tồn còn thiếu StockItem.
+                    // SP có biến thể: bù theo từng biến thể (Variant.Stock vs số InStock thực).
+                    // SP không biến thể: bù ở mức sản phẩm.
+                    if (hasVariants)
+                    {
+                        var variantCounts = await _stockItemRepository.CountInStockByVariantAsync(product.Id);
+                        foreach (var variant in activeVariants)
+                        {
+                            var variantReal = variantCounts.TryGetValue(variant.Id, out var vc) ? vc : 0;
+                            var need = Math.Max(0, variant.Stock - variantReal);
+                            if (need <= 0) continue;
+                            backfilled += await BackfillTagsForAsync(product, variant, need, now, userId);
+                        }
+                    }
+                    else
+                    {
+                        backfilled += await BackfillTagsForAsync(product, null, oldStock - real, now, userId);
+                    }
+                    real += backfilled;
+                }
+
+                await RecomputeStockAsync(product.Id);
+
+                if (oldStock != real || backfilled > 0)
+                {
+                    result.ProductsChanged++;
+                    result.TagsBackfilled += backfilled;
+                    result.Changes.Add(new StockReconcileItemDto
+                    {
+                        ProductId = product.Id,
+                        ProductName = product.Name,
+                        OldStock = oldStock,
+                        NewStock = real,
+                        TagsBackfilled = backfilled
+                    });
+                }
+            }
+
+            return result;
+        }
+
         private async Task<Product> GetProduct(int id)
         {
             return await _productRepository.GetByIdAsync(id) ?? throw new InvalidOperationException($"Product {id} not found");
+        }
+
+        // Backfill InternalCode cho StockItems cũ + phân loại SerialOrImei thành Imei/SerialNumber.
+        // Không xóa/ghi đè dữ liệu cũ — chỉ điền các cột còn trống.
+        public async Task<StockReconcileResultDto> BackfillInternalCodesAsync(Guid? userId)
+        {
+            var result = new StockReconcileResultDto();
+            var items = await _stockItemRepository.GetAllDetailedAsync();
+            var groups = items.GroupBy(x => new { x.ProductId, x.VariantId });
+
+            foreach (var g in groups)
+            {
+                var product = g.First().Product;
+                if (product == null) continue;
+                var variant = g.First().Variant;
+                result.ProductsChecked++;
+
+                var needCode = g.Where(x => string.IsNullOrWhiteSpace(x.InternalCode)).OrderBy(x => x.Id).ToList();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var newCodes = needCode.Count > 0
+                    ? await GenerateInternalCodesAsync(product, variant, needCode.Count, seen)
+                    : new List<string>();
+
+                for (var i = 0; i < needCode.Count; i++)
+                {
+                    needCode[i].InternalCode = newCodes[i];
+                }
+
+                foreach (var it in g)
+                {
+                    // Chỉ promote IMEI thật (15 số + Luhn) lên cột Imei. KHÔNG đoán SerialNumber từ
+                    // dữ liệu cũ — SerialNumber chỉ chứa serial thật nhập qua chế độ SERIAL về sau.
+                    if (!it.IsAutoTag && string.IsNullOrEmpty(it.Imei))
+                    {
+                        var s = (it.SerialOrImei ?? string.Empty).Trim();
+                        if (s.Length == 15 && s.All(char.IsDigit) && IsValidLuhn(s)) it.Imei = s;
+                    }
+                    it.UpdatedAt = DateTime.UtcNow;
+                    await _stockItemRepository.UpdateAsync(it);
+                }
+                result.TagsBackfilled += needCode.Count;
+            }
+
+            foreach (var pid in items.Select(x => x.ProductId).Distinct())
+            {
+                await RecomputeStockAsync(pid);
+            }
+            result.ProductsChanged = result.TagsBackfilled;
+            return result;
+        }
+
+        // ===== Mã định danh kho: SerialNumber / Imei / InternalCode =====
+        public const string CodeTypeImei = "IMEI";
+        public const string CodeTypeSerial = "SERIAL";
+        public const string CodeTypeAuto = "AUTO_INTERNAL_CODE";
+
+        internal sealed record StockCode(string? SerialNumber, string? Imei, string? InternalCode, string SerialOrImei, bool IsAutoTag);
+
+        private static string CategoryCode(int? categoryId) => categoryId switch
+        {
+            1 => "PHONE",
+            2 => "LAP",
+            4 => "TAB",
+            5 => "WATCH",
+            6 => "CAM",
+            7 => "HEAD",
+            8 => "AUD",
+            _ => "PROD"
+        };
+
+        // Chuẩn hóa 1 token: bỏ dấu, in hoa, chỉ giữ chữ-số
+        private static string NormToken(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            var lowered = value.Trim().ToLowerInvariant().Replace((char)0x111, 'd');
+            var norm = lowered.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder();
+            foreach (var ch in norm)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) == System.Globalization.UnicodeCategory.NonSpacingMark) continue;
+                if (ch < 128 && char.IsLetterOrDigit(ch)) sb.Append(char.ToUpperInvariant(ch));
+            }
+            return sb.ToString();
+        }
+
+        // Tiền tố mã tem nội bộ: CATEGORY-PRODUCT-VARIANT (vd PHONE-IP16PM-256GB-VANG)
+        private static string BuildInternalPrefix(Product product, ProductVariant? variant)
+        {
+            var parts = new List<string> { CategoryCode(product.CategoryId) };
+
+            var sku = product.Sku ?? string.Empty;
+            string prod;
+            var dash = sku.IndexOf('-');
+            if (dash >= 0 && dash < sku.Length - 1) prod = NormToken(sku[(dash + 1)..]);
+            else prod = NormToken(string.IsNullOrWhiteSpace(sku) ? product.Name : sku);
+            if (prod.Length > 14) prod = prod[..14];
+            if (string.IsNullOrEmpty(prod)) prod = "P" + product.Id;
+            parts.Add(prod);
+
+            if (variant != null)
+            {
+                foreach (var token in new[] { NormToken(variant.Ram), NormToken(variant.Storage), NormToken(variant.ColorName) })
+                {
+                    if (!string.IsNullOrEmpty(token)) parts.Add(token);
+                }
+            }
+            return string.Join("-", parts.Where(p => !string.IsNullOrEmpty(p)));
+        }
+
+        // Sinh `need` tem nội bộ (StockItem auto-tag, Status=InStock) cho 1 SP/biến thể. Trả về số đã tạo.
+        private async Task<int> BackfillTagsForAsync(Product product, ProductVariant? variant, int need, DateTime now, Guid? userId)
+        {
+            if (need <= 0) return 0;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var newCodes = await GenerateInternalCodesAsync(product, variant, need, seen);
+            var created = 0;
+            foreach (var ic in newCodes)
+            {
+                var si = await _stockItemRepository.AddAsync(new StockItem
+                {
+                    ProductId = product.Id,
+                    VariantId = variant?.Id,
+                    SerialOrImei = ic,
+                    InternalCode = ic,
+                    IsAutoTag = true,
+                    Sku = variant?.Sku ?? product.Sku,
+                    Status = "InStock",
+                    UnitCost = 0,
+                    SupplierName = "Đối soát tồn kho",
+                    ReceivedAt = now,
+                    CreatedAt = now,
+                    Note = "Backfill khi đối soát tồn kho"
+                });
+                await AddMovement(product.Id, variant?.Id, si.Id, null, "Adjust", 1, null, "InStock", "Manual", null, "Backfill đối soát tồn kho", userId);
+                created++;
+            }
+            return created;
+        }
+
+        // Sinh N mã InternalCode duy nhất: {prefix}-{seq:000000}
+        private async Task<List<string>> GenerateInternalCodesAsync(Product product, ProductVariant? variant, int quantity, HashSet<string> seen)
+        {
+            if (quantity <= 0) return new List<string>();
+            var prefix = BuildInternalPrefix(product, variant);
+            var seq = (await _stockItemRepository.CountByInternalCodePrefixAsync(prefix)) + 1;
+            var result = new List<string>(quantity);
+            var guard = 0;
+            while (result.Count < quantity)
+            {
+                if (++guard > quantity + 100000) throw new InvalidOperationException("Không sinh được mã tem kho duy nhất");
+                var candidate = $"{prefix}-{seq:000000}";
+                seq++;
+                if (!seen.Add(candidate)) continue;
+                if (await _stockItemRepository.AnyInternalCodeAsync(candidate)) continue;
+                result.Add(candidate);
+            }
+            return result;
+        }
+
+        private static string NormalizeCodeType(string? codeType, bool autoFlag)
+        {
+            var ct = (codeType ?? string.Empty).Trim().ToUpperInvariant();
+            if (ct == CodeTypeImei || ct == CodeTypeSerial || ct == CodeTypeAuto) return ct;
+            return autoFlag ? CodeTypeAuto : CodeTypeAuto; // mặc định an toàn: tự sinh
+        }
+
+        // Dựng bộ mã cho từng đơn vị nhập kho theo CodeType. Luôn gán InternalCode.
+        private async Task<List<StockCode>> BuildStockCodesAsync(
+            Product product, ProductVariant? variant, string codeType,
+            List<string> inputCodes, int quantity, HashSet<string> seenSerialOrImei)
+        {
+            var internalSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var internalCodes = await GenerateInternalCodesAsync(product, variant, quantity, internalSeen);
+            var codes = new List<StockCode>(quantity);
+
+            if (codeType == CodeTypeAuto)
+            {
+                for (var i = 0; i < quantity; i++)
+                {
+                    var ic = internalCodes[i];
+                    if (!seenSerialOrImei.Add(ic) || await _stockItemRepository.AnySerialAsync(ic))
+                        throw new InvalidOperationException($"Mã tem kho bị trùng: {ic}");
+                    codes.Add(new StockCode(null, null, ic, ic, true));
+                }
+                return codes;
+            }
+
+            var values = NormalizeSerials(inputCodes);
+            if (values.Count != quantity) throw new InvalidOperationException("Số mã nhập phải bằng số lượng");
+            if (values.Count != values.Distinct(StringComparer.OrdinalIgnoreCase).Count()) throw new InvalidOperationException("Có mã bị trùng trong danh sách nhập");
+
+            for (var i = 0; i < quantity; i++)
+            {
+                var raw = values[i];
+                if (!seenSerialOrImei.Add(raw)) throw new InvalidOperationException($"Mã bị trùng trong yêu cầu: {raw}");
+                if (codeType == CodeTypeImei)
+                {
+                    ValidateImeiStrict(raw);
+                    if (await _stockItemRepository.AnyImeiAsync(raw)) throw new InvalidOperationException($"IMEI đã tồn tại: {raw}");
+                    if (await _stockItemRepository.AnySerialAsync(raw)) throw new InvalidOperationException($"Mã đã tồn tại: {raw}");
+                    codes.Add(new StockCode(null, raw, internalCodes[i], raw, false));
+                }
+                else // SERIAL
+                {
+                    if (await _stockItemRepository.AnySerialNumberAsync(raw)) throw new InvalidOperationException($"Serial đã tồn tại: {raw}");
+                    if (await _stockItemRepository.AnySerialAsync(raw)) throw new InvalidOperationException($"Mã đã tồn tại: {raw}");
+                    codes.Add(new StockCode(raw, null, internalCodes[i], raw, false));
+                }
+            }
+            return codes;
+        }
+
+        // IMEI bắt buộc đúng 15 chữ số + Luhn
+        private static void ValidateImeiStrict(string imei)
+        {
+            var s = (imei ?? string.Empty).Trim();
+            if (s.Length != 15 || !s.All(char.IsDigit))
+                throw new InvalidOperationException($"IMEI phải gồm đúng 15 chữ số: {s}");
+            if (!IsValidLuhn(s))
+                throw new InvalidOperationException($"IMEI không hợp lệ (sai số kiểm tra Luhn): {s}");
+        }
+
+        private static bool IsValidLuhn(string digits)
+        {
+            var sum = 0;
+            var alt = false;
+            for (var i = digits.Length - 1; i >= 0; i--)
+            {
+                var d = digits[i] - '0';
+                if (alt) { d *= 2; if (d > 9) d -= 9; }
+                sum += d;
+                alt = !alt;
+            }
+            return sum % 10 == 0;
+        }
+
+        // SP serial-tracked: Product.Stock & Variant.Stock = số StockItems InStock (nguồn sự thật).
+        // SP không serial: giữ nguyên (tồn do nghiệp vụ nhập/đặt quản lý).
+        private async Task RecomputeStockAsync(int productId)
+        {
+            var product = await _productRepository.GetByIdAsync(productId);
+            if (product == null || !product.RequiresSerialTracking) return;
+
+            var variantCounts = await _stockItemRepository.CountInStockByVariantAsync(productId);
+            if (product.Variants != null)
+            {
+                foreach (var v in product.Variants)
+                {
+                    v.Stock = variantCounts.TryGetValue(v.Id, out var c) ? c : 0;
+                }
+            }
+            // Product.Stock = tổng MỌI StockItem InStock của SP (kể cả hàng còn sót ở biến thể đã tắt),
+            // để tồn tổng không bao giờ bị tụt âm thầm khi sửa/đổi biến thể.
+            product.Stock = await _stockItemRepository.CountInStockByProductAsync(productId);
+            product.UpdatedAt = DateTime.UtcNow;
+            await _productRepository.UpdateAsync(product);
         }
 
         private async Task<Supplier?> ResolveSupplierAsync(int? supplierId, string? supplierName)
@@ -665,8 +1023,18 @@ namespace BaseCore.Services
 
         private static ProductVariant? GetVariant(Product product, int? variantId)
         {
-            if (!variantId.HasValue) return null;
-            return product.Variants.FirstOrDefault(x => x.Id == variantId.Value && x.ProductId == product.Id)
+            var activeVariants = product.Variants?.Where(x => x.IsActive).ToList() ?? new();
+            if (!variantId.HasValue)
+            {
+                if (activeVariants.Count > 0)
+                {
+                    throw new InvalidOperationException("Variant is required for products that have variants");
+                }
+                return null;
+            }
+
+            var variants = product.Variants ?? new();
+            return variants.FirstOrDefault(x => x.Id == variantId.Value && x.ProductId == product.Id)
                 ?? throw new InvalidOperationException($"Variant {variantId.Value} not found");
         }
 
@@ -802,9 +1170,13 @@ namespace BaseCore.Services
                 VariantName = VariantName(item.Variant),
                 WarehouseId = item.WarehouseId,
                 WarehouseName = item.Warehouse?.Name,
-                SupplierId = item.SupplierId,
-                SupplierName = item.Supplier?.Name ?? item.SupplierName,
+                SupplierId = item.SupplierId ?? item.Product?.SupplierId,
+                SupplierName = item.Supplier?.Name ?? item.Product?.Supplier?.Name ?? item.SupplierName,
                 SerialOrImei = item.SerialOrImei,
+                SerialNumber = item.SerialNumber,
+                Imei = item.Imei,
+                InternalCode = item.InternalCode,
+                IsAutoTag = item.IsAutoTag,
                 Sku = item.Sku,
                 Status = item.Status,
                 UnitCost = item.UnitCost,

@@ -33,7 +33,7 @@ const Bestseller = () => {
 
     return (
         <>
-            <PageHero title="Sản phẩm bán chạy" current="Bán chạy" kicker="Top picks" />
+            <PageHero title="Sản phẩm bán chạy" current="Bán chạy" kicker="Tuyển chọn" />
             <BestsellerSection products={products} />
         </>
     );

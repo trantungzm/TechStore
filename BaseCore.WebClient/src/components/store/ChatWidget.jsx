@@ -3,6 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ticketApi } from '../../services/api';
+import { isStoreViewOnlyUser, STORE_VIEW_ONLY_MESSAGE } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const SUPPORT_CATEGORY = 'Contact';
@@ -39,6 +40,7 @@ const formatTime = (value) => {
 
 export default function ChatWidget() {
     const { isAuthenticated, user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const navigate = useNavigate();
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +65,7 @@ export default function ChatWidget() {
                 const contactTickets = items.filter((t) => String(t?.category || '').toLowerCase() === SUPPORT_CATEGORY.toLowerCase());
                 let active = pickContactTicket(contactTickets);
 
-                if (!active && contactTickets.length === 0) {
+                if (!active && contactTickets.length === 0 && !isViewOnly) {
                     const created = await ticketApi.create({
                         category: SUPPORT_CATEGORY,
                         subject: 'Liên hệ hỗ trợ',
@@ -87,7 +89,7 @@ export default function ChatWidget() {
 
         load();
         return () => { cancelled = true; };
-    }, [isOpen, isAuthenticated, user?.name, user?.username]);
+    }, [isOpen, isAuthenticated, isViewOnly, user?.name, user?.username]);
 
     useEffect(() => {
         if (!isOpen || !ticketId || !isAuthenticated) return undefined;
@@ -144,6 +146,10 @@ export default function ChatWidget() {
     const handleSendMessage = async () => {
         const text = inputText.trim();
         if (!text || !ticketId) return;
+        if (isViewOnly) {
+            setInputText(STORE_VIEW_ONLY_MESSAGE);
+            return;
+        }
         setInputText('');
         try {
             await ticketApi.addUpdate(ticketId, {

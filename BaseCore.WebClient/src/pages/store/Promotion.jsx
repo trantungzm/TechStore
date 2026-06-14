@@ -3,11 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import CouponCard from '../../components/store/CouponCard';
 import VoucherSpinWheel from '../../components/store/VoucherSpinWheel';
 import PageHero from '../../components/store/PageHero';
+import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { canClaimCoupon, getCouponClaimStatus, isCouponClaimed } from '../../utils/couponUtils';
 import { couponApi } from '../../services/api';
-import { formatCurrency, setPageMeta } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const filters = [
@@ -20,7 +21,9 @@ const filters = [
 ];
 
 const Promotion = () => {
+    const { user } = useAuth();
     const { items, totalAmount } = useCart();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const [activeFilter, setActiveFilter] = useState('all');
     const [claimedIds, setClaimedIds] = useState([]);
     const [message, setMessage] = useState('');
@@ -71,6 +74,10 @@ const Promotion = () => {
     };
 
     const handleClaim = async (coupon) => {
+        if (isViewOnly) {
+            showMessage(STORE_VIEW_ONLY_MESSAGE);
+            return;
+        }
         if (claimingIds.includes(coupon.id)) return;
         
         // Tối ưu: Lấy giờ thực tế ngay tại thời điểm click chuột thay vì dùng context cũ
@@ -117,6 +124,10 @@ const Promotion = () => {
     };
 
     const handleSpinReward = async (reward) => {
+        if (isViewOnly) {
+            showMessage(STORE_VIEW_ONLY_MESSAGE);
+            return;
+        }
         try {
             const myCoupons = await couponApi.getMy({ page: 1, pageSize: 100 });
             const ids = myCoupons.data?.items?.map((c) => String(c.couponId)) || [];
@@ -158,7 +169,7 @@ const Promotion = () => {
 
     return (
         <>
-            <PageHero title="Phiếu giảm giá" current="Promotion" kicker="Vouchers" />
+            <PageHero title="Phiếu giảm giá" current="Khuyến mãi" kicker="Ưu đãi" />
 
             <section className="ts-container py-12">
                 {/* Dashboard thống kê số lượng ví */}
@@ -276,7 +287,7 @@ const Promotion = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-                        onMouseDown={(e) => {
+                        onClick={(e) => {
                             if (e.target === e.currentTarget) closeCondition();
                         }}
                     >
@@ -286,6 +297,7 @@ const Promotion = () => {
                             exit={{ opacity: 0, y: 10, scale: 0.98 }}
                             transition={{ duration: 0.2 }}
                             className="w-full max-w-lg rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)]"
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] p-5">
                                 <div className="min-w-0">
@@ -331,13 +343,13 @@ const Promotion = () => {
                                     {Number(conditionCoupon.minOrder || 0) > 0 && (
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-[var(--color-fg-dim)]">Đơn tối thiểu</span>
-                                            <span className="font-medium">{formatCurrency(conditionCoupon.minOrder || 0)}</span>
+                                            <span className="ts-mono font-medium">{formatCurrency(conditionCoupon.minOrder || 0)}</span>
                                         </div>
                                     )}
                                     {conditionCoupon.maxDiscount != null && (
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-[var(--color-fg-dim)]">Giảm tối đa</span>
-                                            <span className="font-medium">{formatCurrency(conditionCoupon.maxDiscount || 0)}</span>
+                                            <span className="ts-mono font-medium">{formatCurrency(conditionCoupon.maxDiscount || 0)}</span>
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between gap-3">

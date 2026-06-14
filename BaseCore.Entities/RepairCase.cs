@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -20,7 +18,6 @@ namespace BaseCore.Entities
         public string? Diagnosis { get; set; }
         public string? Solution { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? TechnicianId { get; set; }
 
         public string Status { get; set; } = "Pending";
@@ -36,11 +33,11 @@ namespace BaseCore.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        [BsonIgnore] public WarrantyClaim? WarrantyClaim { get; set; }
-        [BsonIgnore] public SupportTicket? Ticket { get; set; }
-        [BsonIgnore] public StockItem? StockItem { get; set; }
-        [BsonIgnore] public Product? Product { get; set; }
-        [BsonIgnore] public ProductVariant? Variant { get; set; }
-        [BsonIgnore] public List<RepairUpdate> Updates { get; set; } = new();
+        public WarrantyClaim? WarrantyClaim { get; set; }
+        public SupportTicket? Ticket { get; set; }
+        public StockItem? StockItem { get; set; }
+        public Product? Product { get; set; }
+        public ProductVariant? Variant { get; set; }
+        public List<RepairUpdate> Updates { get; set; } = new();
     }
 }

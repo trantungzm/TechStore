@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { categoryApi, productApi, specApi } from '../../services/api';
+import { categoryApi, productApi, specApi, brandApi } from '../../services/api';
 import ProductCard from '../../components/store/ProductCard';
 import PageHero from '../../components/store/PageHero';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
@@ -35,7 +35,7 @@ const normalizeCategorySlug = (value = '') => {
     const slug = String(value || '').trim().toLowerCase();
     const map = {
         all: '', phone: 'phone', smartphone: 'phone', 'dien-thoai': 'phone',
-        laptop: 'laptop', accessory: 'accessory', accessories: 'accessory', 'phu-kien': 'accessory',
+        laptop: 'laptop',
         gaming: 'gaming', tablet: 'tablet', watch: 'watch', smartwatch: 'watch', 'dong-ho-thong-minh': 'watch',
         camera: 'camera', 'may-anh': 'camera', headphone: 'headphone', headphones: 'headphone', audio: 'headphone', 'tai-nghe': 'headphone',
     };
@@ -45,7 +45,7 @@ const normalizeCategorySlug = (value = '') => {
 
 const categorySlugMap = {
     Smartphone: 'phone', SmartPhone: 'phone', 'Điện thoại': 'phone', 'Mobiles & Tablets': 'phone',
-    Laptop: 'laptop', Accessories: 'accessory', Gaming: 'gaming', Tablet: 'tablet',
+    Laptop: 'laptop', Gaming: 'gaming', Tablet: 'tablet',
     Smartwatch: 'watch', 'Smart Watch': 'watch', 'Đồng hồ thông minh': 'watch',
     Camera: 'camera', 'Máy ảnh': 'camera', Audio: 'headphone', 'Tai nghe': 'headphone',
 };
@@ -56,7 +56,6 @@ const categoryDescriptionMap = {
     phone: 'Lựa chọn điện thoại theo hãng, nhu cầu và mức giá phù hợp.',
     laptop: 'Lựa chọn laptop theo hãng, cấu hình và mức giá phù hợp.',
     tablet: 'Lựa chọn tablet theo hãng, cấu hình và mức giá phù hợp.',
-    accessory: 'Phụ kiện công nghệ cho thiết bị và góc làm việc của bạn.',
     gaming: 'Thiết bị cho game thủ với hiệu năng cao và thiết kế chuyên game.',
     watch: 'Đồng hồ thông minh theo thương hiệu, tính năng và nhu cầu sử dụng.',
     camera: 'Máy ảnh theo thương hiệu, chụp hình và quay video.',
@@ -79,25 +78,23 @@ const normalizeSearchText = (value = '') => String(value)
     .replace(/Đ/g, 'D')
     .toLowerCase();
 
-const getProductSearchText = (product) => normalizeSearchText([
-    product?.name, product?.title, product?.description, product?.specs, product?.tags, product?.brand, product?.sku,
-    product?.category?.name, product?.categoryName, product?.usage, product?.cpu, product?.gpu,
-    product?.screenSize, product?.resolution, product?.ram, product?.storage, product?.battery, product?.camera,
-].filter(Boolean).join(' '));
-
-const inferPhoneBrand = (product) => {
-    const explicitBrand = String(product?.brand || '').trim().toLowerCase();
-    if (explicitBrand) return explicitBrand;
-    const text = getProductSearchText(product);
-    if (text.includes('iphone') || text.includes('apple')) return 'apple';
-    if (text.includes('samsung')) return 'samsung';
-    if (text.includes('xiaomi')) return 'xiaomi';
-    if (text.includes('oppo')) return 'oppo';
-    if (text.includes('vivo')) return 'vivo';
-    if (text.includes('realme')) return 'realme';
-    if (text.includes('nokia')) return 'nokia';
-    return '';
+const getProductSearchText = (product) => {
+    const variantText = Array.isArray(product?.variants)
+        ? product.variants.map((v) => [v?.variantName, v?.colorName, v?.storage, v?.ram].filter(Boolean).join(' ')).join(' ')
+        : '';
+    const specText = Array.isArray(product?.specs)
+        ? product.specs.map((s) => s?.optionValue || s?.valueText || s?.value || '').filter(Boolean).join(' ')
+        : '';
+    return normalizeSearchText([
+        product?.name, product?.title, product?.description, specText, product?.tags, product?.brand, product?.sku,
+        product?.category?.name, product?.categoryName, product?.usage, product?.cpu, product?.gpu,
+        product?.screenSize, product?.resolution, product?.ram, product?.storage, product?.battery, product?.camera,
+        variantText,
+    ].filter(Boolean).join(' '));
 };
+
+// Hãng lấy trực tiếp từ dữ liệu (Brand master), không "đoán" từ tên nữa.
+const inferPhoneBrand = (product) => String(product?.brand || '').trim().toLowerCase();
 
 const matchesPhonePriceRange = (product, range) => {
     const price = Number(product?.price || 0);
@@ -115,21 +112,7 @@ const matchesTextToken = (product, token) => {
     return getProductSearchText(product).includes(normalizeSearchText(token));
 };
 
-const inferLaptopBrand = (product) => {
-    const explicitBrand = String(product?.brand || '').trim().toLowerCase();
-    if (explicitBrand) return explicitBrand;
-    const text = getProductSearchText(product);
-    if (text.includes('macbook') || text.includes('apple')) return 'apple';
-    if (text.includes('dell')) return 'dell';
-    if (text.includes('hp ') || text.startsWith('hp')) return 'hp';
-    if (text.includes('asus') || text.includes('rog') || text.includes('tuf')) return 'asus';
-    if (text.includes('acer') || text.includes('nitro')) return 'acer';
-    if (text.includes('lenovo') || text.includes('thinkpad') || text.includes('legion')) return 'lenovo';
-    if (text.includes('msi')) return 'msi';
-    if (text.includes('gigabyte')) return 'gigabyte';
-    if (text.includes('lg') || text.includes('gram')) return 'lg';
-    return '';
-};
+const inferLaptopBrand = (product) => String(product?.brand || '').trim().toLowerCase();
 
 const matchesLaptopPriceRange = (product, range) => {
     const price = Number(product?.price || 0);
@@ -209,7 +192,7 @@ const offerOptions = [
 
 const categoryNameMap = {
     Smartphone: 'Điện thoại', Laptop: 'Laptop', Audio: 'Tai nghe', Smartwatch: 'Đồng hồ thông minh',
-    Camera: 'Máy ảnh', Gaming: 'Gaming', Tablet: 'Tablet', Accessories: 'Phụ kiện',
+    Camera: 'Máy ảnh', Gaming: 'Gaming', Tablet: 'Tablet',
 };
 
 const getCategoryDisplayName = (name = '') => categoryNameMap[name] || name;
@@ -257,12 +240,14 @@ const Shop = () => {
     const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [categoryStats, setCategoryStats] = useState(() => getProductStats(getImmediateCatalog()));
     const [specDefinitions, setSpecDefinitions] = useState([]);
+    const [brandOptions, setBrandOptions] = useState([]);
     const [specLoading, setSpecLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(() => Math.ceil(getImmediateCatalog().length / PAGE_SIZE) || 1);
     const [loading, setLoading] = useState(false);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [openFilterSections, setOpenFilterSections] = useState({ price: true, status: true, offer: true });
+    const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
     const { coupons } = usePublicCoupons();
 
     const location = useLocation();
@@ -279,7 +264,7 @@ const Shop = () => {
     const urlSortBy = params.get('sort') || params.get('sortBy') || '';
 
     const sidebarCategories = categories;
-    const knownCategorySlugs = ['phone', 'laptop', 'accessory', 'gaming', 'tablet', 'watch', 'camera', 'headphone'];
+    const knownCategorySlugs = ['phone', 'laptop', 'gaming', 'tablet', 'watch', 'camera', 'headphone'];
     const getCategorySlug = (category) => {
         const name = category?.name || '';
         const displayName = getCategoryDisplayName(name);
@@ -374,6 +359,19 @@ const Shop = () => {
 
     useEffect(() => {
         if (!activeCategoryId) {
+            setBrandOptions([]);
+            return;
+        }
+        brandApi.getByCategory(activeCategoryId)
+            .then((res) => {
+                const list = Array.isArray(res.data) ? res.data : [];
+                setBrandOptions(list.map((b) => b.name ?? b.Name).filter(Boolean));
+            })
+            .catch(() => setBrandOptions([]));
+    }, [activeCategoryId]);
+
+    useEffect(() => {
+        if (!activeCategoryId) {
             setSpecDefinitions([]);
             return;
         }
@@ -394,6 +392,26 @@ const Shop = () => {
 
         loadSpecDefinitions();
     }, [activeCategoryId]);
+
+    useEffect(() => {
+        if (!openFilterDropdown) return undefined;
+
+        const handlePointerDown = (event) => {
+            if (!event.target?.closest?.('[data-shop-filter-dropdown]')) {
+                setOpenFilterDropdown(null);
+            }
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') setOpenFilterDropdown(null);
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [openFilterDropdown]);
 
     useEffect(() => {
         if (!allProducts) return;
@@ -419,6 +437,12 @@ const Shop = () => {
         if (Number.isFinite(minPriceValue)) filtered = filtered.filter((p) => Number(p.price || 0) >= minPriceValue);
         if (Number.isFinite(maxPriceValue)) filtered = filtered.filter((p) => Number(p.price || 0) <= maxPriceValue);
 
+        // Lọc Hãng theo Brand master (khớp tên thật, không "đoán" từ tên SP)
+        const brandFilter = (params.get('brand') || '').trim().toLowerCase();
+        if (brandFilter) {
+            filtered = filtered.filter((p) => String(p.brand || '').trim().toLowerCase() === brandFilter);
+        }
+
         if (specDefinitions.length > 0) {
             specDefinitions.forEach((def) => {
                 const key = def.code || def.id;
@@ -429,12 +453,10 @@ const Shop = () => {
             });
         } else {
             if (isPhoneCategory) {
-                if (phoneFilterValues.brand) filtered = filtered.filter((p) => inferPhoneBrand(p) === phoneFilterValues.brand);
                 filtered = filtered.filter((p) => matchesPhonePriceRange(p, phoneFilterValues.priceRange));
                 if (phoneFilterValues.storage) filtered = filtered.filter((p) => matchesTextToken(p, phoneFilterValues.storage));
                 if (phoneFilterValues.ram) filtered = filtered.filter((p) => matchesTextToken(p, phoneFilterValues.ram));
             } else if (isLaptopCategory) {
-                if (laptopFilterValues.brand) filtered = filtered.filter((p) => inferLaptopBrand(p) === laptopFilterValues.brand);
                 filtered = filtered.filter((p) => matchesLaptopPriceRange(p, laptopFilterValues.priceRange));
                 if (laptopFilterValues.cpu) filtered = filtered.filter((p) => matchesTextToken(p, laptopFilterValues.cpu));
                 if (laptopFilterValues.ram) filtered = filtered.filter((p) => matchesTextToken(p, laptopFilterValues.ram));
@@ -529,8 +551,15 @@ const Shop = () => {
     ].filter(Boolean);
 
     const currentFilterGroups = useMemo(() => {
+        // Nhóm "Hãng" lấy từ Brand master theo danh mục (không phải spec).
+        const brandGroup = brandOptions.length > 0 ? [{
+            key: 'brand',
+            title: 'Hãng',
+            options: [{ label: 'Tất cả', value: '' }, ...brandOptions.map((b) => ({ label: b, value: b }))],
+        }] : [];
+
         if (specDefinitions.length > 0) {
-            return specDefinitions
+            const specGroups = specDefinitions
                 .filter((def) => def.dataType === 'select' && Array.isArray(def.options) && def.options.length > 0)
                 .map((def) => ({
                     key: def.code || def.id,
@@ -543,21 +572,25 @@ const Shop = () => {
                             .map((opt) => ({ label: opt.value, value: opt.value })),
                     ],
                 }));
+            return [...brandGroup, ...specGroups];
         }
-        return isPhoneCategory ? phoneFilterGroups : isLaptopCategory ? laptopFilterGroupsSimple : [];
-    }, [specDefinitions, isPhoneCategory, isLaptopCategory]);
+        const fallback = (isPhoneCategory ? phoneFilterGroups : isLaptopCategory ? laptopFilterGroupsSimple : [])
+            .filter((g) => g.key !== 'brand');
+        return [...brandGroup, ...fallback];
+    }, [specDefinitions, brandOptions, isPhoneCategory, isLaptopCategory]);
 
     const currentFilterValues = useMemo(() => {
+        const values = { brand: params.get('brand') || '' };
         if (specDefinitions.length > 0) {
-            const values = {};
             specDefinitions.forEach((def) => {
                 const key = def.code || def.id;
                 values[key] = params.get(key) || '';
             });
             return values;
         }
-        return isPhoneCategory ? phoneFilterValues : laptopFilterValues;
-    }, [specDefinitions, params, isPhoneCategory, isLaptopCategory]);
+        const fallback = isPhoneCategory ? phoneFilterValues : laptopFilterValues;
+        return { ...fallback, ...values };
+    }, [specDefinitions, params, brandOptions, isPhoneCategory, isLaptopCategory]);
 
     const toggleFilterSection = (key) => {
         setOpenFilterSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -584,15 +617,23 @@ const Shop = () => {
         </div>
     );
 
-    const FilterDropdown = ({ title, options, value, onChange }) => (
-        <div className="relative group">
+    const FilterDropdown = ({ title, options, value, onChange }) => {
+        const isOpen = openFilterDropdown === title;
+        return (
+        <div className="relative" data-shop-filter-dropdown>
             <button
                 type="button"
+                onClick={() => setOpenFilterDropdown(isOpen ? null : title)}
                 className="ts-btn ts-btn-outline px-3 py-1.5 text-xs flex items-center gap-1"
             >
                 {title} <i className="fas fa-chevron-down text-[10px]"></i>
             </button>
-            <div className="absolute left-0 mt-1 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md shadow-card hidden group-hover:block z-10 p-2 max-h-64 overflow-y-auto">
+            {isOpen && (
+            <div
+                className="absolute left-0 top-full z-30 mt-1 w-48 max-h-64 overflow-y-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-card"
+                onClick={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+            >
                 {options.map((opt) => (
                     <label
                         key={opt.value}
@@ -607,15 +648,20 @@ const Shop = () => {
                             type="radio"
                             name={`${title}-${opt.value}`}
                             checked={String(value || '') === String(opt.value || '')}
-                            onChange={() => onChange(opt.value)}
+                            onChange={() => {
+                                onChange(opt.value);
+                                setOpenFilterDropdown(null);
+                            }}
                             className="accent-[var(--color-primary)]"
                         />
                         {opt.label}
                     </label>
                 ))}
             </div>
+            )}
         </div>
-    );
+        );
+    };
 
     const PillSelect = ({ label, options, value, onChange }) => (
         <div>
@@ -642,7 +688,7 @@ const Shop = () => {
 
     return (
         <>
-            <PageHero title="Cửa hàng" current={t('Shop')} kicker="Catalog" />
+            <PageHero title="Cửa hàng" current={t('Shop')} kicker="Danh mục" />
 
             <section className="ts-container flex h-[calc(100vh-180px)] overflow-hidden">
                 <div className="flex w-full gap-8">

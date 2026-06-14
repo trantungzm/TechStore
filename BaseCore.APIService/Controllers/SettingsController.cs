@@ -1,4 +1,5 @@
 using System.Net.Mail;
+using System.Text.Json;
 using BaseCore.Entities;
 using BaseCore.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -67,6 +68,10 @@ namespace BaseCore.APIService.Controllers
             setting.LogoUrl = NormalizeOptional(request.LogoUrl);
             setting.FacebookUrl = NormalizeOptional(request.FacebookUrl);
             setting.ZaloUrl = NormalizeOptional(request.ZaloUrl);
+            setting.BankName = NormalizeOptional(request.BankName);
+            setting.BankAccountNumber = NormalizeOptional(request.BankAccountNumber);
+            setting.BankAccountHolder = NormalizeOptional(request.BankAccountHolder);
+            setting.BankAccountsJson = SerializeBankAccounts(request.BankAccounts);
             setting.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
@@ -94,6 +99,9 @@ namespace BaseCore.APIService.Controllers
                 LogoUrl = string.Empty,
                 FacebookUrl = string.Empty,
                 ZaloUrl = string.Empty,
+                BankName = string.Empty,
+                BankAccountNumber = string.Empty,
+                BankAccountHolder = string.Empty,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -174,10 +182,44 @@ namespace BaseCore.APIService.Controllers
                 LogoUrl = setting.LogoUrl,
                 FacebookUrl = setting.FacebookUrl,
                 ZaloUrl = setting.ZaloUrl,
+                BankName = setting.BankName,
+                BankAccountNumber = setting.BankAccountNumber,
+                BankAccountHolder = setting.BankAccountHolder,
+                BankAccounts = DeserializeBankAccounts(setting.BankAccountsJson),
                 CreatedAt = setting.CreatedAt,
                 UpdatedAt = setting.UpdatedAt
             };
         }
+
+        private static readonly JsonSerializerOptions BankJsonOptions = new(JsonSerializerDefaults.Web);
+
+        private static string? SerializeBankAccounts(List<BankAccountDto>? list)
+        {
+            var clean = (list ?? new List<BankAccountDto>())
+                .Where(b => b != null && !string.IsNullOrWhiteSpace(b.BankName) && !string.IsNullOrWhiteSpace(b.AccountNumber))
+                .Select(b => new BankAccountDto
+                {
+                    BankName = b.BankName!.Trim(),
+                    AccountNumber = b.AccountNumber!.Trim(),
+                    AccountHolder = b.AccountHolder?.Trim()
+                })
+                .ToList();
+            return clean.Count == 0 ? null : JsonSerializer.Serialize(clean, BankJsonOptions);
+        }
+
+        private static List<BankAccountDto> DeserializeBankAccounts(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new List<BankAccountDto>();
+            try { return JsonSerializer.Deserialize<List<BankAccountDto>>(json, BankJsonOptions) ?? new List<BankAccountDto>(); }
+            catch { return new List<BankAccountDto>(); }
+        }
+    }
+
+    public class BankAccountDto
+    {
+        public string? BankName { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? AccountHolder { get; set; }
     }
 
     public class StoreSettingRequest
@@ -193,6 +235,10 @@ namespace BaseCore.APIService.Controllers
         public string? LogoUrl { get; set; }
         public string? FacebookUrl { get; set; }
         public string? ZaloUrl { get; set; }
+        public string? BankName { get; set; }
+        public string? BankAccountNumber { get; set; }
+        public string? BankAccountHolder { get; set; }
+        public List<BankAccountDto>? BankAccounts { get; set; }
     }
 
     public class StoreSettingDto : StoreSettingRequest

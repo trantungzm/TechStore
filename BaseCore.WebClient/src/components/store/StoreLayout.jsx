@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import ElectroAssets from './ElectroAssets';
+import { Outlet, useLocation } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import ElectroFooter from './ElectroFooter';
 import ElectroHeader from './ElectroHeader';
 import ChatWidget from './ChatWidget';
 import { cn } from '../../utils/cn';
 
 const StoreLayout = ({ children }) => {
+    const location = useLocation();
+    const reduceMotion = useReducedMotion();
     const [showSpinner, setShowSpinner] = useState(true);
     const [spinnerHiding, setSpinnerHiding] = useState(false);
     const [toastState, setToastState] = useState(null);
@@ -69,8 +72,6 @@ const StoreLayout = ({ children }) => {
 
     return (
         <div className="relative isolate flex min-h-screen flex-col bg-[var(--color-background)] text-[var(--color-fg)]">
-            <ElectroAssets />
-
             {showSpinner && (
                 <div
                     className={cn(
@@ -87,7 +88,17 @@ const StoreLayout = ({ children }) => {
             )}
 
             <ElectroHeader />
-            <main className="relative z-10 flex-1">{children}</main>
+            <main className="relative z-10 flex-1">
+                <motion.div
+                    key={location.pathname}
+                    initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
+                    style={{ willChange: 'opacity, transform' }}
+                >
+                    {children ?? <Outlet />}
+                </motion.div>
+            </main>
             <ElectroFooter />
             <ChatWidget />
 

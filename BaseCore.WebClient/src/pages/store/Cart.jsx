@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { getCartItemKey, useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { orderApi, couponApi } from '../../services/api';
-import { formatCurrency, resolveProductImage, setPageMeta, t } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import {
     calculateProductCouponDiscount,
@@ -21,10 +22,13 @@ const CHECKOUT_SELECTION_KEY = 'store_checkout_selected_items';
 const CHECKOUT_COUPON_KEY = 'store_checkout_applied_coupons';
 
 const isItemOutOfStock = (item) => item?.product?.inStock === false || Number(item?.product?.stock ?? 0) <= 0;
+const getItemKey = (item) => item.cartItemKey || getCartItemKey(item);
 
 const Cart = () => {
+    const { user } = useAuth();
     const { items, updateQuantity, removeItem } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const navigate = useNavigate();
     const selectionInitializedRef = useRef(false);
     const knownItemIdsRef = useRef(new Set());
@@ -50,12 +54,12 @@ const Cart = () => {
 
     const availableItems = useMemo(() => items.filter((i) => !isItemOutOfStock(i)), [items]);
     const selectedCartItems = useMemo(
-        () => items.filter((i) => selectedIds.includes(String(i.productId)) && !isItemOutOfStock(i)),
+        () => items.filter((i) => selectedIds.includes(getItemKey(i)) && !isItemOutOfStock(i)),
         [items, selectedIds]
     );
     const selectedSubtotal = useMemo(() => getCartSubtotal(selectedCartItems), [selectedCartItems]);
     const selectedCount = selectedCartItems.length;
-    const allAvailableSelected = availableItems.length > 0 && availableItems.every((i) => selectedIds.includes(String(i.productId)));
+    const allAvailableSelected = availableItems.length > 0 && availableItems.every((i) => selectedIds.includes(getItemKey(i)));
 
     const claimedCoupons = useMemo(
         () => coupons.filter((c) => c?.code && claimedIds.includes(c.id)),
@@ -102,8 +106,8 @@ const Cart = () => {
     }, []);
 
     useEffect(() => {
-        const existingIds = new Set(items.map((i) => String(i.productId)));
-        const availableIds = availableItems.map((i) => String(i.productId));
+        const existingIds = new Set(items.map(getItemKey));
+        const availableIds = availableItems.map(getItemKey);
 
         setSelectedIds((current) => {
             if (!selectionInitializedRef.current) {
@@ -147,26 +151,38 @@ const Cart = () => {
 
     const toggleItemSelection = (item) => {
         if (isItemOutOfStock(item)) return;
-        const id = String(item.productId);
+        const id = getItemKey(item);
         setSelectedIds((c) => c.includes(id) ? c.filter((i) => i !== id) : [...c, id]);
     };
 
     const toggleSelectAll = () => {
         if (allAvailableSelected) return setSelectedIds([]);
-        setSelectedIds(availableItems.map((i) => String(i.productId)));
+        setSelectedIds(availableItems.map(getItemKey));
     };
 
     const handleRemoveSelected = () => {
-        selectedCartItems.forEach((i) => removeItem(i.productId));
+        if (isViewOnly) {
+            showCouponMessage(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
+        selectedCartItems.forEach((i) => removeItem(getItemKey(i)));
         setSelectedIds([]);
     };
 
     const handleMoveToWishlist = (item) => {
+        if (isViewOnly) {
+            showCouponMessage(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         if (!isInWishlist(item.product.id)) toggleWishlist(item.product);
-        removeItem(item.productId);
+        removeItem(getItemKey(item));
     };
 
     const handleApplyCoupon = (coupon) => {
+        if (isViewOnly) {
+            showCouponMessage(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         const r = validateSelectedCouponForCart(coupon.code, selectedCartItems, selectedSubtotal, SHIPPING_FEE, coupons, claimedIds);
         if (!r.valid) {
             const u = getSelectedCouponUnavailableReason(coupon, selectedCartItems, selectedSubtotal, SHIPPING_FEE, claimedIds);
@@ -190,11 +206,16 @@ const Cart = () => {
     };
 
     const handleRemoveCoupon = (kind) => {
+        if (isViewOnly) {
+            showCouponMessage(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         if (kind === 'product') { setAppliedProductCoupon(null); showCouponMessage('Đã bỏ phiếu sản phẩm.', 'info'); }
         else { setAppliedShippingCoupon(null); showCouponMessage('Đã bỏ phiếu vận chuyển.', 'info'); }
     };
 
     const handleCheckout = () => {
+        if (isViewOnly) return showCouponMessage(STORE_VIEW_ONLY_MESSAGE, 'warning');
         if (!canCheckout) return showCouponMessage('Vui lòng chọn sản phẩm.', 'warning');
         sessionStorage.setItem(CHECKOUT_SELECTION_KEY, JSON.stringify(selectedCartItems));
         sessionStorage.setItem(CHECKOUT_COUPON_KEY, JSON.stringify({
@@ -205,9 +226,9 @@ const Cart = () => {
     };
 
     const messageStyles = {
-        success: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-        warning: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
-        danger: 'border-red-500/40 bg-red-500/10 text-red-300',
+        success: 'border-emerald-500/40 bg-emerald-50 text-emerald-700',
+        warning: 'border-amber-500/40 bg-amber-50 text-amber-700',
+        danger: 'border-red-500/40 bg-red-50 text-red-700',
         info: 'border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-fg-muted)]',
     };
 
@@ -219,7 +240,7 @@ const Cart = () => {
             <div
                 key={coupon.id}
                 className={cn(
-                    "flex flex-col gap-3 rounded-md border p-4 transition-colors md:flex-row md:items-center",
+                    "flex flex-col gap-3 rounded-xl border p-4 transition-colors md:flex-row md:items-center",
                     isApplied ? "border-[var(--color-accent)]/60 bg-[var(--color-accent)]/5" : "border-[var(--color-border)] bg-[var(--color-surface)]",
                     !valid && "opacity-60"
                 )}
@@ -229,10 +250,10 @@ const Cart = () => {
                     <p className="mt-2 text-sm font-medium text-[var(--color-fg)]">{coupon.title}</p>
                     <p className="text-xs text-[var(--color-fg-muted)]">{coupon.description}</p>
                     {discountPreview > 0 && valid && (
-                        <p className="mt-1 text-[11px] text-emerald-400">Dự kiến giảm {formatCurrency(discountPreview)}</p>
+                        <p className="mt-1 text-[11px] text-emerald-600">Dự kiến giảm {formatCurrency(discountPreview)}</p>
                     )}
                     {!valid && (
-                        <p className="mt-1 text-[11px] text-red-400">{missingAmount > 0 ? `Còn thiếu ${formatCurrency(missingAmount)}` : statusText}</p>
+                        <p className="mt-1 text-[11px] text-red-600">{missingAmount > 0 ? `Còn thiếu ${formatCurrency(missingAmount)}` : statusText}</p>
                     )}
                 </div>
                 <div className="shrink-0">
@@ -248,7 +269,7 @@ const Cart = () => {
 
     return (
         <>
-            <PageHero title={t('Shop Cart')} current={t('Shop Cart')} kicker="Bag" />
+            <PageHero title={t('Shop Cart')} current={t('Shop Cart')} kicker="Giỏ hàng" />
 
             <section className="ts-container py-12">
                 {items.length === 0 ? (
@@ -261,7 +282,7 @@ const Cart = () => {
                 ) : (
                     <>
                         {/* Selection bar */}
-                        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm p-4">
                             <label className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-fg)]">
                                 <input
                                     type="checkbox"
@@ -286,23 +307,24 @@ const Cart = () => {
                         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
                             <div>
                                 {/* Items */}
-                                <div className="overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                                <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
                                     <div className="hidden border-b border-[var(--color-border)] bg-[var(--color-surface-2)] px-5 py-3 md:grid md:grid-cols-[1fr_120px_140px_120px_80px] md:gap-4">
                                         <p className="ts-eyebrow text-[10px]">Sản phẩm</p>
                                         <p className="ts-eyebrow text-[10px]">Đơn giá</p>
                                         <p className="ts-eyebrow text-[10px]">Số lượng</p>
                                         <p className="ts-eyebrow text-[10px]">Thành tiền</p>
-                                        <p className="ts-eyebrow text-[10px] text-right">Action</p>
+                                        <p className="ts-eyebrow text-[10px] text-right">Thao tác</p>
                                     </div>
 
                                     <ul className="divide-y divide-[var(--color-border)]">
                                         {items.map((item) => {
                                             const outOfStock = isItemOutOfStock(item);
-                                            const selected = selectedIds.includes(String(item.productId)) && !outOfStock;
+                                            const itemKey = getItemKey(item);
+                                            const selected = selectedIds.includes(itemKey) && !outOfStock;
                                             const stock = Number(item.product?.stock ?? 0);
                                             return (
                                                 <li
-                                                    key={item.productId}
+                                                    key={itemKey}
                                                     className={cn(
                                                         "grid gap-4 px-5 py-5 md:grid-cols-[1fr_120px_140px_120px_80px] md:items-center",
                                                         outOfStock && "opacity-50"
@@ -321,9 +343,9 @@ const Cart = () => {
                                                             <p className="line-clamp-2 text-sm font-medium text-[var(--color-fg)]">{item.product.name}</p>
                                                             <p className="ts-eyebrow mt-0.5 text-[10px] text-[var(--color-fg-dim)]">{item.product.category?.name || `Mã: G${item.product.id}`}</p>
                                                             {outOfStock ? (
-                                                                <span className="mt-1 inline-block rounded-sm bg-red-500/10 px-2 py-0.5 text-[10px] text-red-400">Hết hàng</span>
+                                                                <span className="mt-1 inline-block rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700">Hết hàng</span>
                                                             ) : stock > 0 && stock <= 5 ? (
-                                                                <span className="mt-1 inline-block rounded-sm bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-400">Chỉ còn {stock}</span>
+                                                                <span className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Chỉ còn {stock}</span>
                                                             ) : null}
                                                         </div>
                                                     </div>
@@ -335,7 +357,7 @@ const Cart = () => {
                                                         <div className="inline-flex items-center rounded-sm border border-[var(--color-border)] bg-[var(--color-background)]">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                                                                onClick={() => updateQuantity(itemKey, Math.max(1, item.quantity - 1))}
                                                                 disabled={item.quantity <= 1}
                                                                 aria-label="Giảm"
                                                                 className="flex h-8 w-8 items-center justify-center text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] disabled:opacity-40"
@@ -345,7 +367,7 @@ const Cart = () => {
                                                             <span className="ts-mono w-8 text-center text-sm">{item.quantity}</span>
                                                             <button
                                                                 type="button"
-                                                                onClick={() => updateQuantity(item.productId, Math.min(item.quantity + 1, stock || item.quantity + 1))}
+                                                                onClick={() => updateQuantity(itemKey, Math.min(item.quantity + 1, stock || item.quantity + 1))}
                                                                 disabled={outOfStock || (stock > 0 && item.quantity >= stock)}
                                                                 aria-label="Tăng"
                                                                 className="flex h-8 w-8 items-center justify-center text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] disabled:opacity-40"
@@ -369,7 +391,7 @@ const Cart = () => {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => removeItem(item.productId)}
+                                                            onClick={() => removeItem(itemKey)}
                                                             aria-label="Xóa"
                                                             className="flex h-8 w-8 items-center justify-center rounded-sm border border-[var(--color-border)] text-xs text-[var(--color-fg-dim)] transition-colors hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
                                                         >
@@ -388,17 +410,17 @@ const Cart = () => {
 
                                 {/* Coupons */}
                                 {claimedCoupons.length > 0 && (
-                                    <div className="mt-8 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                                    <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm p-5">
                                         <div className="mb-4 flex items-center justify-between">
                                             <div>
-                                                <p className="ts-eyebrow text-[var(--color-accent)]">Vouchers</p>
+                                                <p className="ts-eyebrow text-[var(--color-accent)]">Phiếu giảm giá</p>
                                                 <h4 className="ts-display mt-1 text-lg">Phiếu giảm giá</h4>
                                             </div>
                                             <Link to="/promotion" className="ts-btn ts-btn-outline text-xs">Săn thêm</Link>
                                         </div>
 
                                         {selectedCount === 0 && (
-                                            <p className="mb-3 rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                                            <p className="mb-3 rounded-lg border border-amber-500/40 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                                                 Chọn sản phẩm để xem phiếu có thể áp dụng.
                                             </p>
                                         )}
@@ -431,10 +453,10 @@ const Cart = () => {
 
                             {/* Summary */}
                             <aside>
-                                <div className="sticky top-24 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
-                                    <div className="border-b border-[var(--color-border)] px-6 py-5">
-                                        <p className="ts-eyebrow text-[var(--color-accent)]">Order Summary</p>
-                                        <h3 className="ts-display mt-2 text-2xl">Tóm tắt đơn hàng</h3>
+                                <div className="sticky top-24 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+                                    <div className="border-b border-[var(--color-border)] bg-gradient-to-r from-[var(--color-primary)]/8 to-[var(--color-accent)]/8 px-6 py-5">
+                                        <p className="ts-eyebrow text-[var(--color-accent)]">Tóm tắt</p>
+                                        <h3 className="ts-display mt-1 text-2xl">Đơn hàng của bạn</h3>
                                     </div>
                                     <div className="space-y-3 px-6 py-5 text-sm">
                                         <div className="flex justify-between text-[var(--color-fg-muted)]">
@@ -446,7 +468,7 @@ const Cart = () => {
                                             <span className="ts-mono">{formatCurrency(selectedSubtotal)}</span>
                                         </div>
                                         {productDiscount > 0 && (
-                                            <div className="flex justify-between text-emerald-400">
+                                            <div className="flex justify-between text-emerald-600">
                                                 <span>Giảm sản phẩm</span>
                                                 <span className="ts-mono">−{formatCurrency(productDiscount)}</span>
                                             </div>
@@ -456,15 +478,15 @@ const Cart = () => {
                                             <span className="ts-mono">{formatCurrency(selectedCount > 0 ? SHIPPING_FEE : 0)}</span>
                                         </div>
                                         {shippingDiscount > 0 && (
-                                            <div className="flex justify-between text-emerald-400">
+                                            <div className="flex justify-between text-emerald-600">
                                                 <span>Giảm vận chuyển</span>
                                                 <span className="ts-mono">−{formatCurrency(shippingDiscount)}</span>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="border-t border-[var(--color-border)] px-6 py-5">
+                                    <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-2)] px-6 py-5">
                                         <div className="flex items-baseline justify-between">
-                                            <span className="ts-eyebrow text-[10px]">Tổng thanh toán</span>
+                                            <span className="text-sm font-semibold text-[var(--color-fg)]">Tổng thanh toán</span>
                                             <span className="ts-mono text-2xl font-bold ts-gradient-text">{formatCurrency(finalTotal)}</span>
                                         </div>
                                     </div>

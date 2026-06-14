@@ -1,11 +1,8 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
     public class Coupon
     {
-        [BsonId]
         public int Id { get; set; }
         public string Code { get; set; } = "";
         public string Name { get; set; } = "";
@@ -32,10 +29,8 @@ namespace BaseCore.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? CreatedByUserId { get; set; }
 
-        [BsonIgnore]
         public List<CouponScope> Scopes { get; set; } = new();
     }
 }

@@ -40,6 +40,7 @@ namespace BaseCore.DTO.Store
         public bool RequiresSerialTracking { get; set; }
         public int WarrantyMonths { get; set; } = 12;
         public List<ProductImageDto> Images { get; set; } = new();
+        public List<ProductVariantDto> Variants { get; set; } = new();
     }
 
     public class ProductUpdateDto
@@ -67,6 +68,7 @@ namespace BaseCore.DTO.Store
         public bool? RequiresSerialTracking { get; set; }
         public int? WarrantyMonths { get; set; }
         public List<ProductImageDto>? Images { get; set; }
+        public List<ProductVariantDto>? Variants { get; set; }
     }
 
     public class ProductSearchDto
@@ -82,6 +84,7 @@ namespace BaseCore.DTO.Store
         public bool? IsBestSeller { get; set; }
         public bool? IsNewArrival { get; set; }
         public bool? IsDiscounted { get; set; }
+        public bool IncludeInactive { get; set; }
         public string? SortBy { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 10;
@@ -118,14 +121,14 @@ namespace BaseCore.DTO.Store
         public int WarrantyMonths { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public List<ProductVariantDto> Variants { get; set; } = new();
+        public List<ProductSpecValueDto> Specs { get; set; } = new();
     }
 
     public class ProductDetailDto : ProductListDto
     {
         public string? LongDescription { get; set; }
         public List<ProductImageDto> Images { get; set; } = new();
-        public List<ProductVariantDto> Variants { get; set; } = new();
-        public List<ProductSpecValueDto> Specs { get; set; } = new();
         public List<RecommendationDto> Recommendations { get; set; } = new();
     }
 
@@ -166,6 +169,10 @@ namespace BaseCore.DTO.Store
         public string Name { get; set; } = "";
         public string Code { get; set; } = "";
         public string DataType { get; set; } = "text";
+        public string InputType { get; set; } = "text";
+        public string? Unit { get; set; }
+        public bool AllowCustomValue { get; set; }
+        public bool IsVariantAxis { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<SpecOptionDto>? Options { get; set; }
@@ -320,6 +327,7 @@ namespace BaseCore.DTO.Store
         public DateTime? PickupSlotEndAt { get; set; }
         public DateTime? ReadyForPickupAt { get; set; }
         public DateTime? PickupExpiresAt { get; set; }
+        public string? PickupVerificationPin { get; set; }
         public string? Carrier { get; set; }
         public string? TrackingCode { get; set; }
         public DateTime? ShippedAt { get; set; }
@@ -331,6 +339,11 @@ namespace BaseCore.DTO.Store
         public string? RefundTransactionId { get; set; }
         public string? ReturnStatus { get; set; }
         public DateTime? ReturnedAt { get; set; }
+        public string? CancelReason { get; set; }
+        public DateTime? CancelRequestedAt { get; set; }
+        public DateTime? CancelReviewedAt { get; set; }
+        public Guid? CancelReviewedByUserId { get; set; }
+        public string? CancelReviewNote { get; set; }
         public int ItemCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
@@ -344,18 +357,12 @@ namespace BaseCore.DTO.Store
         public string? Ward { get; set; }
         public string? AddressDetail { get; set; }
         public DateTime? ExpectedPickupTime { get; set; }
-        public string? PickupVerificationPin { get; set; }
         public bool InvoiceRequired { get; set; }
         public string? InvoiceCompanyName { get; set; }
         public string? InvoiceTaxCode { get; set; }
         public string? InvoiceAddress { get; set; }
         public string? InvoiceEmail { get; set; }
         public string? Notes { get; set; }
-        public string? CancelReason { get; set; }
-        public DateTime? CancelRequestedAt { get; set; }
-        public DateTime? CancelReviewedAt { get; set; }
-        public Guid? CancelReviewedByUserId { get; set; }
-        public string? CancelReviewNote { get; set; }
         public List<OrderItemDetailDto> Items { get; set; } = new();
         public List<OrderTimelineDto> Timeline { get; set; } = new();
         public List<OrderCouponDto> Coupons { get; set; } = new();

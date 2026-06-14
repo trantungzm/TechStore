@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
 import { productApi, couponApi } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useCompare } from '../../contexts/CompareContext';
@@ -9,7 +10,7 @@ import PageHero from '../../components/store/PageHero';
 import ProductCard from '../../components/store/ProductCard';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { canClaimCoupon, getAvailableCouponsForProduct, getCouponClaimStatus } from '../../utils/couponUtils';
-import { formatCurrency, resolveProductImage, setPageMeta, t } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedProducts';
@@ -219,6 +220,14 @@ const normalizeColorOption = (option, index = 0) => {
     return { id: option.id || option.sku || `color-${label}`, label, colorCode: option.colorCode || option.hex, price: option.price, oldPrice: option.oldPrice, stock: option.stock, sku: option.sku, image: option.image || option.imageUrl };
 };
 
+const normalizeRamOption = (option, index = 0) => {
+    if (typeof option === 'string' || typeof option === 'number') return { id: `ram-${option}`, label: String(option) };
+    if (!option || typeof option !== 'object') return null;
+    const label = getOptionLabel(option, `RAM ${index + 1}`);
+    if (!label) return null;
+    return { id: option.id || option.sku || `ram-${label}`, label, price: option.price, oldPrice: option.oldPrice, stock: option.stock, sku: option.sku, image: option.image || option.imageUrl };
+};
+
 const uniqueOptions = (options) => {
     const seen = new Set();
     return options.filter((o) => {
@@ -230,25 +239,83 @@ const uniqueOptions = (options) => {
     });
 };
 
-const getProductVersions = (product) => {
+const getActiveVariants = (product) => {
     const variants = Array.isArray(product?.variants) ? product.variants : [];
-    return uniqueOptions(variants.map((v, i) => normalizeVersionOption({ ...v, label: v.variantName || v.version || v.storage || v.label || v.name }, i)).filter(Boolean));
+    return variants.filter((variant) => variant?.isActive !== false);
+};
+
+const isOptionOutOfStock = (option) => option?.stock != null && Number(option.stock) <= 0;
+
+const stripVariantPart = (variantName, ...parts) => {
+    let text = fixText(variantName);
+    parts.map(fixText).filter(Boolean).forEach((part) => {
+        text = text
+            .split(' - ')
+            .filter((item) => normalizeText(item) !== normalizeText(part))
+            .join(' - ');
+    });
+    return text.trim();
+};
+
+const getVariantVersionLabel = (variant) => {
+    const direct = fixText(variant?.storage || variant?.version);
+    if (direct) return direct;
+    return stripVariantPart(variant?.variantName || variant?.name || variant?.label, variant?.ram, variant?.colorName || variant?.color);
+};
+
+const getProductVersions = (product) => {
+    const variants = getActiveVariants(product);
+    return uniqueOptions(variants.map((v, i) => normalizeVersionOption({ ...v, label: getVariantVersionLabel(v) }, i)).filter(Boolean));
+};
+
+const getProductRams = (product) => {
+    const variants = getActiveVariants(product);
+    // Chỉ hiện chọn RAM khi biến thể có RAM thật (đồng hồ/máy ảnh/tai nghe/loa không có RAM
+    // -> tránh sinh nhãn ảo "RAM 1, RAM 2…" từ fallback).
+    return uniqueOptions(
+        variants
+            .filter((v) => fixText(v.ram))
+            .map((v, i) => normalizeRamOption({ ...v, label: v.ram }, i))
+            .filter(Boolean)
+    );
 };
 
 const getProductColors = (product) => {
-    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const variants = getActiveVariants(product);
     return uniqueOptions(variants.map((v, i) => normalizeColorOption({ ...v, label: v.colorName || v.color || v.label || v.name }, i)).filter(Boolean));
 };
 
-const findSelectedVariant = (product, sv, sc) => {
-    const variants = Array.isArray(product?.variants) ? product.variants : [];
+const getAvailableVersions = (product, selectedColor) => {
+    const variants = getActiveVariants(product);
+    const colorText = normalizeText(selectedColor?.label);
+    if (!colorText) return getProductVersions(product);
+    return uniqueOptions(variants
+        .filter((v) => normalizeText(v.colorName || v.color) === colorText)
+        .map((v, i) => normalizeVersionOption({ ...v, label: getVariantVersionLabel(v) }, i))
+        .filter(Boolean));
+};
+
+const getAvailableColors = (product, selectedVersion) => {
+    const variants = getActiveVariants(product);
+    const versionText = normalizeText(selectedVersion?.label);
+    if (!versionText) return getProductColors(product);
+    return uniqueOptions(variants
+        .filter((v) => normalizeText(getVariantVersionLabel(v)) === versionText)
+        .map((v, i) => normalizeColorOption({ ...v, label: v.colorName || v.color || v.label || v.name }, i))
+        .filter(Boolean));
+};
+
+const findSelectedVariant = (product, sv, sc, sr) => {
+    const variants = getActiveVariants(product);
     if (!variants.length) return null;
     const versionText = normalizeText(sv?.label);
     const colorText = normalizeText(sc?.label);
+    const ramText = normalizeText(sr?.label);
     return variants.find((v) => {
-        const vVer = normalizeText(v.variantName || v.version || v.storage || v.label || v.name);
+        const vVer = normalizeText(getVariantVersionLabel(v));
         const vCol = normalizeText(v.colorName || v.color);
-        return (!versionText || vVer === versionText) && (!colorText || vCol === colorText);
+        const vRam = normalizeText(v.ram);
+        return (!versionText || vVer === versionText) && (!colorText || vCol === colorText) && (!ramText || vRam === ramText);
     }) || null;
 };
 
@@ -284,10 +351,12 @@ const StarPicker = ({ value, onChange, labels = ratingLabels }) => (
 
 const ProductDetail = () => {
     const { id } = useParams();
+    const { user } = useAuth();
     const { addItem } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { toggleCompare, isInCompare } = useCompare();
     const { coupons } = usePublicCoupons();
+    const isViewOnly = isStoreViewOnlyUser(user);
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -319,24 +388,26 @@ const ProductDetail = () => {
     const [expandedQuestionIds, setExpandedQuestionIds] = useState([]);
     const [selectedVersion, setSelectedVersion] = useState(null);
     const [selectedColor, setSelectedColor] = useState(null);
+    const [selectedRam, setSelectedRam] = useState(null);
 
     const numericId = useMemo(() => Number(id), [id]);
     const productImage = useMemo(() => {
         try { return resolveProductImage(product); }
-        catch { return '/electro/img/product-1.png'; }
+        catch { return ''; }
     }, [product]);
 
     const productName = fixText(product?.name);
-    const productCategoryName = fixText(product?.category?.name || product?.categoryName || product?.category || 'Electronics');
+    const productCategoryName = fixText(product?.category?.name || product?.categoryName || product?.category || 'Sản phẩm');
+    const productRams = useMemo(() => getProductRams(product), [product]);
     const productVersions = useMemo(() => getProductVersions(product), [product]);
     const productColors = useMemo(() => getProductColors(product), [product]);
-    const selectedVariant = useMemo(() => findSelectedVariant(product, selectedVersion, selectedColor), [product, selectedVersion, selectedColor]);
-    const productStock = Number(selectedVariant?.stock ?? selectedVersion?.stock ?? selectedColor?.stock ?? product?.stock ?? 0);
-    const productPrice = Number(selectedVariant?.price ?? selectedVersion?.price ?? selectedColor?.price ?? product?.price ?? 0);
+    const selectedVariant = useMemo(() => findSelectedVariant(product, selectedVersion, selectedColor, selectedRam), [product, selectedVersion, selectedColor, selectedRam]);
+    const productStock = Number(selectedVariant?.stock ?? selectedRam?.stock ?? selectedVersion?.stock ?? selectedColor?.stock ?? product?.stock ?? 0);
+    const productPrice = Number(selectedVariant?.price ?? selectedRam?.price ?? selectedVersion?.price ?? selectedColor?.price ?? product?.price ?? 0);
     const productDescription = fixText(product?.longDescription || product?.description);
-    const oldPrice = selectedVariant?.originalPrice ?? selectedVariant?.oldPrice ?? selectedVersion?.oldPrice ?? selectedColor?.oldPrice ?? product?.originalPrice ?? product?.oldPrice ?? 0;
-    const displaySku = selectedVariant?.sku || selectedVersion?.sku || selectedColor?.sku || product?.sku || product?.id;
-    const selectedImage = selectedVariant?.imageUrl || selectedVariant?.image || selectedColor?.image || selectedVersion?.image || '';
+    const oldPrice = selectedVariant?.originalPrice ?? selectedVariant?.oldPrice ?? selectedRam?.oldPrice ?? selectedVersion?.oldPrice ?? selectedColor?.oldPrice ?? product?.originalPrice ?? product?.oldPrice ?? 0;
+    const displaySku = selectedVariant?.sku || selectedRam?.sku || selectedVersion?.sku || selectedColor?.sku || product?.sku || product?.id;
+    const selectedImage = selectedVariant?.imageUrl || selectedVariant?.image || selectedColor?.image || selectedRam?.image || selectedVersion?.image || '';
     const displayImage = selectedImage ? resolveProductImage({ id: product?.id, imageUrl: selectedImage }) : productImage;
     const galleryImages = useMemo(() => {
         const productImages = Array.isArray(product?.images) ? product.images.map((i) => i.imageUrl || i.url) : [];
@@ -414,7 +485,7 @@ const ProductDetail = () => {
         setReviewImages([]); setReviewError(''); setTemporaryReviews([]);
         setTemporaryQuestions([]); setQuestionInput(''); setQuestionError('');
         setQuestionMsg(''); setExpandedQuestionIds([]);
-        setSelectedVersion(null); setSelectedColor(null);
+        setSelectedVersion(null); setSelectedColor(null); setSelectedRam(null);
         setActiveTab('description');
 
         if (instantProduct) {
@@ -508,6 +579,44 @@ const ProductDetail = () => {
     useEffect(() => { setActiveImage(displayImage); }, [displayImage]);
 
     useEffect(() => {
+        if (!product) return;
+        const variants = getActiveVariants(product);
+        if (!variants.length) return;
+
+        const matched = findSelectedVariant(product, selectedVersion, selectedColor, selectedRam);
+        if ((!productVersions.length || selectedVersion) && (!productColors.length || selectedColor) && (!productRams.length || selectedRam) && matched) return;
+
+        const fallback =
+            findSelectedVariant(product, selectedVersion, selectedColor, null) ||
+            findSelectedVariant(product, selectedVersion, null, selectedRam) ||
+            findSelectedVariant(product, null, selectedColor, selectedRam) ||
+            findSelectedVariant(product, selectedVersion, null, null) ||
+            findSelectedVariant(product, null, selectedColor, null) ||
+            findSelectedVariant(product, null, null, selectedRam) ||
+            variants.find((item) => Number(item.stock || 0) > 0) ||
+            variants[0];
+
+        if (!fallback) return;
+
+        const versionKey = normalizeText(getVariantVersionLabel(fallback));
+        const colorKey = normalizeText(fallback.colorName || fallback.color);
+        const ramKey = normalizeText(fallback.ram);
+        const nextVersion = productVersions.find((item) => normalizeText(item.label) === versionKey) || null;
+        const nextColor = productColors.find((item) => normalizeText(item.label) === colorKey) || null;
+        const nextRam = productRams.find((item) => normalizeText(item.label) === ramKey) || null;
+
+        if ((nextVersion?.id || null) !== (selectedVersion?.id || null)) {
+            setSelectedVersion(nextVersion);
+        }
+        if ((nextColor?.id || null) !== (selectedColor?.id || null)) {
+            setSelectedColor(nextColor);
+        }
+        if ((nextRam?.id || null) !== (selectedRam?.id || null)) {
+            setSelectedRam(nextRam);
+        }
+    }, [product, productVersions, productColors, productRams, selectedVersion, selectedColor, selectedRam]);
+
+    useEffect(() => {
         if (!reviewModalOpen) return undefined;
         const handleEscape = (e) => { if (e.key === 'Escape') setReviewModalOpen(false); };
         document.addEventListener('keydown', handleEscape);
@@ -515,7 +624,17 @@ const ProductDetail = () => {
     }, [reviewModalOpen]);
 
     const handleAddToCart = () => {
+        if (isViewOnly) {
+            setAddedMsg(STORE_VIEW_ONLY_MESSAGE);
+            setTimeout(() => setAddedMsg(''), 2500);
+            return;
+        }
         if (productStock <= 0 || quantity < 1) return;
+        if (productRams.length && !selectedRam) {
+            setAddedMsg('Vui lòng chọn RAM.');
+            setTimeout(() => setAddedMsg(''), 2500);
+            return;
+        }
         if (productVersions.length && !selectedVersion) {
             setAddedMsg('Vui lòng chọn phiên bản.');
             setTimeout(() => setAddedMsg(''), 2500);
@@ -529,11 +648,12 @@ const ProductDetail = () => {
         addItem({
             ...product, id: product.id, productId: product.id,
             variantId: selectedVariant?.id,
+            selectedRam: selectedRam?.label || '',
             selectedVersion: selectedVersion?.label || '',
             selectedColor: selectedColor?.label || '',
             price: productPrice, oldPrice, stock: productStock,
             sku: displaySku, image: displayImage, imageUrl: displayImage,
-            name: [product.name, selectedVersion?.label, selectedColor?.label].filter(Boolean).join(' - '),
+            name: [product.name, selectedRam?.label, selectedVersion?.label, selectedColor?.label].filter(Boolean).join(' - '),
         }, quantity);
         setAddedMsg(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
         setTimeout(() => setAddedMsg(''), 2500);
@@ -545,6 +665,10 @@ const ProductDetail = () => {
     };
 
     const handleClaimCoupon = async (coupon) => {
+        if (isViewOnly) {
+            showCouponMessage(STORE_VIEW_ONLY_MESSAGE);
+            return;
+        }
         if (claimingCouponIds.includes(coupon.id)) return;
         if (!canClaimCoupon(coupon, productCouponContext, claimedCouponIds)) {
             showCouponMessage(getCouponClaimStatus(coupon, productCouponContext, claimedCouponIds).message || 'Chưa đủ điều kiện');
@@ -604,6 +728,10 @@ const ProductDetail = () => {
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
+        if (isViewOnly) {
+            setReviewError(STORE_VIEW_ONLY_MESSAGE);
+            return;
+        }
         const content = reviewContent.trim();
         if (!reviewRating) return setReviewError('Vui lòng chọn đánh giá chung.');
         if (content.length < 15) return setReviewError('Vui lòng nhập nhận xét tối thiểu 15 ký tự.');
@@ -670,6 +798,11 @@ const ProductDetail = () => {
 
     const handleSubmitQuestion = async (e) => {
         e.preventDefault();
+        if (isViewOnly) {
+            setQuestionError(STORE_VIEW_ONLY_MESSAGE);
+            setQuestionMsg('');
+            return;
+        }
         const question = questionInput.trim();
         if (question.length < 10) {
             setQuestionError('Vui lòng nhập câu hỏi tối thiểu 10 ký tự.');
@@ -702,7 +835,7 @@ const ProductDetail = () => {
     if (loading) {
         return (
             <>
-                <PageHero title={t('Product Details')} current={t('Product Details')} kicker="Product" />
+                <PageHero title={t('Product Details')} current={t('Product Details')} kicker="Sản phẩm" />
                 <section className="ts-container py-12">
                     <div className="grid gap-8 lg:grid-cols-2">
                         <div className="aspect-square animate-pulse rounded-md bg-[var(--color-surface)]" />
@@ -720,7 +853,7 @@ const ProductDetail = () => {
     if (error || !product) {
         return (
             <>
-                <PageHero title={t('Product Details')} current={t('Product Details')} kicker="Product" />
+                <PageHero title={t('Product Details')} current={t('Product Details')} kicker="Sản phẩm" />
                 <section className="ts-container flex flex-col items-center py-20 text-center">
                     <i className="fas fa-exclamation-circle text-4xl text-[var(--color-fg-dim)]"></i>
                     <p className="mt-6 text-sm text-[var(--color-fg-muted)]">{error || t('Product not found')}</p>
@@ -732,7 +865,7 @@ const ProductDetail = () => {
 
     return (
         <>
-            <PageHero title={t('Product Details')} current={productName || t('Product Details')} kicker="Product" />
+            <PageHero title={t('Product Details')} current={productName || t('Product Details')} kicker="Sản phẩm" />
 
             <section className="ts-container py-12">
                 {/* Breadcrumb */}
@@ -749,7 +882,14 @@ const ProductDetail = () => {
                     {/* Gallery */}
                     <div>
                         <div className="relative aspect-square overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
-                            <img src={activeImage || productImage} alt={productName} className="h-full w-full object-contain p-12" />
+                            {activeImage || productImage ? (
+                                <img src={activeImage || productImage} alt={productName} className="h-full w-full object-contain p-12" />
+                            ) : (
+                                <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-[var(--color-fg-dim)]">
+                                    <i className="far fa-image text-5xl"></i>
+                                    <span className="text-sm font-semibold">Chưa có ảnh sản phẩm</span>
+                                </div>
+                            )}
                             {galleryImages.length > 1 && (
                                 <>
                                     <button
@@ -809,11 +949,7 @@ const ProductDetail = () => {
                             )}
                         </div>
 
-                        <div className="mt-6 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-4 text-xs">
-                            <div>
-                                <p className="ts-eyebrow text-[10px]">SKU</p>
-                                <p className="ts-mono mt-1 text-[var(--color-fg-muted)]">{displaySku}</p>
-                            </div>
+                        <div className="mt-6 border-y border-[var(--color-border)] py-4 text-xs">
                             <div>
                                 <p className="ts-eyebrow text-[10px]">Tình trạng</p>
                                 <p className={cn("mt-1 font-medium", productStock > 0 ? "text-emerald-400" : "text-red-400")}>
@@ -822,6 +958,37 @@ const ProductDetail = () => {
                             </div>
                         </div>
 
+                        {/* RAM */}
+                        {productRams.length > 0 && (
+                            <div className="mt-6">
+                                <p className="ts-eyebrow mb-3 text-[10px]">RAM</p>
+                                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                                    {productRams.map((ram) => {
+                                        const active = selectedRam?.id === ram.id;
+                                        const oos = isOptionOutOfStock(ram);
+                                        return (
+                                            <button
+                                                key={ram.id}
+                                                type="button"
+                                                onClick={() => setSelectedRam(ram)}
+                                                disabled={oos}
+                                                className={cn(
+                                                    "flex flex-col items-start rounded-sm border p-3 text-left transition-all",
+                                                    active
+                                                        ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                                                        : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]",
+                                                    oos && "opacity-50"
+                                                )}
+                                            >
+                                                <strong className="text-sm text-[var(--color-fg)]">{ram.label}</strong>
+                                                {oos && <em className="mt-1 text-[10px] not-italic text-red-400">Hết hàng</em>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Versions */}
                         {productVersions.length > 0 && (
                             <div className="mt-6">
@@ -829,12 +996,18 @@ const ProductDetail = () => {
                                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                                     {productVersions.map((version) => {
                                         const active = selectedVersion?.id === version.id;
-                                        const oos = version.stock === 0;
+                                        const oos = isOptionOutOfStock(version);
                                         return (
                                             <button
                                                 key={version.id}
                                                 type="button"
-                                                onClick={() => setSelectedVersion(version)}
+                                                onClick={() => {
+                                                    setSelectedVersion(version);
+                                                    const nextColors = getAvailableColors(product, version);
+                                                    if (nextColors.length && !nextColors.some((item) => item.id === selectedColor?.id)) {
+                                                        setSelectedColor(nextColors[0]);
+                                                    }
+                                                }}
                                                 disabled={oos}
                                                 className={cn(
                                                     "flex flex-col items-start rounded-sm border p-3 text-left transition-all",
@@ -845,9 +1018,6 @@ const ProductDetail = () => {
                                                 )}
                                             >
                                                 <strong className="text-sm text-[var(--color-fg)]">{version.label}</strong>
-                                                {version.price != null && (
-                                                    <span className="ts-mono mt-1 text-xs text-[var(--color-accent)]">{formatCurrency(version.price)}</span>
-                                                )}
                                                 {oos && <em className="mt-1 text-[10px] not-italic text-red-400">Hết hàng</em>}
                                             </button>
                                         );
@@ -864,17 +1034,24 @@ const ProductDetail = () => {
                                     {productColors.map((color) => {
                                         const active = selectedColor?.id === color.id;
                                         const colorImage = color.image ? resolveProductImage({ id: product.id, imageUrl: color.image }) : '';
+                                        const oos = isOptionOutOfStock(color);
                                         return (
                                             <button
                                                 key={color.id}
                                                 type="button"
                                                 onClick={() => {
                                                     setSelectedColor(color);
+                                                    const nextVersions = getAvailableVersions(product, color);
+                                                    if (nextVersions.length && !nextVersions.some((item) => item.id === selectedVersion?.id)) {
+                                                        setSelectedVersion(nextVersions[0]);
+                                                    }
                                                     if (colorImage) setActiveImage(colorImage);
                                                 }}
+                                                disabled={oos}
                                                 className={cn(
                                                     "flex items-center gap-2 rounded-sm border p-2 text-left transition-all",
-                                                    active ? "border-[var(--color-primary)]" : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                                                    active ? "border-[var(--color-primary)]" : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]",
+                                                    oos && "opacity-50"
                                                 )}
                                             >
                                                 {colorImage ? (
@@ -885,6 +1062,7 @@ const ProductDetail = () => {
                                                 <span className="min-w-0">
                                                     <strong className="block truncate text-xs text-[var(--color-fg)]">{color.label}</strong>
                                                     {color.price != null && <small className="ts-mono block text-[10px] text-[var(--color-accent)]">{formatCurrency(color.price)}</small>}
+                                                    {oos && <small className="block text-[10px] text-red-400">Het hang</small>}
                                                 </span>
                                             </button>
                                         );
@@ -940,8 +1118,8 @@ const ProductDetail = () => {
                                 className={cn(
                                     "ts-btn flex-1 text-xs",
                                     isInWishlist(product.id)
-                                        ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15"
-                                        : "ts-btn-outline"
+                                        ? "border-black bg-white text-black hover:bg-white"
+                                        : "ts-btn-outline hover:border-black hover:text-black"
                                 )}
                             >
                                 <i className={isInWishlist(product.id) ? "fas fa-heart" : "far fa-heart"}></i>
@@ -1222,7 +1400,13 @@ const ProductDetail = () => {
                             </div>
                             <form onSubmit={handleSubmitReview} className="max-h-[70vh] overflow-y-auto p-5">
                                 <div className="mb-4 flex items-center gap-3 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-2">
-                                    <img src={displayImage || productImage} alt={productName} className="h-12 w-12 rounded-sm object-contain" />
+                                    {displayImage || productImage ? (
+                                        <img src={displayImage || productImage} alt={productName} className="h-12 w-12 rounded-sm object-contain" />
+                                    ) : (
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-[var(--color-surface-2)] text-[var(--color-fg-dim)]">
+                                            <i className="far fa-image"></i>
+                                        </div>
+                                    )}
                                     <strong className="text-sm text-[var(--color-fg)]">{productName}</strong>
                                 </div>
 

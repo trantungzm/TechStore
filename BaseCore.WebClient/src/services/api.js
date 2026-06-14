@@ -130,7 +130,8 @@ export const productApi = {
     getAllRemote: (params = {}) => api.get('/products', { params }),
     getAll: (params = {}) => api.get('/products', { params }),
     search: (params = {}) => api.get('/products', { params }),
-    getById: (id) => api.get(`/products/${id}`),
+    getById: (id, params = {}) => api.get(`/products/${id}`, { params }),
+    getBrands: () => api.get('/products/brands'),
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
     delete: (id) => api.delete(`/products/${id}`),
@@ -145,6 +146,10 @@ export const categoryApi = {
     delete: (id) => api.delete(`/categories/${id}`),
 };
 
+export const brandApi = {
+    getByCategory: (categoryId) => api.get('/brands', { params: categoryId ? { categoryId } : {} }),
+};
+
 export const orderApi = {
     create: (data) => api.post('/orders', data),
     getMyOrders: () => api.get('/orders/my'),
@@ -153,6 +158,21 @@ export const orderApi = {
     updateStatus: (id, data) => api.put(`/orders/${id}/status`, data),
     cancel: (id, data) => api.put(`/orders/${id}/cancel`, data),
     reviewCancellation: (id, data) => api.put(`/orders/${id}/cancellation-review`, data),
+};
+
+export const paymentApi = {
+    createSession: (orderId, amount) => api.post('/payments/sessions', { orderId, amount }),
+    createPendingSession: (orderPayload, amount) => api.post('/payments/sessions', { orderPayload, amount }),
+    getStatus: (sessionId) => api.get(`/payments/${sessionId}/status`),
+    getDetail: (sessionId) => api.get(`/payments/${sessionId}/detail`),
+    getDevInfo: (sessionId) => api.get(`/payments/${sessionId}/dev-info`),
+    // Mock (test bằng Postman): xác nhận thanh toán QR thành công
+    mockConfirm: (sessionIdOrData, data) => {
+        if (typeof sessionIdOrData === 'string') {
+            return api.post(`/payments/${sessionIdOrData}/mock-confirm`, data);
+        }
+        return api.post('/payments/mock-confirm', sessionIdOrData);
+    },
 };
 
 export const specApi = {
@@ -243,6 +263,8 @@ export const inventoryApi = {
         restockStatus: data?.statusAfter || 'InStock',
         note: data?.note || null,
     }),
+    reconcileStock: (backfillTags = false) => api.post('/inventory/reconcile-stock', { backfillTags }),
+    backfillInternalCodes: () => api.post('/inventory/backfill-internal-codes'),
 };
 
 export const supplierApi = {

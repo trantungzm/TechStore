@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -8,7 +6,6 @@ namespace BaseCore.Entities
         public int Id { get; set; }
         public string TicketCode { get; set; } = "";
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? UserId { get; set; }
 
         public string Subject { get; set; } = "";
@@ -25,16 +22,15 @@ namespace BaseCore.Entities
         public string Priority { get; set; } = "Normal";
         public string Category { get; set; } = "Other";
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? AssignedToUserId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? ClosedAt { get; set; }
 
-        [BsonIgnore] public Order? RelatedOrder { get; set; }
-        [BsonIgnore] public Product? RelatedProduct { get; set; }
-        [BsonIgnore] public WarrantyRecord? RelatedWarranty { get; set; }
-        [BsonIgnore] public List<SupportTicketUpdate> Updates { get; set; } = new();
+        public Order? RelatedOrder { get; set; }
+        public Product? RelatedProduct { get; set; }
+        public WarrantyRecord? RelatedWarranty { get; set; }
+        public List<SupportTicketUpdate> Updates { get; set; } = new();
     }
 }

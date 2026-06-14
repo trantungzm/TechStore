@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using BaseCore.Entities;
 using BaseCore.Common;
 using System.Globalization;
@@ -9,7 +9,7 @@ namespace BaseCore.Repository
 {
     /// <summary>
     /// Entity Framework Core DbContext for SQL Server
-    /// Used for teaching EF Core concepts (BÃ i 10)
+    /// Used for teaching EF Core concepts (Bài 10)
     /// </summary>
     public class AppDbContext : DbContext
     {
@@ -57,8 +57,10 @@ namespace BaseCore.Repository
         public DbSet<OrderCoupon> OrderCoupons { get; set; }
         public DbSet<VoucherSpin> VoucherSpins { get; set; }
         public DbSet<StoreSetting> StoreSettings { get; set; }
+        public DbSet<PaymentSession> PaymentSessions { get; set; }
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
         public DbSet<Banner> Banners { get; set; }
+        public DbSet<Brand> Brands { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -140,8 +142,23 @@ namespace BaseCore.Repository
                 entity.Property(e => e.LogoUrl).HasMaxLength(500);
                 entity.Property(e => e.FacebookUrl).HasMaxLength(500);
                 entity.Property(e => e.ZaloUrl).HasMaxLength(500);
+                entity.Property(e => e.BankName).HasMaxLength(160);
+                entity.Property(e => e.BankAccountNumber).HasMaxLength(40);
+                entity.Property(e => e.BankAccountHolder).HasMaxLength(160);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            modelBuilder.Entity<PaymentSession>(entity =>
+            {
+                entity.Property(e => e.SessionId).HasMaxLength(40).IsRequired();
+                entity.Property(e => e.Token).HasMaxLength(64).IsRequired();
+                entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+                entity.Property(e => e.TransactionId).HasMaxLength(80);
+                entity.Property(e => e.OrderPayloadJson);
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+                entity.HasIndex(e => e.SessionId).IsUnique();
+                entity.HasIndex(e => e.OrderId);
             });
 
             modelBuilder.Entity<StoreSetting>().HasData(new StoreSetting
@@ -158,9 +175,64 @@ namespace BaseCore.Repository
                 LogoUrl = string.Empty,
                 FacebookUrl = string.Empty,
                 ZaloUrl = string.Empty,
+                BankName = string.Empty,
+                BankAccountNumber = string.Empty,
+                BankAccountHolder = string.Empty,
                 CreatedAt = coreSeedTime,
                 UpdatedAt = coreSeedTime
             });
+
+            // Configure Brand (Hãng) - master theo danh mục
+            modelBuilder.Entity<Brand>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(120).IsRequired();
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(e => new { e.CategoryId, e.Name }).IsUnique();
+            });
+
+            modelBuilder.Entity<Brand>().HasData(
+                // Cat 1 - Điện thoại
+                new Brand { Id = 1, CategoryId = 1, Name = "Apple", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 2, CategoryId = 1, Name = "Samsung", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 3, CategoryId = 1, Name = "Xiaomi", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 4, CategoryId = 1, Name = "OPPO", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 5, CategoryId = 1, Name = "Vivo", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 6, CategoryId = 1, Name = "Realme", IsActive = true, CreatedAt = coreSeedTime },
+                // Cat 2 - Laptop
+                new Brand { Id = 7, CategoryId = 2, Name = "Apple", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 8, CategoryId = 2, Name = "ASUS", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 9, CategoryId = 2, Name = "Dell", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 10, CategoryId = 2, Name = "HP", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 11, CategoryId = 2, Name = "Lenovo", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 12, CategoryId = 2, Name = "Acer", IsActive = true, CreatedAt = coreSeedTime },
+                // Cat 4 - Tablet
+                new Brand { Id = 13, CategoryId = 4, Name = "Apple", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 14, CategoryId = 4, Name = "Samsung", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 15, CategoryId = 4, Name = "Xiaomi", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 16, CategoryId = 4, Name = "Lenovo", IsActive = true, CreatedAt = coreSeedTime },
+                // Cat 5 - Đồng hồ thông minh
+                new Brand { Id = 17, CategoryId = 5, Name = "Apple", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 18, CategoryId = 5, Name = "Samsung", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 19, CategoryId = 5, Name = "Garmin", IsActive = true, CreatedAt = coreSeedTime },
+                // Cat 6 - Máy ảnh
+                new Brand { Id = 20, CategoryId = 6, Name = "Canon", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 21, CategoryId = 6, Name = "Sony", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 22, CategoryId = 6, Name = "DJI", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 23, CategoryId = 6, Name = "GoPro", IsActive = true, CreatedAt = coreSeedTime },
+                // Cat 7 - Tai nghe
+                new Brand { Id = 24, CategoryId = 7, Name = "Apple", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 25, CategoryId = 7, Name = "Sony", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 26, CategoryId = 7, Name = "Bose", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 27, CategoryId = 7, Name = "Baseus", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 28, CategoryId = 7, Name = "Keychron", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 29, CategoryId = 7, Name = "Logitech", IsActive = true, CreatedAt = coreSeedTime },
+                // Cat 8 - Audio
+                new Brand { Id = 30, CategoryId = 8, Name = "JBL", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 31, CategoryId = 8, Name = "Marshall", IsActive = true, CreatedAt = coreSeedTime },
+                new Brand { Id = 32, CategoryId = 8, Name = "Samsung", IsActive = true, CreatedAt = coreSeedTime }
+            );
 
             // Configure Category entity
             modelBuilder.Entity<Category>(entity =>
@@ -456,6 +528,9 @@ namespace BaseCore.Repository
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.SerialOrImei).HasMaxLength(120).IsRequired();
+                entity.Property(e => e.SerialNumber).HasMaxLength(120);
+                entity.Property(e => e.Imei).HasMaxLength(20);
+                entity.Property(e => e.InternalCode).HasMaxLength(120);
                 entity.Property(e => e.Sku).HasMaxLength(100);
                 entity.Property(e => e.Status).HasMaxLength(40).HasDefaultValue("InStock").IsRequired();
                 entity.Property(e => e.UnitCost).HasPrecision(18, 2);
@@ -463,6 +538,10 @@ namespace BaseCore.Repository
                 entity.Property(e => e.Note).HasMaxLength(1000);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.HasIndex(e => e.SerialOrImei).IsUnique();
+                // Unique filtered index: mỗi loại mã không trùng, nhưng cho phép nhiều NULL
+                entity.HasIndex(e => e.Imei).IsUnique().HasFilter("[Imei] IS NOT NULL");
+                entity.HasIndex(e => e.SerialNumber).IsUnique().HasFilter("[SerialNumber] IS NOT NULL");
+                entity.HasIndex(e => e.InternalCode).IsUnique().HasFilter("[InternalCode] IS NOT NULL");
                 entity.HasOne(e => e.Product).WithMany().HasForeignKey(e => e.ProductId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Variant).WithMany().HasForeignKey(e => e.VariantId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Supplier).WithMany(s => s.StockItems).HasForeignKey(e => e.SupplierId).OnDelete(DeleteBehavior.SetNull);
@@ -792,6 +871,62 @@ namespace BaseCore.Repository
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
 
+            // -----------------------------------------------------------------
+            // Referential integrity for user-reference Guid columns.
+            // These columns hold Users.Id values but previously had no FK.
+            // Configured as FK-only (no navigation property) and nullable with
+            // ON DELETE NO ACTION so guest/system rows (NULL) stay valid and
+            // multiple user FKs on the same table do not create cascade cycles.
+            // -----------------------------------------------------------------
+            modelBuilder.Entity<Attachment>().HasOne<User>().WithMany().HasForeignKey(e => e.UploadedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Coupon>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<GoodsReceipt>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<InventoryReturn>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<InventoryReturn>().HasOne<User>().WithMany().HasForeignKey(e => e.ReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<InventoryTransaction>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Notification>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<OrderCancellation>().HasOne<User>().WithMany().HasForeignKey(e => e.RequestedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<OrderCancellation>().HasOne<User>().WithMany().HasForeignKey(e => e.ReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Order>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Order>().HasOne<User>().WithMany().HasForeignKey(e => e.CancelReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Order>().HasOne<User>().WithMany().HasForeignKey(e => e.UpdatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<OrderTimeline>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<RepairCase>().HasOne<User>().WithMany().HasForeignKey(e => e.TechnicianId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<RepairUpdate>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<StockItem>().HasOne<User>().WithMany().HasForeignKey(e => e.CustomerId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<StockMovement>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<SupportTicket>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<SupportTicket>().HasOne<User>().WithMany().HasForeignKey(e => e.AssignedToUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<SupportTicketUpdate>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<UserCoupon>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<VoucherSpin>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<WarrantyClaim>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<WarrantyClaimUpdate>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<WarrantyRecord>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+
+            // -----------------------------------------------------------------
+            // CHECK constraints for status/type columns whose value set is closed
+            // and fully controlled by the app (mirrors BaseCore.Common.StatusConstants).
+            // Open/dynamic sets (e.g. Order/Warranty/Ticket statuses, StockMovement
+            // types) are intentionally left without CHECK to avoid blocking valid
+            // future transitions. NULL passes the IN(...) check, so nullable columns
+            // remain valid when empty.
+            // -----------------------------------------------------------------
+            modelBuilder.Entity<StockItem>().ToTable(t => t.HasCheckConstraint("CK_StockItems_Status",
+                "[Status] IN ('InStock','Reserved','Sold','Returned','Repairing','Warranty','Damaged','Lost')"));
+            modelBuilder.Entity<InventoryReturn>().ToTable(t => t.HasCheckConstraint("CK_InventoryReturns_Status",
+                "[Status] IN ('Pending','Approved','Rejected','Restocked','Damaged')"));
+            modelBuilder.Entity<InventoryReturn>().ToTable(t => t.HasCheckConstraint("CK_InventoryReturns_Condition",
+                "[Condition] IN ('New','OpenBox','Used','Damaged','Defective')"));
+            modelBuilder.Entity<Coupon>().ToTable(t => t.HasCheckConstraint("CK_Coupons_Type",
+                "[Type] IN ('Product','Shipping')"));
+            modelBuilder.Entity<Coupon>().ToTable(t => t.HasCheckConstraint("CK_Coupons_DiscountType",
+                "[DiscountType] IN ('Amount','Percent','FreeShipping')"));
+            modelBuilder.Entity<VoucherSpin>().ToTable(t => t.HasCheckConstraint("CK_VoucherSpins_ResultType",
+                "[ResultType] IN ('Coupon','NoReward')"));
+            modelBuilder.Entity<UserCoupon>().ToTable(t => t.HasCheckConstraint("CK_UserCoupons_Status",
+                "[Status] IN ('Claimed','Used','Removed','Expired')"));
+
             // Seed initial data
             SeedData(modelBuilder);
         }
@@ -800,15 +935,13 @@ namespace BaseCore.Repository
         {
             // Seed Categories
             modelBuilder.Entity<Category>().HasData(
-                new Category { Id = 1, Name = "Dien thoai", Description = "Dien thoai va thiet bi di dong" },
+                new Category { Id = 1, Name = "Điện thoại", Description = "Điện thoại và thiết bị di động" },
                 new Category { Id = 2, Name = "Laptop", Description = "Laptop va may tinh xach tay" },
-                new Category { Id = 3, Name = "Accessories", Description = "Phu kien dien tu" },
-                new Category { Id = 4, Name = "Tablet", Description = "May tinh bang" },
-                new Category { Id = 5, Name = "Dong ho thong minh", Description = "Dong ho thong minh" },
-                new Category { Id = 6, Name = "May anh", Description = "May anh va thiet bi quay video" },
-                new Category { Id = 7, Name = "Tai nghe", Description = "Tai nghe va thiet bi am thanh" },
-                new Category { Id = 8, Name = "Audio", Description = "Loa va tai nghe" },
-                new Category { Id = 9, Name = "Electronics", Description = "Thiet bi dien tu" }
+                new Category { Id = 4, Name = "Tablet", Description = "Máy tính bảng" },
+                new Category { Id = 5, Name = "Đồng hồ thông minh", Description = "Đồng hồ thông minh" },
+                new Category { Id = 6, Name = "Máy ảnh", Description = "Máy ảnh và thiết bị quay video" },
+                new Category { Id = 7, Name = "Tai nghe", Description = "Tai nghe và thiết bị âm thanh" },
+                new Category { Id = 8, Name = "Audio", Description = "Loa va tai nghe" }
             );
 
             modelBuilder.Entity<Warehouse>().HasData(
@@ -1030,6 +1163,7 @@ namespace BaseCore.Repository
             await CleanupLegacyRolesAsync();
             await EnsureStoreSettingsAsync();
             await EnsureElectroCatalogAsync();
+            await EnsureProductVariantsAsync();
             await CleanupCategoryDuplicatesAsync();
             await DisableLegacyAdminAccountAsync();
             await EnsureDemoLoginUsersAsync();
@@ -1062,7 +1196,7 @@ namespace BaseCore.Repository
 
                 Users.Add(adminUser);
                 await SaveChangesAsync();
-                Console.WriteLine("âœ“ Admin user seeded successfully");
+                Console.WriteLine("✓ Admin user seeded successfully");
             }
         }
 
@@ -1103,6 +1237,212 @@ namespace BaseCore.Repository
             await SaveChangesAsync();
             Console.WriteLine($"Demo login user '{username}' is ready");
         }
+
+        private async Task EnsureProductVariantsAsync()
+        {
+            var products = await Products
+                .Where(p => p.IsActive)
+                .Include(p => p.Variants)
+                .ToListAsync();
+
+            var changed = false;
+
+            foreach (var product in products)
+            {
+                var seeds = BuildVariantSeeds(product).ToList();
+                if (seeds.Count == 0) continue;
+
+                foreach (var seed in seeds)
+                {
+                    var sku = BuildVariantSku(product, seed);
+                    var variant = product.Variants.FirstOrDefault(v => v.Sku == sku);
+
+                    if (variant == null)
+                    {
+                        variant = new ProductVariant
+                        {
+                            ProductId = product.Id,
+                            Sku = sku,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        ProductVariants.Add(variant);
+                        product.Variants.Add(variant);
+                        changed = true;
+                    }
+
+                    var price = product.Price + seed.PriceDelta;
+                    decimal? originalPrice = product.OriginalPrice.HasValue
+                        ? product.OriginalPrice.Value + seed.PriceDelta
+                        : null;
+                    var stock = Math.Max(1, seed.Stock);
+                    var imageUrl = string.IsNullOrWhiteSpace(seed.ImageUrl) ? product.ImageUrl : seed.ImageUrl;
+
+                    if (variant.VariantName != seed.VariantName ||
+                        variant.ColorName != seed.ColorName ||
+                        variant.ColorCode != seed.ColorCode ||
+                        variant.Storage != seed.Storage ||
+                        variant.Ram != seed.Ram ||
+                        variant.Price != price ||
+                        variant.OriginalPrice != originalPrice ||
+                        variant.Stock != stock ||
+                        variant.ImageUrl != imageUrl ||
+                        !variant.IsActive)
+                    {
+                        variant.VariantName = seed.VariantName;
+                        variant.ColorName = seed.ColorName;
+                        variant.ColorCode = seed.ColorCode;
+                        variant.Storage = seed.Storage;
+                        variant.Ram = seed.Ram;
+                        variant.Price = price;
+                        variant.OriginalPrice = originalPrice;
+                        variant.Stock = stock;
+                        variant.ImageUrl = imageUrl;
+                        variant.IsActive = true;
+                        variant.UpdatedAt = DateTime.UtcNow;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+            {
+                await SaveChangesAsync();
+                Console.WriteLine("Product variants synchronized successfully");
+            }
+        }
+
+        private static IEnumerable<VariantSeed> BuildVariantSeeds(Product product)
+        {
+            var name = (product.Name ?? string.Empty).ToLowerInvariant();
+            var stock = Math.Max(1, product.Stock);
+
+            if (name.Contains("iphone 15 pro"))
+            {
+                yield return new("128GB", "Natural Titanium", "#C8BFB1", "128GB", null, 0m, SplitStock(stock, 0));
+                yield return new("256GB", "Blue Titanium", "#4F6578", "256GB", null, 3000000m, SplitStock(stock, 1));
+                yield return new("512GB", "Black Titanium", "#3C3C3D", "512GB", null, 7000000m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("samsung galaxy s24"))
+            {
+                yield return new("256GB", "Onyx Black", "#1F1F1F", "256GB", "8GB", 0m, SplitStock(stock, 0));
+                yield return new("256GB", "Marble Gray", "#C8C8C8", "256GB", "8GB", 0m, SplitStock(stock, 1));
+                yield return new("512GB", "Cobalt Violet", "#6F5C91", "512GB", "12GB", 3500000m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("macbook air m3"))
+            {
+                yield return new("8GB/256GB", "Midnight", "#1E2A36", "256GB", "8GB", 0m, SplitStock(stock, 0));
+                yield return new("8GB/512GB", "Starlight", "#E3D2BA", "512GB", "8GB", 4000000m, SplitStock(stock, 1));
+                yield return new("16GB/512GB", "Space Gray", "#7D7E80", "512GB", "16GB", 7000000m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("dell xps 15"))
+            {
+                yield return new("16GB/512GB", "Platinum Silver", "#D6D6D6", "512GB", "16GB", 0m, SplitStock(stock, 0));
+                yield return new("32GB/1TB", "Platinum Silver", "#D6D6D6", "1TB", "32GB", 9000000m, SplitStock(stock, 1));
+                yield break;
+            }
+
+            if (name.Contains("ipad pro"))
+            {
+                yield return new("256GB WiFi", "Space Gray", "#6E6E73", "256GB", null, 0m, SplitStock(stock, 0));
+                yield return new("512GB WiFi", "Silver", "#D8D8D8", "512GB", null, 4000000m, SplitStock(stock, 1));
+                yield return new("512GB 5G", "Space Gray", "#6E6E73", "512GB", null, 7500000m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("ipad gen 10"))
+            {
+                yield return new("64GB WiFi", "Blue", "#87A9D6", "64GB", null, 0m, SplitStock(stock, 0));
+                yield return new("64GB WiFi", "Pink", "#F6B8C9", "64GB", null, 0m, SplitStock(stock, 1));
+                yield return new("256GB WiFi", "Silver", "#D8D8D8", "256GB", null, 3500000m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("xiaomi pad 6"))
+            {
+                yield return new("8GB/128GB", "Gravity Gray", "#4B4B4B", "128GB", "8GB", 0m, SplitStock(stock, 0));
+                yield return new("8GB/256GB", "Mist Blue", "#A7BCD6", "256GB", "8GB", 1800000m, SplitStock(stock, 1));
+                yield break;
+            }
+
+            if (name.Contains("apple watch series 10"))
+            {
+                yield return new("42mm GPS", "Jet Black", "#111111", null, null, 0m, SplitStock(stock, 0));
+                yield return new("46mm GPS", "Rose Gold", "#D7B6A3", null, null, 1600000m, SplitStock(stock, 1));
+                yield return new("46mm GPS + Cellular", "Silver", "#D8D8D8", null, null, 3500000m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("samsung galaxy watch7"))
+            {
+                yield return new("40mm Bluetooth", "Cream", "#E8DDC8", null, null, 0m, SplitStock(stock, 0));
+                yield return new("44mm Bluetooth", "Green", "#63766A", null, null, 1200000m, SplitStock(stock, 1));
+                yield break;
+            }
+
+            if (name.Contains("airpods pro 2"))
+            {
+                yield return new("USB-C", "White", "#FFFFFF", null, null, 0m, stock);
+                yield break;
+            }
+
+            if (name.Contains("jbl flip 6"))
+            {
+                yield return new("Black", "Black", "#111111", null, null, 0m, SplitStock(stock, 0));
+                yield return new("Blue", "Blue", "#1F5DA8", null, null, 0m, SplitStock(stock, 1));
+                yield return new("Red", "Red", "#C62828", null, null, 0m, SplitStock(stock, 2));
+                yield break;
+            }
+
+            if (name.Contains("canon eos r50"))
+            {
+                yield return new("Body only", "Black", "#111111", null, null, 0m, SplitStock(stock, 0));
+                yield return new("Kit 18-45mm", "Black", "#111111", null, null, 2500000m, SplitStock(stock, 1));
+                yield break;
+            }
+
+            if (name.Contains("gopro hero"))
+            {
+                yield return new("Black", "Black", "#111111", null, null, 0m, stock);
+                yield break;
+            }
+
+            yield return new("Mặc định", null, null, null, null, 0m, stock);
+        }
+
+        private static int SplitStock(int stock, int index)
+        {
+            var baseStock = Math.Max(1, stock / 3);
+            var remainder = Math.Max(0, stock - baseStock * 3);
+            return baseStock + (index < remainder ? 1 : 0);
+        }
+
+        private static string BuildVariantSku(Product product, VariantSeed seed)
+        {
+            var source = $"{product.Sku ?? product.Name}-{seed.VariantName}-{seed.ColorName}";
+            var chars = source
+                .ToUpperInvariant()
+                .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+                .ToArray();
+            var sku = new string(chars);
+            while (sku.Contains("--")) sku = sku.Replace("--", "-");
+            return sku.Trim('-');
+        }
+
+        private sealed record VariantSeed(
+            string? VariantName,
+            string? ColorName,
+            string? ColorCode,
+            string? Storage,
+            string? Ram,
+            decimal PriceDelta,
+            int Stock,
+            string? ImageUrl = null);
 
         private async Task DisableLegacyAdminAccountAsync()
         {
@@ -1252,15 +1592,13 @@ namespace BaseCore.Repository
         {
             var categorySeeds = new[]
             {
-                new Category { Id = 1, Name = "Äiá»‡n thoáº¡i", Description = "Äiá»‡n thoáº¡i vÃ  thiáº¿t bá»‹ di Ä‘á»™ng" },
+                new Category { Id = 1, Name = "Điện thoại", Description = "Điện thoại và thiết bị di động" },
                 new Category { Id = 2, Name = "Laptop", Description = "Laptop va may tinh xach tay" },
-                new Category { Id = 3, Name = "Accessories", Description = "Phu kien dien tu" },
-                new Category { Id = 4, Name = "Tablet", Description = "MÃ¡y tÃ­nh báº£ng" },
-                new Category { Id = 5, Name = "Äá»“ng há»“ thÃ´ng minh", Description = "Äá»“ng há»“ thÃ´ng minh" },
-                new Category { Id = 6, Name = "MÃ¡y áº£nh", Description = "MÃ¡y áº£nh vÃ  thiáº¿t bá»‹ quay video" },
-                new Category { Id = 7, Name = "Tai nghe", Description = "Tai nghe vÃ  thiáº¿t bá»‹ Ã¢m thanh" },
-                new Category { Id = 8, Name = "Audio", Description = "Loa va tai nghe" },
-                new Category { Id = 9, Name = "Electronics", Description = "Thiet bi dien tu" }
+                new Category { Id = 4, Name = "Tablet", Description = "Máy tính bảng" },
+                new Category { Id = 5, Name = "Đồng hồ thông minh", Description = "Đồng hồ thông minh" },
+                new Category { Id = 6, Name = "Máy ảnh", Description = "Máy ảnh và thiết bị quay video" },
+                new Category { Id = 7, Name = "Tai nghe", Description = "Tai nghe và thiết bị âm thanh" },
+                new Category { Id = 8, Name = "Audio", Description = "Loa va tai nghe" }
             };
 
             foreach (var seed in categorySeeds)
@@ -1299,59 +1637,50 @@ namespace BaseCore.Repository
                     return categoryId;
                 }
 
-                if (categoryName.Contains("Accessories", StringComparison.OrdinalIgnoreCase)) return CategoryIdByName("Accessories", 3);
                 if (categoryName.Contains("Audio", StringComparison.OrdinalIgnoreCase)) return CategoryIdByName("Audio", 8);
-                if (categoryName.Contains("Electronics", StringComparison.OrdinalIgnoreCase)) return CategoryIdByName("Electronics", 9);
                 if (categoryName.Contains("Laptop", StringComparison.OrdinalIgnoreCase)) return CategoryIdByName("Laptop", 2);
                 if (categoryName.Contains("Tablet", StringComparison.OrdinalIgnoreCase)) return CategoryIdByName("Tablet", 4);
 
                 var name = productName.ToLowerInvariant();
-                if (name.Contains("iphone") || name.Contains("galaxy") || name.Contains("xiaomi") || name.Contains("oppo") || name.Contains("vivo") || name.Contains("realme")) return CategoryIdByName("Äiá»‡n thoáº¡i", 1);
-                if (name.Contains("watch") || name.Contains("garmin")) return CategoryIdByName("Äá»“ng há»“ thÃ´ng minh", 5);
-                if (name.Contains("camera") || name.Contains("canon") || name.Contains("gopro") || name.Contains("sony a7") || name.Contains("dji")) return CategoryIdByName("MÃ¡y áº£nh", 6);
+                if (name.Contains("iphone") || name.Contains("galaxy") || name.Contains("xiaomi") || name.Contains("oppo") || name.Contains("vivo") || name.Contains("realme")) return CategoryIdByName("Điện thoại", 1);
+                if (name.Contains("watch") || name.Contains("garmin")) return CategoryIdByName("Đồng hồ thông minh", 5);
+                if (name.Contains("camera") || name.Contains("canon") || name.Contains("gopro") || name.Contains("sony a7") || name.Contains("dji")) return CategoryIdByName("Máy ảnh", 6);
                 if (name.Contains("airpods") || name.Contains("bose") || name.Contains("wh-1000")) return CategoryIdByName("Tai nghe", 7);
                 if (name.Contains("jbl") || name.Contains("marshall") || name.Contains("soundbar")) return CategoryIdByName("Audio", 8);
-                if (name.Contains("hub") || name.Contains("keyboard") || name.Contains("mouse")) return CategoryIdByName("Accessories", 3);
 
-                return CategoryIdByName("Electronics", 9);
+                return CategoryIdByName("Laptop", 2);
             }
             var productSeeds = new[]
             {
-                new { Name = "iPhone 15 Pro", Price = 28990000m, OriginalPrice = 32990000m, Stock = 12, Category = "Äiá»‡n thoáº¡i", Description = "Flagship Apple smartphone", ImageUrl = "/electro/img/product-1.png", Brand = "Apple", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Samsung Galaxy S24", Price = 21990000m, OriginalPrice = 24990000m, Stock = 15, Category = "Äiá»‡n thoáº¡i", Description = "Android flagship phone", ImageUrl = "/electro/img/product-2.png", Brand = "Samsung", Featured = true, BestSeller = true, NewArrival = true, Discounted = true },
+                new { Name = "iPhone 15 Pro", Price = 28990000m, OriginalPrice = 32990000m, Stock = 12, Category = "Điện thoại", Description = "Flagship Apple smartphone", ImageUrl = "/electro/img/product-1.png", Brand = "Apple", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "Samsung Galaxy S24", Price = 21990000m, OriginalPrice = 24990000m, Stock = 15, Category = "Điện thoại", Description = "Android flagship phone", ImageUrl = "/electro/img/product-2.png", Brand = "Samsung", Featured = true, BestSeller = true, NewArrival = true, Discounted = true },
                 new { Name = "MacBook Air M3", Price = 31990000m, OriginalPrice = 35990000m, Stock = 10, Category = "Laptop", Description = "Lightweight Apple laptop", ImageUrl = "/electro/img/product-3.png", Brand = "Apple", Featured = true, BestSeller = true, NewArrival = false, Discounted = true },
                 new { Name = "Dell XPS 15", Price = 35990000m, OriginalPrice = 39990000m, Stock = 8, Category = "Laptop", Description = "High-end productivity laptop", ImageUrl = "/electro/img/product-4.png", Brand = "Dell", Featured = true, BestSeller = false, NewArrival = false, Discounted = true },
                 new { Name = "ASUS ROG Strix G16", Price = 29990000m, OriginalPrice = 34990000m, Stock = 7, Category = "Laptop", Description = "Gaming laptop with RTX graphics", ImageUrl = "/electro/img/product-11.png", Brand = "ASUS", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "USB-C Hub 7-in-1", Price = 790000m, OriginalPrice = 990000m, Stock = 35, Category = "Accessories", Description = "Multi-port USB hub", ImageUrl = "/electro/img/product-6.png", Brand = "Baseus", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "Mechanical Keyboard", Price = 2490000m, OriginalPrice = 2990000m, Stock = 18, Category = "Accessories", Description = "RGB mechanical keyboard", ImageUrl = "/electro/img/product-7.png", Brand = "Keychron", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "Gaming Mouse", Price = 990000m, OriginalPrice = 1290000m, Stock = 30, Category = "Accessories", Description = "High DPI gaming mouse", ImageUrl = "/electro/img/product-8.png", Brand = "Logitech", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
                 new { Name = "iPad Pro 12.9", Price = 25990000m, OriginalPrice = 28990000m, Stock = 14, Category = "Tablet", Description = "Large tablet for professionals", ImageUrl = "/electro/img/product-7.png", Brand = "Apple", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
                 new { Name = "Samsung Galaxy Tab S9", Price = 19990000m, OriginalPrice = 22990000m, Stock = 12, Category = "Tablet", Description = "High-end Android tablet", ImageUrl = "/electro/img/product-13.png", Brand = "Samsung", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
                 new { Name = "Lenovo Tab P12", Price = 8990000m, OriginalPrice = 9990000m, Stock = 16, Category = "Tablet", Description = "Entertainment tablet", ImageUrl = "/electro/img/product-14.png", Brand = "Lenovo", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Apple Watch Series 9", Price = 9990000m, OriginalPrice = 11990000m, Stock = 16, Category = "Äá»“ng há»“ thÃ´ng minh", Description = "Premium smartwatch", ImageUrl = "/electro/img/product-8.png", Brand = "Apple", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
-                new { Name = "Samsung Galaxy Watch 6", Price = 7990000m, OriginalPrice = 8990000m, Stock = 20, Category = "Äá»“ng há»“ thÃ´ng minh", Description = "Android smartwatch", ImageUrl = "/electro/img/product-15.png", Brand = "Samsung", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "Garmin Venu 3", Price = 10990000m, OriginalPrice = 12990000m, Stock = 9, Category = "Äá»“ng há»“ thÃ´ng minh", Description = "Fitness smartwatch", ImageUrl = "/electro/img/product-16.png", Brand = "Garmin", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Canon EOS R5", Price = 64990000m, OriginalPrice = 69990000m, Stock = 5, Category = "MÃ¡y áº£nh", Description = "Professional mirrorless camera", ImageUrl = "/electro/img/product-9.png", Brand = "Canon", Featured = true, BestSeller = false, NewArrival = false, Discounted = true },
-                new { Name = "Sony A7IV", Price = 44990000m, OriginalPrice = 49990000m, Stock = 8, Category = "MÃ¡y áº£nh", Description = "Full-frame mirrorless camera", ImageUrl = "/electro/img/product-17.png", Brand = "Sony", Featured = true, BestSeller = false, NewArrival = false, Discounted = true },
-                new { Name = "DJI Osmo Pocket 3", Price = 13990000m, OriginalPrice = 15990000m, Stock = 11, Category = "MÃ¡y áº£nh", Description = "Compact video camera", ImageUrl = "/electro/img/product-18.png", Brand = "DJI", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
+                new { Name = "Apple Watch Series 9", Price = 9990000m, OriginalPrice = 11990000m, Stock = 16, Category = "Đồng hồ thông minh", Description = "Premium smartwatch", ImageUrl = "/electro/img/product-8.png", Brand = "Apple", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
+                new { Name = "Samsung Galaxy Watch 6", Price = 7990000m, OriginalPrice = 8990000m, Stock = 20, Category = "Đồng hồ thông minh", Description = "Android smartwatch", ImageUrl = "/electro/img/product-15.png", Brand = "Samsung", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
+                new { Name = "Garmin Venu 3", Price = 10990000m, OriginalPrice = 12990000m, Stock = 9, Category = "Đồng hồ thông minh", Description = "Fitness smartwatch", ImageUrl = "/electro/img/product-16.png", Brand = "Garmin", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "Canon EOS R5", Price = 64990000m, OriginalPrice = 69990000m, Stock = 5, Category = "Máy ảnh", Description = "Professional mirrorless camera", ImageUrl = "/electro/img/product-9.png", Brand = "Canon", Featured = true, BestSeller = false, NewArrival = false, Discounted = true },
+                new { Name = "Sony A7IV", Price = 44990000m, OriginalPrice = 49990000m, Stock = 8, Category = "Máy ảnh", Description = "Full-frame mirrorless camera", ImageUrl = "/electro/img/product-17.png", Brand = "Sony", Featured = true, BestSeller = false, NewArrival = false, Discounted = true },
+                new { Name = "DJI Osmo Pocket 3", Price = 13990000m, OriginalPrice = 15990000m, Stock = 11, Category = "Máy ảnh", Description = "Compact video camera", ImageUrl = "/electro/img/product-18.png", Brand = "DJI", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
                 new { Name = "AirPods Pro 2", Price = 5990000m, OriginalPrice = 6990000m, Stock = 25, Category = "Tai nghe", Description = "Wireless earbuds", ImageUrl = "/electro/img/product-5.png", Brand = "Apple", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
                 new { Name = "Bose QuietComfort 45", Price = 8990000m, OriginalPrice = 9990000m, Stock = 14, Category = "Tai nghe", Description = "Noise-cancelling headphones", ImageUrl = "/electro/img/product-10.png", Brand = "Bose", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
                 new { Name = "Sony WH-1000XM5", Price = 8490000m, OriginalPrice = 9490000m, Stock = 13, Category = "Tai nghe", Description = "Noise-cancelling headphones", ImageUrl = "/electro/img/product-19.png", Brand = "Sony", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
                 new { Name = "JBL PartyBox 310", Price = 11990000m, OriginalPrice = 13990000m, Stock = 6, Category = "Audio", Description = "Portable party speaker", ImageUrl = "/electro/img/product-12.png", Brand = "JBL", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
                 new { Name = "Marshall Stanmore III", Price = 10990000m, OriginalPrice = 12990000m, Stock = 8, Category = "Audio", Description = "Home bluetooth speaker", ImageUrl = "/electro/img/product-20.png", Brand = "Marshall", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
                 new { Name = "Soundbar Samsung Q600C", Price = 7990000m, OriginalPrice = 8990000m, Stock = 10, Category = "Audio", Description = "TV soundbar", ImageUrl = "/electro/img/product-21.png", Brand = "Samsung", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Xiaomi TV Box S 4K", Price = 1490000m, OriginalPrice = 1790000m, Stock = 24, Category = "Electronics", Description = "4K streaming box", ImageUrl = "/electro/img/product-22.png", Brand = "Xiaomi", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "TP-Link Archer AX55", Price = 1890000m, OriginalPrice = 2290000m, Stock = 22, Category = "Electronics", Description = "Wi-Fi 6 router", ImageUrl = "/electro/img/product-23.png", Brand = "TP-Link", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Anker PowerCore 20K", Price = 1290000m, OriginalPrice = 1590000m, Stock = 28, Category = "Electronics", Description = "Power bank 20000mAh", ImageUrl = "/electro/img/product-24.png", Brand = "Anker", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "iPhone 15", Price = 21990000m, OriginalPrice = 24990000m, Stock = 18, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Apple smartphone 128GB camera 48MP", ImageUrl = "/electro/img/product-6.png", Brand = "Apple", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "iPhone 14 Plus", Price = 18990000m, OriginalPrice = 21990000m, Stock = 11, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Large screen Apple smartphone 128GB", ImageUrl = "/electro/img/product-7.png", Brand = "Apple", Featured = false, BestSeller = false, NewArrival = false, Discounted = true },
-                new { Name = "Samsung Galaxy S24 Ultra", Price = 28990000m, OriginalPrice = 32990000m, Stock = 9, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Samsung flagship 12GB 256GB camera 200MP", ImageUrl = "/electro/img/product-8.png", Brand = "Samsung", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Samsung Galaxy A55 5G", Price = 9990000m, OriginalPrice = 11990000m, Stock = 28, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Samsung midrange phone 8GB 256GB 5000mAh", ImageUrl = "/electro/img/product-9.png", Brand = "Samsung", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "Xiaomi 14T Pro", Price = 16990000m, OriginalPrice = 18990000m, Stock = 16, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Xiaomi gaming phone 12GB 512GB camera Leica", ImageUrl = "/electro/img/product-10.png", Brand = "Xiaomi", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Xiaomi Redmi Note 13 Pro", Price = 7490000m, OriginalPrice = 8990000m, Stock = 32, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Affordable Xiaomi phone 8GB 256GB 5000mAh", ImageUrl = "/electro/img/product-11.png", Brand = "Xiaomi", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
-                new { Name = "OPPO Reno12 F", Price = 8990000m, OriginalPrice = 9990000m, Stock = 21, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "OPPO camera phone 8GB 256GB portrait", ImageUrl = "/electro/img/product-12.png", Brand = "OPPO", Featured = false, BestSeller = false, NewArrival = true, Discounted = false },
-                new { Name = "Vivo V30 5G", Price = 11990000m, OriginalPrice = 13990000m, Stock = 14, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Vivo phone 12GB 512GB selfie camera", ImageUrl = "/electro/img/product-13.png", Brand = "Vivo", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Realme 12 Pro Plus", Price = 10990000m, OriginalPrice = 12990000m, Stock = 17, Category = "Ã„ÂiÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i", Description = "Realme phone 12GB 512GB telephoto camera", ImageUrl = "/electro/img/product-14.png", Brand = "Realme", Featured = false, BestSeller = false, NewArrival = false, Discounted = true },
+                new { Name = "iPhone 15", Price = 21990000m, OriginalPrice = 24990000m, Stock = 18, Category = "Điện thoại", Description = "Apple smartphone 128GB camera 48MP", ImageUrl = "/electro/img/product-6.png", Brand = "Apple", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "iPhone 14 Plus", Price = 18990000m, OriginalPrice = 21990000m, Stock = 11, Category = "Điện thoại", Description = "Large screen Apple smartphone 128GB", ImageUrl = "/electro/img/product-7.png", Brand = "Apple", Featured = false, BestSeller = false, NewArrival = false, Discounted = true },
+                new { Name = "Samsung Galaxy S24 Ultra", Price = 28990000m, OriginalPrice = 32990000m, Stock = 9, Category = "Điện thoại", Description = "Samsung flagship 12GB 256GB camera 200MP", ImageUrl = "/electro/img/product-8.png", Brand = "Samsung", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "Samsung Galaxy A55 5G", Price = 9990000m, OriginalPrice = 11990000m, Stock = 28, Category = "Điện thoại", Description = "Samsung midrange phone 8GB 256GB 5000mAh", ImageUrl = "/electro/img/product-9.png", Brand = "Samsung", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
+                new { Name = "Xiaomi 14T Pro", Price = 16990000m, OriginalPrice = 18990000m, Stock = 16, Category = "Điện thoại", Description = "Xiaomi gaming phone 12GB 512GB camera Leica", ImageUrl = "/electro/img/product-10.png", Brand = "Xiaomi", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "Xiaomi Redmi Note 13 Pro", Price = 7490000m, OriginalPrice = 8990000m, Stock = 32, Category = "Điện thoại", Description = "Affordable Xiaomi phone 8GB 256GB 5000mAh", ImageUrl = "/electro/img/product-11.png", Brand = "Xiaomi", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
+                new { Name = "OPPO Reno12 F", Price = 8990000m, OriginalPrice = 9990000m, Stock = 21, Category = "Điện thoại", Description = "OPPO camera phone 8GB 256GB portrait", ImageUrl = "/electro/img/product-12.png", Brand = "OPPO", Featured = false, BestSeller = false, NewArrival = true, Discounted = false },
+                new { Name = "Vivo V30 5G", Price = 11990000m, OriginalPrice = 13990000m, Stock = 14, Category = "Điện thoại", Description = "Vivo phone 12GB 512GB selfie camera", ImageUrl = "/electro/img/product-13.png", Brand = "Vivo", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "Realme 12 Pro Plus", Price = 10990000m, OriginalPrice = 12990000m, Stock = 17, Category = "Điện thoại", Description = "Realme phone 12GB 512GB telephoto camera", ImageUrl = "/electro/img/product-14.png", Brand = "Realme", Featured = false, BestSeller = false, NewArrival = false, Discounted = true },
                 new { Name = "MacBook Pro 14 M3", Price = 45990000m, OriginalPrice = 49990000m, Stock = 7, Category = "Laptop", Description = "Apple laptop M3 16GB 512GB for creative work", ImageUrl = "/electro/img/product-15.png", Brand = "Apple", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
                 new { Name = "Dell Inspiron 15 3530", Price = 15990000m, OriginalPrice = 17990000m, Stock = 19, Category = "Laptop", Description = "Dell office laptop Intel Core i5 16GB 512GB", ImageUrl = "/electro/img/product-16.png", Brand = "Dell", Featured = false, BestSeller = false, NewArrival = false, Discounted = true },
                 new { Name = "Dell G15 Gaming", Price = 27990000m, OriginalPrice = 31990000m, Stock = 8, Category = "Laptop", Description = "Dell gaming laptop RTX 4050 16GB 512GB", ImageUrl = "/electro/img/product-17.png", Brand = "Dell", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
@@ -1362,10 +1691,10 @@ namespace BaseCore.Repository
                 new { Name = "iPad Air M2 11 inch", Price = 16990000m, OriginalPrice = 18990000m, Stock = 18, Category = "Tablet", Description = "Apple tablet M2 128GB WiFi", ImageUrl = "/electro/img/product-4.png", Brand = "Apple", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
                 new { Name = "iPad Gen 10 10.9 inch", Price = 9990000m, OriginalPrice = 11990000m, Stock = 24, Category = "Tablet", Description = "Apple tablet A14 64GB WiFi", ImageUrl = "/electro/img/product-5.png", Brand = "Apple", Featured = false, BestSeller = true, NewArrival = false, Discounted = true },
                 new { Name = "Xiaomi Pad 6", Price = 8490000m, OriginalPrice = 9990000m, Stock = 22, Category = "Tablet", Description = "Xiaomi tablet 11 inch 8GB 256GB", ImageUrl = "/electro/img/product-6.png", Brand = "Xiaomi", Featured = false, BestSeller = false, NewArrival = false, Discounted = true },
-                new { Name = "Apple Watch Series 10", Price = 10990000m, OriginalPrice = 12990000m, Stock = 20, Category = "Ã„ÂÃ¡Â»â€œng hÃ¡Â»â€œ thÃƒÂ´ng minh", Description = "Apple smartwatch GPS 46mm health tracking", ImageUrl = "/electro/img/product-7.png", Brand = "Apple", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
-                new { Name = "Samsung Galaxy Watch7", Price = 7490000m, OriginalPrice = 8990000m, Stock = 19, Category = "Ã„ÂÃ¡Â»â€œng hÃ¡Â»â€œ thÃƒÂ´ng minh", Description = "Samsung smartwatch 44mm Wear OS", ImageUrl = "/electro/img/product-8.png", Brand = "Samsung", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "Canon EOS R50 Kit", Price = 18990000m, OriginalPrice = 21990000m, Stock = 10, Category = "MÃƒÂ¡y Ã¡ÂºÂ£nh", Description = "Canon mirrorless camera vlog 4K kit lens", ImageUrl = "/electro/img/product-9.png", Brand = "Canon", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
-                new { Name = "GoPro Hero 13 Black", Price = 11990000m, OriginalPrice = 13990000m, Stock = 14, Category = "MÃƒÂ¡y Ã¡ÂºÂ£nh", Description = "GoPro action camera waterproof 5.3K video", ImageUrl = "/electro/img/product-10.png", Brand = "GoPro", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
+                new { Name = "Apple Watch Series 10", Price = 10990000m, OriginalPrice = 12990000m, Stock = 20, Category = "Đồng hồ thông minh", Description = "Apple smartwatch GPS 46mm health tracking", ImageUrl = "/electro/img/product-7.png", Brand = "Apple", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
+                new { Name = "Samsung Galaxy Watch7", Price = 7490000m, OriginalPrice = 8990000m, Stock = 19, Category = "Đồng hồ thông minh", Description = "Samsung smartwatch 44mm Wear OS", ImageUrl = "/electro/img/product-8.png", Brand = "Samsung", Featured = false, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "Canon EOS R50 Kit", Price = 18990000m, OriginalPrice = 21990000m, Stock = 10, Category = "Máy ảnh", Description = "Canon mirrorless camera vlog 4K kit lens", ImageUrl = "/electro/img/product-9.png", Brand = "Canon", Featured = true, BestSeller = false, NewArrival = true, Discounted = true },
+                new { Name = "GoPro Hero 13 Black", Price = 11990000m, OriginalPrice = 13990000m, Stock = 14, Category = "Máy ảnh", Description = "GoPro action camera waterproof 5.3K video", ImageUrl = "/electro/img/product-10.png", Brand = "GoPro", Featured = false, BestSeller = true, NewArrival = true, Discounted = true },
                 new { Name = "JBL Flip 6", Price = 2790000m, OriginalPrice = 3290000m, Stock = 26, Category = "Audio", Description = "JBL bluetooth speaker waterproof audio", ImageUrl = "/electro/img/product-11.png", Brand = "JBL", Featured = false, BestSeller = true, NewArrival = false, Discounted = true }
             };
 
@@ -1401,11 +1730,15 @@ namespace BaseCore.Repository
                     product = await Products.FindAsync(i + 1);
                 }
 
-                if (product == null)
+                // Chỉ tạo mới khi sản phẩm chưa tồn tại. KHÔNG ghi đè sản phẩm đã có
+                // để tránh reset các thay đổi do người dùng chỉnh sửa khi seeder chạy lại.
+                if (product != null)
                 {
-                    product = new Product();
-                    await Products.AddAsync(product);
+                    continue;
                 }
+
+                product = new Product();
+                await Products.AddAsync(product);
 
                 product.Name = seed.Name;
                 product.Price = seed.Price;
@@ -1463,7 +1796,7 @@ namespace BaseCore.Repository
                     definition = new SpecDefinition
                     {
                         CategoryId = seed.CategoryId,
-                        Name = "Mau sac",
+                        Name = "Màu sắc",
                         Code = "color",
                         DataType = "select",
                         InputType = "select",
@@ -1472,6 +1805,7 @@ namespace BaseCore.Repository
                         IsFilterable = true,
                         AllowCustomValue = false,
                         IsActive = true,
+                        IsVariantAxis = true, // Màu là trục biến thể, không phải thông số chung
                         CreatedAt = DateTime.UtcNow
                     };
 
@@ -1481,21 +1815,23 @@ namespace BaseCore.Repository
                 }
                 else
                 {
-                    if (definition.Name != "Mau sac" ||
+                    if (definition.Name != "Màu sắc" ||
                         definition.DataType != "select" ||
                         definition.InputType != "select" ||
                         !definition.IsComparable ||
                         !definition.IsFilterable ||
                         definition.AllowCustomValue ||
-                        !definition.IsActive)
+                        !definition.IsActive ||
+                        !definition.IsVariantAxis)
                     {
-                        definition.Name = "Mau sac";
+                        definition.Name = "Màu sắc";
                         definition.DataType = "select";
                         definition.InputType = "select";
                         definition.IsComparable = true;
                         definition.IsFilterable = true;
                         definition.AllowCustomValue = false;
                         definition.IsActive = true;
+                        definition.IsVariantAxis = true;
                         definition.UpdatedAt = DateTime.UtcNow;
                         changed = true;
                     }
@@ -1716,7 +2052,7 @@ namespace BaseCore.Repository
         private static bool IsObsoleteCategory(Category category, int? cameraId, int? headphonesId)
         {
             var key = NormalizeCategoryName(category.Name);
-            if (key is "accessories" or "phu kien" or "audio") return true;
+            if (key is "accessories" or "phu kien" or "phu kien dien tu" or "electronics" or "thiet bi dien tu") return true;
             if (key == "may anh" && cameraId.HasValue && category.Id != cameraId.Value) return true;
             if (key == "tai nghe" && headphonesId.HasValue && category.Id != headphonesId.Value) return true;
             return false;
@@ -1738,8 +2074,8 @@ namespace BaseCore.Repository
 
             return builder
                 .ToString()
-                .Replace("Ä‘", "d")
-                .Replace("Ä", "D")
+                .Replace("đ", "d")
+                .Replace("Đ", "D")
                 .Normalize(NormalizationForm.FormC)
                 .Trim()
                 .ToLowerInvariant();
@@ -1758,6 +2094,4 @@ namespace BaseCore.Repository
         }
     }
 }
-
-
 

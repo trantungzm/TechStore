@@ -36,7 +36,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "Admin,CustomerService,Technical,Warranty")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> All([FromQuery] SupportSearchDto search)
         {
             var result = await _service.GetAllAsync(search);
@@ -127,7 +127,7 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> Get(int id)
         {
             var userId = CurrentUserId();
-            var isStaff = IsStaff();
+            var isStaff = IsStaffViewer();
             var item = await _service.GetAsync(id);
             if (item == null) return NotFound(new { message = "Ticket khong ton tai." });
             if (!isStaff)
@@ -151,6 +151,8 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> AddUpdate(int id, [FromBody] CreateTicketUpdateDto dto)
         {
+            // Admin & Warehouse chỉ được xem ticket, không trả lời/ghi chú.
+            if (User.IsInRole("Admin") || User.IsInRole("Warehouse")) return Forbid();
             var isStaff = IsStaff();
             if (!isStaff)
             {
@@ -167,7 +169,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin,CustomerService,Technical,Warranty")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Status(int id, [FromBody] UpdateTicketStatusDto dto)
         {
             var item = await _service.UpdateStatusAsync(id, dto, CurrentUserId());
@@ -175,7 +177,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("{id}/assign")]
-        [Authorize(Roles = "Admin,CustomerService,Technical,Warranty")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Assign(int id, [FromBody] AssignTicketDto dto)
         {
             var item = await _service.AssignAsync(id, dto, CurrentUserId());
@@ -187,9 +189,16 @@ namespace BaseCore.APIService.Controllers
             var raw = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
             return Guid.TryParse(raw, out var value) ? value : null;
         }
+        // Người thao tác ticket (ghi): chỉ Technical. Admin chỉ được xem.
         private bool IsStaff()
         {
-            return User.IsInRole("Admin") || User.IsInRole("CustomerService") || User.IsInRole("Technical") || User.IsInRole("Warranty");
+            return User.IsInRole("Technical");
+        }
+
+        // Người được xem nội dung staff (mọi ticket + ghi chú nội bộ): Admin & Warehouse (chỉ xem) + Technical.
+        private bool IsStaffViewer()
+        {
+            return User.IsInRole("Admin") || User.IsInRole("Warehouse") || User.IsInRole("Technical");
         }
         private static object Paged<T>(List<T> items, int totalCount, int page, int pageSize)
         {

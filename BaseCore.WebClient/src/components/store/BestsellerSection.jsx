@@ -13,10 +13,7 @@ const serviceItems = [
     { icon: 'fas fa-headset', title: 'Online Service', text: 'Free return products in 30 days' },
 ];
 
-const offers = [
-    { title: 'Smart Camera', subtitle: 'Tìm camera tốt nhất dành cho bạn!', discount: '40%', imageUrl: '/electro/img/product-1.png' },
-    { title: 'SmartPhone', subtitle: 'Tìm điện thoại tốt nhất dành cho bạn!', discount: '30%', imageUrl: '/electro/img/product-2.png' },
-];
+const offers = [];
 
 const BestsellerSection = ({ products }) => (
     <>

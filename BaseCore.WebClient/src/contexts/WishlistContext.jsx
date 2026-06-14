@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
+import { isStoreViewOnlyUser, STORE_VIEW_ONLY_MESSAGE, toast } from '../utils/store';
 
 const WishlistContext = createContext(null);
 const BASE_WISHLIST_KEY = 'store_wishlist';
 
 export const WishlistProvider = ({ children }) => {
     const { user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const storageKey = user ? `${BASE_WISHLIST_KEY}_${user.userId}` : `${BASE_WISHLIST_KEY}_guest`;
 
     const [wishlistItems, setWishlistItems] = useState([]);
@@ -24,6 +26,10 @@ export const WishlistProvider = ({ children }) => {
     }, [wishlistItems, storageKey, loadedKey]);
 
     const toggleWishlist = (product) => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         setWishlistItems((currentItems) => {
             const exists = currentItems.find((item) => item.id === product.id);
             if (exists) {
@@ -37,7 +43,13 @@ export const WishlistProvider = ({ children }) => {
         return wishlistItems.some((item) => item.id === productId);
     };
 
-    const clearWishlist = () => setWishlistItems([]);
+    const clearWishlist = () => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
+        setWishlistItems([]);
+    };
 
     return (
         <WishlistContext.Provider

@@ -1,14 +1,20 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useCart } from '../../contexts/CartContext';
 import ProductCard from '../../components/store/ProductCard';
 import PageHero from '../../components/store/PageHero';
-import { setPageMeta, t, toast } from '../../utils/store';
+import { isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t, toast } from '../../utils/store';
+import { confirmDialog } from '../../utils/notify';
+
+const hasActiveVariants = (product) => Array.isArray(product?.variants) && product.variants.some((variant) => variant?.isActive !== false);
 
 const Wishlist = () => {
+    const { user } = useAuth();
     const { wishlistItems, clearWishlist } = useWishlist();
     const { addItem } = useCart();
+    const isViewOnly = isStoreViewOnlyUser(user);
 
     useEffect(() => {
         setPageMeta({
@@ -18,18 +24,23 @@ const Wishlist = () => {
     }, []);
 
     const handleAddAll = () => {
-        const inStock = wishlistItems.filter((p) => p.stock > 0);
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
+        const inStock = wishlistItems.filter((p) => p.stock > 0 && !hasActiveVariants(p));
         if (inStock.length === 0) {
-            toast('Tất cả sản phẩm đã hết hàng.', 'danger');
+            toast('Không có sản phẩm nào có thể thêm nhanh. Vui lòng chọn phiên bản trong trang chi tiết.', 'danger');
             return;
         }
         inStock.forEach((p) => addItem(p, 1));
-        toast(`Đã thêm ${inStock.length} sản phẩm vào giỏ hàng!`, 'success');
+        const skipped = wishlistItems.filter((p) => p.stock > 0 && hasActiveVariants(p)).length;
+        toast(`Đã thêm ${inStock.length} sản phẩm vào giỏ hàng${skipped ? `, bỏ qua ${skipped} sản phẩm cần chọn phiên bản` : ''}.`, 'success');
     };
 
     return (
         <>
-            <PageHero title={t('Wishlist')} current={t('Wishlist')} kicker="Saved for later" />
+            <PageHero title={t('Wishlist')} current={t('Wishlist')} kicker="Đã lưu" />
 
             <section className="ts-container py-12">
                 {wishlistItems.length === 0 ? (
@@ -51,7 +62,7 @@ const Wishlist = () => {
                                     <i className="fas fa-shopping-cart"></i>Thêm tất cả vào giỏ
                                 </button>
                                 <button
-                                    onClick={() => { if (window.confirm('Xóa toàn bộ danh sách yêu thích?')) clearWishlist(); }}
+                                    onClick={() => confirmDialog({ title: 'Xóa danh sách yêu thích', message: 'Xóa toàn bộ danh sách yêu thích?', tone: 'danger', confirmText: 'Xóa' }).then((ok) => { if (ok) clearWishlist(); })}
                                     className="ts-btn ts-btn-outline text-xs"
                                 >
                                     <i className="fas fa-trash"></i>Xóa tất cả

@@ -41,12 +41,14 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] bool? isBestSeller,
             [FromQuery] bool? isNewArrival,
             [FromQuery] bool? isDiscounted,
+            [FromQuery] bool includeInactive,
             [FromQuery] string? sortBy,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
             var effectivePage = Math.Max(1, page);
             var effectivePageSize = Math.Clamp(pageSize, 1, 100);
+            var canIncludeInactive = includeInactive && User.IsInRole("Admin");
             var (products, totalCount) = await _productService.SearchAsync(new ProductSearchDto
             {
                 Keyword = keyword,
@@ -60,6 +62,7 @@ namespace BaseCore.APIService.Controllers
                 IsBestSeller = isBestSeller,
                 IsNewArrival = isNewArrival,
                 IsDiscounted = isDiscounted,
+                IncludeInactive = canIncludeInactive,
                 SortBy = sortBy,
                 Page = effectivePage,
                 PageSize = effectivePageSize
@@ -85,9 +88,9 @@ namespace BaseCore.APIService.Controllers
         /// Get product by ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, [FromQuery] bool includeInactive = false)
         {
-            var product = await _productService.GetProductByIdAsync(id);
+            var product = await _productService.GetProductByIdAsync(id, includeInactive && User.IsInRole("Admin"));
             if (product == null)
                 return NotFound(new { message = "Product not found" });
 
@@ -99,6 +102,16 @@ namespace BaseCore.APIService.Controllers
                 dto.RatingCount = rating.RatingCount;
             }
             return Ok(dto);
+        }
+
+        /// <summary>
+        /// Distinct list of existing brands (for the product form brand picker).
+        /// </summary>
+        [HttpGet("brands")]
+        public async Task<IActionResult> GetBrands()
+        {
+            var brands = await _productService.GetBrandsAsync();
+            return Ok(brands);
         }
 
         /// <summary>

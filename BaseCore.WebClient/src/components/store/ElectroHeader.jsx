@@ -4,10 +4,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useCompare } from '../../contexts/CompareContext';
 import { useWishlist } from '../../contexts/WishlistContext';
-import { productApi } from '../../services/api';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { productApi, orderApi } from '../../services/api';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
-import { formatCurrency, resolveProductImage, t } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
@@ -15,7 +16,6 @@ const SEARCH_HISTORY_KEY = 'searchHistory';
 const categoryNameMap = {
     Smartphone: 'Điện thoại',
     Laptop: 'Laptop',
-    Accessories: 'Phụ kiện',
     Audio: 'Tai nghe',
     Smartwatch: 'Đồng hồ thông minh',
     Camera: 'Máy ảnh',
@@ -110,10 +110,34 @@ const ElectroHeader = () => {
     const { wishlistCount } = useWishlist();
     const { compareCount } = useCompare();
     const { coupons } = usePublicCoupons();
+    const settings = useStoreSettings();
+    const canAccessAdminArea = isAdmin() || isStoreViewOnlyUser(user);
+    const [activeOrderCount, setActiveOrderCount] = useState(0);
     const navigate = useNavigate();
     const location = useLocation();
     const dashboardLabel = user?.name || user?.username || t('My Dashboard');
+    // Tên gọi ngắn: lấy từ cuối của họ tên (tiếng Việt), nếu không có thì dùng username.
+    const firstName = (() => {
+        const full = String(user?.name || '').trim();
+        if (full) return full.split(/\s+/).pop();
+        return user?.username || '';
+    })();
     const trimmedKeyword = keyword.trim();
+
+    // Đếm số đơn "cần chú ý" = đơn đang xử lý, chưa kết thúc (loại các trạng thái cuối).
+    useEffect(() => {
+        if (!isAuthenticated) { setActiveOrderCount(0); return undefined; }
+        let active = true;
+        const terminal = ['Completed', 'Cancelled', 'CancelRejected', 'Returned', 'Failed'];
+        orderApi.getMyOrders()
+            .then((res) => {
+                if (!active) return;
+                const list = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+                setActiveOrderCount(list.filter((o) => !terminal.includes(o.status)).length);
+            })
+            .catch(() => { if (active) setActiveOrderCount(0); });
+        return () => { active = false; };
+    }, [isAuthenticated]);
 
     const suggestedProducts = useMemo(() => {
         const normalizedKeyword = normalizeSearchText(trimmedKeyword);
@@ -493,15 +517,30 @@ const ElectroHeader = () => {
 
                 {/* Icons */}
                 <div className="flex items-center gap-2 md:ml-0 ml-auto">
-                    <NavLink to="/compare" onClick={scrollToPageTop} className={iconButtonClass} aria-label="So sánh">
-                        <i className="fas fa-random text-sm"></i>
+                    <NavLink
+                        to="/compare"
+                        onClick={scrollToPageTop}
+                        className={cn(iconButtonClass, compareCount > 0 && "text-black")}
+                        aria-label="So sánh"
+                    >
+                        <i className={`${compareCount > 0 ? 'fas' : 'far'} fa-clone text-sm`}></i>
                         {compareCount > 0 && <span className={badgeClass}>{compareCount}</span>}
                     </NavLink>
-                    <NavLink to="/wishlist" onClick={scrollToPageTop} className={iconButtonClass} aria-label="Yêu thích">
-                        <i className="fas fa-heart text-sm"></i>
+                    <NavLink
+                        to="/wishlist"
+                        onClick={scrollToPageTop}
+                        className={cn(iconButtonClass, wishlistCount > 0 && "text-black")}
+                        aria-label="Yêu thích"
+                    >
+                        <i className={`${wishlistCount > 0 ? 'fas' : 'far'} fa-heart text-sm`}></i>
                         {wishlistCount > 0 && <span className={badgeClass}>{wishlistCount}</span>}
                     </NavLink>
-                    <NavLink to="/cart" onClick={scrollToPageTop} className={iconButtonClass} aria-label="Giỏ hàng">
+                    <NavLink
+                        to="/cart"
+                        onClick={scrollToPageTop}
+                        className={cn(iconButtonClass, itemCount > 0 && "text-black")}
+                        aria-label="Giỏ hàng"
+                    >
                         <i className="fas fa-shopping-cart text-sm"></i>
                         {itemCount > 0 && <span className={badgeClass}>{itemCount}</span>}
                     </NavLink>
@@ -510,10 +549,20 @@ const ElectroHeader = () => {
                         <button
                             type="button"
                             onClick={() => setOpenDropdown(openDropdown === 'dashboard' ? null : 'dashboard')}
-                            className={cn(iconButtonClass, isAuthenticated && "border-[var(--color-primary)]/60 text-[var(--color-fg)]")}
+                            className={cn(
+                                "relative inline-flex h-10 items-center gap-2 rounded-full border border-[var(--color-border)] text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]",
+                                isAuthenticated && firstName ? "pl-3 pr-3.5" : "w-10 justify-center",
+                                isAuthenticated && "border-[var(--color-primary)]/60 text-[var(--color-fg)]"
+                            )}
                             aria-label={dashboardLabel}
                         >
                             <i className="fas fa-user text-sm"></i>
+                            {isAuthenticated && firstName && (
+                                <span className="max-w-[100px] truncate text-sm font-medium">{firstName}</span>
+                            )}
+                            {isAuthenticated && activeOrderCount > 0 && (
+                                <span className={badgeClass}>{activeOrderCount}</span>
+                            )}
                         </button>
                         {openDropdown === 'dashboard' && (
                             <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ts-anim-fade-up">
@@ -523,12 +572,17 @@ const ElectroHeader = () => {
                                 </div>
                                 {isAuthenticated ? (
                                     <div className="p-1">
-                                        <Link to="/orders" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Đơn hàng của tôi</Link>
+                                        <Link to="/orders" onClick={closeMainMenus} className="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">
+                                            <span><i className="fas fa-box-open mr-2 text-xs text-[var(--color-fg-dim)]"></i>Đơn hàng của tôi</span>
+                                            {activeOrderCount > 0 && (
+                                                <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">{activeOrderCount}</span>
+                                            )}
+                                        </Link>
                                         <Link to="/tickets" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Hỗ trợ của tôi</Link>
                                         <Link to="/promotion" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Phiếu giảm giá</Link>
                                         <Link to="/wishlist" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Sản phẩm yêu thích</Link>
                                         <Link to="/compare" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">So sánh sản phẩm</Link>
-                                        {isAdmin() && <Link to="/admin" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-accent)] hover:bg-[var(--color-surface-2)]">Trang quản trị</Link>}
+                                        {canAccessAdminArea && <Link to="/admin" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-accent)] hover:bg-[var(--color-surface-2)]">Trang quản trị</Link>}
                                         <div className="my-1 h-px bg-[var(--color-border)]" />
                                         <button type="button" onClick={handleLogout} className="block w-full rounded-sm px-3 py-2 text-left text-sm text-[var(--color-danger)] hover:bg-[var(--color-surface-2)]">
                                             Đăng xuất
@@ -594,13 +648,15 @@ const ElectroHeader = () => {
                                 </NavLink>
                             ))}
                         </nav>
-                        <a
-                            href="tel:+01234567890"
-                            className="ts-btn ts-btn-outline mt-4 w-full"
-                        >
-                            <i className="fas fa-mobile-alt"></i>
-                            +0123 456 7890
-                        </a>
+                        {settings.hotline && (
+                            <a
+                                href={`tel:${settings.hotline.replace(/\s+/g, '')}`}
+                                className="ts-btn ts-btn-outline mt-4 w-full"
+                            >
+                                <i className="fas fa-mobile-alt"></i>
+                                {settings.hotline}
+                            </a>
+                        )}
                     </div>
                 </div>
             )}

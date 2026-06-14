@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { categoryApi, couponApi } from '../services/api';
+import { categoryApi, couponApi, brandApi } from '../services/api';
+import { confirmDialog } from '../utils/notify';
 
 const inputClass = 'rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
@@ -77,16 +78,20 @@ const getStatusLabel = (coupon) => {
 const AdminCoupons = () => {
     const [coupons, setCoupons] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [brands, setBrands] = useState([]);
     const [stats, setStats] = useState(null);
     const [analytics, setAnalytics] = useState([]);
     const [form, setForm] = useState(defaultForm);
     const [editingId, setEditingId] = useState(null);
+    const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
+    const [keywordInput, setKeywordInput] = useState('');
+    const [filters, setFilters] = useState({ keyword: '', type: '', status: '' });
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -99,14 +104,17 @@ const AdminCoupons = () => {
     useEffect(() => {
         const initData = async () => {
             try {
-                const [categoryRes, statsRes, analyticsRes] = await Promise.all([
+                const [categoryRes, statsRes, analyticsRes, brandRes] = await Promise.all([
                     categoryApi.getAll(),
                     couponApi.getStats(),
-                    couponApi.getAnalytics({ top: 10 })
+                    couponApi.getAnalytics({ top: 10 }),
+                    brandApi.getByCategory()
                 ]);
                 setCategories(unwrapItems(categoryRes.data));
                 setStats(statsRes.data || null);
                 setAnalytics(unwrapItems(analyticsRes.data));
+                const brandList = Array.isArray(brandRes.data) ? brandRes.data : [];
+                setBrands([...new Set(brandList.map((b) => b.name ?? b.Name).filter(Boolean))].sort());
             } catch (err) {
                 console.error("Lỗi khởi tạo dữ liệu Admin Coupons:", err);
             }
@@ -114,16 +122,22 @@ const AdminCoupons = () => {
         initData();
     }, []);
 
-    // Chỉ theo dõi và Fetch lại danh sách Coupons khi chuyển trang
+    // Fetch lại danh sách khi chuyển trang HOẶC khi áp dụng bộ lọc (React 18 gộp setPage + setFilters -> chỉ 1 lần fetch)
     useEffect(() => {
         loadCoupons(page);
-    }, [page]);
+    }, [page, filters]);
 
     const loadCoupons = async (nextPage = page) => {
         setLoading(true);
         setError('');
         try {
-            const couponRes = await couponApi.getAll({ page: nextPage, pageSize });
+            const couponRes = await couponApi.getAll({
+                page: nextPage,
+                pageSize,
+                keyword: filters.keyword.trim() || undefined,
+                type: filters.type || undefined,
+                status: filters.status || undefined,
+            });
             const items = unwrapItems(couponRes.data);
             const meta = unwrapPageMeta(couponRes.data, items, nextPage, pageSize);
             
@@ -155,6 +169,25 @@ const AdminCoupons = () => {
         }
     };
 
+    const applySearch = (event) => {
+        event?.preventDefault();
+        setFilters((current) => ({ ...current, keyword: keywordInput.trim() }));
+        setPage(1);
+    };
+
+    const changeFilter = (patch) => {
+        setFilters((current) => ({ ...current, ...patch }));
+        setPage(1);
+    };
+
+    const clearFilters = () => {
+        setKeywordInput('');
+        setFilters({ keyword: '', type: '', status: '' });
+        setPage(1);
+    };
+
+    const hasActiveFilters = Boolean(filters.keyword || filters.type || filters.status);
+
     const updateField = (field, value) => {
         setForm((current) => {
             const updated = { ...current, [field]: value };
@@ -171,6 +204,15 @@ const AdminCoupons = () => {
         setForm(defaultForm());
         setError('');
         setSuccess('');
+        setShowForm(false);
+    };
+
+    const openCreateForm = () => {
+        setEditingId(null);
+        setForm(defaultForm());
+        setError('');
+        setSuccess('');
+        setShowForm(true);
     };
 
     const editCoupon = (coupon) => {
@@ -206,6 +248,7 @@ const AdminCoupons = () => {
         });
         setError('');
         setSuccess('');
+        setShowForm(true);
     };
 
     const buildPayload = () => {
@@ -284,7 +327,7 @@ const AdminCoupons = () => {
     };
 
     const handleDelete = async (coupon) => {
-        if (!window.confirm(`Xóa phiếu "${coupon.code}"? Phiếu đã có người nhận sẽ chỉ bị tắt.`)) return;
+        if (!(await confirmDialog({ title: 'Xóa phiếu giảm giá', message: `Xóa phiếu "${coupon.code}"? Phiếu đã có người nhận sẽ chỉ bị tắt.`, tone: 'danger', confirmText: 'Xóa' }))) return;
         setError('');
         try {
             await couponApi.delete(coupon.id);
@@ -317,7 +360,7 @@ const AdminCoupons = () => {
                     <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Khuyến mãi</p>
                     <h2 className="mb-0 text-2xl font-bold text-[var(--color-fg)]">Phiếu giảm giá / Voucher</h2>
                 </div>
-                <button type="button" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)]" onClick={resetForm}>
+                <button type="button" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)]" onClick={openCreateForm}>
                     <i className="fas fa-plus mr-2"></i>
                     Thêm phiếu
                 </button>
@@ -380,10 +423,46 @@ const AdminCoupons = () => {
                 </div>
             )}
 
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="grid gap-5">
                 <section className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
                     <div className="border-b border-[var(--color-border)] px-4 py-3">
                         <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Danh sách phiếu</h3>
+                    </div>
+                    {/* Tìm kiếm 3 tiêu chí: Từ khóa (mã/tên) · Loại · Trạng thái */}
+                    <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3">
+                        <form onSubmit={applySearch} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px_180px_auto]">
+                            <div className="relative">
+                                <i className="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-fg-dim)]"></i>
+                                <input
+                                    className={`${inputClass} w-full pl-9`}
+                                    placeholder="Tìm theo mã hoặc tên phiếu..."
+                                    value={keywordInput}
+                                    onChange={(e) => setKeywordInput(e.target.value)}
+                                />
+                            </div>
+                            <select className={`${inputClass} w-full`} value={filters.type} onChange={(e) => changeFilter({ type: e.target.value })}>
+                                <option value="">Tất cả loại</option>
+                                <option value="Product">Sản phẩm</option>
+                                <option value="Shipping">Vận chuyển</option>
+                            </select>
+                            <select className={`${inputClass} w-full`} value={filters.status} onChange={(e) => changeFilter({ status: e.target.value })}>
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="active">Hoạt động</option>
+                                <option value="disabled">Tạm dừng</option>
+                                <option value="upcoming">Sắp diễn ra</option>
+                                <option value="expired">Hết hạn</option>
+                            </select>
+                            <div className="flex gap-2">
+                                <button type="submit" className="rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-accent)]/90">
+                                    <i className="fas fa-magnifying-glass mr-1"></i>Tìm
+                                </button>
+                                {hasActiveFilters && (
+                                    <button type="button" onClick={clearFilters} className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-3)]" title="Xóa lọc">
+                                        <i className="fas fa-xmark"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </form>
                     </div>
                     <div className="p-4">
                         {loading ? (
@@ -404,6 +483,13 @@ const AdminCoupons = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {coupons.length === 0 && (
+                                            <tr>
+                                                <td colSpan="7" className="py-10 text-center text-sm font-semibold text-[var(--color-fg-muted)]">
+                                                    {hasActiveFilters ? 'Không tìm thấy phiếu phù hợp bộ lọc.' : 'Chưa có phiếu giảm giá nào.'}
+                                                </td>
+                                            </tr>
+                                        )}
                                         {coupons.map((coupon) => (
                                             <tr key={coupon.id}>
                                                 <td>
@@ -470,11 +556,21 @@ const AdminCoupons = () => {
                     </div>
                 </section>
 
-                <aside className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] ">
-                    <div className="border-b border-[var(--color-border)] px-4 py-3">
+                {showForm && (
+                <div className="fixed bottom-0 left-0 right-0 top-14 z-[70] flex items-center justify-center bg-slate-950/50 px-4 pb-8 pt-4 lg:left-64">
+                <aside className="flex max-h-[calc(100vh-7rem)] w-full max-w-3xl flex-col overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
                         <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">{editingId ? 'Sửa phiếu' : 'Thêm phiếu'}</h3>
+                        <button
+                            type="button"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-fg-dim)] hover:bg-[var(--color-surface-3)] hover:text-[var(--color-fg)]"
+                            onClick={resetForm}
+                            aria-label="Đóng"
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
                     </div>
-                    <form onSubmit={handleSubmit} className="space-y-4 p-4">
+                    <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4">
                         <div className="grid grid-cols-2 gap-3">
                             <label className="block">
                                 <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Mã</span>
@@ -567,7 +663,11 @@ const AdminCoupons = () => {
                         {form.scopeType === 'Brand' && (
                             <label className="block">
                                 <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Thương hiệu</span>
-                                <input className={`${inputClass} w-full`} value={form.brand} onChange={(e) => updateField('brand', e.target.value)} />
+                                <select className={`${inputClass} w-full`} value={form.brand} onChange={(e) => updateField('brand', e.target.value)}>
+                                    <option value="">Chọn thương hiệu</option>
+                                    {form.brand && !brands.includes(form.brand) && <option value={form.brand}>{form.brand}</option>}
+                                    {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+                                </select>
                             </label>
                         )}
                         <div className="grid grid-cols-3 gap-2 text-sm font-semibold text-[var(--color-fg)]">
@@ -615,13 +715,15 @@ const AdminCoupons = () => {
                             </div>
                         </div>
                         <div className="flex justify-end gap-2">
-                            {editingId && <button type="button" className="rounded-md border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={resetForm}>Hủy</button>}
+                            <button type="button" className="rounded-md border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={resetForm}>Hủy</button>
                             <button type="submit" className="rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" disabled={saving}>
                                 {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Tạo phiếu'}
                             </button>
                         </div>
                     </form>
                 </aside>
+                </div>
+                )}
             </div>
         </div>
     );

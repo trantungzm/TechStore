@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { productApi } from '../services/api';
-import { formatCurrency, resolveProductImage } from '../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, STORE_VIEW_ONLY_MESSAGE, toast } from '../utils/store';
+import { useAuth } from './AuthContext';
 
 const CompareContext = createContext(null);
 const COMPARE_STORAGE_KEY = 'compareProducts';
@@ -39,6 +40,8 @@ const readCompareItems = () => {
 };
 
 export const CompareProvider = ({ children }) => {
+    const { user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const [compareItems, setCompareItems] = useState(() => readCompareItems());
     const [isCompareBarVisible, setIsCompareBarVisible] = useState(false);
     const [isCompareBarCollapsed, setIsCompareBarCollapsed] = useState(false);
@@ -49,6 +52,7 @@ export const CompareProvider = ({ children }) => {
     });
     const navigate = useNavigate();
     const location = useLocation();
+    const previousPathRef = useRef(location.pathname);
     const isCompareRoute = location.pathname === '/compare';
 
     useEffect(() => {
@@ -83,7 +87,30 @@ export const CompareProvider = ({ children }) => {
         }
     }, [compareItems.length, isCompareRoute]);
 
+    useEffect(() => {
+        if (previousPathRef.current !== location.pathname) {
+            previousPathRef.current = location.pathname;
+            setIsCompareBarVisible(false);
+            setPickerOpen(false);
+        }
+    }, [location.pathname]);
+
+    useEffect(() => {
+        const hideOnTabChange = () => {
+            if (document.hidden) {
+                setIsCompareBarVisible(false);
+                setPickerOpen(false);
+            }
+        };
+        document.addEventListener('visibilitychange', hideOnTabChange);
+        return () => document.removeEventListener('visibilitychange', hideOnTabChange);
+    }, []);
+
     const addToCompare = (product) => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return false;
+        }
         if (!product?.id) return false;
         setIsCompareBarVisible(true);
         let added = false;
@@ -112,6 +139,10 @@ export const CompareProvider = ({ children }) => {
     const toggleCompare = (product) => addToCompare(product);
 
     const removeFromCompare = (productId) => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         setCompareItems((current) => {
             const nextItems = current.filter((item) => item.id !== productId);
             if (nextItems.length === 0) {
@@ -123,6 +154,10 @@ export const CompareProvider = ({ children }) => {
     };
 
     const clearCompare = () => {
+        if (isViewOnly) {
+            toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
+            return;
+        }
         setCompareItems([]);
         setIsCompareBarVisible(false);
         setPickerOpen(false);

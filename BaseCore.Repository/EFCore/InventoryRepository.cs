@@ -129,6 +129,16 @@ namespace BaseCore.Repository.EFCore
         Task<List<StockItem>> GetByOrderAsync(int orderId);
         Task<List<StockItem>> GetAvailableAsync(int productId, int? variantId, int quantity, int? warehouseId = null);
         Task<bool> AnySerialAsync(string serialOrImei);
+        Task<bool> AnyImeiAsync(string imei);
+        Task<bool> AnySerialNumberAsync(string serialNumber);
+        Task<bool> AnyInternalCodeAsync(string internalCode);
+        Task<int> CountByInternalCodePrefixAsync(string prefix);
+        Task<List<StockItem>> GetAllDetailedAsync();
+        Task<bool> AnyByVariantAsync(int variantId);
+        Task<int> CountInStockByVariantIdAsync(int variantId);
+        Task<int> CountInStockByProductAsync(int productId);
+        Task<Dictionary<int, int>> CountInStockByVariantAsync(int productId);
+        Task<List<(int ProductId, int Count)>> CountInStockGroupedAsync();
         Task<(List<StockItem> Items, int TotalCount)> SearchAsync(InventorySearchDto search);
         Task<(List<StockItem> Items, int TotalCount)> GetAgedAsync(AgedStockSearchDto search);
     }
@@ -160,7 +170,9 @@ namespace BaseCore.Repository.EFCore
 
         public Task<List<StockItem>> GetAvailableAsync(int productId, int? variantId, int quantity, int? warehouseId = null)
         {
-            var q = _dbSet.AsQueryable().Where(x => x.ProductId == productId && x.Status == "InStock");
+            // Include multiple statuses: InStock, Received, Available
+            var availableStatuses = new[] { "InStock", "Received", "Available" };
+            var q = _dbSet.AsQueryable().Where(x => x.ProductId == productId && availableStatuses.Contains(x.Status));
             if (variantId.HasValue) q = q.Where(x => x.VariantId == variantId.Value);
             if (warehouseId.HasValue) q = q.Where(x => x.WarehouseId == warehouseId.Value);
             return q.OrderBy(x => x.ReceivedAt).ThenBy(x => x.Id).Take(Math.Max(0, quantity)).ToListAsync();
@@ -170,6 +182,70 @@ namespace BaseCore.Repository.EFCore
         {
             var serial = serialOrImei.Trim().ToLower();
             return _dbSet.AnyAsync(x => x.SerialOrImei.ToLower() == serial);
+        }
+
+        public Task<bool> AnyImeiAsync(string imei)
+        {
+            var v = imei.Trim().ToLower();
+            return _dbSet.AnyAsync(x => x.Imei != null && x.Imei.ToLower() == v);
+        }
+
+        public Task<bool> AnySerialNumberAsync(string serialNumber)
+        {
+            var v = serialNumber.Trim().ToLower();
+            return _dbSet.AnyAsync(x => x.SerialNumber != null && x.SerialNumber.ToLower() == v);
+        }
+
+        public Task<bool> AnyInternalCodeAsync(string internalCode)
+        {
+            var v = internalCode.Trim().ToLower();
+            return _dbSet.AnyAsync(x => x.InternalCode != null && x.InternalCode.ToLower() == v);
+        }
+
+        public Task<int> CountByInternalCodePrefixAsync(string prefix)
+        {
+            var p = prefix + "-";
+            return _dbSet.CountAsync(x => x.InternalCode != null && x.InternalCode.StartsWith(p));
+        }
+
+        public Task<List<StockItem>> GetAllDetailedAsync()
+        {
+            return DetailQuery().ToListAsync();
+        }
+
+        public Task<int> CountInStockByProductAsync(int productId)
+        {
+            return _dbSet.CountAsync(x => x.ProductId == productId && x.Status == "InStock");
+        }
+
+        public Task<int> CountInStockByVariantIdAsync(int variantId)
+        {
+            return _dbSet.CountAsync(x => x.VariantId == variantId && x.Status == "InStock");
+        }
+
+        public async Task<Dictionary<int, int>> CountInStockByVariantAsync(int productId)
+        {
+            var rows = await _dbSet
+                .Where(x => x.ProductId == productId && x.Status == "InStock" && x.VariantId != null)
+                .GroupBy(x => x.VariantId!.Value)
+                .Select(g => new { VariantId = g.Key, Count = g.Count() })
+                .ToListAsync();
+            return rows.ToDictionary(r => r.VariantId, r => r.Count);
+        }
+
+        public async Task<List<(int ProductId, int Count)>> CountInStockGroupedAsync()
+        {
+            var rows = await _dbSet
+                .Where(x => x.Status == "InStock")
+                .GroupBy(x => x.ProductId)
+                .Select(g => new { ProductId = g.Key, Count = g.Count() })
+                .ToListAsync();
+            return rows.Select(r => (r.ProductId, r.Count)).ToList();
+        }
+
+        public Task<bool> AnyByVariantAsync(int variantId)
+        {
+            return _dbSet.AnyAsync(x => x.VariantId == variantId);
         }
 
         public async Task<(List<StockItem> Items, int TotalCount)> SearchAsync(InventorySearchDto search)
@@ -201,6 +277,7 @@ namespace BaseCore.Repository.EFCore
         {
             return _dbSet
                 .Include(x => x.Product)
+                    .ThenInclude(x => x!.Supplier)
                 .Include(x => x.Variant)
                 .Include(x => x.Supplier)
                 .Include(x => x.Warehouse)

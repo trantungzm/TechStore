@@ -5,6 +5,14 @@ namespace BaseCore.APIService
 {
     public static class StoreDtoMapper
     {
+        private static int GetDisplayStock(Product product)
+        {
+            var variants = product.Variants ?? new List<ProductVariant>();
+            return variants.Count > 0
+                ? variants.Where(v => v.IsActive).Sum(v => v.Stock)
+                : product.Stock;
+        }
+
         public static CategoryDto ToCategoryDto(Category category) => new()
         {
             Id = category.Id,
@@ -20,7 +28,7 @@ namespace BaseCore.APIService
             Sku = product.Sku,
             Price = product.Price,
             OriginalPrice = product.OriginalPrice,
-            Stock = product.Stock,
+            Stock = GetDisplayStock(product),
             ImageUrl = product.ImageUrl,
             Description = product.Description,
             Brand = product.Brand,
@@ -42,7 +50,9 @@ namespace BaseCore.APIService
             RequiresSerialTracking = product.RequiresSerialTracking,
             WarrantyMonths = product.WarrantyMonths,
             CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt
+            UpdatedAt = product.UpdatedAt,
+            Variants = (product.Variants ?? new()).Select(ToVariantDto).ToList(),
+            Specs = (product.SpecValues ?? new()).OrderBy(x => x.SpecDefinition?.SortOrder ?? 0).Select(ToSpecValueDto).ToList()
         };
 
         public static ProductListDto ToListDto(Product product, double ratingAverage, int ratingCount)
@@ -63,7 +73,7 @@ namespace BaseCore.APIService
                 Sku = product.Sku,
                 Price = product.Price,
                 OriginalPrice = product.OriginalPrice,
-                Stock = product.Stock,
+                Stock = GetDisplayStock(product),
                 ImageUrl = product.ImageUrl,
                 Description = product.Description,
                 LongDescription = product.LongDescription,
@@ -131,6 +141,10 @@ namespace BaseCore.APIService
             Name = definition.Name,
             Code = definition.Code,
             DataType = definition.DataType,
+            InputType = definition.InputType,
+            Unit = definition.Unit,
+            AllowCustomValue = definition.AllowCustomValue,
+            IsVariantAxis = definition.IsVariantAxis,
             CreatedAt = definition.CreatedAt,
             UpdatedAt = definition.UpdatedAt,
             Options = (definition.Options ?? new()).OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id).Select(ToSpecOptionDto).ToList()

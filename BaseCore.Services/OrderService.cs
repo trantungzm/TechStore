@@ -218,6 +218,7 @@ namespace BaseCore.Services
 
             var pickupSlotStartAt = dto.PickupSlotStartAt ?? dto.ExpectedPickupTime;
             var pickupSlotEndAt = dto.PickupSlotEndAt;
+            var deliveryAddress = BuildShippingAddress(dto, shippingMethod);
             var productDiscount = 0m;
             var shippingDiscount = 0m;
             ValidateCouponsResultDto? couponValidation = null;
@@ -276,7 +277,7 @@ namespace BaseCore.Services
                 PaymentStatus = paymentStatus,
                 TransactionId = dto.TransactionId?.Trim(),
                 ShippingMethod = shippingMethod,
-                ShippingAddress = BuildShippingAddress(dto, shippingMethod),
+                ShippingAddress = deliveryAddress,
                 Province = shippingMethod == "Delivery" ? dto.Province?.Trim() : null,
                 District = shippingMethod == "Delivery" ? dto.District?.Trim() : null,
                 Ward = shippingMethod == "Delivery" ? dto.Ward?.Trim() : null,
@@ -312,12 +313,8 @@ namespace BaseCore.Services
                 if (!product.RequiresSerialTracking) continue;
 
                 var available = await _stockItemRepository.GetAvailableAsync(detail.ProductId, detail.VariantId, detail.Quantity, shippingMethod == "StorePickup" ? pickupWarehouseId : null);
-                if (available.Count < detail.Quantity)
-                {
-                    var name = detail.ProductName ?? product.Name ?? $"#{detail.ProductId}";
-                    throw new InvalidOperationException($"Khong du serial/IMEI trong kho de xuat ban cho san pham {name}.");
-                }
-
+                
+                // Allow back-order if not enough stock items available (assign serials for available items only)
                 var serials = new List<string>();
                 foreach (var item in available)
                 {
@@ -337,7 +334,11 @@ namespace BaseCore.Services
                     serials.Add(item.SerialOrImei);
                 }
 
-                detail.SerialOrImei = serials.Count == 1 ? serials[0] : string.Join(", ", serials);
+                // If not all units have serials assigned, it's a back-order
+                if (serials.Count > 0)
+                {
+                    detail.SerialOrImei = serials.Count == 1 ? serials[0] : string.Join(", ", serials);
+                }
                 await _orderDetailRepository.UpdateAsync(detail);
             }
 
@@ -569,7 +570,8 @@ namespace BaseCore.Services
             cancellation.ReviewedAt = now;
             await _cancellationRepository.UpdateAsync(cancellation);
 
-            order.Status = dto.Approved ? "Cancelled" : "CancelRejected";
+            var resumeStatus = dto.Approved ? "Cancelled" : await ResolveStatusBeforeCancellationAsync(order.Id);
+            order.Status = resumeStatus;
             order.CancelReviewedAt = now;
             order.CancelReviewedByUserId = reviewedByUserId;
             order.CancelReviewNote = dto.AdminNote?.Trim();
@@ -589,8 +591,39 @@ namespace BaseCore.Services
                 dto.Approved ? "Yeu cau huy don da duoc chap nhan" : "Yeu cau huy don bi tu choi",
                 dto.AdminNote,
                 reviewedByUserId);
+            if (!dto.Approved)
+            {
+                await AddTimeline(
+                    order.Id,
+                    order.Status,
+                    "Don hang tiep tuc xu ly",
+                    null,
+                    reviewedByUserId);
+            }
 
             return await GetOrderWithDetailsAsync(order.Id);
+        }
+
+        private async Task<string> ResolveStatusBeforeCancellationAsync(int orderId)
+        {
+            var timeline = await _timelineRepository.GetByOrderAsync(orderId);
+            var cancelIndex = timeline.FindLastIndex(x =>
+                string.Equals(NormalizeStatus(x.Status), "CancelRequested", StringComparison.OrdinalIgnoreCase));
+
+            var candidates = cancelIndex > 0
+                ? timeline.Take(cancelIndex).Reverse()
+                : timeline.AsEnumerable().Reverse();
+
+            foreach (var item in candidates)
+            {
+                var status = NormalizeStatus(item.Status);
+                if (IsResumableOrderStatus(status))
+                {
+                    return status;
+                }
+            }
+
+            return "Processing";
         }
 
         public async Task<List<OrderTimelineDto>> GetTimelineAsync(int id)
@@ -716,11 +749,12 @@ namespace BaseCore.Services
             if (dto.Items.Any(x => x.ProductId <= 0 || x.Quantity <= 0)) throw new InvalidOperationException("Invalid order item");
 
             var shippingMethod = NormalizeShippingMethod(dto.ShippingMethod);
-            if (shippingMethod == "Delivery" &&
-                (string.IsNullOrWhiteSpace(dto.Province) ||
-                 string.IsNullOrWhiteSpace(dto.District) ||
-                 string.IsNullOrWhiteSpace(dto.Ward) ||
-                 string.IsNullOrWhiteSpace(dto.AddressDetail)))
+            var hasStructuredDeliveryAddress =
+                !string.IsNullOrWhiteSpace(dto.Province) &&
+                !string.IsNullOrWhiteSpace(dto.Ward) &&
+                !string.IsNullOrWhiteSpace(dto.AddressDetail);
+            var hasFullDeliveryAddress = !string.IsNullOrWhiteSpace(dto.ShippingAddress);
+            if (shippingMethod == "Delivery" && !hasFullDeliveryAddress && !hasStructuredDeliveryAddress)
             {
                 throw new InvalidOperationException("Delivery address is required");
             }
@@ -788,6 +822,11 @@ namespace BaseCore.Services
         private static string NormalizeCancelledPaymentStatus(string? currentStatus)
         {
             return string.Equals(currentStatus, "Paid", StringComparison.OrdinalIgnoreCase) ? "Refunded" : "Cancelled";
+        }
+
+        private static bool IsResumableOrderStatus(string status)
+        {
+            return status is "Pending" or "Confirmed" or "Processing" or "ReadyForPickup" or "Shipping" or "Shipped" or "Delivered";
         }
 
         private static void EnsureAllowedTransition(string currentStatus, string nextStatus)
@@ -907,6 +946,7 @@ namespace BaseCore.Services
                 PickupSlotEndAt = order.PickupSlotEndAt,
                 ReadyForPickupAt = order.ReadyForPickupAt,
                 PickupExpiresAt = order.PickupExpiresAt,
+                PickupVerificationPin = order.PickupVerificationPin,
                 Carrier = order.Carrier,
                 TrackingCode = order.TrackingCode,
                 ShippedAt = order.ShippedAt,
@@ -918,6 +958,11 @@ namespace BaseCore.Services
                 RefundTransactionId = order.RefundTransactionId,
                 ReturnStatus = order.ReturnStatus,
                 ReturnedAt = order.ReturnedAt,
+                CancelReason = order.CancelReason,
+                CancelRequestedAt = order.CancelRequestedAt,
+                CancelReviewedAt = order.CancelReviewedAt,
+                CancelReviewedByUserId = order.CancelReviewedByUserId,
+                CancelReviewNote = order.CancelReviewNote,
                 ItemCount = order.OrderDetails?.Sum(x => x.Quantity) ?? 0,
                 CreatedAt = order.CreatedAt,
                 UpdatedAt = order.UpdatedAt

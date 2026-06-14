@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -7,7 +5,6 @@ namespace BaseCore.Entities
     {
         public int Id { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid UserId { get; set; }
 
         public DateTime SpinDate { get; set; }

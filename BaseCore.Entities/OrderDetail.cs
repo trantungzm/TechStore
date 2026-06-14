@@ -1,10 +1,8 @@
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
     public class OrderDetail
     {
-        [BsonId]
         public int Id { get; set; }
 
         public int OrderId { get; set; }
@@ -25,16 +23,12 @@ namespace BaseCore.Entities
         public string? SerialOrImei { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [BsonIgnore]
         public Order? Order { get; set; }
 
-        [BsonIgnore]
         public Product? Product { get; set; }
 
-        [BsonIgnore]
         public ProductVariant? Variant { get; set; }
 
-        [BsonIgnore]
         public List<OrderDetailStockItem> StockItems { get; set; } = new();
     }
 }

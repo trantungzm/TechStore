@@ -18,6 +18,10 @@ namespace BaseCore.DTO.Inventory
         public int? WarehouseId { get; set; }
         public int Quantity { get; set; }
         public List<string> Serials { get; set; } = new();
+        // Loại mã: "IMEI" | "SERIAL" | "AUTO_INTERNAL_CODE"
+        public string? CodeType { get; set; }
+        // (giữ tương thích) true = tự sinh mã tem nội bộ
+        public bool AutoGenerateSerials { get; set; }
         public DateTime? ReceivedAt { get; set; }
         public string? Note { get; set; }
     }
@@ -29,6 +33,10 @@ namespace BaseCore.DTO.Inventory
         public int Quantity { get; set; }
         public decimal UnitCost { get; set; }
         public List<string> Serials { get; set; } = new();
+        // Loại mã: "IMEI" | "SERIAL" | "AUTO_INTERNAL_CODE"
+        public string? CodeType { get; set; }
+        // (giữ tương thích) true = tự sinh mã tem nội bộ
+        public bool AutoGenerateSerials { get; set; }
     }
 
     public class GoodsReceiptDto
@@ -72,6 +80,10 @@ namespace BaseCore.DTO.Inventory
         public int? SupplierId { get; set; }
         public string? SupplierName { get; set; }
         public string SerialOrImei { get; set; } = "";
+        public string? SerialNumber { get; set; }
+        public string? Imei { get; set; }
+        public string? InternalCode { get; set; }
+        public bool IsAutoTag { get; set; }
         public string? Sku { get; set; }
         public string Status { get; set; } = "";
         public decimal UnitCost { get; set; }
@@ -174,6 +186,29 @@ namespace BaseCore.DTO.Inventory
     {
         public string RestockStatus { get; set; } = "";
         public string? Note { get; set; }
+    }
+
+    public class ReconcileStockRequestDto
+    {
+        // true = sinh mã tem cho phần tồn ảo (Stock > số StockItems) ở SP không biến thể
+        public bool BackfillTags { get; set; }
+    }
+
+    public class StockReconcileItemDto
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = "";
+        public int OldStock { get; set; }
+        public int NewStock { get; set; }
+        public int TagsBackfilled { get; set; }
+    }
+
+    public class StockReconcileResultDto
+    {
+        public int ProductsChecked { get; set; }
+        public int ProductsChanged { get; set; }
+        public int TagsBackfilled { get; set; }
+        public List<StockReconcileItemDto> Changes { get; set; } = new();
     }
 
     public class StockMovementDto

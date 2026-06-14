@@ -1,13 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { t } from '../../utils/store';
-
-const contactItems = [
-    { icon: 'fas fa-map-marker-alt', title: 'Address', text: '123 Street New York.USA' },
-    { icon: 'fas fa-envelope', title: 'Mail Us', text: 'info@example.com' },
-    { icon: 'fas fa-phone-alt', title: 'Telephone', text: '(+012) 3456 7890' },
-    { icon: 'fas fa-globe', title: 'Website', text: 'techstore.example.com' },
-];
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const footerGroups = [
     {
@@ -41,15 +35,21 @@ const footerGroups = [
     },
 ];
 
-const socials = [
-    { icon: 'fab fa-facebook-f', href: '#', label: 'Facebook' },
-    { icon: 'fab fa-instagram', href: '#', label: 'Instagram' },
-    { icon: 'fab fa-x-twitter', href: '#', label: 'Twitter' },
-    { icon: 'fab fa-youtube', href: '#', label: 'YouTube' },
-    { icon: 'fab fa-tiktok', href: '#', label: 'TikTok' },
-];
+const ElectroFooter = () => {
+    const settings = useStoreSettings();
+    const storeName = settings.storeName || 'TechStore';
+    const contactItems = [
+        settings.address && { icon: 'fas fa-map-marker-alt', title: 'Address', text: settings.address },
+        settings.supportEmail && { icon: 'fas fa-envelope', title: 'Mail Us', text: settings.supportEmail },
+        settings.hotline && { icon: 'fas fa-phone-alt', title: 'Telephone', text: settings.hotline },
+        settings.supportTime && { icon: 'fas fa-clock', title: 'Working Hours', text: settings.supportTime },
+    ].filter(Boolean);
+    const socials = [
+        settings.facebookUrl && { icon: 'fab fa-facebook-f', href: settings.facebookUrl, label: 'Facebook' },
+        settings.zaloUrl && { icon: 'fas fa-comment-dots', href: settings.zaloUrl, label: 'Zalo' },
+    ].filter(Boolean);
 
-const ElectroFooter = () => (
+    return (
     <footer className="relative mt-32 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent" />
 
@@ -69,7 +69,7 @@ const ElectroFooter = () => (
             <div className="grid grid-cols-1 gap-12 py-16 md:grid-cols-2 lg:grid-cols-4">
                 <div className="lg:col-span-1">
                     <Link to="/" className="ts-display text-2xl text-[var(--color-fg)]">
-                        Tech<span className="ts-gradient-text">Store</span>
+                        {storeName}
                     </Link>
                     <p className="mt-5 text-sm leading-relaxed text-[var(--color-fg-muted)]">
                         Sản phẩm công nghệ được tuyển chọn — chính hãng, bảo hành minh bạch, dịch vụ tận tâm.
@@ -127,12 +127,13 @@ const ElectroFooter = () => (
         <div className="border-t border-[var(--color-border)]">
             <div className="ts-container flex flex-col items-center justify-between gap-3 py-6 md:flex-row">
                 <p className="text-xs text-[var(--color-fg-dim)]">
-                    © {new Date().getFullYear()} <Link to="/" className="text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-primary)]">TechStore</Link> · Bản quyền được bảo lưu.
+                    © {new Date().getFullYear()} <Link to="/" className="text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-primary)]">{storeName}</Link> · Bản quyền được bảo lưu.
                 </p>
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-fg-dim)]">Crafted on BaseCore</p>
             </div>
         </div>
     </footer>
-);
+    );
+};
 
 export default ElectroFooter;

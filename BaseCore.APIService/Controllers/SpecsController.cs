@@ -5,6 +5,8 @@ using BaseCore.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -60,7 +62,7 @@ namespace BaseCore.APIService.Controllers
                 InputType = FixedSpecInputType,
                 SortOrder = await GetNextSortOrder(dto.CategoryId),
                 IsComparable = true,
-                AllowCustomValue = false,
+                AllowCustomValue = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -132,13 +134,30 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> CreateOption([FromBody] SpecOptionDto dto)
         {
-            var validation = await ValidateOption(dto);
+            var validation = await ValidateOption(dto, ignoreDuplicate: true);
             if (validation != null) return validation;
+
+            var value = dto.Value.Trim();
+            var existingOptions = await _db.SpecOptions
+                .Where(x => x.SpecDefinitionId == dto.SpecDefinitionId)
+                .ToListAsync();
+            var existingOption = existingOptions.FirstOrDefault(x => SameOptionValue(x.Value, value));
+            if (existingOption != null)
+            {
+                existingOption.Value = value;
+                existingOption.IsActive = true;
+                existingOption.DisplayOrder = dto.DisplayOrder > 0
+                    ? dto.DisplayOrder
+                    : existingOption.DisplayOrder;
+                existingOption.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                return Ok(StoreDtoMapper.ToSpecOptionDto(existingOption));
+            }
 
             var option = new SpecOption
             {
                 SpecDefinitionId = dto.SpecDefinitionId,
-                Value = dto.Value.Trim(),
+                Value = value,
                 DisplayOrder = dto.DisplayOrder,
                 IsActive = dto.IsActive,
                 CreatedAt = DateTime.UtcNow
@@ -233,6 +252,10 @@ namespace BaseCore.APIService.Controllers
                 return BadRequest(new { message = "Specs must belong to the product category", invalidDefinitionIds });
             }
 
+            // Bỏ qua thuộc tính "trục biến thể" (RAM/Bộ nhớ/Màu) — chúng được nhập ở Biến thể, không lưu như thông số chung.
+            var variantAxisIds = definitions.Where(x => x.IsVariantAxis).Select(x => x.Id).ToHashSet();
+            incoming = incoming.Where(x => !variantAxisIds.Contains(x.SpecDefinitionId)).ToList();
+
             var categoryDefinitionIds = await _db.SpecDefinitions
                 .Where(x => x.CategoryId == product.CategoryId)
                 .Select(x => x.Id)
@@ -258,6 +281,10 @@ namespace BaseCore.APIService.Controllers
                     {
                         return BadRequest(new { message = "Spec option must belong to the selected definition", item.SpecDefinitionId, item.SpecOptionId });
                     }
+                }
+                else
+                {
+                    await EnsureCustomOptionsAsync(definition, item);
                 }
 
                 var value = existing.FirstOrDefault(x => x.SpecDefinitionId == item.SpecDefinitionId);
@@ -295,6 +322,85 @@ namespace BaseCore.APIService.Controllers
             return await GetProductSpecs(productId);
         }
 
+        private async Task EnsureCustomOptionsAsync(SpecDefinition definition, ProductSpecValueUpsertDto item)
+        {
+            var inputType = (definition.InputType ?? definition.DataType ?? string.Empty).Trim().ToLowerInvariant();
+            if (inputType is "boolean" or "bool") return;
+            if (string.IsNullOrWhiteSpace(item.ValueText)) return;
+
+            var values = inputType == "multiselect"
+                ? SplitCustomValues(item.ValueText)
+                : new List<string> { item.ValueText.Trim() };
+            if (values.Count == 0) return;
+
+            var nextOrder = definition.Options.Count == 0 ? 1 : definition.Options.Max(x => x.DisplayOrder) + 1;
+            foreach (var customValue in values)
+            {
+                var option = definition.Options.FirstOrDefault(x => SameOptionValue(x.Value, customValue));
+                if (option != null)
+                {
+                    if (!option.IsActive)
+                    {
+                        option.IsActive = true;
+                        option.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    if (inputType != "multiselect")
+                    {
+                        item.SpecOptionId = option.Id;
+                        item.ValueText = option.Value;
+                    }
+                    continue;
+                }
+
+                var newOption = new SpecOption
+                {
+                    SpecDefinitionId = definition.Id,
+                    Value = customValue,
+                    DisplayOrder = nextOrder++,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                definition.Options.Add(newOption);
+                _db.SpecOptions.Add(newOption);
+
+                if (inputType != "multiselect")
+                {
+                    await _db.SaveChangesAsync();
+                    item.SpecOptionId = newOption.Id;
+                    item.ValueText = newOption.Value;
+                }
+            }
+        }
+
+        private static List<string> SplitCustomValues(string raw)
+        {
+            return raw
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static bool SameOptionValue(string? left, string? right)
+        {
+            return NormalizeOptionValue(left) == NormalizeOptionValue(right);
+        }
+
+        private static string NormalizeOptionValue(string? value)
+        {
+            var normalized = (value ?? string.Empty).Trim().Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder(normalized.Length);
+            foreach (var ch in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
+                {
+                    builder.Append(char.ToLowerInvariant(ch));
+                }
+            }
+            return builder.ToString().Normalize(NormalizationForm.FormC);
+        }
+
         private async Task<IActionResult?> ValidateDefinition(SpecDefinitionDto dto, int? currentId = null)
         {
             if (dto == null) return BadRequest(new { message = "Invalid request" });
@@ -316,7 +422,7 @@ namespace BaseCore.APIService.Controllers
             return null;
         }
 
-        private async Task<IActionResult?> ValidateOption(SpecOptionDto dto, int? currentId = null)
+        private async Task<IActionResult?> ValidateOption(SpecOptionDto dto, int? currentId = null, bool ignoreDuplicate = false)
         {
             if (dto == null) return BadRequest(new { message = "Invalid request" });
             if (dto.SpecDefinitionId <= 0) return BadRequest(new { message = "Spec definition is required" });
@@ -324,6 +430,8 @@ namespace BaseCore.APIService.Controllers
 
             var definitionExists = await _db.SpecDefinitions.AnyAsync(x => x.Id == dto.SpecDefinitionId);
             if (!definitionExists) return BadRequest(new { message = "Spec definition not found" });
+
+            if (ignoreDuplicate) return null;
 
             var value = dto.Value.Trim();
             var duplicate = await _db.SpecOptions.AnyAsync(x =>

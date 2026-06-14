@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import { CompareProvider } from './contexts/CompareContext';
+import { StoreSettingsProvider } from './contexts/StoreSettingsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import Login from './pages/Login';
@@ -20,9 +21,9 @@ import AdminRepairs from './pages/AdminRepairs';
 import AdminTickets from './pages/AdminTickets';
 import AdminWarranty from './pages/AdminWarranty';
 import Roles from './pages/Roles';
-import Settings from './pages/Settings';
 import StoreLayout from './components/store/StoreLayout';
 import ScrollToTop from './components/store/ScrollToTop';
+import AppNotifications from './components/AppNotifications';
 import Home from './pages/store/Home';
 import Shop from './pages/store/Shop';
 import Single from './pages/store/Single';
@@ -37,6 +38,7 @@ import Wishlist from './pages/store/Wishlist';
 import Compare from './pages/store/Compare';
 import ProductDetail from './pages/store/ProductDetail';
 import Tickets from './pages/store/Tickets';
+import PaymentWaiting from './pages/store/PaymentWaiting';
 import { getPostLoginPath } from './utils/store';
 
 const PublicRoute = ({ children }) => {
@@ -76,160 +78,52 @@ function AppRoutes() {
                     </PublicRoute>
                 }
             />
-            <Route
-                path="/"
-                element={
-                    <StoreLayout>
-                        <Home />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/home"
-                element={
-                    <StoreLayout>
-                        <Home />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/shop"
-                element={
-                    <StoreLayout>
-                        <Shop />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/single"
-                element={
-                    <StoreLayout>
-                        <Single />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/bestseller"
-                element={
-                    <StoreLayout>
-                        <Bestseller />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/new-arrivals"
-                element={
-                    <StoreLayout>
-                        <Bestseller />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/promotion"
-                element={
-                    <StoreLayout>
-                        <Promotion />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/warranty"
-                element={
-                    <StoreLayout>
-                        <Warranty />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/bao-hanh"
-                element={
-                    <StoreLayout>
-                        <Warranty />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/product/:id"
-                element={
-                    <StoreLayout>
-                        <ProductDetail />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/cart"
-                element={
-                    <StoreLayout>
-                        <Cart />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/wishlist"
-                element={
-                    <StoreLayout>
-                        <Wishlist />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/compare"
-                element={
-                    <StoreLayout>
-                        <Compare />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/contact"
-                element={<Navigate to="/" replace />}
-            />
-            <Route
-                path="/checkout"
-                element={
-                    <StoreLayout>
-                        <Checkout />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/404"
-                element={
-                    <StoreLayout>
-                        <NotFound />
-                    </StoreLayout>
-                }
-            />
-            <Route
-                path="/orders"
-                element={
-                    <ProtectedRoute>
-                        <StoreLayout>
+            <Route path="/contact" element={<Navigate to="/" replace />} />
+
+            {/* Store (user-facing): StoreLayout là layout route nên tồn tại xuyên suốt
+                — header/footer/spinner không dựng lại, chỉ nội dung fade mượt khi đổi trang. */}
+            <Route element={<StoreLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/single" element={<Single />} />
+                <Route path="/bestseller" element={<Bestseller />} />
+                <Route path="/new-arrivals" element={<Bestseller />} />
+                <Route path="/promotion" element={<Promotion />} />
+                <Route path="/warranty" element={<Warranty />} />
+                <Route path="/bao-hanh" element={<Warranty />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/compare" element={<Compare />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/payment/waiting/:sessionId" element={<PaymentWaiting />} />
+                <Route path="/404" element={<NotFound />} />
+                <Route
+                    path="/orders"
+                    element={
+                        <ProtectedRoute>
                             <Orders />
-                        </StoreLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/tickets"
-                element={
-                    <ProtectedRoute>
-                        <StoreLayout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/tickets"
+                    element={
+                        <ProtectedRoute>
                             <Tickets />
-                        </StoreLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/tickets/:ticketId"
-                element={
-                    <ProtectedRoute>
-                        <StoreLayout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/tickets/:ticketId"
+                    element={
+                        <ProtectedRoute>
                             <Tickets />
-                        </StoreLayout>
-                    </ProtectedRoute>
-                }
-            />
+                        </ProtectedRoute>
+                    }
+                />
+            </Route>
             <Route
                 path="/admin"
                 element={
@@ -286,16 +180,6 @@ function AppRoutes() {
                     <ProtectedRoute allowedRoles={['Admin']}>
                         <MainLayout>
                             <Roles />
-                        </MainLayout>
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/admin/settings"
-                element={
-                    <ProtectedRoute allowedRoles={['Admin']}>
-                        <MainLayout>
-                            <Settings />
                         </MainLayout>
                     </ProtectedRoute>
                 }
@@ -373,7 +257,7 @@ function AppRoutes() {
             <Route
                 path="/admin/warranty"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warranty', 'Technical', 'CustomerService']}>
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
                         <MainLayout>
                             <AdminWarranty />
                         </MainLayout>
@@ -383,7 +267,7 @@ function AppRoutes() {
             <Route
                 path="/admin/repairs"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Technical']}>
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
                         <MainLayout>
                             <AdminRepairs />
                         </MainLayout>
@@ -393,7 +277,7 @@ function AppRoutes() {
             <Route
                 path="/admin/tickets"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Technical']}>
+                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
                         <MainLayout>
                             <AdminTickets />
                         </MainLayout>
@@ -404,14 +288,9 @@ function AppRoutes() {
             <Route path="/categories" element={<LegacyAdminRedirect to="/admin/categories" />} />
             <Route path="/users" element={<LegacyAdminRedirect to="/admin/users" />} />
             <Route path="/admin/login" element={<Navigate to="/login" replace />} />
-            <Route
-                path="*"
-                element={
-                    <StoreLayout>
-                        <NotFound />
-                    </StoreLayout>
-                }
-            />
+            <Route element={<StoreLayout />}>
+                <Route path="*" element={<NotFound />} />
+            </Route>
         </Routes>
     );
 }
@@ -420,14 +299,17 @@ function App() {
     return (
         <Router>
             <ScrollToTop />
+            <AppNotifications />
             <AuthProvider>
-                <WishlistProvider>
-                    <CompareProvider>
-                        <CartProvider>
-                            <AppRoutes />
-                        </CartProvider>
-                    </CompareProvider>
-                </WishlistProvider>
+                <StoreSettingsProvider>
+                    <WishlistProvider>
+                        <CompareProvider>
+                            <CartProvider>
+                                <AppRoutes />
+                            </CartProvider>
+                        </CompareProvider>
+                    </WishlistProvider>
+                </StoreSettingsProvider>
             </AuthProvider>
         </Router>
     );

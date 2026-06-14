@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 
@@ -7,12 +5,10 @@ namespace BaseCore.Entities
 {
     public class Order
     {
-        [BsonId]
         public int Id { get; set; }
 
         public string? OrderCode { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? UserId { get; set; }
 
         public string? CustomerName { get; set; }
@@ -69,14 +65,12 @@ namespace BaseCore.Entities
         public DateTime? CancelRequestedAt { get; set; }
         public DateTime? CancelReviewedAt { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? CancelReviewedByUserId { get; set; }
 
         public string? CancelReviewNote { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? UpdatedByUserId { get; set; }
 
         public List<OrderDetail> OrderDetails { get; set; } = new();

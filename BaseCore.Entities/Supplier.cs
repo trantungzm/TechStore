@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -13,7 +11,6 @@ namespace BaseCore.Entities
 
     public class Supplier
     {
-        [BsonId]
         public int Id { get; set; }
 
         public string SupplierCode { get; set; } = "";
@@ -29,23 +26,18 @@ namespace BaseCore.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        [BsonIgnore]
         public string Code
         {
             get => SupplierCode;
             set => SupplierCode = value;
         }
 
-        [BsonIgnore]
         public List<GoodsReceipt> GoodsReceipts { get; set; } = new();
 
-        [BsonIgnore]
         public List<StockItem> StockItems { get; set; } = new();
 
-        [BsonIgnore]
         public List<Product> Products { get; set; } = new();
 
-        [BsonIgnore]
         public List<Product> BackupProducts { get; set; } = new();
     }
 }

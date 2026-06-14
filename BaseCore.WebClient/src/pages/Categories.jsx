@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { categoryApi, specApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { toast, confirmDialog } from '../utils/notify';
 
 const inputClass = 'rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100 bg-[var(--color-surface)] text-[var(--color-fg)]';
 const hiddenAdminCategoryNames = new Set(['accessories', 'phu kien', 'phụ kiện', 'audio']);
@@ -123,7 +124,7 @@ const Categories = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Bạn có chắc muốn xóa danh mục này?')) return;
+        if (!(await confirmDialog('Bạn có chắc muốn xóa danh mục này?'))) return;
 
         try {
             await categoryApi.delete(id);
@@ -133,7 +134,7 @@ const Categories = () => {
                 setPage(1);
             }
         } catch (err) {
-            alert('Không thể xóa danh mục. Danh mục có thể đang chứa sản phẩm.');
+            toast.error('Không thể xóa danh mục. Danh mục có thể đang chứa sản phẩm.');
         }
     };
 
@@ -205,7 +206,7 @@ const Categories = () => {
             setShowSpecEditor(false);
         } catch (err) {
             console.error('Lỗi khi lưu thông số:', err);
-            alert('Không thể lưu thông số cấu hình. Vui lòng kiểm tra lại dữ liệu.');
+            toast.error('Không thể lưu thông số cấu hình. Vui lòng kiểm tra lại dữ liệu.');
         }
     };
 
@@ -252,13 +253,13 @@ const Categories = () => {
     };
 
     const deleteSpec = async (definition) => {
-        if (!window.confirm('Bạn có chắc muốn xóa hoặc tắt thông số này?')) return;
+        if (!(await confirmDialog('Bạn có chắc muốn xóa hoặc tắt thông số này?'))) return;
         try {
             await specApi.deleteDefinition(definition.id);
             await loadCategorySpecs(selectedCategory);
         } catch (err) {
             console.error('Lỗi khi xóa thông số:', err);
-            alert('Không thể xóa thông số này.');
+            toast.error('Không thể xóa thông số này.');
         }
     };
 

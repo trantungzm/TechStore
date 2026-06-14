@@ -30,7 +30,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> All([FromQuery] SupportSearchDto search)
         {
             var result = await _service.GetAllWarrantiesAsync(search);
@@ -48,7 +48,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPost("activate-admin")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> ActivateAdmin([FromBody] ActivateWarrantyDto dto)
         {
             var item = await _service.ActivateAsStaffAsync(dto.WarrantyId, CurrentUserId());
@@ -81,7 +81,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpGet("claims/all")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> AllClaims([FromQuery] SupportSearchDto search)
         {
             var result = await _service.GetClaimsAsync(search);
@@ -97,7 +97,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("claims/{id}/status")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateWarrantyClaimStatusDto dto)
         {
             var claim = await _service.UpdateClaimStatusAsync(id, dto, CurrentUserId());

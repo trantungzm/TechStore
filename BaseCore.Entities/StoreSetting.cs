@@ -16,6 +16,11 @@ namespace BaseCore.Entities
         public string? LogoUrl { get; set; }
         public string? FacebookUrl { get; set; }
         public string? ZaloUrl { get; set; }
+        public string? BankName { get; set; }
+        public string? BankAccountNumber { get; set; }
+        public string? BankAccountHolder { get; set; }
+        // Danh sách nhiều tài khoản ngân hàng nhận chuyển khoản (JSON: [{bankName, accountNumber, accountHolder}]).
+        public string? BankAccountsJson { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

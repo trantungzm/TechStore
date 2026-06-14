@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -13,7 +11,6 @@ namespace BaseCore.Entities
         public string ContentType { get; set; } = "";
         public long Size { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? UploadedByUserId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

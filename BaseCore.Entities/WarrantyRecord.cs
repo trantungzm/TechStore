@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -8,7 +6,6 @@ namespace BaseCore.Entities
         public int Id { get; set; }
         public string WarrantyCode { get; set; } = "";
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? UserId { get; set; }
 
         public int? OrderId { get; set; }
@@ -32,10 +29,10 @@ namespace BaseCore.Entities
         public DateTime? UpdatedAt { get; set; }
         public string? Note { get; set; }
 
-        [BsonIgnore] public Order? Order { get; set; }
-        [BsonIgnore] public OrderDetail? OrderDetail { get; set; }
-        [BsonIgnore] public Product? Product { get; set; }
-        [BsonIgnore] public ProductVariant? Variant { get; set; }
-        [BsonIgnore] public StockItem? StockItem { get; set; }
+        public Order? Order { get; set; }
+        public OrderDetail? OrderDetail { get; set; }
+        public Product? Product { get; set; }
+        public ProductVariant? Variant { get; set; }
+        public StockItem? StockItem { get; set; }
     }
 }

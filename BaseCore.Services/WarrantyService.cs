@@ -50,6 +50,9 @@ namespace BaseCore.Services
                 var product = await _productRepository.GetByIdAsync(detail.ProductId);
                 if (product == null) continue;
                 var months = product.WarrantyMonths <= 0 ? 12 : product.WarrantyMonths;
+                // Tự động kích hoạt bảo hành ngay khi đơn Hoàn thành: mốc bắt đầu = ngày hoàn tất.
+                var startAt = purchaseDate;
+                var endAt = startAt.AddMonths(months);
 
                 var assignedPairs = detail.StockItems
                     .Select(x => x.StockItem)
@@ -87,9 +90,11 @@ namespace BaseCore.Services
                         ProductName = detail.ProductName ?? product.Name,
                         ProductImage = detail.ProductImage ?? product.ImageUrl,
                         WarrantyMonths = months,
-                        StartDate = null,
-                        EndDate = null,
-                        Status = "NotActivated",
+                        ActivatedAt = startAt,
+                        ExpiresAt = endAt,
+                        StartDate = startAt,
+                        EndDate = endAt,
+                        Status = "Active",
                         CreatedAt = DateTime.UtcNow
                     });
                     empty.WarrantyCode = $"BH-{purchaseDate:yyyyMMdd}-{empty.Id:0000}";
@@ -132,7 +137,15 @@ namespace BaseCore.Services
                         reuse.ProductName = detail.ProductName ?? product.Name;
                         reuse.ProductImage = detail.ProductImage ?? product.ImageUrl;
                         reuse.WarrantyMonths = months;
-                        reuse.Status = string.IsNullOrWhiteSpace(reuse.Status) ? "NotActivated" : reuse.Status;
+                        // Tự kích hoạt nếu chưa active.
+                        if (!string.Equals(reuse.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                        {
+                            reuse.ActivatedAt = reuse.ActivatedAt ?? startAt;
+                            reuse.StartDate = reuse.StartDate ?? startAt;
+                            reuse.ExpiresAt = reuse.ExpiresAt ?? endAt;
+                            reuse.EndDate = reuse.EndDate ?? endAt;
+                            reuse.Status = "Active";
+                        }
                         reuse.UpdatedAt = DateTime.UtcNow;
                         if (string.IsNullOrWhiteSpace(reuse.WarrantyCode))
                         {
@@ -157,9 +170,11 @@ namespace BaseCore.Services
                         ProductName = detail.ProductName ?? product.Name,
                         ProductImage = detail.ProductImage ?? product.ImageUrl,
                         WarrantyMonths = months,
-                        StartDate = null,
-                        EndDate = null,
-                        Status = "NotActivated",
+                        ActivatedAt = startAt,
+                        ExpiresAt = endAt,
+                        StartDate = startAt,
+                        EndDate = endAt,
+                        Status = "Active",
                         CreatedAt = DateTime.UtcNow
                     });
                     created.WarrantyCode = $"BH-{purchaseDate:yyyyMMdd}-{created.Id:0000}";

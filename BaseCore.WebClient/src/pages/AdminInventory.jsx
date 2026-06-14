@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { categoryApi, inventoryApi, productApi, supplierApi } from '../services/api';
-import { toast } from '../utils/store';
+import { toast, formatCurrency } from '../utils/store';
+import { confirmDialog } from '../utils/notify';
 import AdminFilterDropdown from '../components/AdminFilterDropdown';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -57,6 +58,10 @@ const normalizeStockItem = (x) => ({
     productId: x.productId ?? x.ProductId,
     productName: x.productName ?? x.ProductName,
     serialOrImei: x.serialOrImei ?? x.SerialOrImei,
+    serialNumber: x.serialNumber ?? x.SerialNumber,
+    imei: x.imei ?? x.Imei,
+    internalCode: x.internalCode ?? x.InternalCode,
+    isAutoTag: x.isAutoTag ?? x.IsAutoTag,
     status: x.status ?? x.Status,
     receivedAt: x.receivedAt ?? x.ReceivedAt,
     soldAt: x.soldAt ?? x.SoldAt,
@@ -67,12 +72,30 @@ const readError = (err, fallback) => {
     return data?.message || data?.detail || data?.title || err?.message || fallback;
 };
 
+const isValidLuhn = (digits) => {
+    let sum = 0;
+    let alternate = false;
+    for (let i = digits.length - 1; i >= 0; i -= 1) {
+        let value = Number(digits[i]);
+        if (alternate) {
+            value *= 2;
+            if (value > 9) value -= 9;
+        }
+        sum += value;
+        alternate = !alternate;
+    }
+    return sum % 10 === 0;
+};
+
+const isValidImei = (value) => /^\d{15}$/.test(value) && isValidLuhn(value);
+
 const AdminInventory = () => {
     const { user } = useAuth();
     const location = useLocation();
     const role = user?.role || '';
-    const canReceive = ['Admin', 'Warehouse'].includes(role);
-    const canReturn = ['Admin', 'Technical'].includes(role);
+    // Admin chỉ xem; thao tác kho do Warehouse, xử lý đổi/trả do Technical.
+    const canReceive = role === 'Warehouse';
+    const canReturn = role === 'Technical';
 
     const [products, setProducts] = useState([]);
     const [stockItems, setStockItems] = useState([]);
@@ -80,7 +103,7 @@ const AdminInventory = () => {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-    const [filters, setFilters] = useState({ keyword: '', status: '', productId: '', minDaysInStock: '' });
+    const [filters, setFilters] = useState({ keyword: '', status: '', categoryId: '', productId: '', minDaysInStock: '' });
     const [serialQuickSearch, setSerialQuickSearch] = useState('');
     const [stockPage, setStockPage] = useState(1);
     const [stockPageSize] = useState(10);
@@ -89,6 +112,7 @@ const AdminInventory = () => {
     const [returnLookup, setReturnLookup] = useState({ loading: false, data: null, error: '' });
     const [activeLeftPanel, setActiveLeftPanel] = useState(canReceive ? 'receive' : 'return');
     const [receiveMode, setReceiveMode] = useState('receipt');
+    const [productStockFilter, setProductStockFilter] = useState(''); // '' = tất cả, 'instock' = đã nhập (tồn>0), 'empty' = chưa nhập (tồn=0)
     const [suppliers, setSuppliers] = useState([]);
     const [categories, setCategories] = useState([]);
     const [csvImportStatus, setCsvImportStatus] = useState('');
@@ -102,6 +126,7 @@ const AdminInventory = () => {
         categoryId: '',
         supplierId: '',
         productId: '',
+        variantId: '',
         quantity: 1,
         unitCost: 0,
         serialsText: '',
@@ -114,15 +139,34 @@ const AdminInventory = () => {
     });
 
     const [hasOpeningStock, setHasOpeningStock] = useState(false);
+    const [codeType, setCodeType] = useState('IMEI'); // IMEI | SERIAL; backend always generates InternalCode
+    const [reconciling, setReconciling] = useState(false);
+    const [reconcileResult, setReconcileResult] = useState(null);
+    const [detailItem, setDetailItem] = useState(null); // { base, lookup }
+    const [detailLoading, setDetailLoading] = useState(false);
 
     const selectedProduct = useMemo(() => {
         const id = Number(form.productId);
         return id ? products.find((p) => Number(p.id ?? p.Id) === id) || null : null;
     }, [form.productId, products]);
 
+    const selectedProductVariants = useMemo(() => {
+        const variants = selectedProduct?.variants ?? selectedProduct?.Variants ?? [];
+        return Array.isArray(variants)
+            ? variants.filter((v) => (v.isActive ?? v.IsActive) !== false)
+            : [];
+    }, [selectedProduct]);
+
+    const requiresVariant = selectedProductVariants.length > 0;
     const requiresSerialTracking = Boolean(selectedProduct?.requiresSerialTracking ?? selectedProduct?.RequiresSerialTracking);
+    // Chỉ nhập Serial/IMEI tay khi SP cần serial VÀ người dùng chọn chế độ "Serial thật"
+    const useManualSerials = requiresSerialTracking;
 
     useEffect(() => {
+        if (requiresSerialTracking && !['IMEI', 'SERIAL'].includes(codeType)) {
+            setCodeType('IMEI');
+            return;
+        }
         const checkOpeningStock = async () => {
             if (selectedProduct && selectedProduct.id) {
                 try {
@@ -137,7 +181,7 @@ const AdminInventory = () => {
             }
         };
         checkOpeningStock();
-    }, [selectedProduct]);
+    }, [selectedProduct, requiresSerialTracking, codeType]);
 
     const selectedSupplier = useMemo(() => {
         const id = Number(form.supplierId);
@@ -160,15 +204,21 @@ const AdminInventory = () => {
 
         const quantity = Number(form.quantity || 0);
         const count = serials.length;
+        // IMEI: đúng 15 chữ số và qua checksum Luhn giống backend.
+        const invalidImeis = codeType === 'IMEI'
+            ? serials.filter((s) => !isValidImei(s))
+            : [];
         return {
             count,
             duplicates: Array.from(duplicates),
+            invalidImeis,
             isEnough: count === quantity,
             isMissing: count < quantity,
             isExtra: count > quantity,
-            isValid: !requiresSerialTracking || (quantity > 0 && count === quantity && duplicates.size === 0),
+            // Chế độ tự sinh tem (hoặc SP không cần serial) -> không bắt nhập tay
+            isValid: !useManualSerials || (quantity > 0 && count === quantity && duplicates.size === 0 && invalidImeis.length === 0),
         };
-    }, [serials, form.quantity, requiresSerialTracking]);
+    }, [serials, form.quantity, useManualSerials, codeType]);
 
     const productNameById = useMemo(() => {
         const map = new Map();
@@ -205,6 +255,7 @@ const AdminInventory = () => {
             pageSize: stockPageSize,
             keyword: keyword || undefined,
             status: filters.status || undefined,
+            categoryId: filters.categoryId || undefined,
             productId: filters.productId || undefined,
             minDays: filters.minDaysInStock || undefined,
         });
@@ -235,7 +286,7 @@ const AdminInventory = () => {
     }, []);
 
     useEffect(() => {
-        setForm((prev) => ({ ...prev, productId: '' }));
+        setForm((prev) => ({ ...prev, productId: '', variantId: '' }));
     }, [form.categoryId]);
 
     useEffect(() => {
@@ -252,11 +303,11 @@ const AdminInventory = () => {
 
     useEffect(() => {
         setStockPage(1);
-    }, [filters.keyword, filters.status, filters.productId, filters.minDaysInStock, serialQuickSearch]);
+    }, [filters.keyword, filters.status, filters.categoryId, filters.productId, filters.minDaysInStock, serialQuickSearch]);
 
     useEffect(() => {
         loadStock(stockPage).catch((err) => setError(readError(err, 'Không tải được tồn kho.')));
-    }, [stockPage, filters.keyword, filters.status, filters.productId, filters.minDaysInStock, serialQuickSearch]);
+    }, [stockPage, filters.keyword, filters.status, filters.categoryId, filters.productId, filters.minDaysInStock, serialQuickSearch]);
 
     useEffect(() => {
         const serial = String(returnForm.serialOrImei || '').trim();
@@ -288,6 +339,30 @@ const AdminInventory = () => {
     }, [returnForm.serialOrImei]);
 
     const handleChange = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+    const handleProductChange = (e) => {
+        setForm((prev) => ({ ...prev, productId: e.target.value, variantId: '' }));
+    };
+
+    const variantLabel = (variant) => {
+        const id = variant?.id ?? variant?.Id;
+        const name = String(variant?.variantName ?? variant?.VariantName ?? '').trim();
+        // variantName đã chứa sẵn RAM/bộ nhớ/màu (tự sinh từ trang sản phẩm) -> dùng luôn,
+        // tránh nối lại các thuộc tính gây trùng tên. Chỉ ghép tay khi không có variantName.
+        let label;
+        if (name) {
+            label = name;
+        } else {
+            const parts = [
+                variant?.colorName ?? variant?.ColorName,
+                variant?.storage ?? variant?.Storage,
+                variant?.ram ?? variant?.Ram,
+            ].filter(Boolean);
+            label = parts.length ? parts.join(' - ') : `Variant #${id}`;
+        }
+        const stock = variant?.stock ?? variant?.Stock;
+        return stock == null ? label : `${label} (Tồn: ${stock})`;
+    };
 
     const cleanSerialWhitespace = () => {
         setForm((prev) => ({
@@ -608,13 +683,69 @@ const AdminInventory = () => {
         URL.revokeObjectURL(url);
     };
 
+    const handleReconcile = async (backfill) => {
+        const msg = backfill
+            ? 'Đối soát tồn kho theo StockItems và SINH MÃ TEM cho phần tồn ảo (sản phẩm không biến thể). Tiếp tục?'
+            : 'Đối soát: đặt lại tồn kho của sản phẩm theo số StockItems thực tế. Tiếp tục?';
+        if (!(await confirmDialog({ title: 'Đối soát tồn kho', message: msg, confirmText: 'Tiếp tục' }))) return;
+        setReconciling(true);
+        setError('');
+        try {
+            const res = await inventoryApi.reconcileStock(backfill);
+            setReconcileResult(res.data);
+            toast(`Đã đối soát: ${res.data.productsChanged}/${res.data.productsChecked} sản phẩm cập nhật.`, 'success');
+            await loadAll();
+        } catch (err) {
+            setError(readError(err, 'Không đối soát được tồn kho.'));
+        } finally {
+            setReconciling(false);
+        }
+    };
+
+    const openStockDetail = async (raw) => {
+        setDetailItem({ base: raw, lookup: null });
+        setDetailLoading(true);
+        try {
+            const serial = raw.serialOrImei ?? raw.SerialOrImei ?? raw.internalCode ?? raw.InternalCode;
+            if (serial) {
+                const res = await inventoryApi.lookupStockItem(serial);
+                setDetailItem((cur) => (cur ? { ...cur, lookup: res.data } : cur));
+            }
+        } catch {
+            // bỏ qua lỗi enrich (đơn hàng/bảo hành) — vẫn hiển thị thông tin cơ bản
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
+    const handleBackfillCodes = async () => {
+        if (!(await confirmDialog({ title: 'Sinh mã tem hàng cũ', message: 'Sinh Mã tem kho nội bộ cho toàn bộ hàng cũ chưa có, và phân loại Serial/IMEI từ dữ liệu cũ. Không xóa/ghi đè dữ liệu. Tiếp tục?', confirmText: 'Tiếp tục' }))) return;
+        setReconciling(true);
+        setError('');
+        try {
+            const res = await inventoryApi.backfillInternalCodes();
+            setReconcileResult(res.data);
+            toast(`Đã sinh mã tem cho ${res.data.tagsBackfilled} đơn vị.`, 'success');
+            await loadAll();
+        } catch (err) {
+            setError(readError(err, 'Không sinh được mã tem kho.'));
+        } finally {
+            setReconciling(false);
+        }
+    };
+
     const handleCreateReceipt = async (e) => {
         e.preventDefault();
         const productId = Number(form.productId);
+        const variantId = Number(form.variantId);
         const quantity = Number(form.quantity);
         const unitCost = Number(form.unitCost);
         if (!productId || quantity <= 0) return;
-        if (requiresSerialTracking && !serialValidation.isValid) {
+        if (requiresVariant && !variantId) {
+            setError('Vui long chon phien ban/variant truoc khi nhap kho.');
+            return;
+        }
+        if (useManualSerials && !serialValidation.isValid) {
             setError('Serial/IMEI chưa hợp lệ. Vui lòng nhập đúng số lượng và không để trùng mã.');
             return;
         }
@@ -623,26 +754,34 @@ const AdminInventory = () => {
             return;
         }
 
+        // codeType quyết định cách backend xử lý mã; tự sinh -> không gửi serial
+        const effectiveCodeType = requiresSerialTracking ? codeType : 'AUTO_INTERNAL_CODE';
+        const autoGenerateSerials = effectiveCodeType === 'AUTO_INTERNAL_CODE';
+        const serialsToSend = useManualSerials ? serials : [];
+
         setSubmitting(true);
         setError('');
         try {
             if (receiveMode === 'opening') {
                 await inventoryApi.createOpeningStock({
                     productId,
+                    variantId: variantId || null,
                     quantity,
-                    serials: requiresSerialTracking ? serials : [],
+                    serials: serialsToSend,
+                    codeType: effectiveCodeType,
+                    autoGenerateSerials,
                 });
                 toast('Đã nhập tồn đầu kỳ thành công.', 'success');
             } else {
                 await inventoryApi.createReceipt({
                     categoryId: Number(form.categoryId),
                     supplierId: Number(form.supplierId),
-                    lines: [{ productId, quantity, unitCost, serials: requiresSerialTracking ? serials : [] }],
+                    lines: [{ productId, variantId: variantId || null, quantity, unitCost, serials: serialsToSend, codeType: effectiveCodeType, autoGenerateSerials }],
                 });
                 toast(requiresSerialTracking ? 'Đã nhập kho và tạo Serial/IMEI' : 'Đã nhập kho', 'success');
             }
 
-            setForm((prev) => ({ ...prev, quantity: 1, unitCost: 0, serialsText: '', note: '' }));
+            setForm((prev) => ({ ...prev, variantId: '', quantity: 1, unitCost: 0, serialsText: '', note: '' }));
             await loadAll();
         } catch (err) {
             setError(readError(err, receiveMode === 'opening' ? 'Không tạo được tồn đầu kỳ.' : 'Không tạo được phiếu nhập.'));
@@ -685,14 +824,31 @@ const AdminInventory = () => {
         const categoryId = Number(form.categoryId || 0);
         return products
             .filter((p) => !categoryId || Number(p.categoryId ?? p.CategoryId) === categoryId)
+            .filter((p) => {
+                if (!productStockFilter) return true;
+                const stock = Number(p.stock ?? p.Stock ?? 0);
+                if (productStockFilter === 'instock') return stock > 0; // đã nhập kho, có số lượng
+                if (productStockFilter === 'empty') return stock <= 0;  // chưa nhập kho
+                return true;
+            })
             .slice()
             .sort((a, b) => String(a.name ?? a.Name ?? '').localeCompare(String(b.name ?? b.Name ?? '')))
             .slice(0, 120);
-    }, [products, form.categoryId]);
+    }, [products, form.categoryId, productStockFilter]);
+
+    const stockFilterProductOptions = useMemo(() => {
+        const categoryId = Number(filters.categoryId || 0);
+        if (!categoryId) return [];
+        return products
+            .filter((p) => Number(p.categoryId ?? p.CategoryId) === categoryId)
+            .slice()
+            .sort((a, b) => String(a.name ?? a.Name ?? '').localeCompare(String(b.name ?? b.Name ?? ''), 'vi'));
+    }, [products, filters.categoryId]);
 
     const activeFilterCount =
         (filters.keyword.trim() ? 1 : 0) +
         (filters.status ? 1 : 0) +
+        (filters.categoryId ? 1 : 0) +
         (filters.productId ? 1 : 0) +
         (String(filters.minDaysInStock || '').trim() ? 1 : 0);
     const stockFrom = stockItems.length ? (stockPage - 1) * stockPageSize + 1 : 0;
@@ -705,6 +861,7 @@ const AdminInventory = () => {
     const csvTo = csvRows.length ? Math.min(csvPage * csvPreviewPageSize, csvRows.length) : 0;
 
     return (
+        <>
         <div className="px-4 py-6 lg:px-8">
             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -827,20 +984,48 @@ const AdminInventory = () => {
                                         </Link>
                                     </div>
                                     <label className="block">
-                                        <span className={labelClass}>Chọn sản phẩm có sẵn</span>
-                                        <select className={fieldClass} value={form.productId} onChange={handleChange('productId')} required disabled={(receiveMode === 'receipt' && !form.categoryId) || productOptions.length === 0}>
+                                        <div className="mb-1 flex items-center justify-between gap-2">
+                                            <span className={labelClass}>Chọn sản phẩm có sẵn</span>
+                                            <select
+                                                className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 py-1 text-xs text-[var(--color-fg)] outline-none focus:border-[var(--color-accent)]"
+                                                value={productStockFilter}
+                                                onChange={(e) => { setProductStockFilter(e.target.value); setForm((prev) => ({ ...prev, productId: '', variantId: '' })); }}
+                                                title="Lọc theo tình trạng tồn kho"
+                                            >
+                                                <option value="">Tất cả tồn kho</option>
+                                                <option value="instock">Đã nhập kho (có số lượng)</option>
+                                                <option value="empty">Chưa nhập kho (tồn 0)</option>
+                                            </select>
+                                        </div>
+                                        <select className={fieldClass} value={form.productId} onChange={handleProductChange} required disabled={(receiveMode === 'receipt' && !form.categoryId) || productOptions.length === 0}>
                                             <option value="">{receiveMode === 'receipt' && !form.categoryId ? 'Chọn danh mục trước' : productOptions.length ? 'Chọn sản phẩm' : 'Không có sản phẩm phù hợp'}</option>
-                                            {productOptions.map((p) => (
-                                                <option key={p.id ?? p.Id} value={p.id ?? p.Id}>
-                                                    {p.name ?? p.Name} (ID: {p.id ?? p.Id})
-                                                </option>
-                                            ))}
+                                            {productOptions.map((p) => {
+                                                const pStock = Number(p.stock ?? p.Stock ?? 0);
+                                                return (
+                                                    <option key={p.id ?? p.Id} value={p.id ?? p.Id}>
+                                                        {p.name ?? p.Name} (ID: {p.id ?? p.Id}) · {pStock > 0 ? `Tồn ${pStock}` : 'Chưa nhập'}
+                                                    </option>
+                                                );
+                                            })}
                                         </select>
                                     </label>
                                     {form.categoryId && productOptions.length === 0 && (
                                         <div className="mt-3 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-2)] px-3 py-2 text-xs font-semibold text-amber-800">
                                             Danh mục này chưa có sản phẩm. Hãy tạo sản phẩm trước, sau đó quay lại nhập kho.
                                         </div>
+                                    )}
+                                    {selectedProduct && requiresVariant && (
+                                        <label className="mt-3 block">
+                                            <span className={labelClass}>Phien ban / Variant</span>
+                                            <select className={fieldClass} value={form.variantId} onChange={handleChange('variantId')} required>
+                                                <option value="">Chon phien ban</option>
+                                                {selectedProductVariants.map((variant) => (
+                                                    <option key={variant.id ?? variant.Id} value={variant.id ?? variant.Id}>
+                                                        {variantLabel(variant)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
                                     )}
                                     {selectedProduct && (
                                         <div className="mt-3 rounded-md bg-[var(--color-surface-2)] px-3 py-2 text-xs font-semibold text-[var(--color-fg-muted)]">
@@ -863,21 +1048,41 @@ const AdminInventory = () => {
                                 </div>
 
                                 {selectedProduct && requiresSerialTracking && (
+                                    <div className="rounded-md border border-[var(--color-border)] p-3">
+                                        <span className={labelClass}>Loại mã định danh</span>
+                                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-4">
+                                            <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                                                <input type="radio" name="codeType" checked={codeType === 'IMEI'} onChange={() => setCodeType('IMEI')} />
+                                                IMEI
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
+                                                <input type="radio" name="codeType" checked={codeType === 'SERIAL'} onChange={() => setCodeType('SERIAL')} />
+                                                Serial Number
+                                            </label>
+                                        </div>
+                                        <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
+                                            {codeType === 'IMEI'
+                                                ? 'Nhập/quét IMEI thật — bắt buộc 15 chữ số + kiểm Luhn, không trùng.'
+                                                : 'Nhập/quét Serial thật (chữ + số, không bắt 15 số), không trùng.'}
+                                        </p>
+                                        <p className="mt-1 text-xs text-[var(--color-fg-muted)]">Mọi đơn vị đều được gán thêm Mã tem kho nội bộ (InternalCode).</p>
+                                    </div>
+                                )}
+
+                                {useManualSerials && (
                                 <div>
                                     <div className="mb-1 flex items-center justify-between gap-3">
-                                        <span className={labelClass}>Serial/IMEI</span>
-                                        {selectedProduct && requiresSerialTracking && (
-                                            <span className={`text-xs font-bold ${serialValidation.isValid ? 'text-emerald-300' : 'text-amber-300'}`}>
-                                                Đã nhập {serialValidation.count}/{Number(form.quantity || 0)} mã
-                                            </span>
-                                        )}
+                                        <span className={labelClass}>{codeType === 'IMEI' ? 'IMEI (15 số)' : 'Serial Number'}</span>
+                                        <span className={`text-xs font-bold ${serialValidation.isValid ? 'text-emerald-300' : 'text-amber-300'}`}>
+                                            Đã nhập {serialValidation.count}/{Number(form.quantity || 0)} mã
+                                        </span>
                                     </div>
                                     <textarea
                                         className={`${fieldClass} min-h-32 resize-y font-mono`}
                                         rows="6"
                                         value={form.serialsText}
                                         onChange={handleChange('serialsText')}
-                                        placeholder={'Mỗi dòng một mã\n356938035643809\n356938035643810'}
+                                        placeholder={codeType === 'IMEI' ? 'Mỗi dòng một IMEI 15 số\n356938035643809\n356938035643817' : 'Mỗi dòng một serial\nSN-ABC12345\nSN-ABC12346'}
                                         disabled={!selectedProduct || !requiresSerialTracking}
                                     />
                                     {selectedProduct && requiresSerialTracking && (
@@ -885,11 +1090,13 @@ const AdminInventory = () => {
                                             <div className={`rounded-md px-3 py-2 text-xs font-semibold ${serialValidation.isValid ? 'bg-emerald-500/10 text-emerald-300' : 'bg-[var(--color-surface-2)] text-amber-800'}`}>
                                                 {serialValidation.duplicates.length > 0
                                                     ? `Có ${serialValidation.duplicates.length} mã bị trùng trong danh sách.`
-                                                    : serialValidation.isMissing
-                                                        ? `Còn thiếu ${Number(form.quantity || 0) - serialValidation.count} mã Serial/IMEI.`
-                                                        : serialValidation.isExtra
-                                                            ? `Đang thừa ${serialValidation.count - Number(form.quantity || 0)} mã Serial/IMEI.`
-                                                            : 'Danh sách Serial/IMEI hợp lệ.'}
+                                                    : serialValidation.invalidImeis?.length > 0
+                                                        ? `Có ${serialValidation.invalidImeis.length} IMEI sai định dạng hoặc sai số kiểm tra Luhn.`
+                                                        : serialValidation.isMissing
+                                                            ? `Còn thiếu ${Number(form.quantity || 0) - serialValidation.count} mã.`
+                                                            : serialValidation.isExtra
+                                                                ? `Đang thừa ${serialValidation.count - Number(form.quantity || 0)} mã.`
+                                                                : 'Danh sách mã hợp lệ.'}
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 <label className="cursor-pointer rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10">
@@ -919,7 +1126,7 @@ const AdminInventory = () => {
                                 </div>
                                 )}
 
-                                <button className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" disabled={submitting || loading || (requiresSerialTracking && !serialValidation.isValid)}>
+                                <button className="w-full rounded-md bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-primary)] disabled:opacity-60" disabled={submitting || loading || (useManualSerials && !serialValidation.isValid)}>
                                     {submitting ? 'Đang lưu...' : receiveMode === 'opening' ? 'Ghi nhận tồn đầu kỳ' : 'Tạo phiếu nhập'}
                                 </button>
                             </form>
@@ -996,7 +1203,9 @@ const AdminInventory = () => {
                         </div>
                     </section>
                 ) : (
-                    <div className="rounded-md border border-blue-200 bg-[var(--color-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--color-accent)]">Không có quyền truy cập chức năng này.</div>
+                    <div className="rounded-md border border-blue-200 bg-[var(--color-accent)]/10 px-4 py-3 text-sm font-semibold text-[var(--color-accent)]">
+                        Chế độ chỉ xem — bạn có thể xem danh sách tồn kho bên phải. Thao tác nhập kho / trả hàng do bộ phận Kho (Warehouse) và Kỹ thuật (Technical) thực hiện.
+                    </div>
                 )}
             </div>
 
@@ -1088,6 +1297,37 @@ const AdminInventory = () => {
                     <div className="flex flex-col gap-3 border-b border-[var(--color-border)] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                         <h3 className="mb-0 text-base font-bold text-[var(--color-fg)]">Tồn kho theo Serial/IMEI</h3>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            {canReceive && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleBackfillCodes}
+                                        disabled={reconciling}
+                                        className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:opacity-60"
+                                        title="Sinh Mã tem kho nội bộ cho hàng cũ + phân loại Serial/IMEI"
+                                    >
+                                        {reconciling ? 'Đang xử lý...' : 'Sinh mã tem hàng cũ'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleReconcile(false)}
+                                        disabled={reconciling}
+                                        className="rounded-md border border-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60"
+                                        title="Đặt lại tồn kho của sản phẩm theo số StockItems thực tế"
+                                    >
+                                        {reconciling ? 'Đang đối soát...' : 'Đối soát tồn kho'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleReconcile(true)}
+                                        disabled={reconciling}
+                                        className="rounded-md bg-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-accent)]/90 disabled:opacity-60"
+                                        title="Đối soát tồn kho VÀ sinh tem nội bộ cho phần tồn chưa có StockItem (vd hàng audio/tai nghe vừa bật theo dõi serial)"
+                                    >
+                                        {reconciling ? 'Đang xử lý...' : 'Đối soát + sinh tem'}
+                                    </button>
+                                </>
+                            )}
                             <input className="rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)] sm:w-[240px]" placeholder="Tìm serial..." value={serialQuickSearch} onChange={(e) => setSerialQuickSearch(e.target.value)} />
                             <AdminFilterDropdown open={isFilterMenuOpen} onOpenChange={setIsFilterMenuOpen} label="Bộ lọc" activeCount={activeFilterCount}>
                                 <form onSubmit={(e) => { e.preventDefault(); setIsFilterMenuOpen(false); }}>
@@ -1102,28 +1342,77 @@ const AdminInventory = () => {
                                             {Object.entries(STOCK_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                                         </select>
                                     </div>
-                                    <div className="mb-3">
-                                        <label>Số ngày tồn tối thiểu</label>
-                                        <input className="ts-input" type="number" min="0" value={filters.minDaysInStock} onChange={(e) => setFilters((p) => ({ ...p, minDaysInStock: e.target.value }))} placeholder="Ví dụ: 90" />
-                                        <button type="button" className="ts-btn ts-btn-ghost mt-2 px-3 py-1.5 text-xs" onClick={() => setFilters((p) => ({ ...p, minDaysInStock: '90', status: p.status || 'InStock' }))}>
-                                            {'>= 90 ngày'}
-                                        </button>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label>Sản phẩm</label>
-                                        <select className="ts-input" value={filters.productId} onChange={(e) => setFilters((p) => ({ ...p, productId: e.target.value }))}>
-                                            <option value="">Tất cả</option>
-                                            {products.map((p) => <option key={p.id ?? p.Id} value={p.id ?? p.Id}>{(p.name ?? p.Name) || `#${p.id ?? p.Id}`}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="flex justify-end gap-2">
-                                        <button type="button" className="ts-btn ts-btn-ghost text-xs" onClick={() => setFilters({ keyword: '', status: '', productId: '', minDaysInStock: '' })}>Xóa lọc</button>
+                                     <div className="mb-3">
+                                         <label>Số ngày tồn tối thiểu</label>
+                                         <input className="ts-input" type="number" min="0" value={filters.minDaysInStock} onChange={(e) => setFilters((p) => ({ ...p, minDaysInStock: e.target.value }))} placeholder="Ví dụ: 90" />
+                                         <button type="button" className="ts-btn ts-btn-ghost mt-2 px-3 py-1.5 text-xs" onClick={() => setFilters((p) => ({ ...p, minDaysInStock: '90', status: p.status || 'InStock' }))}>
+                                             {'>= 90 ngày'}
+                                         </button>
+                                     </div>
+                                     <div className="mb-3">
+                                         <label>Danh mục</label>
+                                         <select
+                                             className="ts-input"
+                                             value={filters.categoryId}
+                                             onChange={(e) => setFilters((p) => ({ ...p, categoryId: e.target.value, productId: '' }))}
+                                         >
+                                             <option value="">Tất cả danh mục</option>
+                                             {categories.map((category) => (
+                                                 <option key={category.id ?? category.Id} value={category.id ?? category.Id}>
+                                                     {category.name ?? category.Name}
+                                                 </option>
+                                             ))}
+                                         </select>
+                                     </div>
+                                     <div className="mb-3">
+                                         <label>Sản phẩm</label>
+                                         <select
+                                             className="ts-input"
+                                             value={filters.productId}
+                                             onChange={(e) => setFilters((p) => ({ ...p, productId: e.target.value }))}
+                                             disabled={!filters.categoryId}
+                                         >
+                                             <option value="">{filters.categoryId ? 'Tất cả sản phẩm trong danh mục' : 'Chọn danh mục trước'}</option>
+                                             {stockFilterProductOptions.map((p) => <option key={p.id ?? p.Id} value={p.id ?? p.Id}>{(p.name ?? p.Name) || `#${p.id ?? p.Id}`}</option>)}
+                                         </select>
+                                     </div>
+                                     <div className="flex justify-end gap-2">
+                                         <button type="button" className="ts-btn ts-btn-ghost text-xs" onClick={() => setFilters({ keyword: '', status: '', categoryId: '', productId: '', minDaysInStock: '' })}>Xóa lọc</button>
                                         <button type="submit" className="ts-btn ts-btn-primary text-xs">Đóng</button>
                                     </div>
                                 </form>
                             </AdminFilterDropdown>
                         </div>
                     </div>
+                    {reconcileResult && (
+                        <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 text-sm">
+                            <div className="flex items-center justify-between">
+                                <span className="font-semibold text-[var(--color-fg)]">
+                                    Kết quả đối soát: {reconcileResult.productsChanged}/{reconcileResult.productsChecked} sản phẩm cập nhật
+                                    {reconcileResult.tagsBackfilled > 0 ? `, sinh ${reconcileResult.tagsBackfilled} mã tem` : ''}
+                                </span>
+                                <button type="button" className="text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]" onClick={() => setReconcileResult(null)}>Đóng</button>
+                            </div>
+                            {reconcileResult.changes?.length > 0 && (
+                                <div className="mt-2 max-h-44 overflow-y-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                                    <table className="w-full text-xs">
+                                        <thead className="text-[var(--color-fg-muted)]">
+                                            <tr><th className="px-2 py-1 text-left">Sản phẩm</th><th className="px-2 py-1 text-right">Tồn cũ</th><th className="px-2 py-1 text-right">Tồn mới</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {reconcileResult.changes.map((c) => (
+                                                <tr key={c.productId} className="border-t border-[var(--color-border)]">
+                                                    <td className="px-2 py-1">{c.productName} <span className="text-[var(--color-fg-dim)]">#{c.productId}</span></td>
+                                                    <td className="px-2 py-1 text-right text-[var(--color-fg-muted)]">{c.oldStock}</td>
+                                                    <td className="px-2 py-1 text-right font-semibold text-[var(--color-accent)]">{c.newStock}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <div className="p-4">
                         {loading ? (
                             <div className="py-12 text-center text-sm font-semibold text-[var(--color-fg-muted)]">Đang tải tồn kho...</div>
@@ -1135,10 +1424,13 @@ const AdminInventory = () => {
                                         <tr>
                                             <th className="ts-table-col-narrow">ID</th>
                                             <th className="ts-table-col-wide">Sản phẩm</th>
-                                            <th className="ts-table-col-wide ts-table-hide-mobile">Serial/IMEI</th>
+                                            <th className="ts-table-col-medium">Mã tem nội bộ</th>
+                                            <th className="ts-table-col-medium ts-table-hide-mobile">IMEI</th>
+                                            <th className="ts-table-col-medium ts-table-hide-mobile">Serial Number</th>
                                             <th className="ts-table-col-medium ts-table-hide-mobile">Trạng thái</th>
                                             <th className="ts-table-col-medium ts-table-hide-tablet">Ngày nhập</th>
                                             <th className="ts-table-col-medium ts-table-hide-tablet">Ngày bán</th>
+                                            <th className="ts-table-col-narrow text-right">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1151,20 +1443,36 @@ const AdminInventory = () => {
                                                     <td>
                                                         <span className="block max-w-[240px] truncate font-semibold text-[var(--color-fg)]">{productName}</span>
                                                     </td>
+                                                    <td className="font-mono">
+                                                        <span className="block max-w-[200px] truncate">{s.internalCode || s.serialOrImei || '-'}</span>
+                                                    </td>
                                                     <td className="ts-table-hide-mobile font-mono">
-                                                        <span className="block max-w-[260px] truncate">{s.serialOrImei}</span>
+                                                        <span className="block max-w-[160px] truncate">{s.imei || '-'}</span>
+                                                    </td>
+                                                    <td className="ts-table-hide-mobile font-mono">
+                                                        <span className="block max-w-[160px] truncate">{s.serialNumber || '-'}</span>
                                                     </td>
                                                     <td className="ts-table-hide-mobile">
                                                         <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${stockStatusClass(s.status)}`}>{stockStatusText(s.status)}</span>
                                                     </td>
                                                     <td className="ts-table-hide-tablet">{s.receivedAt ? new Date(s.receivedAt).toLocaleString() : '-'}</td>
                                                     <td className="ts-table-hide-tablet">{s.soldAt ? new Date(s.soldAt).toLocaleString() : '-'}</td>
+                                                    <td className="text-right">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openStockDetail(raw)}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                                                            title="Xem thông tin sản phẩm"
+                                                        >
+                                                            <i className="fas fa-eye"></i>
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             );
                                         })}
                                         {!pagedStockItems.length && (
                                             <tr>
-                                                <td colSpan="6" className="px-4 py-8 text-center text-sm font-semibold text-[var(--color-fg-muted)]">
+                                                <td colSpan="9" className="px-4 py-8 text-center text-sm font-semibold text-[var(--color-fg-muted)]">
                                                     Không có dữ liệu phù hợp.
                                                 </td>
                                             </tr>
@@ -1190,6 +1498,69 @@ const AdminInventory = () => {
             </div>
         </div>
         </div>
+
+        {detailItem && (() => {
+            const b = detailItem.base || {};
+            const lk = detailItem.lookup || {};
+            const g = (k) => b[k] ?? b[k.charAt(0).toUpperCase() + k.slice(1)];
+            const pid = g('productId');
+            const productName = g('productName') || productNameById.get(Number(pid)) || `#${pid}`;
+            const fmt = (d) => (d ? new Date(d).toLocaleString() : '-');
+            const rows = [
+                ['Sản phẩm', productName],
+                ['Phiên bản', g('variantName') || '-'],
+                ['Mã tem nội bộ', g('internalCode') || '-'],
+                ['IMEI', g('imei') || '-'],
+                ['Serial Number', g('serialNumber') || '-'],
+                ['Mã định danh (hệ thống)', g('serialOrImei') || '-'],
+                ['SKU', g('sku') || '-'],
+                ['Trạng thái', stockStatusText(g('status'))],
+                ['Nhà cung cấp', g('supplierName') || '-'],
+                ['Kho', g('warehouseName') || '-'],
+                ['Giá vốn nhập', formatCurrency(Number(g('unitCost') || 0))],
+                ['Ngày nhập', fmt(g('receivedAt'))],
+                ['Ngày bán', fmt(g('soldAt'))],
+                ['Mã đơn hàng', (lk.orderCode ?? lk.OrderCode) || (g('orderId') ? `#${g('orderId')}` : '-')],
+                ['Khách hàng', (lk.customerName ?? lk.CustomerName) || '-'],
+                ['SĐT khách', (lk.customerPhone ?? lk.CustomerPhone) || '-'],
+                ['Bảo hành', (lk.warrantyStatus ?? lk.WarrantyStatus) || '-'],
+            ];
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-8" onClick={() => setDetailItem(null)}>
+                    <div className="max-h-[85vh] w-full max-w-lg overflow-hidden rounded-md bg-[var(--color-surface)] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+                            <div>
+                                <p className="mb-0 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Chi tiết tồn kho #{g('id')}</p>
+                                <h3 className="mb-0 text-lg font-bold text-[var(--color-fg)]">{productName}</h3>
+                            </div>
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-fg-dim)] hover:bg-[var(--color-surface-3)]" onClick={() => setDetailItem(null)}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
+                            <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-[160px_1fr] sm:gap-x-3">
+                                {rows.map(([label, value]) => (
+                                    <React.Fragment key={label}>
+                                        <dt className="font-semibold text-[var(--color-fg-muted)]">{label}</dt>
+                                        <dd className="mb-1 break-words font-mono text-[var(--color-fg)] sm:mb-0">{value}</dd>
+                                    </React.Fragment>
+                                ))}
+                            </dl>
+                            {detailLoading && <p className="mt-3 text-xs text-[var(--color-fg-muted)]">Đang tải thông tin đơn hàng/bảo hành...</p>}
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-5 py-3">
+                            {pid && (
+                                <a href={`/product/${pid}`} target="_blank" rel="noreferrer" className="rounded-md border border-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10">
+                                    Xem trang sản phẩm
+                                </a>
+                            )}
+                            <button type="button" className="rounded-md border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]" onClick={() => setDetailItem(null)}>Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        })()}
+        </>
     );
 };
 

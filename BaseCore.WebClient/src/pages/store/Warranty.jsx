@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHero from '../../components/store/PageHero';
-import { setPageMeta, toast } from '../../utils/store';
+import { isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, toast } from '../../utils/store';
 import { cn } from '../../utils/cn';
 import { repairApi, uploadApi, warrantyApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const policyGroups = [
     {
@@ -82,13 +83,43 @@ const statusStyle = (status) => {
 const CLAIM_TIMELINE = ['Pending', 'Confirmed', 'Received', 'Diagnosing', 'Repairing', 'ReadyToReturn', 'Delivered', 'Completed'];
 const REPAIR_TIMELINE = ['Pending', 'Intake', 'Diagnosing', 'WaitingCustomerApproval', 'WaitingParts', 'Repairing', 'Testing', 'Completed', 'Delivered'];
 
+// Nhãn tiếng Việt cho trạng thái yêu cầu bảo hành (claim) và phiếu sửa chữa (repair).
+const CLAIM_STATUS_LABELS = {
+    Pending: 'Chờ xử lý',
+    Confirmed: 'Đã xác nhận',
+    Approved: 'Đã duyệt',
+    Received: 'Đã tiếp nhận',
+    Diagnosing: 'Đang kiểm tra',
+    InProgress: 'Đang xử lý',
+    Repairing: 'Đang sửa chữa',
+    ReadyToReturn: 'Sẵn sàng trả máy',
+    Delivered: 'Đã trả máy',
+    Completed: 'Hoàn tất',
+    Rejected: 'Từ chối',
+    Cancelled: 'Đã hủy',
+};
+const REPAIR_STATUS_LABELS = {
+    Pending: 'Chờ xử lý',
+    Intake: 'Tiếp nhận',
+    Diagnosing: 'Đang chẩn đoán',
+    WaitingCustomerApproval: 'Chờ khách duyệt',
+    WaitingParts: 'Chờ linh kiện',
+    Repairing: 'Đang sửa chữa',
+    Testing: 'Kiểm thử',
+    Completed: 'Hoàn tất',
+    Delivered: 'Đã trả máy',
+    Cancelled: 'Đã hủy',
+};
+const claimStatusLabel = (s) => CLAIM_STATUS_LABELS[s] || s || '—';
+const repairStatusLabel = (s) => REPAIR_STATUS_LABELS[s] || s || '—';
+
 const timelineIndex = (status, steps) => {
     const s = String(status || '').trim();
     const idx = steps.findIndex((x) => x === s);
     return idx >= 0 ? idx : 0;
 };
 
-const Timeline = ({ steps = [], current = '' }) => {
+const Timeline = ({ steps = [], current = '', labels = {} }) => {
     const currentIdx = timelineIndex(current, steps);
     return (
         <div className="mt-3 flex flex-wrap items-center gap-1">
@@ -103,7 +134,7 @@ const Timeline = ({ steps = [], current = '' }) => {
                             )}>
                                 <i className={`fas ${idx < currentIdx ? 'fa-check' : 'fa-circle text-[6px]'}`}></i>
                             </div>
-                            <span className={cn("text-[11px]", done ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)]")}>{step}</span>
+                            <span className={cn("text-[11px]", done ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)]")}>{labels[step] || step}</span>
                         </div>
                         {idx < steps.length - 1 && (
                             <div className={cn("h-px w-6", done && idx < currentIdx ? "bg-[var(--color-primary)]/60" : "bg-[var(--color-border)]")} />
@@ -116,7 +147,13 @@ const Timeline = ({ steps = [], current = '' }) => {
 };
 
 const Warranty = () => {
-    const { isAuthenticated, loading: authLoading } = useAuth();
+    const { isAuthenticated, loading: authLoading, user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
+    const settings = useStoreSettings();
+    const hotline = settings.hotline || '';
+    const hotlineTel = hotline.replace(/\s+/g, '');
+    const supportEmail = settings.supportEmail || '';
+    const supportTime = settings.supportTime || '';
     const [openFaq, setOpenFaq] = useState(0);
     const [warranties, setWarranties] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -254,6 +291,7 @@ const Warranty = () => {
 
     const handleActivate = async () => {
         if (!selectedWarranty) return;
+        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         setActivating(true);
         try {
             const res = await warrantyApi.activate(selectedWarranty.id);
@@ -289,6 +327,7 @@ const Warranty = () => {
     const handleSubmitClaim = async (e) => {
         e.preventDefault();
         if (!selectedWarranty) return;
+        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         const issue = issueDescription.trim();
         if (issue.length < 15) return toast('Mô tả lỗi tối thiểu 15 ký tự.', 'danger');
         if (!receiveMethod) return toast('Vui lòng chọn hình thức gửi.', 'danger');
@@ -348,6 +387,7 @@ const Warranty = () => {
     };
 
     const handlePublicActivate = async (warranty) => {
+        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         const serialOrImei = publicLookup.serialOrImei.trim() || warranty?.serialOrImei || '';
         const phone = publicLookup.phone.trim();
         const orderCode = publicLookup.orderCode.trim() || null;
@@ -376,7 +416,7 @@ const Warranty = () => {
 
     return (
         <>
-            <PageHero title="Trung tâm bảo hành" current="Bảo hành" kicker="E-Warranty" />
+            <PageHero title="Trung tâm bảo hành" current="Bảo hành" kicker="Bảo hành điện tử" />
 
             <section className="ts-container py-12">
                 <div className="mb-12 flex flex-wrap items-center justify-center gap-3">
@@ -395,7 +435,7 @@ const Warranty = () => {
 
                 <section className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Policy</p>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Chính sách</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Chính sách bảo hành điện tử</h2>
                     </div>
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -418,7 +458,7 @@ const Warranty = () => {
 
                 <section id="public-lookup" className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Lookup</p>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Tra cứu</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Tra cứu bảo hành</h2>
                         <p className="mx-auto mt-2 max-w-2xl text-sm text-[var(--color-fg-muted)]">
                             Nhập Serial/IMEI, mã đơn hoặc SĐT để kiểm tra bảo hành điện tử.
@@ -498,7 +538,7 @@ const Warranty = () => {
                 <section id="my-devices" className="mb-16">
                     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <p className="ts-eyebrow text-[var(--color-accent)]">My devices</p>
+                            <p className="ts-eyebrow text-[var(--color-accent)]">Thiết bị của tôi</p>
                             <h2 className="ts-display mt-2 text-3xl">Sản phẩm của tôi</h2>
                             <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
                                 {authLoading ? 'Đang kiểm tra đăng nhập...' : !isAuthenticated ? 'Đăng nhập để xem thiết bị đã mua.' : loading ? 'Đang tải...' : `${warranties.length} thiết bị`}
@@ -707,7 +747,7 @@ const Warranty = () => {
 
                 <section id="submit-claim" className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Submit</p>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Gửi yêu cầu</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Gửi yêu cầu sửa chữa</h2>
                     </div>
 
@@ -804,7 +844,7 @@ const Warranty = () => {
 
                 <section id="repair-history" className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">History</p>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Lịch sử</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Lịch sử bảo hành & sửa chữa</h2>
                     </div>
 
@@ -829,9 +869,9 @@ const Warranty = () => {
                                                     <p className="ts-eyebrow text-[10px]">Mã yêu cầu</p>
                                                     <p className="ts-mono text-sm text-[var(--color-fg)]">{c.claimCode}</p>
                                                 </div>
-                                                <span className={statusStyle(c.status === 'Completed' ? 'Active' : c.status)}>{c.status}</span>
+                                                <span className={statusStyle(c.status === 'Completed' ? 'Active' : c.status)}>{claimStatusLabel(c.status)}</span>
                                             </div>
-                                            <Timeline steps={CLAIM_TIMELINE} current={c.status} />
+                                            <Timeline steps={CLAIM_TIMELINE} current={c.status} labels={CLAIM_STATUS_LABELS} />
                                             <div className="mt-3 grid grid-cols-1 gap-3 text-xs text-[var(--color-fg-muted)] sm:grid-cols-3">
                                                 <p><span className="ts-eyebrow block text-[10px]">Ngày tạo</span>{formatDate(c.createdAt)}</p>
                                                 <p><span className="ts-eyebrow block text-[10px]">Nhận máy</span>{formatDate(c.receivedAt)}</p>
@@ -878,8 +918,8 @@ const Warranty = () => {
                                             >
                                                 <div>
                                                     <p className="ts-mono text-sm">{r.repairCode}</p>
-                                                    <p className="mt-1 text-xs text-[var(--color-fg-muted)]">Tiếp nhận: {formatDate(r.receivedAt)} • Trạng thái: {r.status}</p>
-                                                    <Timeline steps={REPAIR_TIMELINE} current={r.status} />
+                                                    <p className="mt-1 text-xs text-[var(--color-fg-muted)]">Tiếp nhận: {formatDate(r.receivedAt)} • Trạng thái: {repairStatusLabel(r.status)}</p>
+                                                    <Timeline steps={REPAIR_TIMELINE} current={r.status} labels={REPAIR_STATUS_LABELS} />
                                                 </div>
                                                 <i className={cn("fas fa-chevron-down text-xs text-[var(--color-fg-dim)] transition-transform", repairOpenId === r.id && "rotate-180")}></i>
                                             </button>
@@ -912,7 +952,7 @@ const Warranty = () => {
 
                 <section className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">FAQ</p>
+                        <p className="ts-eyebrow text-[var(--color-accent)]">Hỏi đáp</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Câu hỏi thường gặp</h2>
                     </div>
                     <div className="mx-auto max-w-3xl space-y-3">
@@ -937,18 +977,18 @@ const Warranty = () => {
                 <section className="rounded-md border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] p-8 md:p-12">
                     <div className="grid gap-8 md:grid-cols-2">
                         <div>
-                            <p className="ts-eyebrow text-[var(--color-accent)]">Quick Support</p>
+                            <p className="ts-eyebrow text-[var(--color-accent)]">Hỗ trợ nhanh</p>
                             <h2 className="ts-display mt-3 text-2xl">Cần hỗ trợ thêm?</h2>
                             <p className="mt-3 text-sm text-[var(--color-fg-muted)]">Liên hệ TechStore để được tư vấn bảo hành điện tử và hỗ trợ gửi sản phẩm.</p>
                             <div className="mt-6 flex flex-wrap gap-3">
-                                <a href="tel:0327188459" className="ts-btn ts-btn-primary"><i className="fas fa-phone"></i>Gọi hỗ trợ</a>
+                                {hotline && <a href={`tel:${hotlineTel}`} className="ts-btn ts-btn-primary"><i className="fas fa-phone"></i>Gọi hỗ trợ</a>}
                                 <Link to="/contact" className="ts-btn ts-btn-ghost">Liên hệ ngay</Link>
                             </div>
                         </div>
                         <div className="space-y-3 text-sm">
-                            <p className="flex items-center gap-3"><i className="fas fa-phone-alt w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Hotline:</span><strong className="ts-mono text-[var(--color-fg)]">0327 188 459</strong></p>
-                            <p className="flex items-center gap-3"><i className="fas fa-envelope w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Email:</span><strong className="text-[var(--color-fg)]">support@techstore.vn</strong></p>
-                            <p className="flex items-center gap-3"><i className="fas fa-clock w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Giờ:</span><strong className="text-[var(--color-fg)]">8:00 - 22:00 mỗi ngày</strong></p>
+                            {hotline && <p className="flex items-center gap-3"><i className="fas fa-phone-alt w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Hotline:</span><strong className="ts-mono text-[var(--color-fg)]">{hotline}</strong></p>}
+                            {supportEmail && <p className="flex items-center gap-3"><i className="fas fa-envelope w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Email:</span><strong className="text-[var(--color-fg)]">{supportEmail}</strong></p>}
+                            {supportTime && <p className="flex items-center gap-3"><i className="fas fa-clock w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Giờ:</span><strong className="text-[var(--color-fg)]">{supportTime}</strong></p>}
                         </div>
                     </div>
                 </section>

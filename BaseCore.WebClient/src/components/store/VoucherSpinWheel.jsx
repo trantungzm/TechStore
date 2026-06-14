@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { couponApi } from '../../services/api';
+import { isStoreViewOnlyUser, STORE_VIEW_ONLY_MESSAGE } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const pickWeightedReward = (rewards) => {
@@ -13,12 +15,20 @@ const pickWeightedReward = (rewards) => {
 };
 
 const VoucherSpinWheel = ({ rewards, onReward }) => {
+    const { user } = useAuth();
+    const isViewOnly = isStoreViewOnlyUser(user);
     const [spinning, setSpinning] = useState(false);
     const [result, setResult] = useState(null);
     const [canSpin, setCanSpin] = useState(true);
     const spinRewards = useMemo(() => rewards.filter((reward) => Number(reward.spinWeight || 0) > 0), [rewards]);
 
     const handleSpin = async () => {
+        if (isViewOnly) {
+            const result = { rewardType: 'error', code: '', id: null, errorMessage: STORE_VIEW_ONLY_MESSAGE };
+            setResult(result);
+            onReward?.(result);
+            return;
+        }
         if (!canSpin || spinning || spinRewards.length === 0) return;
         setSpinning(true);
         setResult(null);
@@ -53,7 +63,7 @@ const VoucherSpinWheel = ({ rewards, onReward }) => {
         <section className="rounded-md border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <p className="ts-eyebrow text-[var(--color-accent)]">Daily Spin</p>
+                    <p className="ts-eyebrow text-[var(--color-accent)]">Vòng quay may mắn</p>
                     <h3 className="ts-display mt-2 text-xl text-[var(--color-fg)]">Quay thưởng nhận voucher</h3>
                     <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
                         Mỗi ngày 1 lượt quay · Còn lại: <span className="ts-mono font-bold text-[var(--color-accent)]">{canSpin ? 1 : 0}</span>

@@ -15,6 +15,11 @@ namespace BaseCore.Entities
         public bool IsComparable { get; set; } = true;
         public bool AllowCustomValue { get; set; } = true;
         public bool IsActive { get; set; } = true;
+        /// <summary>
+        /// True = thuộc tính dùng để phân biệt biến thể (RAM/Bộ nhớ/Màu).
+        /// Không hiển thị ở "Thông số chung", options của nó làm nguồn dropdown cho variant.
+        /// </summary>
+        public bool IsVariantAxis { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

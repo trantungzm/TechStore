@@ -1,5 +1,3 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
@@ -9,7 +7,6 @@ namespace BaseCore.Entities
         public string ClaimCode { get; set; } = "";
         public int WarrantyId { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? UserId { get; set; }
 
         public int? OrderId { get; set; }
@@ -33,10 +30,10 @@ namespace BaseCore.Entities
         public string? RejectedReason { get; set; }
         public string? Note { get; set; }
 
-        [BsonIgnore] public WarrantyRecord? Warranty { get; set; }
-        [BsonIgnore] public Product? Product { get; set; }
-        [BsonIgnore] public ProductVariant? Variant { get; set; }
-        [BsonIgnore] public StockItem? StockItem { get; set; }
-        [BsonIgnore] public List<WarrantyClaimUpdate> Updates { get; set; } = new();
+        public WarrantyRecord? Warranty { get; set; }
+        public Product? Product { get; set; }
+        public ProductVariant? Variant { get; set; }
+        public StockItem? StockItem { get; set; }
+        public List<WarrantyClaimUpdate> Updates { get; set; } = new();
     }
 }

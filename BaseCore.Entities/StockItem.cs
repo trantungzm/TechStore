@@ -1,18 +1,24 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace BaseCore.Entities
 {
     public class StockItem
     {
-        [BsonId]
         public int Id { get; set; }
         public int ProductId { get; set; }
         public int? VariantId { get; set; }
         public int? WarehouseId { get; set; }
         public int? SupplierId { get; set; }
+        // Mã định danh chính (giữ tương thích nghiệp vụ cũ) = Imei ?? SerialNumber ?? InternalCode
         public string SerialOrImei { get; set; } = "";
+        // Serial thật từ hãng (chữ + số, không bắt 15 số)
+        public string? SerialNumber { get; set; }
+        // IMEI thật (15 chữ số + Luhn)
+        public string? Imei { get; set; }
+        // Mã tem kho nội bộ do hệ thống sinh — mọi StockItem đều có
+        public string? InternalCode { get; set; }
         public string? Sku { get; set; }
+        // true = mã tem kho tự sinh (không phải Serial/IMEI thật của nhà sản xuất)
+        public bool IsAutoTag { get; set; }
         public string Status { get; set; } = "InStock";
         public decimal UnitCost { get; set; }
         public string? SupplierName { get; set; }
@@ -21,29 +27,22 @@ namespace BaseCore.Entities
         public int? OrderId { get; set; }
         public int? OrderDetailId { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
         public Guid? CustomerId { get; set; }
 
         public string? Note { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        [BsonIgnore]
         public Supplier? Supplier { get; set; }
 
-        [BsonIgnore]
         public Product? Product { get; set; }
 
-        [BsonIgnore]
         public ProductVariant? Variant { get; set; }
 
-        [BsonIgnore]
         public Warehouse? Warehouse { get; set; }
 
-        [BsonIgnore]
         public Order? Order { get; set; }
 
-        [BsonIgnore]
         public OrderDetail? OrderDetail { get; set; }
     }
 }

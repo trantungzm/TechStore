@@ -66,6 +66,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UploadedByUserId");
+
                     b.ToTable("Attachments");
                 });
 
@@ -143,6 +145,298 @@ namespace BaseCore.Repository.Migrations
                     b.ToTable("Banners");
                 });
 
+            modelBuilder.Entity("BaseCore.Entities.Brand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Brands");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Apple"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Samsung"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Xiaomi"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "OPPO"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Vivo"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Realme"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Apple"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "ASUS"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Dell"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "HP"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Lenovo"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Acer"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            CategoryId = 4,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Apple"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            CategoryId = 4,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Samsung"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            CategoryId = 4,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Xiaomi"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            CategoryId = 4,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Lenovo"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            CategoryId = 5,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Apple"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            CategoryId = 5,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Samsung"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            CategoryId = 5,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Garmin"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            CategoryId = 6,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Canon"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            CategoryId = 6,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Sony"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            CategoryId = 6,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "DJI"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            CategoryId = 6,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "GoPro"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            CategoryId = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Apple"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            CategoryId = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Sony"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            CategoryId = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Bose"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            CategoryId = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Baseus"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            CategoryId = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Keychron"
+                        },
+                        new
+                        {
+                            Id = 29,
+                            CategoryId = 7,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Logitech"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            CategoryId = 8,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "JBL"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            CategoryId = 8,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Marshall"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            CategoryId = 8,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Samsung"
+                        });
+                });
+
             modelBuilder.Entity("BaseCore.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -168,8 +462,8 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Dien thoai va thiet bi di dong",
-                            Name = "Dien thoai"
+                            Description = "Điện thoại và thiết bị di động",
+                            Name = "Điện thoại"
                         },
                         new
                         {
@@ -179,32 +473,26 @@ namespace BaseCore.Repository.Migrations
                         },
                         new
                         {
-                            Id = 3,
-                            Description = "Phu kien dien tu",
-                            Name = "Accessories"
-                        },
-                        new
-                        {
                             Id = 4,
-                            Description = "May tinh bang",
+                            Description = "Máy tính bảng",
                             Name = "Tablet"
                         },
                         new
                         {
                             Id = 5,
-                            Description = "Dong ho thong minh",
-                            Name = "Dong ho thong minh"
+                            Description = "Đồng hồ thông minh",
+                            Name = "Đồng hồ thông minh"
                         },
                         new
                         {
                             Id = 6,
-                            Description = "May anh va thiet bi quay video",
-                            Name = "May anh"
+                            Description = "Máy ảnh và thiết bị quay video",
+                            Name = "Máy ảnh"
                         },
                         new
                         {
                             Id = 7,
-                            Description = "Tai nghe va thiet bi am thanh",
+                            Description = "Tai nghe và thiết bị âm thanh",
                             Name = "Tai nghe"
                         },
                         new
@@ -212,12 +500,6 @@ namespace BaseCore.Repository.Migrations
                             Id = 8,
                             Description = "Loa va tai nghe",
                             Name = "Audio"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Description = "Thiet bi dien tu",
-                            Name = "Electronics"
                         });
                 });
 
@@ -370,7 +652,14 @@ namespace BaseCore.Repository.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Coupons");
+                    b.HasIndex("CreatedByUserId");
+
+                    b.ToTable("Coupons", t =>
+                        {
+                            t.HasCheckConstraint("CK_Coupons_DiscountType", "[DiscountType] IN ('Amount','Percent','FreeShipping')");
+
+                            t.HasCheckConstraint("CK_Coupons_Type", "[Type] IN ('Product','Shipping')");
+                        });
 
                     b.HasData(
                         new
@@ -866,6 +1155,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("ReceiptCode")
                         .IsUnique();
 
@@ -1039,6 +1330,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("OrderDetailId");
 
                     b.HasIndex("OrderId");
@@ -1048,11 +1341,18 @@ namespace BaseCore.Repository.Migrations
                     b.HasIndex("ReturnCode")
                         .IsUnique();
 
+                    b.HasIndex("ReviewedByUserId");
+
                     b.HasIndex("StockItemId");
 
                     b.HasIndex("VariantId");
 
-                    b.ToTable("InventoryReturns");
+                    b.ToTable("InventoryReturns", t =>
+                        {
+                            t.HasCheckConstraint("CK_InventoryReturns_Condition", "[Condition] IN ('New','OpenBox','Used','Damaged','Defective')");
+
+                            t.HasCheckConstraint("CK_InventoryReturns_Status", "[Status] IN ('Pending','Approved','Rejected','Restocked','Damaged')");
+                        });
                 });
 
             modelBuilder.Entity("BaseCore.Entities.InventoryTransaction", b =>
@@ -1097,6 +1397,8 @@ namespace BaseCore.Repository.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("ProductId");
 
@@ -1370,9 +1672,15 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CancelReviewedByUserId");
+
                     b.HasIndex("OrderCode")
                         .IsUnique()
                         .HasFilter("[OrderCode] IS NOT NULL");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
@@ -1420,6 +1728,10 @@ namespace BaseCore.Repository.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("ReviewedByUserId");
 
                     b.ToTable("OrderCancellations");
                 });
@@ -1618,9 +1930,70 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderTimelines");
+                });
+
+            modelBuilder.Entity("BaseCore.Entities.PaymentSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OrderPayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("TransactionId")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("SessionId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentSessions");
                 });
 
             modelBuilder.Entity("BaseCore.Entities.Product", b =>
@@ -2139,6 +2512,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasIndex("StockItemId");
 
+                    b.HasIndex("TechnicianId");
+
                     b.HasIndex("TicketId");
 
                     b.HasIndex("VariantId");
@@ -2182,6 +2557,8 @@ namespace BaseCore.Repository.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("RepairCaseId");
 
@@ -2334,6 +2711,9 @@ namespace BaseCore.Repository.Migrations
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsVariantAxis")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(160)
@@ -2370,6 +2750,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc man hinh",
                             SortOrder = 1
                         },
@@ -2386,6 +2767,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong nghe man hinh",
                             SortOrder = 2
                         },
@@ -2402,6 +2784,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Camera sau",
                             SortOrder = 3
                         },
@@ -2418,6 +2801,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Camera truoc",
                             SortOrder = 4
                         },
@@ -2434,6 +2818,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Chipset",
                             SortOrder = 5
                         },
@@ -2450,6 +2835,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong nghe NFC",
                             SortOrder = 6
                         },
@@ -2466,6 +2852,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Dung luong RAM",
                             SortOrder = 7
                         },
@@ -2482,6 +2869,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Bo nho trong",
                             SortOrder = 8
                         },
@@ -2498,6 +2886,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Pin",
                             SortOrder = 9
                         },
@@ -2514,6 +2903,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "The SIM",
                             SortOrder = 10
                         },
@@ -2530,6 +2920,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "He dieu hanh",
                             SortOrder = 11
                         },
@@ -2546,6 +2937,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Do phan giai man hinh",
                             SortOrder = 12
                         },
@@ -2562,6 +2954,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tinh nang man hinh",
                             SortOrder = 13
                         },
@@ -2578,6 +2971,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai CPU",
                             SortOrder = 14
                         },
@@ -2594,6 +2988,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai card do hoa",
                             SortOrder = 1
                         },
@@ -2610,6 +3005,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Dung luong RAM",
                             SortOrder = 2
                         },
@@ -2626,6 +3022,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai RAM",
                             SortOrder = 3
                         },
@@ -2642,6 +3039,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "So khe RAM",
                             SortOrder = 4
                         },
@@ -2658,6 +3056,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "O cung",
                             SortOrder = 5
                         },
@@ -2674,6 +3073,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc man hinh",
                             SortOrder = 6
                         },
@@ -2690,6 +3090,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong nghe man hinh",
                             SortOrder = 7
                         },
@@ -2706,6 +3107,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Pin",
                             SortOrder = 8
                         },
@@ -2722,6 +3124,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "He dieu hanh",
                             SortOrder = 9
                         },
@@ -2738,6 +3141,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Do phan giai man hinh",
                             SortOrder = 10
                         },
@@ -2754,6 +3158,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai CPU",
                             SortOrder = 11
                         },
@@ -2770,6 +3175,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong giao tiep",
                             SortOrder = 12
                         },
@@ -2786,6 +3192,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc man hinh",
                             SortOrder = 1
                         },
@@ -2802,6 +3209,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong nghe man hinh",
                             SortOrder = 2
                         },
@@ -2818,6 +3226,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Camera sau",
                             SortOrder = 3
                         },
@@ -2834,6 +3243,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Camera truoc",
                             SortOrder = 4
                         },
@@ -2850,6 +3260,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Chipset",
                             SortOrder = 5
                         },
@@ -2866,6 +3277,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Dung luong RAM",
                             SortOrder = 6
                         },
@@ -2882,6 +3294,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Bo nho trong",
                             SortOrder = 7
                         },
@@ -2898,6 +3311,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Pin",
                             SortOrder = 8
                         },
@@ -2914,6 +3328,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "He dieu hanh",
                             SortOrder = 9
                         },
@@ -2930,6 +3345,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Do phan giai man hinh",
                             SortOrder = 10
                         },
@@ -2946,6 +3362,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tinh nang man hinh",
                             SortOrder = 11
                         },
@@ -2962,6 +3379,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai CPU",
                             SortOrder = 12
                         },
@@ -2978,6 +3396,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tuong thich",
                             SortOrder = 13
                         },
@@ -2994,6 +3413,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong nghe man hinh",
                             SortOrder = 1
                         },
@@ -3010,6 +3430,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc man hinh",
                             SortOrder = 2
                         },
@@ -3026,6 +3447,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Duong kinh mat",
                             SortOrder = 3
                         },
@@ -3042,6 +3464,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc co tay phu hop",
                             SortOrder = 4
                         },
@@ -3058,6 +3481,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Nghe goi",
                             SortOrder = 5
                         },
@@ -3074,6 +3498,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tien ich suc khoe",
                             SortOrder = 6
                         },
@@ -3090,6 +3515,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tuong thich",
                             SortOrder = 7
                         },
@@ -3106,6 +3532,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Thoi luong pin",
                             SortOrder = 8
                         },
@@ -3122,6 +3549,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Hang san xuat",
                             SortOrder = 9
                         },
@@ -3138,6 +3566,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc",
                             SortOrder = 1
                         },
@@ -3154,6 +3583,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Trong luong",
                             SortOrder = 2
                         },
@@ -3170,6 +3600,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Cong nghe am thanh",
                             SortOrder = 3
                         },
@@ -3186,6 +3617,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Micro",
                             SortOrder = 4
                         },
@@ -3202,6 +3634,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Thoi luong su dung pin",
                             SortOrder = 5
                         },
@@ -3218,6 +3651,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Phuong thuc dieu khien",
                             SortOrder = 6
                         },
@@ -3234,6 +3668,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Chipset",
                             SortOrder = 7
                         },
@@ -3250,6 +3685,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tinh nang khac",
                             SortOrder = 8
                         },
@@ -3266,6 +3702,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Hang san xuat",
                             SortOrder = 9
                         },
@@ -3282,6 +3719,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Hang san xuat",
                             SortOrder = 1
                         },
@@ -3298,6 +3736,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai may anh",
                             SortOrder = 2
                         },
@@ -3314,6 +3753,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = true,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai cam bien",
                             SortOrder = 3
                         },
@@ -3330,6 +3770,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Khau do",
                             SortOrder = 4
                         },
@@ -3346,6 +3787,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Tieu cu",
                             SortOrder = 5
                         },
@@ -3362,6 +3804,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Loai ong kinh",
                             SortOrder = 6
                         },
@@ -3378,6 +3821,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Che do lay net",
                             SortOrder = 7
                         },
@@ -3394,6 +3838,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Man trap",
                             SortOrder = 8
                         },
@@ -3410,6 +3855,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Chuan in anh",
                             SortOrder = 9
                         },
@@ -3426,6 +3872,7 @@ namespace BaseCore.Repository.Migrations
                             IsComparable = true,
                             IsFilterable = false,
                             IsRequired = false,
+                            IsVariantAxis = false,
                             Name = "Kich thuoc anh",
                             SortOrder = 10
                         });
@@ -5907,6 +6354,17 @@ namespace BaseCore.Repository.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Imei")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("InternalCode")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<bool>("IsAutoTag")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Note")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -5922,6 +6380,10 @@ namespace BaseCore.Repository.Migrations
 
                     b.Property<DateTime>("ReceivedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
 
                     b.Property<string>("SerialOrImei")
                         .IsRequired()
@@ -5964,11 +6426,25 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("Imei")
+                        .IsUnique()
+                        .HasFilter("[Imei] IS NOT NULL");
+
+                    b.HasIndex("InternalCode")
+                        .IsUnique()
+                        .HasFilter("[InternalCode] IS NOT NULL");
+
                     b.HasIndex("OrderDetailId");
 
                     b.HasIndex("OrderId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("SerialNumber")
+                        .IsUnique()
+                        .HasFilter("[SerialNumber] IS NOT NULL");
 
                     b.HasIndex("SerialOrImei")
                         .IsUnique();
@@ -5979,7 +6455,10 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasIndex("WarehouseId");
 
-                    b.ToTable("StockItems");
+                    b.ToTable("StockItems", t =>
+                        {
+                            t.HasCheckConstraint("CK_StockItems_Status", "[Status] IN ('InStock','Reserved','Sold','Returned','Repairing','Warranty','Damaged','Lost')");
+                        });
                 });
 
             modelBuilder.Entity("BaseCore.Entities.StockMovement", b =>
@@ -6040,6 +6519,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("ProductId");
 
                     b.HasIndex("StockItemId");
@@ -6062,6 +6543,21 @@ namespace BaseCore.Repository.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("BankAccountHolder")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("BankAccountsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -6124,6 +6620,9 @@ namespace BaseCore.Repository.Migrations
                         {
                             Id = 1,
                             Address = "",
+                            BankAccountHolder = "",
+                            BankAccountNumber = "",
+                            BankName = "",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DefaultShippingFee = 0m,
                             FacebookUrl = "",
@@ -6348,6 +6847,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AssignedToUserId");
+
                     b.HasIndex("RelatedOrderId");
 
                     b.HasIndex("RelatedProductId");
@@ -6356,6 +6857,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasIndex("TicketCode")
                         .IsUnique();
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("SupportTickets");
                 });
@@ -6409,6 +6912,8 @@ namespace BaseCore.Repository.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("ParentMessageId");
 
@@ -6521,7 +7026,10 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasIndex("UserId", "CouponId");
 
-                    b.ToTable("UserCoupons");
+                    b.ToTable("UserCoupons", t =>
+                        {
+                            t.HasCheckConstraint("CK_UserCoupons_Status", "[Status] IN ('Claimed','Used','Removed','Expired')");
+                        });
                 });
 
             modelBuilder.Entity("BaseCore.Entities.VoucherSpin", b =>
@@ -6562,7 +7070,10 @@ namespace BaseCore.Repository.Migrations
                     b.HasIndex("UserId", "SpinDate")
                         .IsUnique();
 
-                    b.ToTable("VoucherSpins");
+                    b.ToTable("VoucherSpins", t =>
+                        {
+                            t.HasCheckConstraint("CK_VoucherSpins_ResultType", "[ResultType] IN ('Coupon','NoReward')");
+                        });
                 });
 
             modelBuilder.Entity("BaseCore.Entities.Warehouse", b =>
@@ -6729,6 +7240,8 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasIndex("StockItemId");
 
+                    b.HasIndex("UserId");
+
                     b.HasIndex("VariantId");
 
                     b.HasIndex("WarrantyId");
@@ -6770,6 +7283,8 @@ namespace BaseCore.Repository.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("WarrantyClaimId");
 
@@ -6879,12 +7394,22 @@ namespace BaseCore.Repository.Migrations
 
                     b.HasIndex("StockItemId");
 
+                    b.HasIndex("UserId");
+
                     b.HasIndex("VariantId");
 
                     b.HasIndex("WarrantyCode")
                         .IsUnique();
 
                     b.ToTable("WarrantyRecords");
+                });
+
+            modelBuilder.Entity("BaseCore.Entities.Attachment", b =>
+                {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
                 });
 
             modelBuilder.Entity("BaseCore.Entities.CategorySupplier", b =>
@@ -6904,6 +7429,14 @@ namespace BaseCore.Repository.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("BaseCore.Entities.Coupon", b =>
+                {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
                 });
 
             modelBuilder.Entity("BaseCore.Entities.CouponScope", b =>
@@ -6933,6 +7466,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.GoodsReceipt", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.Supplier", "Supplier")
                         .WithMany("GoodsReceipts")
                         .HasForeignKey("SupplierId")
@@ -6995,6 +7533,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.InventoryReturn", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.OrderDetail", "OrderDetail")
                         .WithMany()
                         .HasForeignKey("OrderDetailId")
@@ -7010,6 +7553,11 @@ namespace BaseCore.Repository.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("BaseCore.Entities.StockItem", "StockItem")
                         .WithMany()
@@ -7034,6 +7582,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.InventoryTransaction", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -7050,6 +7603,32 @@ namespace BaseCore.Repository.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("BaseCore.Entities.Notification", b =>
+                {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("BaseCore.Entities.Order", b =>
+                {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CancelReviewedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
             modelBuilder.Entity("BaseCore.Entities.OrderCancellation", b =>
                 {
                     b.HasOne("BaseCore.Entities.Order", "Order")
@@ -7057,6 +7636,16 @@ namespace BaseCore.Repository.Migrations
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Order");
                 });
@@ -7134,6 +7723,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.OrderTimeline", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.Order", "Order")
                         .WithMany("Timelines")
                         .HasForeignKey("OrderId")
@@ -7248,6 +7842,11 @@ namespace BaseCore.Repository.Migrations
                         .HasForeignKey("StockItemId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("TechnicianId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.SupportTicket", "Ticket")
                         .WithMany()
                         .HasForeignKey("TicketId")
@@ -7276,6 +7875,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.RepairUpdate", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.RepairCase", "RepairCase")
                         .WithMany("Updates")
                         .HasForeignKey("RepairCaseId")
@@ -7309,6 +7913,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.StockItem", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.OrderDetail", "OrderDetail")
                         .WithMany()
                         .HasForeignKey("OrderDetailId")
@@ -7355,6 +7964,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.StockMovement", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -7387,6 +8001,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.SupportTicket", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.Order", "RelatedOrder")
                         .WithMany()
                         .HasForeignKey("RelatedOrderId")
@@ -7402,6 +8021,11 @@ namespace BaseCore.Repository.Migrations
                         .HasForeignKey("RelatedWarrantyId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("RelatedOrder");
 
                     b.Navigation("RelatedProduct");
@@ -7411,6 +8035,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.SupportTicketUpdate", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.SupportTicketUpdate", "ParentMessage")
                         .WithMany("Replies")
                         .HasForeignKey("ParentMessageId")
@@ -7435,6 +8064,12 @@ namespace BaseCore.Repository.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Coupon");
                 });
 
@@ -7444,6 +8079,12 @@ namespace BaseCore.Repository.Migrations
                         .WithMany()
                         .HasForeignKey("RewardCouponId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("RewardCoupon");
                 });
@@ -7459,6 +8100,11 @@ namespace BaseCore.Repository.Migrations
                     b.HasOne("BaseCore.Entities.StockItem", "StockItem")
                         .WithMany()
                         .HasForeignKey("StockItemId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("BaseCore.Entities.ProductVariant", "Variant")
@@ -7483,6 +8129,11 @@ namespace BaseCore.Repository.Migrations
 
             modelBuilder.Entity("BaseCore.Entities.WarrantyClaimUpdate", b =>
                 {
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BaseCore.Entities.WarrantyClaim", "WarrantyClaim")
                         .WithMany("Updates")
                         .HasForeignKey("WarrantyClaimId")
@@ -7513,6 +8164,11 @@ namespace BaseCore.Repository.Migrations
                     b.HasOne("BaseCore.Entities.StockItem", "StockItem")
                         .WithMany()
                         .HasForeignKey("StockItemId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BaseCore.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("BaseCore.Entities.ProductVariant", "Variant")

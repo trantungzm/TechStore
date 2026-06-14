@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { bannerApi, uploadApi } from '../services/api';
 import { resolveProductImage } from '../utils/store';
+import { confirmDialog } from '../utils/notify';
 
 const inputClass = 'rounded-md border border-[var(--color-border-strong)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-blue-100';
 
@@ -27,6 +28,7 @@ const AdminBanners = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [imageFile, setImageFile] = useState(null);
+    const [showForm, setShowForm] = useState(false);
 
     const loadBanners = async () => {
         try {
@@ -79,6 +81,7 @@ const AdminBanners = () => {
             setForm(defaultForm);
             setEditingId(null);
             setImageFile(null);
+            setShowForm(false);
             loadBanners();
         } catch (err) {
             setError(editingId ? 'Không thể cập nhật banner' : 'Không thể tạo banner');
@@ -104,10 +107,22 @@ const AdminBanners = () => {
         });
         setEditingId(banner.id);
         setImageFile(null);
+        setError('');
+        setSuccess('');
+        setShowForm(true);
+    };
+
+    const handleOpenCreate = () => {
+        setForm(defaultForm);
+        setEditingId(null);
+        setImageFile(null);
+        setError('');
+        setSuccess('');
+        setShowForm(true);
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Bạn chắc chắn muốn xoá banner này?')) return;
+        if (!(await confirmDialog({ title: 'Xoá banner', message: 'Bạn chắc chắn muốn xoá banner này?', tone: 'danger', confirmText: 'Xoá' }))) return;
 
         try {
             await bannerApi.delete(id);
@@ -135,6 +150,7 @@ const AdminBanners = () => {
         setImageFile(null);
         setError('');
         setSuccess('');
+        setShowForm(false);
     };
 
     if (loading) {
@@ -143,7 +159,16 @@ const AdminBanners = () => {
 
     return (
         <div className="p-8">
-            <h1 className="mb-6 text-3xl font-bold">Quản lý banner</h1>
+            <div className="mb-6 flex items-center justify-between gap-3">
+                <h1 className="text-3xl font-bold">Quản lý banner</h1>
+                <button
+                    type="button"
+                    onClick={handleOpenCreate}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--color-accent)]/90"
+                >
+                    <i className="fas fa-plus"></i>Thêm banner
+                </button>
+            </div>
 
             {error && (
                 <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-4 text-red-700">
@@ -157,12 +182,35 @@ const AdminBanners = () => {
                 </div>
             )}
 
-            {/* Form */}
-            <div className="mb-8 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)]">
-                <h2 className="mb-4 text-xl font-semibold">
-                    {editingId ? 'Sửa banner' : 'Tạo banner mới'}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Form (modal) */}
+            {showForm && (
+            <div
+                className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+                onClick={handleCancel}
+            >
+                <div
+                    className="my-6 w-full max-w-3xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
+                        <h2 className="text-xl font-semibold">
+                            {editingId ? 'Sửa banner' : 'Tạo banner mới'}
+                        </h2>
+                        <button
+                            type="button"
+                            onClick={handleCancel}
+                            aria-label="Đóng"
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-fg-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]"
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {error && (
+                        <div className="mx-6 mt-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                            {error}
+                        </div>
+                    )}
+                    <form onSubmit={handleSubmit} className="space-y-4 p-6">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
                             <label className="mb-1 block text-sm font-medium">Dòng nhấn (Kicker)</label>
@@ -320,92 +368,130 @@ const AdminBanners = () => {
                             </button>
                         )}
                     </div>
-                </form>
+                    </form>
+                </div>
             </div>
+            )}
 
             {/* Banners List */}
-            <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)]">
-                <div className="border-b border-[var(--color-border)] p-4">
-                    <h2 className="text-xl font-semibold">Danh sách banner</h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-[var(--color-surface-2)]">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Thứ tự</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Ảnh</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Kicker</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Tiêu đề</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">CTA</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Trạng thái</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {banners.length === 0 ? (
-                                <tr>
-                                    <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
-                                        Chưa có banner nào. Hãy tạo banner đầu tiên ở form phía trên.
-                                    </td>
-                                </tr>
-                            ) : (
-                                banners
-                                    .sort((a, b) => a.displayOrder - b.displayOrder)
-                                    .map((banner) => (
-                                        <tr key={banner.id} className="border-t border-[var(--color-border)]">
-                                            <td className="px-4 py-3 text-sm">{banner.displayOrder}</td>
-                                            <td className="px-4 py-3">
-                                                {banner.imageUrl && (
-                                                    <img
-                                                        src={resolveProductImage({ imageUrl: banner.imageUrl, id: banner.id })}
-                                                        alt="Banner"
-                                                        className="h-16 w-24 rounded-md object-cover border border-[var(--color-border)]"
-                                                    />
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm">{banner.kicker}</td>
-                                            <td className="px-4 py-3 text-sm max-w-xs truncate">{banner.title}</td>
-                                            <td className="px-4 py-3 text-sm">{banner.ctaLabel}</td>
-                                            <td className="px-4 py-3 text-sm">
-                                                <span
-                                                    className={`inline-block rounded-full px-2 py-1 text-xs ${
-                                                        banner.isActive
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : 'bg-gray-100 text-gray-700'
-                                                    }`}
-                                                >
-                                                    {banner.isActive ? 'Đang hiển thị' : 'Đang ẩn'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleEdit(banner)}
-                                                        className="text-blue-600 hover:text-blue-800"
-                                                    >
-                                                        Sửa
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleToggle(banner.id)}
-                                                        className="text-yellow-600 hover:text-yellow-800"
-                                                    >
-                                                        {banner.isActive ? 'Ẩn' : 'Hiện'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(banner.id)}
-                                                        className="text-red-600 hover:text-red-800"
-                                                    >
-                                                        Xoá
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Danh sách banner</h2>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-sm text-[var(--color-fg-muted)]">
+                    <i className="fas fa-images text-[var(--color-accent)]"></i>
+                    {banners.length} banner
+                    <span className="text-[var(--color-fg-dim)]">· {banners.filter((b) => b.isActive).length} đang hiển thị</span>
+                </span>
             </div>
+
+            {banners.length === 0 ? (
+                <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-16 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-2)]">
+                        <i className="fas fa-image text-2xl text-[var(--color-fg-dim)]"></i>
+                    </div>
+                    <h4 className="mt-4 text-lg font-semibold text-[var(--color-fg)]">Chưa có banner nào</h4>
+                    <p className="mt-1 text-sm text-[var(--color-fg-muted)]">Hãy tạo banner đầu tiên ở form phía trên.</p>
+                </div>
+            ) : (
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {banners
+                        .slice()
+                        .sort((a, b) => a.displayOrder - b.displayOrder)
+                        .map((banner) => (
+                            <div
+                                key={banner.id}
+                                className={`group flex flex-col overflow-hidden rounded-2xl border bg-[var(--color-surface)] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                                    banner.isActive ? 'border-[var(--color-border)]' : 'border-[var(--color-border)] opacity-75'
+                                }`}
+                            >
+                                {/* Preview ảnh */}
+                                <div className="relative aspect-[16/7] overflow-hidden bg-gradient-to-br from-[var(--color-surface-2)] to-[var(--color-surface-3)]">
+                                    {banner.imageUrl ? (
+                                        <img
+                                            src={resolveProductImage({ imageUrl: banner.imageUrl, id: banner.id })}
+                                            alt={banner.title || 'Banner'}
+                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-[var(--color-fg-dim)]">
+                                            <i className="fas fa-image text-3xl"></i>
+                                        </div>
+                                    )}
+                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                    <span className="absolute left-3 top-3 inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-black/55 px-2 text-xs font-bold text-white backdrop-blur-sm">
+                                        #{banner.displayOrder}
+                                    </span>
+                                    <span
+                                        className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm ${
+                                            banner.isActive ? 'bg-emerald-500/90 text-white' : 'bg-gray-500/80 text-white'
+                                        }`}
+                                    >
+                                        <i className={`fas ${banner.isActive ? 'fa-eye' : 'fa-eye-slash'} text-[10px]`}></i>
+                                        {banner.isActive ? 'Đang hiển thị' : 'Đang ẩn'}
+                                    </span>
+                                    {banner.ctaLabel && (
+                                        <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[var(--color-fg)] backdrop-blur-sm">
+                                            <i className="fas fa-arrow-pointer text-[10px] text-[var(--color-accent)]"></i>
+                                            {banner.ctaLabel}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Nội dung */}
+                                <div className="flex flex-1 flex-col p-4">
+                                    {banner.kicker && (
+                                        <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-accent)]">{banner.kicker}</p>
+                                    )}
+                                    <h3 className="mt-1 line-clamp-1 text-base font-bold text-[var(--color-fg)]">{banner.title}</h3>
+                                    {banner.subTitle && (
+                                        <p className="mt-1 line-clamp-2 text-sm text-[var(--color-fg-muted)]">{banner.subTitle}</p>
+                                    )}
+                                    {(banner.offerTitle || banner.offerProduct || banner.offerDiscount) && (
+                                        <div className="mt-3 flex flex-wrap gap-1.5">
+                                            {banner.offerTitle && (
+                                                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                                                    <i className="fas fa-gift text-[10px]"></i>{banner.offerTitle}
+                                                </span>
+                                            )}
+                                            {banner.offerProduct && (
+                                                <span className="inline-flex items-center rounded-md bg-[var(--color-surface-2)] px-2 py-0.5 text-[11px] text-[var(--color-fg-muted)]">
+                                                    {banner.offerProduct}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                    {banner.ctaTo && (
+                                        <p className="mt-3 truncate text-[11px] text-[var(--color-fg-dim)]">
+                                            <i className="fas fa-link mr-1"></i>{banner.ctaTo}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Thao tác */}
+                                <div className="grid grid-cols-3 divide-x divide-[var(--color-border)] border-t border-[var(--color-border)]">
+                                    <button
+                                        onClick={() => handleEdit(banner)}
+                                        className="flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-[var(--color-fg-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-blue-600"
+                                    >
+                                        <i className="fas fa-pen text-xs"></i>Sửa
+                                    </button>
+                                    <button
+                                        onClick={() => handleToggle(banner.id)}
+                                        className="flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-[var(--color-fg-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-amber-600"
+                                    >
+                                        <i className={`fas ${banner.isActive ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
+                                        {banner.isActive ? 'Ẩn' : 'Hiện'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(banner.id)}
+                                        className="flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-[var(--color-fg-muted)] transition-colors hover:bg-red-50 hover:text-red-600"
+                                    >
+                                        <i className="fas fa-trash text-xs"></i>Xoá
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            )}
         </div>
     );
 };

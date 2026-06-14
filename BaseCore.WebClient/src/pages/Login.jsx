@@ -142,9 +142,9 @@ const Login = () => {
                                 <p className="mt-2 text-sm text-[var(--color-fg-muted)]">Chào mừng bạn quay lại TechStore</p>
 
                                 {error && (
-                                    <div className="mt-5 flex items-start justify-between gap-3 rounded-sm border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm text-red-300 ts-anim-fade-in">
+                                    <div className="mt-5 flex items-start justify-between gap-3 rounded-lg border border-red-500/40 bg-red-50 px-4 py-2.5 text-sm text-red-700 ts-anim-fade-in">
                                         <span>{error}</span>
-                                        <button onClick={() => setError('')} aria-label="Đóng" className="text-red-400 hover:text-red-200 mt-0.5">
+                                        <button onClick={() => setError('')} aria-label="Đóng" className="text-red-600 hover:text-red-800 mt-0.5">
                                             <i className="fas fa-times text-xs"></i>
                                         </button>
                                     </div>
@@ -152,7 +152,7 @@ const Login = () => {
 
                                 <form onSubmit={handleSubmit} className="mt-6 space-y-4.5">
                                     <label className="block">
-                                        <span className="ts-eyebrow mb-1.5 block text-[10px] text-[var(--color-fg-muted)]">Email / SĐT / Tên đăng nhập</span>
+                                        <span className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">Tên đăng nhập</span>
                                         <div className="relative">
                                             <i className="fas fa-user pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-fg-dim)]"></i>
                                             <input
@@ -160,14 +160,14 @@ const Login = () => {
                                                 value={username}
                                                 onChange={(e) => setUsername(e.target.value)}
                                                 required
-                                                placeholder="Nhập tên đăng nhập hoặc email..."
+                                                placeholder="Nhập tên đăng nhập"
                                                 className="ts-input pl-10" // Tăng padding trái để không dính icon
                                             />
                                         </div>
                                     </label>
                                     
                                     <label className="block">
-                                        <span className="ts-eyebrow mb-1.5 block text-[10px] text-[var(--color-fg-muted)]">Mật khẩu</span>
+                                        <span className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">Mật khẩu</span>
                                         <div className="relative">
                                             <i className="fas fa-lock pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-fg-dim)]"></i>
                                             <input
@@ -226,35 +226,47 @@ const Login = () => {
                                 <h2 className="ts-display mt-3 text-3xl text-[var(--color-fg)]">Đăng ký tài khoản</h2>
                                 <p className="mt-2 text-sm text-[var(--color-fg-muted)]">Tạo tài khoản để mua sắm thuận tiện hơn</p>
 
-                                {registerError && <div className="mt-5 rounded-sm border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm text-red-300 ts-anim-fade-in">{registerError}</div>}
-                                {registerSuccess && <div className="mt-5 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-300 ts-anim-fade-in">{registerSuccess}</div>}
+                                {registerError && <div className="mt-5 rounded-lg border border-red-500/40 bg-red-50 px-4 py-2.5 text-sm text-red-700 ts-anim-fade-in">{registerError}</div>}
+                                {registerSuccess && <div className="mt-5 rounded-lg border border-emerald-500/40 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 ts-anim-fade-in">{registerSuccess}</div>}
 
                                 <form onSubmit={handleRegister} autoComplete="off" className="mt-6 grid grid-cols-1 gap-x-4 gap-y-3.5 sm:grid-cols-2">
                                     {[
-                                        ['username', 'Tên đăng nhập', 'text', true],
-                                        ['password', 'Mật khẩu', 'password', true],
-                                        ['name', 'Họ và tên', 'text', false],
-                                        ['dateOfBirth', 'Ngày sinh', 'date', false],
-                                        ['email', 'Email', 'email', false],
-                                        ['phone', 'Số điện thoại', 'tel', false],
-                                    ].map(([field, label, type, req]) => (
+                                        ['username', 'Tên đăng nhập', 'text', true, 'fa-user'],
+                                        ['password', 'Mật khẩu', 'password', true, 'fa-lock'],
+                                        ['name', 'Họ và tên', 'text', false, 'fa-id-card'],
+                                        ['dateOfBirth', 'Ngày sinh', 'date', false, 'fa-calendar-days'],
+                                        ['email', 'Email', 'email', false, 'fa-envelope'],
+                                        ['phone', 'Số điện thoại', 'tel', false, 'fa-phone'],
+                                    ].map(([field, label, type, req, icon]) => (
                                         <label key={field} className="block">
-                                            {/* Sửa lỗi dính chữ bằng cách thêm space sau label text */}
-                                            <span className="ts-eyebrow mb-1.5 block text-[10px] text-[var(--color-fg-muted)]">
+                                            <span className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
                                                 {label}
-                                                {req && <span className="text-red-500 ml-1">*</span>}
+                                                {req && <span className="ml-0.5 text-red-500">*</span>}
                                             </span>
-                                            <input
-                                                type={field === 'password' && showPassword ? 'text' : type}
-                                                name={`register-${field}`}
-                                                value={registerData[field]}
-                                                onChange={(e) => setRegisterData({ ...registerData, [field]: e.target.value })}
-                                                required={req}
-                                                placeholder={field === 'password' ? '••••••••' : `Nhập ${label.toLowerCase()}...`}
-                                                {...(field === 'password' ? { minLength: 6, autoComplete: 'new-password' } : { autoComplete: 'off' })}
-                                                {...(field === 'dateOfBirth' ? { max: new Date().toISOString().split('T')[0] } : {})}
-                                                className="ts-input"
-                                            />
+                                            <div className="relative">
+                                                <i className={`fas ${icon} pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-fg-dim)]`}></i>
+                                                <input
+                                                    type={field === 'password' && showPassword ? 'text' : type}
+                                                    name={`register-${field}`}
+                                                    value={registerData[field]}
+                                                    onChange={(e) => setRegisterData({ ...registerData, [field]: e.target.value })}
+                                                    required={req}
+                                                    placeholder={field === 'password' ? '••••••••' : `Nhập ${label.toLowerCase()}`}
+                                                    {...(field === 'password' ? { minLength: 6, autoComplete: 'new-password' } : { autoComplete: 'off' })}
+                                                    {...(field === 'dateOfBirth' ? { max: new Date().toISOString().split('T')[0] } : {})}
+                                                    className={cn('ts-input pl-10', field === 'password' && 'pr-10')}
+                                                />
+                                                {field === 'password' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-xs text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                                                    >
+                                                        <i className={cn('fas', showPassword ? 'fa-eye-slash' : 'fa-eye')}></i>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </label>
                                     ))}
 

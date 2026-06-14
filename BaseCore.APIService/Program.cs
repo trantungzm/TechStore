@@ -220,8 +220,9 @@ if (autoMigrateOnStartup)
     try
     {
         db.Database.Migrate();
+        await db.SeedDataAsync();
     
-    Console.WriteLine("Database migrated successfully");
+        Console.WriteLine("Database migrated and seeded successfully");
     }
     catch (Exception ex)
     {
@@ -247,4 +248,3 @@ app.MapHub<TechStoreChatHub>("/techstoreChatHub");
 Console.WriteLine("BaseCore API Service running on port 5001 - Database mode");
 Console.WriteLine("Endpoints: /api/products, /api/categories, /api/orders, /api/inventory, /api/warranty, /api/repairs, /api/tickets, /api/notifications, /api/coupons, /api/specs, /api/uploads, /api/recommendations");
 app.Run();
-

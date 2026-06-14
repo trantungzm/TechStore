@@ -15,7 +15,7 @@ namespace BaseCore.APIService.Controllers
         public RepairsController(IRepairService service) => _service = service;
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> Get([FromQuery] SupportSearchDto search)
         {
             var result = await _service.GetRepairsAsync(search);
@@ -32,7 +32,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _service.GetRepairAsync(id);
@@ -49,7 +49,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPost("intake")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Intake([FromBody] CreateRepairIntakeDto dto)
         {
             var item = await _service.IntakeAsync(dto, CurrentUserId());
@@ -57,7 +57,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateRepairCaseDto dto)
         {
             var item = await _service.UpdateAsync(id, dto);
@@ -65,7 +65,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Status(int id, [FromBody] UpdateRepairStatusDto dto)
         {
             var item = await _service.UpdateStatusAsync(id, dto, CurrentUserId());
@@ -73,7 +73,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpGet("{id}/updates")]
-        [Authorize(Roles = "Admin,Warranty,Technical,CustomerService")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> Updates(int id) => Ok(await _service.GetUpdatesAsync(id));
 
         [HttpGet("my/{id}/updates")]

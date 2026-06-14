@@ -23,5 +23,7 @@ namespace BaseCore.Services
         Task<InventoryReturnDto?> RestockReturnAsync(int id, RestockReturnDto dto, Guid? userId);
         Task<(List<StockMovementDto> Items, int TotalCount)> GetMovementsAsync(InventorySearchDto search);
         Task<bool> HasOpeningStockAsync(int productId);
+        Task<StockReconcileResultDto> ReconcileStockAsync(bool backfillTags, Guid? userId);
+        Task<StockReconcileResultDto> BackfillInternalCodesAsync(Guid? userId);
     }
 }
