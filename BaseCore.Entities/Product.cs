@@ -12,7 +12,7 @@ namespace BaseCore.Entities
         public decimal? OriginalPrice { get; set; }
 
         public int Stock { get; set; }
-
+ 
         public string? ImageUrl { get; set; }
 
         public string? Description { get; set; }
@@ -24,6 +24,12 @@ namespace BaseCore.Entities
         public string? WarrantyProvider { get; set; }
 
         public int CategoryId { get; set; }
+
+        /// <summary>
+        /// Additional categories the product belongs to (many-to-many).
+        /// The primary category is still CategoryId.
+        /// </summary>
+        public List<ProductCategory> ProductCategories { get; set; } = new();
         public bool IsActive { get; set; } = true;
         public bool IsFeatured { get; set; }
         public bool IsBestSeller { get; set; }

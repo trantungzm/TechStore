@@ -24,6 +24,11 @@ namespace BaseCore.DTO.Store
         public decimal? OriginalPrice { get; set; }
         public int Stock { get; set; }
         public int CategoryId { get; set; }
+
+        /// <summary> 
+        /// Additional category IDs (besides CategoryId) the product belongs to.
+        /// </summary>
+        public List<int> AdditionalCategoryIds { get; set; } = new();
         public string? Description { get; set; }
         public string? LongDescription { get; set; }
         public string? Brand { get; set; }
@@ -52,6 +57,13 @@ namespace BaseCore.DTO.Store
         public decimal? OriginalPrice { get; set; }
         public int? Stock { get; set; }
         public int? CategoryId { get; set; }
+
+        /// <summary>
+        /// Additional category IDs (besides CategoryId) the product belongs to.
+        /// Pass empty list to clear all additional categories.
+        /// Pass null to leave unchanged.
+        /// </summary>
+        public List<int>? AdditionalCategoryIds { get; set; }
         public string? Description { get; set; }
         public string? LongDescription { get; set; }
         public string? Brand { get; set; }
@@ -75,6 +87,11 @@ namespace BaseCore.DTO.Store
     {
         public string? Keyword { get; set; }
         public int? CategoryId { get; set; }
+
+        /// <summary>
+        /// Search for products belonging to ANY of the given category IDs.
+        /// </summary>
+        public List<int>? CategoryIds { get; set; }
         public string? CategorySlug { get; set; }
         public string? Brand { get; set; }
         public decimal? MinPrice { get; set; }

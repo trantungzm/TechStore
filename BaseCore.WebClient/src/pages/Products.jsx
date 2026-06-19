@@ -363,6 +363,7 @@ const Products = () => {
         images: [],
         variants: [],
         categoryId: '',
+        additionalCategoryIds: [],
         warrantyMonths: 12,
         requiresSerialTracking: true,
         isActive: true,
@@ -482,11 +483,17 @@ const Products = () => {
     };
 
     const visibleProducts = useMemo(() => {
-        if (!stockFilter) return products;
-        if (stockFilter === 'low') return products.filter((product) => Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 10);
-        if (stockFilter === 'out') return products.filter((product) => Number(product.stock || 0) <= 0);
-        if (stockFilter === 'available') return products.filter((product) => Number(product.stock || 0) > 10);
-        return products;
+        let filtered = products;
+        if (stockFilter === 'low') filtered = products.filter((product) => Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 10);
+        else if (stockFilter === 'out') filtered = products.filter((product) => Number(product.stock || 0) <= 0);
+        else if (stockFilter === 'available') filtered = products.filter((product) => Number(product.stock || 0) > 10);
+
+        return [...filtered]
+            .map((product) => ({
+                ...product,
+                totalValue: Number(product.price || 0) * Number(product.stock || 0),
+            }))
+            .sort((a, b) => b.totalValue - a.totalValue);
     }, [products, stockFilter]);
 
     const inventoryStats = useMemo(() => {
@@ -575,6 +582,14 @@ const Products = () => {
             const detailWarrantyOptions = getWarrantyOptions(detailCategory);
             const detailWarranty = Number(detail.warrantyMonths) || 12;
             const resolvedWarranty = detailWarrantyOptions.includes(detailWarranty) ? detailWarranty : (detailWarrantyOptions[0] || 12);
+
+            // Collect additional category IDs from productCategories if available
+            const additionalIds = Array.isArray(detail.productCategories)
+                ? detail.productCategories
+                    .map(pc => pc.categoryId ?? pc.CategoryId)
+                    .filter(id => Number(id) > 0 && Number(id) !== Number(detail.categoryId))
+                : [];
+
             setFormData({
                 name: detail.name,
                 sku: detail.sku || '',
@@ -592,6 +607,7 @@ const Products = () => {
                 })) : [],
                 brand: detail.brand || '',
                 categoryId: detail.categoryId,
+                additionalCategoryIds: additionalIds,
                 warrantyMonths: resolvedWarranty,
                 requiresSerialTracking: detail.requiresSerialTracking !== false,
                 isActive: detail.isActive !== false,
@@ -619,6 +635,7 @@ const Products = () => {
                 variants: [],
                 brand: '',
                 categoryId: '',
+                additionalCategoryIds: [],
                 warrantyMonths: '',
                 requiresSerialTracking: true,
                 isActive: true,
@@ -1368,13 +1385,14 @@ const Products = () => {
                                         <th className="ts-table-col-medium ts-table-hide-mobile">Danh mục</th>
                                         <th className="ts-table-col-medium">Giá</th>
                                         <th className="ts-table-col-narrow">Tồn kho</th>
+                                        <th className="ts-table-col-medium">Tổng giá</th>
                                         {canViewProductDetails && <th className="ts-table-col-narrow text-right">Thao tác</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {visibleProducts.length === 0 ? (
                                         <tr>
-                                            <td colSpan={canViewProductDetails ? 5 : 4} className="px-4 py-10 text-center text-[var(--color-fg-muted)]">Không tìm thấy sản phẩm</td>
+                                            <td colSpan={canViewProductDetails ? 6 : 5} className="px-4 py-10 text-center text-[var(--color-fg-muted)]">Không tìm thấy sản phẩm</td>
                                         </tr>
                                     ) : visibleProducts.map((product) => (
                                         <tr key={product.id}>
@@ -1394,6 +1412,7 @@ const Products = () => {
                                             <td>
                                                 <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${stockBadge(product.stock)}`}>{product.stock}</span>
                                             </td>
+                                            <td className="whitespace-nowrap font-semibold text-[var(--color-fg)]">{formatCurrency(product.totalValue)}</td>
                                             {canViewProductDetails && (
                                                 <td>
                                                     <div className="flex justify-end gap-2">
@@ -1534,16 +1553,16 @@ const Products = () => {
                                         ].map(([key, label]) => (
                                             <label key={key} className="flex items-center gap-2 text-sm font-semibold text-[var(--color-fg)]">
                                                 <input type="checkbox" checked={Boolean(formData[key])} onChange={(e) => setFormData({ ...formData, [key]: e.target.checked })} />
-                                                {label}
+                                                {label} 
                                             </label>
                                         ))}
                                     </div>
                                     <label className="md:col-span-4">
                                         <span className="mb-1 block text-sm font-semibold text-[var(--color-fg)]">Mô tả</span>
-                                        <textarea className={`${inputClass} w-full`} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows="4" />
+                                        <textarea className={`${inputClass} w-full`} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows="4" /> 
                                     </label>
                                     <div className="md:col-span-4 rounded-md border border-[var(--color-border)] p-3">
-                                        <div className="mb-3 flex items-center justify-between gap-2">
+                                        <div className="mb-3 flex items-center justify-between gap-2"> 
                                             <div>
                                                 <span className="block text-sm font-semibold text-[var(--color-fg)]">Ảnh sản phẩm</span>
                                                 <span className="text-xs text-[var(--color-fg-muted)]">Upload file ảnh vào thư mục uploads/products. Ảnh chính sẽ dùng làm banner.</span>

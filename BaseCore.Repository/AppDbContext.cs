@@ -12,7 +12,7 @@ namespace BaseCore.Repository
     /// Used for teaching EF Core concepts (Bài 10)
     /// </summary>
     public class AppDbContext : DbContext
-    {
+    { 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
@@ -22,6 +22,7 @@ namespace BaseCore.Repository
         public DbSet<Role> Roles { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<ProductCategory> ProductCategories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<OrderTimeline> OrderTimelines { get; set; }
@@ -276,6 +277,28 @@ namespace BaseCore.Repository
                       .WithMany(s => s.BackupProducts)
                       .HasForeignKey(e => e.BackupSupplierId)
                       .OnDelete(DeleteBehavior.NoAction);
+
+                // Many-to-many with Category via ProductCategory
+                entity.HasMany(e => e.ProductCategories)
+                      .WithOne(pc => pc.Product)
+                      .HasForeignKey(pc => pc.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ProductCategory join entity
+            modelBuilder.Entity<ProductCategory>(entity =>
+            {
+                entity.HasKey(e => new { e.ProductId, e.CategoryId });
+
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.ProductCategories)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Category)
+                      .WithMany()
+                      .HasForeignKey(e => e.CategoryId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<ProductImage>(entity =>

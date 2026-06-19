@@ -11,7 +11,7 @@ namespace BaseCore.Services
     public class ProductService : IProductService
     {
         private readonly IProductRepositoryEF _productRepository;
-        private readonly ICategoryRepositoryEF _categoryRepository;
+        private readonly ICategoryRepositoryEF _categoryRepository;  
         private readonly ISupplierRepositoryEF _supplierRepository;
         private readonly IStockItemRepositoryEF _stockItemRepository;
 
@@ -95,6 +95,16 @@ namespace BaseCore.Services
             product.Variants = BuildVariants(dto.Variants);
             product.ImageUrl = ResolvePrimaryImageUrl(dto.ImageUrl, product.Images);
 
+            // Add product-category relationships for additional categories
+            var allCategoryIds = dto.AdditionalCategoryIds
+                .Where(id => id > 0 && id != dto.CategoryId)
+                .Distinct()
+                .ToList();
+            product.ProductCategories = allCategoryIds.Select(catId => new ProductCategory
+            {
+                CategoryId = catId
+            }).ToList();
+
             return await _productRepository.AddAsync(product);
         }
 
@@ -159,6 +169,40 @@ namespace BaseCore.Services
             if (dto.Variants != null)
             {
                 await MergeVariantsAsync(product, dto.Variants);
+            }
+
+            // Update additional categories
+            if (dto.AdditionalCategoryIds != null)
+            {
+                var currentCategoryIds = product.ProductCategories
+                    .Where(pc => pc.CategoryId != product.CategoryId)
+                    .Select(pc => pc.CategoryId)
+                    .ToHashSet();
+
+                var requestedCategoryIds = dto.AdditionalCategoryIds
+                    .Where(id => id > 0 && id != product.CategoryId)
+                    .Distinct()
+                    .ToHashSet();
+
+                // Remove categories not in the new list
+                var toRemove = product.ProductCategories
+                    .Where(pc => pc.CategoryId != product.CategoryId && !requestedCategoryIds.Contains(pc.CategoryId))
+                    .ToList();
+                foreach (var pc in toRemove)
+                {
+                    product.ProductCategories.Remove(pc);
+                }
+
+                // Add new categories not already associated
+                var existingIds = product.ProductCategories.Select(pc => pc.CategoryId).ToHashSet();
+                var toAdd = requestedCategoryIds
+                    .Where(id => !existingIds.Contains(id))
+                    .Select(id => new ProductCategory { ProductId = product.Id, CategoryId = id })
+                    .ToList();
+                foreach (var pc in toAdd)
+                {
+                    product.ProductCategories.Add(pc);
+                }
             }
 
             await _productRepository.UpdateAsync(product);

@@ -150,6 +150,7 @@ const AdminWarranty = () => {
     const [tab, setTab] = useState('warranties');
     const [warranties, setWarranties] = useState([]);
     const [claims, setClaims] = useState([]);
+    const [repairs, setRepairs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [updatingId, setUpdatingId] = useState(null);
@@ -188,6 +189,13 @@ const AdminWarranty = () => {
             ]);
             setWarranties(Array.isArray(wRes.data) ? wRes.data : []);
             setClaims(Array.isArray(cRes.data) ? cRes.data : []);
+            // Tải danh sách phiếu sửa chữa để biết claim nào đã có repair (không chặn trang nếu lỗi/thiếu quyền).
+            try {
+                const rRes = await repairApi.getAll();
+                setRepairs(Array.isArray(rRes.data) ? rRes.data : []);
+            } catch {
+                setRepairs([]);
+            }
         } catch (err) {
             setError(readError(err, 'Không tải được dữ liệu bảo hành.'));
         } finally {
@@ -226,6 +234,23 @@ const AdminWarranty = () => {
                     .includes(keyword);
             });
     }, [warranties, filters]);
+
+    // Map warrantyClaimId -> phiếu sửa chữa (để biết claim nào đã có repair).
+    const repairByClaimId = useMemo(() => {
+        const map = {};
+        (repairs || []).forEach((r) => {
+            const claimId = r.warrantyClaimId ?? r.WarrantyClaimId;
+            if (claimId == null) return;
+            if (!map[claimId]) {
+                map[claimId] = {
+                    id: r.id ?? r.Id,
+                    repairCode: r.repairCode ?? r.RepairCode,
+                    status: r.status ?? r.Status,
+                };
+            }
+        });
+        return map;
+    }, [repairs]);
 
     const filteredClaims = useMemo(() => {
         const keyword = claimFilters.keyword.trim().toLowerCase();
@@ -282,20 +307,6 @@ const AdminWarranty = () => {
         };
     }, [claims]);
 
-    const handleActivate = async (id) => {
-        setUpdatingId(id);
-        setError('');
-        try {
-            await warrantyApi.activateAdmin(id);
-            toast('Đã kích hoạt bảo hành', 'success');
-            await load();
-        } catch (err) {
-            setError(readError(err, 'Không kích hoạt được bảo hành.'));
-        } finally {
-            setUpdatingId(null);
-        }
-    };
-
     const toggleClaim = async (claimId) => {
         const next = openClaimId === claimId ? null : claimId;
         setOpenClaimId(next);
@@ -347,8 +358,9 @@ const AdminWarranty = () => {
                 customerPhone: claim.customerPhone || null,
                 issueDescription: claim.issueDescription || null,
             });
+            const code = res.data?.repairCode ?? res.data?.RepairCode ?? res.data?.id ?? res.data?.Id;
             toast('Đã tạo phiếu sửa chữa', 'success');
-            navigate('/admin/repairs');
+            navigate(code ? `/admin/repairs?q=${encodeURIComponent(code)}` : '/admin/repairs');
         } catch (err) {
             setError(readError(err, 'Không tạo được phiếu sửa chữa.'));
         } finally {
@@ -479,6 +491,11 @@ const AdminWarranty = () => {
                 {loading ? (
                     <div className="p-6 text-sm text-[var(--color-fg-muted)]">Đang tải...</div>
                 ) : tab === 'warranties' ? (
+                    <>
+                    <div className="flex items-start gap-2 border-b border-[var(--color-border)] bg-sky-500/5 px-4 py-2.5 text-xs text-[var(--color-fg-muted)]">
+                        <i className="fas fa-circle-info mt-0.5 text-sky-500"></i>
+                        <span>Bảo hành được <b className="text-[var(--color-fg)]">tự động kích hoạt</b> khi đơn hàng chuyển sang <b className="text-[var(--color-fg)]">Hoàn thành</b>. Kỹ thuật chỉ tiếp nhận &amp; xử lý các <b className="text-[var(--color-fg)]">yêu cầu bảo hành</b> ở tab bên cạnh.</span>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="w-full table-auto border-collapse">
                             <thead className="bg-[var(--color-surface-2)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
@@ -512,6 +529,7 @@ const AdminWarranty = () => {
                             </tbody>
                         </table>
                     </div>
+                    </>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full table-auto border-collapse">
@@ -601,14 +619,26 @@ const AdminWarranty = () => {
                                                             >
                                                                 {updatingId === c.id ? 'Đang lưu...' : 'Cập nhật'}
                                                             </button>
-                                                            <button
-                                                                type="button"
-                                                                className="rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60"
-                                                                onClick={() => handleCreateRepair(c)}
-                                                                disabled={creatingRepairId === c.id}
-                                                            >
-                                                                {creatingRepairId === c.id ? 'Đang tạo...' : 'Tạo repair'}
-                                                            </button>
+                                                            {repairByClaimId[c.id] ? (
+                                                                <button
+                                                                    type="button"
+                                                                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/10"
+                                                                    onClick={() => navigate(`/admin/repairs?q=${encodeURIComponent(repairByClaimId[c.id].repairCode || repairByClaimId[c.id].id || '')}`)}
+                                                                    title={`Xem phiếu sửa chữa ${repairByClaimId[c.id].repairCode || '#' + repairByClaimId[c.id].id}`}
+                                                                >
+                                                                    <i className="fas fa-screwdriver-wrench"></i>
+                                                                    Xem phiếu sửa chữa
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    type="button"
+                                                                    className="rounded-md border border-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 disabled:opacity-60"
+                                                                    onClick={() => handleCreateRepair(c)}
+                                                                    disabled={creatingRepairId === c.id}
+                                                                >
+                                                                    {creatingRepairId === c.id ? 'Đang tạo...' : 'Tạo repair'}
+                                                                </button>
+                                                            )}
                                                         </>
                                                     )}
                                                     <button

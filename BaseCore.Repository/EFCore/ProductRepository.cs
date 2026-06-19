@@ -4,7 +4,7 @@ using BaseCore.Entities;
 
 namespace BaseCore.Repository.EFCore
 {
-    /// <summary>
+    /// <summary> 
     /// Product Repository using Entity Framework Core
     /// </summary>
     public interface IProductRepositoryEF : IRepository<Product>
@@ -65,7 +65,16 @@ namespace BaseCore.Repository.EFCore
                     (p.Sku != null && p.Sku.ToLower().Contains(keyword)));
             }
 
-            if (search.CategoryId.HasValue && search.CategoryId > 0)
+            if (search.CategoryIds != null && search.CategoryIds.Count > 0)
+            {
+                var validIds = search.CategoryIds.Where(id => id > 0).Distinct().ToList();
+                if (validIds.Count > 0)
+                {
+                    query = query.Where(p => validIds.Contains(p.CategoryId)
+                        || p.ProductCategories.Any(pc => validIds.Contains(pc.CategoryId)));
+                }
+            }
+            else if (search.CategoryId.HasValue && search.CategoryId > 0)
             {
                 query = query.Where(p => p.CategoryId == search.CategoryId);
             }

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { inventoryApi, repairApi, warrantyApi } from '../services/api';
 import AdminFilterDropdown from '../components/AdminFilterDropdown';
 import { useAuth } from '../contexts/AuthContext';
@@ -99,7 +100,9 @@ const AdminRepairs = () => {
     const [updatingId, setUpdatingId] = useState(null);
     const [activatingWarranty, setActivatingWarranty] = useState(false);
     const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-    const [filters, setFilters] = useState({ keyword: '', status: '' });
+    const [searchParams] = useSearchParams();
+    // Lọc sẵn theo ?q= khi điều hướng từ trang Bảo hành (vd ?q=RC-0001).
+    const [filters, setFilters] = useState({ keyword: searchParams.get('q') || '', status: '' });
     const [page, setPage] = useState(1);
     const pageSize = 10;
 
