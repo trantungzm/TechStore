@@ -5,10 +5,11 @@ import { useCart } from '../../contexts/CartContext';
 import { useCompare } from '../../contexts/CompareContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
-import { productApi, orderApi } from '../../services/api';
+import { orderApi, productApi } from '../../services/api';
+import { countUnseenOrderUpdates } from '../../utils/orderUpdates';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
-import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, t } from '../../utils/store';
+import { formatCurrency, normalizeSearchText, resolveProductImage, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
@@ -20,13 +21,6 @@ const categoryNameMap = {
     Smartwatch: 'Đồng hồ thông minh',
     Camera: 'Máy ảnh',
 };
-
-const normalizeSearchText = (value = '') => String(value)
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase();
 
 const readSearchHistory = () => {
     try {
@@ -90,6 +84,7 @@ const navItems = [
 
 const ElectroHeader = () => {
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [hasOrderUpdates, setHasOrderUpdates] = useState(false);
     const [keyword, setKeyword] = useState('');
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchHistory, setSearchHistory] = useState(() => readSearchHistory());
@@ -105,38 +100,36 @@ const ElectroHeader = () => {
     const headerRef = useRef(null);
     const searchRef = useRef(null);
     const dropdownRef = useRef(null);
-    const { user, isAuthenticated, isAdmin, logout } = useAuth();
+    const { user, isAuthenticated, canAccessAdminPanel, logout } = useAuth();
     const { itemCount } = useCart();
     const { wishlistCount } = useWishlist();
     const { compareCount } = useCompare();
     const { coupons } = usePublicCoupons();
     const settings = useStoreSettings();
-    const canAccessAdminArea = isAdmin() || isStoreViewOnlyUser(user);
-    const [activeOrderCount, setActiveOrderCount] = useState(0);
     const navigate = useNavigate();
     const location = useLocation();
-    const dashboardLabel = user?.name || user?.username || t('My Dashboard');
-    // Tên gọi ngắn: lấy từ cuối của họ tên (tiếng Việt), nếu không có thì dùng username.
-    const firstName = (() => {
-        const full = String(user?.name || '').trim();
-        if (full) return full.split(/\s+/).pop();
-        return user?.username || '';
-    })();
+    const fullName = user?.name || user?.username || '';
+    // Chỉ lấy chữ cuối của họ tên, vd "Trần Thanh Tùng" -> "Tùng".
+    const shortName = fullName.trim().split(/\s+/).filter(Boolean).pop() || '';
+    // Tài khoản admin chỉ hiển thị "Admin" trên ô user; còn lại hiển thị tên ngắn.
+    const displayName = user?.role === 'Admin' ? 'Admin' : shortName;
+    const dashboardLabel = fullName || t('My Dashboard');
     const trimmedKeyword = keyword.trim();
 
-    // Đếm số đơn "cần chú ý" = đơn đang xử lý, chưa kết thúc (loại các trạng thái cuối).
+    // Hiện chấm đỏ ở ô user khi có đơn hàng vừa đổi trạng thái (so với lần xem gần nhất).
     useEffect(() => {
-        if (!isAuthenticated) { setActiveOrderCount(0); return undefined; }
+        if (!isAuthenticated) { setHasOrderUpdates(false); return undefined; }
         let active = true;
-        const terminal = ['Completed', 'Cancelled', 'CancelRejected', 'Returned', 'Failed'];
-        orderApi.getMyOrders()
-            .then((res) => {
-                if (!active) return;
-                const list = Array.isArray(res.data) ? res.data : (res.data?.items || []);
-                setActiveOrderCount(list.filter((o) => !terminal.includes(o.status)).length);
-            })
-            .catch(() => { if (active) setActiveOrderCount(0); });
-        return () => { active = false; };
+        const check = async () => {
+            try {
+                const res = await orderApi.getMyOrders();
+                if (active) setHasOrderUpdates(countUnseenOrderUpdates(res.data || []) > 0);
+            } catch { /* bỏ qua */ }
+        };
+        check();
+        const onSeen = () => { if (active) setHasOrderUpdates(false); };
+        window.addEventListener('orders:seen', onSeen);
+        return () => { active = false; window.removeEventListener('orders:seen', onSeen); };
     }, [isAuthenticated]);
 
     const suggestedProducts = useMemo(() => {
@@ -303,33 +296,39 @@ const ElectroHeader = () => {
         scrollToPageTop();
     };
 
-    const iconButtonClass = "relative flex h-10 w-10 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)]/40 text-[var(--color-fg-muted)] transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]";
-    const badgeClass = "absolute -top-1.5 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-1 text-[10px] font-semibold leading-none text-white shadow-md";
+    const iconButtonClass = "relative flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white/70 text-[var(--color-fg-muted)] shadow-[var(--shadow-soft)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]";
+    const badgeClass = "absolute -top-1.5 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] px-1 text-[10px] font-semibold leading-none text-white shadow-md";
+
+    // Icon hiển thị viền đen rỗng khi chưa có sản phẩm, đổ đen đặc khi đã có.
+    const iconGlyphStyle = (filled) => filled
+        ? { color: '#000' }
+        : { color: 'transparent', WebkitTextStroke: '1px #000' };
 
     return (
         <header
             ref={headerRef}
             className={cn(
-                "sticky top-0 z-50 w-full backdrop-blur-xl transition-all duration-300",
+                "sticky top-0 z-50 w-full pt-3 backdrop-blur-xl transition-all duration-300",
                 isScrolled
-                    ? "border-b border-[var(--color-border)] bg-white/85 shadow-[0_8px_24px_-12px_rgba(192,57,43,0.15)]"
-                    : "border-b border-transparent bg-white/60"
+                    ? "drop-shadow-[0_20px_40px_rgba(37,99,235,0.08)]"
+                    : ""
             )}
         >
-            <div className="ts-container flex h-20 items-center gap-6">
+            <div className="ts-container">
+            <div className="flex h-[72px] w-full items-center gap-4 rounded-[22px] border border-[var(--color-border)] bg-[var(--color-surface-glass)] px-4 shadow-[var(--shadow-soft)] backdrop-blur-xl lg:px-6">
                 {/* Logo */}
                 <Link
                     to="/"
                     onClick={closeMainMenus}
-                    className="group flex shrink-0 items-center gap-2"
+                    className="group flex flex-1 items-center gap-2"
                 >
                     <span className="ts-display text-2xl tracking-tight text-[var(--color-fg)] transition-transform duration-300 group-hover:scale-[1.03]">
                         Tech<span className="ts-gradient-text">Store</span>
                     </span>
                 </Link>
 
-                {/* Desktop nav */}
-                <nav className="ml-6 hidden items-center gap-1 lg:flex">
+                {/* Desktop nav - centered */}
+                <nav className="hidden shrink-0 items-center gap-1 lg:flex">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.to}
@@ -337,35 +336,25 @@ const ElectroHeader = () => {
                             end={item.end}
                             onClick={closeMainMenus}
                             className={({ isActive }) => cn(
-                                "relative px-3 py-2 text-sm font-medium tracking-wide transition-colors",
+                                "relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium tracking-wide transition-all",
                                 isActive
-                                    ? "text-[var(--color-fg)]"
-                                    : "text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
+                                    ? "bg-[var(--color-primary)]/10 text-[var(--color-fg)]"
+                                    : "text-[var(--color-fg-dim)] hover:bg-white/65 hover:text-[var(--color-fg)]"
                             )}
                         >
-                            {({ isActive }) => (
-                                <>
-                                    {item.label}
-                                    <span
-                                        className={cn(
-                                            "absolute inset-x-3 -bottom-px h-px transition-all",
-                                            isActive
-                                                ? "bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)] opacity-100"
-                                                : "bg-[var(--color-primary)] opacity-0"
-                                        )}
-                                    />
-                                </>
-                            )}
+                            {item.label}
                         </NavLink>
                     ))}
                 </nav>
 
+                {/* Right cluster: search + actions */}
+                <div className="flex flex-1 items-center justify-end gap-2">
                 {/* Search */}
-                <div ref={searchRef} className="relative ml-auto hidden flex-1 max-w-md md:block">
+                <div ref={searchRef} className="relative hidden w-40 md:block lg:w-52">
                     <form
                         onSubmit={handleSearch}
                         className={cn(
-                            "flex h-10 items-center gap-2 rounded-md border bg-[var(--color-surface)] px-3 transition-colors",
+                            "flex h-11 items-center gap-2 rounded-xl border bg-white/78 px-4 shadow-[var(--shadow-soft)] backdrop-blur-md transition-colors",
                             searchOpen
                                 ? "border-[var(--color-primary)] shadow-[0_0_0_3px_var(--color-primary-soft)]"
                                 : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
@@ -374,7 +363,7 @@ const ElectroHeader = () => {
                         <i className="fas fa-search text-xs text-[var(--color-fg-dim)]"></i>
                         <input
                             type="text"
-                            placeholder="Tìm sản phẩm, thương hiệu..."
+                            placeholder="Bạn muốn mua gì"
                             value={keyword}
                             onFocus={() => setSearchOpen(true)}
                             onChange={(event) => {
@@ -396,10 +385,10 @@ const ElectroHeader = () => {
                     </form>
 
                     {searchOpen && (
-                        <div className="absolute left-0 right-0 top-full mt-2 max-h-[78vh] overflow-y-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ts-anim-fade-up">
+                        <div className="absolute right-0 top-full mt-3 w-[min(420px,calc(100vw-2rem))] max-h-[78vh] overflow-y-auto rounded-[20px] border border-[var(--color-border)] bg-white/92 shadow-[var(--shadow-card)] backdrop-blur-xl ts-anim-fade-up">
                             {trimmedKeyword ? (
                                 <div className="p-4">
-                                    <p className="ts-eyebrow mb-3 text-[var(--color-accent)]">Kết quả gợi ý</p>
+                                    <p className="ts-eyebrow mb-3 text-[var(--color-primary)]">Kết quả gợi ý</p>
                                     {suggestedProducts.length > 0 ? (
                                         <ul className="space-y-1">
                                             {suggestedProducts.map((product) => {
@@ -411,7 +400,7 @@ const ElectroHeader = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleSuggestionClick(product)}
-                                                            className="flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-[var(--color-surface-2)]"
+                                                            className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-[var(--color-surface-2)]"
                                                         >
                                                             <img
                                                                 src={resolveProductImage(product)}
@@ -420,7 +409,7 @@ const ElectroHeader = () => {
                                                             />
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="truncate text-sm font-medium text-[var(--color-fg)]">{product.name || product.title}</p>
-                                                                <p className="ts-mono mt-0.5 text-xs text-[var(--color-accent)]">{formatCurrency(product.price)}</p>
+                                                                <p className="ts-mono mt-0.5 text-xs text-[var(--color-primary)]">{formatCurrency(product.price)}</p>
                                                                 <div className="mt-1 flex flex-wrap gap-1">
                                                                     <span className={cn(
                                                                         "rounded-full px-1.5 py-0.5 text-[10px]",
@@ -445,7 +434,7 @@ const ElectroHeader = () => {
                                     <button
                                         type="button"
                                         onClick={() => goToShopSearch(trimmedKeyword)}
-                                        className="mt-3 block w-full border-t border-[var(--color-border)] py-3 text-center text-xs uppercase tracking-[0.2em] text-[var(--color-accent)] hover:text-[var(--color-primary)]"
+                                        className="mt-3 block w-full border-t border-[var(--color-border)] py-3 text-center text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
                                     >
                                         Xem tất cả kết quả cho "{trimmedKeyword}"
                                     </button>
@@ -470,7 +459,7 @@ const ElectroHeader = () => {
                                                         key={item}
                                                         type="button"
                                                         onClick={() => handleHistoryClick(item)}
-                                                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-xs text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]"
+                                                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]"
                                                     >
                                                         <i className="fas fa-history text-[10px]"></i>
                                                         {item}
@@ -482,7 +471,7 @@ const ElectroHeader = () => {
 
                                     {trendingProducts.length > 0 && (
                                         <div className={cn(searchHistory.length > 0 ? "pt-4" : "")}>
-                                            <p className="ts-eyebrow mb-3 text-[var(--color-accent)]">
+                                            <p className="ts-eyebrow mb-3 text-[var(--color-primary)]">
                                                 <i className="fas fa-fire mr-1.5"></i>Xu hướng
                                             </p>
                                             <div className="grid grid-cols-2 gap-1">
@@ -491,7 +480,7 @@ const ElectroHeader = () => {
                                                         key={product.id}
                                                         type="button"
                                                         onClick={() => goToProduct(product)}
-                                                        className="flex items-center gap-2 rounded-md p-1.5 text-left transition-colors hover:bg-[var(--color-surface-2)]"
+                                                        className="flex items-center gap-2 rounded-xl p-1.5 text-left transition-colors hover:bg-[var(--color-surface-2)]"
                                                     >
                                                         <img
                                                             src={resolveProductImage(product)}
@@ -501,7 +490,7 @@ const ElectroHeader = () => {
                                                         <div className="min-w-0">
                                                             <p className="truncate text-xs font-medium text-[var(--color-fg)]">{product.name || product.title}</p>
                                                             {product.price != null && (
-                                                                <p className="ts-mono text-[11px] text-[var(--color-accent)]">{formatCurrency(product.price)}</p>
+                                                                <p className="ts-mono text-[11px] text-[var(--color-primary)]">{formatCurrency(product.price)}</p>
                                                             )}
                                                         </div>
                                                     </button>
@@ -516,32 +505,17 @@ const ElectroHeader = () => {
                 </div>
 
                 {/* Icons */}
-                <div className="flex items-center gap-2 md:ml-0 ml-auto">
-                    <NavLink
-                        to="/compare"
-                        onClick={scrollToPageTop}
-                        className={cn(iconButtonClass, compareCount > 0 && "text-black")}
-                        aria-label="So sánh"
-                    >
-                        <i className={`${compareCount > 0 ? 'fas' : 'far'} fa-clone text-sm`}></i>
+                <div className="flex items-center gap-2">
+                    <NavLink to="/compare" onClick={scrollToPageTop} className={iconButtonClass} aria-label="So sánh">
+                        <i className="fas fa-random text-sm" style={iconGlyphStyle(compareCount > 0)}></i>
                         {compareCount > 0 && <span className={badgeClass}>{compareCount}</span>}
                     </NavLink>
-                    <NavLink
-                        to="/wishlist"
-                        onClick={scrollToPageTop}
-                        className={cn(iconButtonClass, wishlistCount > 0 && "text-black")}
-                        aria-label="Yêu thích"
-                    >
-                        <i className={`${wishlistCount > 0 ? 'fas' : 'far'} fa-heart text-sm`}></i>
+                    <NavLink to="/wishlist" onClick={scrollToPageTop} className={iconButtonClass} aria-label="Yêu thích">
+                        <i className="fas fa-heart text-sm" style={iconGlyphStyle(wishlistCount > 0)}></i>
                         {wishlistCount > 0 && <span className={badgeClass}>{wishlistCount}</span>}
                     </NavLink>
-                    <NavLink
-                        to="/cart"
-                        onClick={scrollToPageTop}
-                        className={cn(iconButtonClass, itemCount > 0 && "text-black")}
-                        aria-label="Giỏ hàng"
-                    >
-                        <i className="fas fa-shopping-cart text-sm"></i>
+                    <NavLink to="/cart" onClick={scrollToPageTop} className={iconButtonClass} aria-label="Giỏ hàng">
+                        <i className="fas fa-shopping-cart text-sm" style={iconGlyphStyle(itemCount > 0)}></i>
                         {itemCount > 0 && <span className={badgeClass}>{itemCount}</span>}
                     </NavLink>
 
@@ -549,40 +523,33 @@ const ElectroHeader = () => {
                         <button
                             type="button"
                             onClick={() => setOpenDropdown(openDropdown === 'dashboard' ? null : 'dashboard')}
-                            className={cn(
-                                "relative inline-flex h-10 items-center gap-2 rounded-full border border-[var(--color-border)] text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-fg)]",
-                                isAuthenticated && firstName ? "pl-3 pr-3.5" : "w-10 justify-center",
-                                isAuthenticated && "border-[var(--color-primary)]/60 text-[var(--color-fg)]"
-                            )}
+                            className={cn(iconButtonClass, isAuthenticated && "w-auto gap-2 px-3 border-[var(--color-primary)]/60 text-[var(--color-fg)]")}
                             aria-label={dashboardLabel}
                         >
                             <i className="fas fa-user text-sm"></i>
-                            {isAuthenticated && firstName && (
-                                <span className="max-w-[100px] truncate text-sm font-medium">{firstName}</span>
+                            {isAuthenticated && displayName && (
+                                <span className="max-w-[120px] truncate text-sm font-medium">
+                                    {displayName}
+                                </span>
                             )}
-                            {isAuthenticated && activeOrderCount > 0 && (
-                                <span className={badgeClass}>{activeOrderCount}</span>
+                            {isAuthenticated && hasOrderUpdates && (
+                                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white ts-anim-pulse" title="Có cập nhật đơn hàng" />
                             )}
                         </button>
                         {openDropdown === 'dashboard' && (
-                            <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ts-anim-fade-up">
+                            <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-[18px] border border-[var(--color-border)] bg-white/92 shadow-[var(--shadow-card)] backdrop-blur-xl ts-anim-fade-up">
                                 <div className="border-b border-[var(--color-border)] px-4 py-3">
                                     <p className="ts-eyebrow">Tài khoản</p>
                                     <p className="mt-1 truncate text-sm font-medium text-[var(--color-fg)]">{dashboardLabel}</p>
                                 </div>
                                 {isAuthenticated ? (
                                     <div className="p-1">
-                                        <Link to="/orders" onClick={closeMainMenus} className="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">
-                                            <span><i className="fas fa-box-open mr-2 text-xs text-[var(--color-fg-dim)]"></i>Đơn hàng của tôi</span>
-                                            {activeOrderCount > 0 && (
-                                                <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-primary)] px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">{activeOrderCount}</span>
-                                            )}
-                                        </Link>
+                                        <Link to="/orders" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Đơn hàng của tôi</Link>
                                         <Link to="/tickets" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Hỗ trợ của tôi</Link>
                                         <Link to="/promotion" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Phiếu giảm giá</Link>
                                         <Link to="/wishlist" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">Sản phẩm yêu thích</Link>
                                         <Link to="/compare" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-fg)]">So sánh sản phẩm</Link>
-                                        {canAccessAdminArea && <Link to="/admin" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-accent)] hover:bg-[var(--color-surface-2)]">Trang quản trị</Link>}
+                                        {canAccessAdminPanel() && <Link to="/admin" onClick={closeMainMenus} className="block rounded-sm px-3 py-2 text-sm text-[var(--color-primary)] hover:bg-[var(--color-surface-2)]">Trang quản trị</Link>}
                                         <div className="my-1 h-px bg-[var(--color-border)]" />
                                         <button type="button" onClick={handleLogout} className="block w-full rounded-sm px-3 py-2 text-left text-sm text-[var(--color-danger)] hover:bg-[var(--color-surface-2)]">
                                             Đăng xuất
@@ -614,13 +581,16 @@ const ElectroHeader = () => {
                         <i className={cn("fas", mobileNavOpen ? "fa-times" : "fa-bars", "text-sm")}></i>
                     </button>
                 </div>
+                </div>
+                </div>
             </div>
 
             {/* Mobile drawer */}
             {mobileNavOpen && (
-                <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)] lg:hidden">
-                    <div className="ts-container py-4">
-                        <form onSubmit={handleSearch} className="mb-4 flex h-10 items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 md:hidden">
+                <div className="ts-container">
+                <div className="mt-3 border border-[var(--color-border)] bg-[var(--color-surface-glass)] shadow-[var(--shadow-soft)] backdrop-blur-xl lg:hidden rounded-[22px]">
+                    <div className="px-4 py-4">
+                        <form onSubmit={handleSearch} className="mb-4 flex h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white/80 px-3 md:hidden">
                             <i className="fas fa-search text-xs text-[var(--color-fg-dim)]"></i>
                             <input
                                 type="text"
@@ -638,7 +608,7 @@ const ElectroHeader = () => {
                                     end={item.end}
                                     onClick={closeMainMenus}
                                     className={({ isActive }) => cn(
-                                        "border-b border-[var(--color-border)] px-1 py-3 text-sm font-medium tracking-wide transition-colors",
+                                        "border-b border-[var(--color-border)] px-2 py-3 text-sm font-medium tracking-wide transition-colors last:border-b-0",
                                         isActive
                                             ? "text-[var(--color-primary)]"
                                             : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
@@ -658,6 +628,7 @@ const ElectroHeader = () => {
                             </a>
                         )}
                     </div>
+                </div>
                 </div>
             )}
         </header>

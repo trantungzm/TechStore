@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getCartItemKey, useCart } from '../../contexts/CartContext';
+import { getItemKey, useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { orderApi, couponApi } from '../../services/api';
 import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
@@ -22,7 +22,6 @@ const CHECKOUT_SELECTION_KEY = 'store_checkout_selected_items';
 const CHECKOUT_COUPON_KEY = 'store_checkout_applied_coupons';
 
 const isItemOutOfStock = (item) => item?.product?.inStock === false || Number(item?.product?.stock ?? 0) <= 0;
-const getItemKey = (item) => item.cartItemKey || getCartItemKey(item);
 
 const Cart = () => {
     const { user } = useAuth();

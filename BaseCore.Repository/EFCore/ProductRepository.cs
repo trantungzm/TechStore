@@ -15,6 +15,8 @@ namespace BaseCore.Repository.EFCore
         Task<Product?> GetDetailAsync(int id, bool includeInactive = false);
         Task<bool> HasOrderDetailsAsync(int productId);
         Task<List<string>> GetBrandsAsync();
+        Task<int> DecrementStockAsync(int productId, int quantity, int version);
+        Task<int> IncrementStockAsync(int productId, int quantity, int version);
     }
 
     public class ProductRepositoryEF : Repository<Product>, IProductRepositoryEF
@@ -176,6 +178,24 @@ namespace BaseCore.Repository.EFCore
                 .Distinct()
                 .OrderBy(b => b)
                 .ToListAsync();
+        }
+
+        public async Task<int> DecrementStockAsync(int productId, int quantity, int version)
+        {
+            return await _context.Products
+                .Where(p => p.Id == productId && p.Stock >= quantity)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(p => p.Stock, p => p.Stock - quantity)
+                    .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
+        }
+
+        public async Task<int> IncrementStockAsync(int productId, int quantity, int version)
+        {
+            return await _context.Products
+                .Where(p => p.Id == productId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(p => p.Stock, p => p.Stock + quantity)
+                    .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
         }
     }
 }

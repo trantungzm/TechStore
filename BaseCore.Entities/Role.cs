@@ -7,12 +7,6 @@ namespace BaseCore.Entities
 {
     public partial class Role : Entity, IAuditable
     {
-        public Role()
-        {
-            RoleModule = new HashSet<Module>();
-            UserRole = new HashSet<UserRole>();
-        }
-
         public Guid Guid { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
@@ -23,7 +17,5 @@ namespace BaseCore.Entities
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
         public int RoleType { get; set; }
-        public virtual ICollection<Module> RoleModule { get; set; }
-        public virtual ICollection<UserRole> UserRole { get; set; }
     }
 }

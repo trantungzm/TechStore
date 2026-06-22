@@ -53,10 +53,10 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
             )}
         >
             {/* Tear-off code box */}
-            <div className="relative flex w-24 shrink-0 flex-col items-center justify-center gap-1 border-r border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-accent)]/15 to-[var(--color-primary)]/15 p-3 text-center">
+            <div className="relative flex w-24 shrink-0 flex-col items-center justify-center gap-1 border-r border-dashed border-[var(--color-border)] bg-gradient-to-br from-[var(--color-gold)]/15 to-[var(--color-primary)]/15 p-3 text-center">
                 <span aria-hidden className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--color-background)]" />
                 <span aria-hidden className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[var(--color-background)]" />
-                <strong className="ts-mono text-[11px] font-bold uppercase tracking-wider text-[var(--color-accent)]">{coupon.code}</strong>
+                <strong className="ts-mono text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold)]">{coupon.code}</strong>
                 <span className="text-[10px] uppercase tracking-wider text-[var(--color-fg-dim)]">{getScopeLabel(coupon)}</span>
             </div>
 
@@ -86,11 +86,7 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
                     <button
                         type="button"
                         disabled={!canClaim || processing}
-                        onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onClaim?.(coupon);
-                        }}
+                        onClick={() => onClaim?.(coupon)}
                         className={cn(
                             "ts-btn px-3 py-1.5 text-[11px]",
                             isClaimed && "ts-btn-outline",
@@ -103,11 +99,7 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
                     {isClaimed ? (
                         <button
                             type="button"
-                            onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                onCopy?.(coupon);
-                            }}
+                            onClick={() => onCopy?.(coupon)}
                             className="ts-btn ts-btn-ghost px-3 py-1.5 text-[11px]"
                         >
                             <i className="fas fa-copy text-[10px]"></i>
@@ -116,11 +108,7 @@ const CouponCard = ({ coupon, status, claimed, onClaim, onCopy, onViewCondition,
                     ) : (
                         <button
                             type="button"
-                            onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                onViewCondition?.(coupon);
-                            }}
+                            onClick={() => onViewCondition?.(coupon)}
                             className="text-[11px] text-[var(--color-fg-dim)] underline-offset-2 hover:underline"
                         >
                             Xem điều kiện

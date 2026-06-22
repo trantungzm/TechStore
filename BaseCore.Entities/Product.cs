@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BaseCore.Entities
 {
     public class Product
@@ -6,12 +8,35 @@ namespace BaseCore.Entities
 
         public string Name { get; set; }
         public string? Slug { get; set; }
-        public string? Sku { get; set; }
 
-        public decimal Price { get; set; }
+        public decimal? BasePrice { get; set; }
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
         public decimal? OriginalPrice { get; set; }
+        public int? TotalStock { get; set; }
+        public int Version { get; set; }
 
-        public int Stock { get; set; }
+        [NotMapped]
+        public decimal Price
+        {
+            get => BasePrice ?? MinPrice ?? 0;
+            set
+            {
+                BasePrice = value;
+                MinPrice ??= value;
+                MaxPrice ??= value;
+            }
+        }
+
+        [NotMapped]
+        public int Stock
+        {
+            get => TotalStock ?? 0;
+            set => TotalStock = value;
+        }
+
+        [NotMapped]
+        public string? Sku { get; set; }
  
         public string? ImageUrl { get; set; }
 
@@ -25,7 +50,7 @@ namespace BaseCore.Entities
 
         public int CategoryId { get; set; }
 
-        /// <summary>
+        /// <summary> 
         /// Additional categories the product belongs to (many-to-many).
         /// The primary category is still CategoryId.
         /// </summary>

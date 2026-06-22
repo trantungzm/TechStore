@@ -39,7 +39,8 @@ namespace BaseCore.AuthService.Controllers
             }
 
             // Generate JWT token
-            var secretKey = _configuration["Jwt:SecretKey"] ?? _configuration["AppSettings:Secret"] ?? "CHANGE_ME_TO_A_LONG_RANDOM_SECRET";
+            var secretKey = _configuration["Jwt:SecretKey"] ?? _configuration["AppSettings:Secret"]
+                ?? throw new InvalidOperationException("Jwt:SecretKey chưa được cấu hình (appsettings).");
             var issuer = _configuration["Jwt:Issuer"] ?? "BaseCore";
             var audience = _configuration["Jwt:Audience"] ?? "BaseCore.WebClient";
             var roleName = await ResolveRoleName(user.UserType);

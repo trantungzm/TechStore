@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { orderApi } from '../../services/api';
 import { formatCurrency, isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t, toast } from '../../utils/store';
+import { useMyOrders } from '../../hooks/useMyOrders';
+import { getSeenOrderStatuses, markOrdersSeen, isOrderUnseen } from '../../utils/orderUpdates';
 import PageHero from '../../components/store/PageHero';
 import { Link } from 'react-router-dom';
 import { cn } from '../../utils/cn';
@@ -159,6 +161,14 @@ const OrderTimeline = ({ timeline = [], status, shippingMethod }) => {
 };
 
 const ORDERS_PER_PAGE = 8;
+const statusFilterOrder = ['Pending', 'Confirmed', 'Processing', 'ReadyForPickup', 'Shipping', 'Completed', 'cancelled'];
+
+const normalizeStatusFilter = (status) => {
+    const value = String(status || '');
+    if (value.toLowerCase().includes('cancel')) return 'cancelled';
+    if (value === 'Shipped' || value === 'Delivered') return 'Shipping';
+    return value;
+};
 
 const normalizeOrderDetailResponse = (payload) => {
     if (payload?.order) {
@@ -184,9 +194,7 @@ const paymentLabel = (method) => ({
 const Orders = () => {
     const { user } = useAuth();
     const isViewOnly = isStoreViewOnlyUser(user);
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { orders, loading, error, setError, reload } = useMyOrders();
     const [statusFilter, setStatusFilter] = useState('');
     const [page, setPage] = useState(1);
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -194,29 +202,19 @@ const Orders = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelling, setCancelling] = useState(false);
-
-    const loadOrders = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            const response = await orderApi.getMyOrders();
-            const raw = response.data || [];
-            raw.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-            setOrders(raw);
-        } catch (e) {
-            const data = e.response?.data;
-            setError(data?.message || data?.detail || data?.title || 'Không tải được danh sách đơn hàng.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Ảnh chụp trạng thái "đã xem" tại thời điểm mở trang -> để đánh dấu đơn nào vừa đổi trạng thái lần này.
+    const seenSnapshotRef = useRef(getSeenOrderStatuses());
 
     useEffect(() => {
         setPageMeta({ title: `${t('Order History')} | TechStore`, description: 'Xem và quản lý đơn hàng của bạn.' });
-        loadOrders();
     }, []);
 
     useEffect(() => { setPage(1); }, [statusFilter]);
+
+    // Sau khi tải đơn xong, lưu trạng thái hiện tại là "đã xem" (xoá chấm cho lần sau + cập nhật chấm ở ô user).
+    useEffect(() => {
+        if (orders.length > 0) markOrdersSeen(orders);
+    }, [orders]);
 
     const handleViewDetails = async (orderId) => {
         setDetailLoading(true);
@@ -243,7 +241,7 @@ const Orders = () => {
             setShowCancelModal(false);
             setCancelReason('');
             setSelectedOrder(null);
-            await loadOrders();
+            await reload();
             toast('Gửi yêu cầu hủy đơn thành công!', 'success');
         } catch (e) {
             toast(e.response?.data?.message || 'Không thể gửi yêu cầu hủy.', 'danger');
@@ -254,23 +252,29 @@ const Orders = () => {
 
     const filteredOrders = statusFilter
         ? orders.filter((o) => {
-            if (statusFilter === 'cancelled') return o.status.toLowerCase().includes('cancel');
-            return o.status.toLowerCase() === statusFilter.toLowerCase();
+            return normalizeStatusFilter(o.status).toLowerCase() === statusFilter.toLowerCase();
         })
         : orders;
 
     const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE) || 1;
     const pagedOrders = filteredOrders.slice((page - 1) * ORDERS_PER_PAGE, page * ORDERS_PER_PAGE);
 
-    const statusOptions = [
-        { value: '', label: 'Tất cả' },
-        { value: 'Pending', label: 'Chờ xác nhận' },
-        { value: 'Confirmed', label: 'Đã xác nhận' },
-        { value: 'Processing', label: 'Đang xử lý' },
-        { value: 'Shipped', label: 'Đang giao' },
-        { value: 'Completed', label: 'Hoàn thành' },
-        { value: 'cancelled', label: 'Đã hủy' },
-    ];
+    const statusOptions = useMemo(() => {
+        const existing = new Set(orders
+            .map((order) => String(order.status || ''))
+            .filter(Boolean)
+            .map(normalizeStatusFilter)
+            .filter((status) => statusFilterOrder.includes(status)));
+        const known = statusFilterOrder.filter((status) => existing.has(status));
+
+        return [
+            { value: '', label: 'Tất cả' },
+            ...known.map((status) => ({
+                value: status,
+                label: status === 'cancelled' ? 'Đã hủy' : orderStatusLabel(status),
+            })),
+        ];
+    }, [orders]);
 
     return (
         <>
@@ -318,7 +322,7 @@ const Orders = () => {
                     <div className="flex items-center gap-3 rounded-md border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">
                         <i className="fas fa-exclamation-circle"></i>
                         <span>{error}</span>
-                        <button onClick={loadOrders} className="ml-auto ts-btn ts-btn-outline px-3 py-1 text-xs">Thử lại</button>
+                        <button onClick={reload} className="ml-auto ts-btn ts-btn-outline px-3 py-1 text-xs">Thử lại</button>
                     </div>
                 ) : orders.length === 0 ? (
                     <div className="flex flex-col items-center rounded-md border border-dashed border-[var(--color-border)] py-20 text-center">
@@ -352,6 +356,12 @@ const Orders = () => {
                                                     )}
                                                 </span>
                                                 <span className="ts-mono">#{order.orderCode || order.id}</span>
+                                                {isOrderUnseen(order, seenSnapshotRef.current) && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600" title="Trạng thái vừa được cập nhật">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 ts-anim-pulse" />
+                                                        Cập nhật mới
+                                                    </span>
+                                                )}
                                             </p>
                                             {String(order.shippingMethod || '').toLowerCase().includes('pickup') &&
                                                 String(order.status || '').toLowerCase() === 'readyforpickup' &&

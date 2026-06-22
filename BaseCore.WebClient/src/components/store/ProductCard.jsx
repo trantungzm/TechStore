@@ -4,16 +4,10 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useCompare } from '../../contexts/CompareContext';
 import { useWishlist } from '../../contexts/WishlistContext';
-import { formatCurrency, getProductCategoryName, resolveProductImage, t } from '../../utils/store';
+import { formatCurrency, getProductCategoryName, getProductOldPrice, resolveProductImage, t } from '../../utils/store';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
 import { cn } from '../../utils/cn';
-
-const getProductOldPrice = (product) => {
-    const oldPrice = Number(product?.originalPrice ?? product?.OriginalPrice ?? product?.oldPrice ?? product?.OldPrice ?? 0);
-    const price = Number(product?.price ?? product?.Price ?? 0);
-    return oldPrice > price ? oldPrice : 0;
-};
 
 const hasScopedProductCoupon = (product, coupons = []) => (
     getAvailableCouponsForProduct(product, coupons).some(({ coupon }) => (
@@ -32,6 +26,17 @@ const getProductRating = (product) => {
         0
     );
     return Number.isFinite(value) ? Math.max(0, Math.min(5, value)) : 0;
+};
+
+const getProductRatingCount = (product) => {
+    const value = Number(
+        product?.ratingCount ??
+        product?.reviewCount ??
+        product?.reviewsCount ??
+        product?.totalReviews ??
+        0
+    );
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
 };
 
 const Rating = ({ rating = 0 }) => (
@@ -61,6 +66,7 @@ const ProductCard = ({ product, onAddToCart }) => {
     const outOfStock = product.stock !== undefined && product.stock !== null && product.stock <= 0;
     const hasVariants = Array.isArray(product?.variants) && product.variants.some((variant) => variant?.isActive !== false);
     const rating = getProductRating(product);
+    const ratingCount = getProductRatingCount(product);
     const productImage = resolveProductImage(product);
     const handleAdd = (e) => {
         e?.preventDefault();
@@ -164,7 +170,12 @@ const ProductCard = ({ product, onAddToCart }) => {
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                    <Rating rating={rating} />
+                    <div className="flex items-center gap-1">
+                        <Rating rating={rating} />
+                        <span className="text-[10px] text-[var(--color-fg-dim)]">
+                            {ratingCount > 0 ? `(${ratingCount})` : 'Chưa có đánh giá'}
+                        </span>
+                    </div>
                     <div className="flex items-center gap-1">
                         <button
                             type="button"
@@ -197,8 +208,8 @@ const ProductCard = ({ product, onAddToCart }) => {
 
                 {hasVariants ? (
                     <Link to={`/product/${product.id}`} className="ts-btn ts-btn-primary group/btn mt-2 w-full text-xs">
-                        <i className="fas fa-sliders-h text-[11px]"></i>
-                        Chọn phiên bản
+                        <i className="fas fa-shopping-cart text-[11px]"></i>
+                        Thêm vào giỏ hàng
                     </Link>
                 ) : (
                     <button

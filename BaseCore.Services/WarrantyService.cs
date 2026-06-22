@@ -4,8 +4,12 @@ using BaseCore.Repository.EFCore;
 
 namespace BaseCore.Services
 {
+    // Service bảo hành: tạo warranty record từ đơn hoàn tất, xử lý kích hoạt,
+    // tiếp nhận claim và đồng bộ trạng thái với stock item/notification.
     public class WarrantyService : IWarrantyService
     {
+        private const int ManualActivationWindowDays = 7;
+
         private readonly IWarrantyRecordRepositoryEF _warrantyRepository;
         private readonly IWarrantyClaimRepositoryEF _claimRepository;
         private readonly IWarrantyClaimUpdateRepositoryEF _updateRepository;
@@ -38,6 +42,8 @@ namespace BaseCore.Services
             _notificationService = notificationService;
         }
 
+        // Khi đơn hoàn tất, order/inventory gọi sang đây để đảm bảo mỗi thiết bị bán ra
+        // đều có warranty record tương ứng, kể cả trường hợp chưa kích hoạt ngay.
         public async Task EnsureWarrantiesForCompletedOrderAsync(int orderId)
         {
             var order = await _orderRepository.GetWithDetailsAsync(orderId);
@@ -50,9 +56,6 @@ namespace BaseCore.Services
                 var product = await _productRepository.GetByIdAsync(detail.ProductId);
                 if (product == null) continue;
                 var months = product.WarrantyMonths <= 0 ? 12 : product.WarrantyMonths;
-                // Tự động kích hoạt bảo hành ngay khi đơn Hoàn thành: mốc bắt đầu = ngày hoàn tất.
-                var startAt = purchaseDate;
-                var endAt = startAt.AddMonths(months);
 
                 var assignedPairs = detail.StockItems
                     .Select(x => x.StockItem)
@@ -90,11 +93,9 @@ namespace BaseCore.Services
                         ProductName = detail.ProductName ?? product.Name,
                         ProductImage = detail.ProductImage ?? product.ImageUrl,
                         WarrantyMonths = months,
-                        ActivatedAt = startAt,
-                        ExpiresAt = endAt,
-                        StartDate = startAt,
-                        EndDate = endAt,
-                        Status = "Active",
+                        StartDate = null,
+                        EndDate = null,
+                        Status = "NotActivated",
                         CreatedAt = DateTime.UtcNow
                     });
                     empty.WarrantyCode = $"BH-{purchaseDate:yyyyMMdd}-{empty.Id:0000}";
@@ -137,15 +138,7 @@ namespace BaseCore.Services
                         reuse.ProductName = detail.ProductName ?? product.Name;
                         reuse.ProductImage = detail.ProductImage ?? product.ImageUrl;
                         reuse.WarrantyMonths = months;
-                        // Tự kích hoạt nếu chưa active.
-                        if (!string.Equals(reuse.Status, "Active", StringComparison.OrdinalIgnoreCase))
-                        {
-                            reuse.ActivatedAt = reuse.ActivatedAt ?? startAt;
-                            reuse.StartDate = reuse.StartDate ?? startAt;
-                            reuse.ExpiresAt = reuse.ExpiresAt ?? endAt;
-                            reuse.EndDate = reuse.EndDate ?? endAt;
-                            reuse.Status = "Active";
-                        }
+                        reuse.Status = string.IsNullOrWhiteSpace(reuse.Status) ? "NotActivated" : reuse.Status;
                         reuse.UpdatedAt = DateTime.UtcNow;
                         if (string.IsNullOrWhiteSpace(reuse.WarrantyCode))
                         {
@@ -170,11 +163,9 @@ namespace BaseCore.Services
                         ProductName = detail.ProductName ?? product.Name,
                         ProductImage = detail.ProductImage ?? product.ImageUrl,
                         WarrantyMonths = months,
-                        ActivatedAt = startAt,
-                        ExpiresAt = endAt,
-                        StartDate = startAt,
-                        EndDate = endAt,
-                        Status = "Active",
+                        StartDate = null,
+                        EndDate = null,
+                        Status = "NotActivated",
                         CreatedAt = DateTime.UtcNow
                     });
                     created.WarrantyCode = $"BH-{purchaseDate:yyyyMMdd}-{created.Id:0000}";
@@ -183,24 +174,33 @@ namespace BaseCore.Services
             }
         }
 
+        // Lookup công khai theo serial/order/phone để customer hoặc staff tra cứu bảo hành.
         public async Task<WarrantyLookupResultDto> LookupAsync(string? serialOrImei, string? orderCode, string? phone)
         {
             var items = await _warrantyRepository.LookupAsync(serialOrImei, orderCode, phone);
-            if (items.Count == 0) return new WarrantyLookupResultDto { Found = false, Message = "Không tìm thấy thông tin bảo hành ph hợp." };
+            if (items.Count == 0) return new WarrantyLookupResultDto { Found = false, Message = "Không tìm thấy thông tin bảo hành phù hợp." };
+            await ApplyAutoActivationAsync(items);
             return new WarrantyLookupResultDto { Found = true, Warranties = await ToWarrantyDtos(items) };
         }
 
+        // Danh sách warranty của user hiện tại; trước khi trả về sẽ auto cập nhật trạng thái nếu cần.
         public async Task<List<WarrantyRecordDto>> GetMyAsync(Guid userId)
         {
-            return await ToWarrantyDtos(await _warrantyRepository.GetByUserAsync(userId));
+            var items = await _warrantyRepository.GetByUserAsync(userId);
+            await ApplyAutoActivationAsync(items);
+            return await ToWarrantyDtos(items);
         }
 
+        // Search/paging toàn bộ warranty record cho admin hậu mãi.
         public async Task<(List<WarrantyRecordDto> Items, int TotalCount)> GetAllWarrantiesAsync(SupportSearchDto search)
         {
             var result = await _warrantyRepository.SearchAsync(search);
+            await ApplyAutoActivationAsync(result.Items);
             return (await ToWarrantyDtos(result.Items), result.TotalCount);
         }
 
+        // User tự kích hoạt bảo hành của mình. Nếu đã quá cửa sổ kích hoạt tay,
+        // service sẽ tự auto-activate theo ngày hoàn tất đơn hàng.
         public async Task<WarrantyRecordDto?> ActivateAsync(int warrantyId, Guid userId)
         {
             var item = await _warrantyRepository.GetDetailAsync(warrantyId);
@@ -209,18 +209,24 @@ namespace BaseCore.Services
             if (string.Equals(item.Status, "Active", StringComparison.OrdinalIgnoreCase)) return ToWarrantyDto(item, null);
 
             var now = DateTime.UtcNow;
-            item.ActivatedAt = now;
-            item.ExpiresAt = now.AddMonths(item.WarrantyMonths <= 0 ? 12 : item.WarrantyMonths);
-            item.StartDate = item.ActivatedAt;
-            item.EndDate = item.ExpiresAt;
-            item.Status = "Active";
-            item.UpdatedAt = now;
-            await _warrantyRepository.UpdateAsync(item);
-            await _notificationService.CreateAsync(item.UserId, "Bảo hành đã được kích hoạt", item.WarrantyCode, "Warranty", "WarrantyRecord", item.Id);
+            var completionDate = ResolveWarrantyCompletionDate(item);
+            if (completionDate.HasValue)
+            {
+                var autoActivatedAt = completionDate.Value.AddDays(ManualActivationWindowDays);
+                if (now > autoActivatedAt)
+                {
+                    await SetActivatedAsync(item, autoActivatedAt, now, false);
+                    var latestExpired = await _claimRepository.GetLatestByWarrantyAsync(item.Id);
+                    return ToWarrantyDto(item, latestExpired?.Status);
+                }
+            }
+
+            await SetActivatedAsync(item, now, now, true);
             var latest = await _claimRepository.GetLatestByWarrantyAsync(item.Id);
             return ToWarrantyDto(item, latest?.Status);
         }
 
+        // Staff kích hoạt thay khách trong các case hỗ trợ tại quầy hoặc hotline.
         public async Task<WarrantyRecordDto?> ActivateAsStaffAsync(int warrantyId, Guid? userId)
         {
             var item = await _warrantyRepository.GetDetailAsync(warrantyId);
@@ -228,18 +234,13 @@ namespace BaseCore.Services
             if (string.Equals(item.Status, "Active", StringComparison.OrdinalIgnoreCase)) return ToWarrantyDto(item, null);
 
             var now = DateTime.UtcNow;
-            item.ActivatedAt = now;
-            item.ExpiresAt = now.AddMonths(item.WarrantyMonths <= 0 ? 12 : item.WarrantyMonths);
-            item.StartDate = item.ActivatedAt;
-            item.EndDate = item.ExpiresAt;
-            item.Status = "Active";
-            item.UpdatedAt = now;
-            await _warrantyRepository.UpdateAsync(item);
-            await _notificationService.CreateAsync(item.UserId, "Bảo hành đã được kích hoạt", item.WarrantyCode, "Warranty", "WarrantyRecord", item.Id);
+            await SetActivatedAsync(item, now, now, true);
             var latest = await _claimRepository.GetLatestByWarrantyAsync(item.Id);
             return ToWarrantyDto(item, latest?.Status);
         }
 
+        // Kích hoạt công khai từ form public: xác minh theo serial + phone (+ orderCode nếu có)
+        // rồi reuse cùng logic active như luồng user đăng nhập.
         public async Task<WarrantyRecordDto?> ActivatePublicAsync(ActivateWarrantyPublicDto dto)
         {
             if (dto == null) throw new InvalidOperationException("Dữ liệu không hợp lệ.");
@@ -271,24 +272,32 @@ namespace BaseCore.Services
             if (string.Equals(item.Status, "Active", StringComparison.OrdinalIgnoreCase)) return ToWarrantyDto(item, null);
 
             var now = DateTime.UtcNow;
-            item.ActivatedAt = now;
-            item.ExpiresAt = now.AddMonths(item.WarrantyMonths <= 0 ? 12 : item.WarrantyMonths);
-            item.StartDate = item.ActivatedAt;
-            item.EndDate = item.ExpiresAt;
-            item.Status = "Active";
-            item.UpdatedAt = now;
-            await _warrantyRepository.UpdateAsync(item);
-            await _notificationService.CreateAsync(item.UserId, "Bảo hành đã kích hoạt", item.WarrantyCode, "Warranty", "WarrantyRecord", item.Id);
+            var completionDate = ResolveWarrantyCompletionDate(item);
+            if (completionDate.HasValue)
+            {
+                var autoActivatedAt = completionDate.Value.AddDays(ManualActivationWindowDays);
+                if (now > autoActivatedAt)
+                {
+                    await SetActivatedAsync(item, autoActivatedAt, now, false);
+                    var latestExpired = await _claimRepository.GetLatestByWarrantyAsync(item.Id);
+                    return ToWarrantyDto(item, latestExpired?.Status);
+                }
+            }
+
+            await SetActivatedAsync(item, now, now, true);
             var latest = await _claimRepository.GetLatestByWarrantyAsync(item.Id);
             return ToWarrantyDto(item, latest?.Status);
         }
 
+        // Danh sách yêu cầu bảo hành của user, có thể lọc theo một warranty cụ thể.
         public async Task<List<WarrantyClaimDto>> GetMyClaimsAsync(Guid userId, int? warrantyId)
         {
             var claims = await _claimRepository.GetByUserAsync(userId, warrantyId);
             return claims.Select(ToClaimDto).ToList();
         }
 
+        // Tạo yêu cầu bảo hành từ warranty có sẵn hoặc suy ra từ serial/order.
+        // Nếu thiết bị chưa có warranty record thì service sẽ dựng record trước rồi mới tạo claim.
         public async Task<WarrantyClaimDto> CreateClaimAsync(CreateWarrantyClaimDto dto, Guid? userId)
         {
             ValidateClaim(dto);
@@ -298,6 +307,12 @@ namespace BaseCore.Services
                 warranty = (await _warrantyRepository.LookupAsync(dto.SerialOrImei, null, null)).FirstOrDefault();
             if (warranty == null && !string.IsNullOrWhiteSpace(dto.OrderCode))
                 warranty = (await _warrantyRepository.LookupAsync(null, dto.OrderCode, dto.CustomerPhone)).FirstOrDefault();
+
+            // Kiểm tra bảo hành đã hết hạn
+            if (warranty != null && string.Equals(warranty.Status, "Expired", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Bảo hành đã hết hạn, không thể gửi yêu cầu bảo hành.");
+            if (warranty != null && warranty.ExpiresAt.HasValue && warranty.ExpiresAt.Value < DateTime.UtcNow)
+                throw new InvalidOperationException("Bảo hành đã hết hạn, không thể gửi yêu cầu bảo hành.");
 
             StockItem? stockItem = null;
             if (warranty?.StockItemId.HasValue == true) stockItem = await _stockItemRepository.GetDetailAsync(warranty.StockItemId.Value);
@@ -396,18 +411,22 @@ namespace BaseCore.Services
             return (await GetClaimAsync(claim.Id))!;
         }
 
+        // Search/paging claim bảo hành ở phía admin để xử lý hậu mãi.
         public async Task<(List<WarrantyClaimDto> Items, int TotalCount)> GetClaimsAsync(SupportSearchDto search)
         {
             var result = await _claimRepository.SearchAsync(search);
             return (result.Items.Select(ToClaimDto).ToList(), result.TotalCount);
         }
 
+        // Lấy chi tiết một claim kèm updates và thông tin liên quan.
         public async Task<WarrantyClaimDto?> GetClaimAsync(int id)
         {
             var claim = await _claimRepository.GetDetailAsync(id);
             return claim == null ? null : ToClaimDto(claim);
         }
 
+        // Admin cập nhật tiến độ claim; đồng thời stock item liên quan sẽ chuyển sang
+        // Warranty/Repairing và customer nhận được notification theo từng mốc.
         public async Task<WarrantyClaimDto?> UpdateClaimStatusAsync(int id, UpdateWarrantyClaimStatusDto dto, Guid? userId)
         {
             var claim = await _claimRepository.GetDetailAsync(id);
@@ -440,6 +459,8 @@ namespace BaseCore.Services
             return _updateRepository.GetByClaimAsync(claimId).ContinueWith(t => t.Result.Select(ToUpdateDto).ToList());
         }
 
+        // Mỗi warranty record còn được ghép thêm trạng thái claim gần nhất để FE
+        // hiển thị đúng bối cảnh hậu mãi hiện tại của thiết bị.
         private async Task<List<WarrantyRecordDto>> ToWarrantyDtos(List<WarrantyRecord> items)
         {
             var result = new List<WarrantyRecordDto>();
@@ -451,6 +472,7 @@ namespace BaseCore.Services
             return result;
         }
 
+        // Lưu timeline xử lý claim để user/admin có thể theo dõi tiến độ bảo hành.
         private async Task AddUpdate(int claimId, string status, string title, string? message, Guid? userId)
         {
             await _updateRepository.AddAsync(new WarrantyClaimUpdate
@@ -464,37 +486,48 @@ namespace BaseCore.Services
             });
         }
 
+        // Validate form gửi yêu cầu bảo hành từ FE trước khi truy ngược serial/order.
         private static void ValidateClaim(CreateWarrantyClaimDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.IssueDescription) || dto.IssueDescription.Trim().Length < 15) throw new InvalidOperationException("Vui long nhap mo ta loi toi thieu 15 ky tu.");
-            if (string.IsNullOrWhiteSpace(dto.ReceiveMethod)) throw new InvalidOperationException("Vui long chon hinh thuc tiep nhan.");
-            if (NormalizeReceiveMethod(dto.ReceiveMethod) == "Shipping" && string.IsNullOrWhiteSpace(dto.ReturnAddress)) throw new InvalidOperationException("Vui long nhap dia chi gui/nhan hang.");
-            if (!dto.WarrantyId.HasValue && string.IsNullOrWhiteSpace(dto.SerialOrImei) && string.IsNullOrWhiteSpace(dto.OrderCode)) throw new InvalidOperationException("Can co ma bao hanh, serial/IMEI hoac ma don hang.");
+            if (string.IsNullOrWhiteSpace(dto.IssueDescription) || dto.IssueDescription.Trim().Length < 15) throw new InvalidOperationException("Vui lòng nhập mô tả lỗi tối thiểu 15 ký tự.");
+            if (string.IsNullOrWhiteSpace(dto.ReceiveMethod)) throw new InvalidOperationException("Vui lòng chọn hình thức tiếp nhận.");
+            if (NormalizeReceiveMethod(dto.ReceiveMethod) == "Shipping" && string.IsNullOrWhiteSpace(dto.ReturnAddress)) throw new InvalidOperationException("Vui lòng nhập địa chỉ gửi/nhận hàng.");
+            if (!dto.WarrantyId.HasValue && string.IsNullOrWhiteSpace(dto.SerialOrImei) && string.IsNullOrWhiteSpace(dto.OrderCode)) throw new InvalidOperationException("Cần có mã bảo hành, Serial/IMEI hoặc mã đơn hàng.");
         }
 
+        // Chỉ giữ hai receive method canonical cho luồng bảo hành.
         private static string NormalizeReceiveMethod(string? value) => string.Equals(value?.Trim(), "Shipping", StringComparison.OrdinalIgnoreCase) ? "Shipping" : "StoreDropOff";
+        // Chuẩn hóa status claim để đồng bộ với workflow support/repair.
         private static string NormalizeClaimStatus(string status)
         {
             var allowed = new[] { "Pending", "Confirmed", "Received", "Diagnosing", "SentToBrand", "Repairing", "WaitingParts", "ReadyToReturn", "Delivered", "Completed", "Rejected", "Cancelled" };
             return allowed.FirstOrDefault(x => string.Equals(x, status, StringComparison.OrdinalIgnoreCase)) ?? throw new InvalidOperationException("Trang thai bao hanh khong hop le.");
         }
 
+        // Tiêu đề hiển thị theo từng mốc tiến độ của claim bảo hành.
         private static string ClaimTitle(string status) => status switch
         {
             "Confirmed" => "Nhân viên đã xác nhận yêu cầu",
             "Received" => "Sản phẩm đã được tiếp nhận",
             "Diagnosing" => "Kỹ thuật đang kiểm tra",
+            "SentToBrand" => "Sản phẩm đã gửi về hãng",
             "Repairing" => "Sản phẩm đang được sửa chữa",
+            "WaitingParts" => "Đang chờ linh kiện",
             "ReadyToReturn" => "Sản phẩm sẵn sàng trả khách",
+            "Delivered" => "Sản phẩm đã được giao trả khách",
+            "Completed" => "Yêu cầu bảo hành đã hoàn tất",
             "Rejected" => "Yêu cầu bảo hành bị từ chối",
+            "Cancelled" => "Yêu cầu bảo hành đã bị hủy",
             _ => "Cập nhật yêu cầu bảo hành"
         };
 
+        // Tách chuỗi serial/IMEI lưu dạng CSV thành danh sách giá trị riêng lẻ.
         private static List<string?> SplitSerials(string? serials) => string.IsNullOrWhiteSpace(serials) ? new() : serials.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Cast<string?>().ToList();
 
+        // Map warranty record sang DTO và tính thêm thông tin hiển thị như ngày hết hạn, số ngày còn lại.
         private static WarrantyRecordDto ToWarrantyDto(WarrantyRecord item, string? latestClaimStatus)
         {
-            var purchase = item.Order?.CreatedAt ?? item.CreatedAt;
+            var purchase = ResolveWarrantyCompletionDate(item) ?? item.Order?.OrderDate ?? item.CreatedAt;
             var activatedAt = item.ActivatedAt ?? (item.Status == "Active" ? item.StartDate : null);
             var expiresAt = item.ExpiresAt ?? (item.Status == "Active" ? item.EndDate : null);
             if (!expiresAt.HasValue)
@@ -564,6 +597,68 @@ namespace BaseCore.Services
             };
         }
 
+        // Thời điểm bắt đầu tính cửa sổ kích hoạt và hạn bảo hành được suy ra từ
+        // trạng thái giao/nhận thực tế của đơn hàng.
+        private static DateTime? ResolveWarrantyCompletionDate(WarrantyRecord item)
+        {
+            var order = item.Order;
+            if (order == null) return null;
+            if (order.DeliveredAt.HasValue) return order.DeliveredAt.Value;
+            if (order.ShippedAt.HasValue) return order.ShippedAt.Value;
+            if (order.ReadyForPickupAt.HasValue) return order.ReadyForPickupAt.Value;
+            if (string.Equals(order.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                return order.UpdatedAt ?? order.OrderDate;
+            }
+            return order.UpdatedAt ?? order.OrderDate;
+        }
+
+        // Khi user/staff tra cứu danh sách, service tranh thủ tự kích hoạt các warranty
+        // đã quá hạn kích hoạt tay và đánh dấu hết hạn nếu cần.
+        private async Task ApplyAutoActivationAsync(List<WarrantyRecord> items)
+        {
+            var now = DateTime.UtcNow;
+            foreach (var item in items)
+            {
+                if (string.Equals(item.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (item.ExpiresAt.HasValue && item.ExpiresAt.Value < now && !string.Equals(item.Status, "Expired", StringComparison.OrdinalIgnoreCase))
+                    {
+                        item.Status = "Expired";
+                        item.UpdatedAt = now;
+                        await _warrantyRepository.UpdateAsync(item);
+                    }
+                    continue;
+                }
+
+                if (!string.Equals(item.Status, "NotActivated", StringComparison.OrdinalIgnoreCase)) continue;
+                var completion = ResolveWarrantyCompletionDate(item);
+                if (!completion.HasValue) continue;
+                var autoActivatedAt = completion.Value.AddDays(ManualActivationWindowDays);
+                if (now <= autoActivatedAt) continue;
+                await SetActivatedAsync(item, autoActivatedAt, now, false);
+            }
+        }
+
+        // Hàm dùng chung để bật bảo hành: set start/end date, suy ra Active/Expired
+        // và phát notification nếu đây là thao tác kích hoạt chủ động.
+        private async Task SetActivatedAsync(WarrantyRecord item, DateTime activatedAt, DateTime now, bool notify)
+        {
+            var months = item.WarrantyMonths <= 0 ? 12 : item.WarrantyMonths;
+            item.ActivatedAt = activatedAt;
+            item.ExpiresAt = activatedAt.AddMonths(months);
+            item.StartDate = item.ActivatedAt;
+            item.EndDate = item.ExpiresAt;
+            item.Status = item.ExpiresAt.HasValue && item.ExpiresAt.Value < now ? "Expired" : "Active";
+            item.UpdatedAt = now;
+            await _warrantyRepository.UpdateAsync(item);
+            if (notify)
+            {
+                await _notificationService.CreateAsync(item.UserId, "Bảo hành đã được kích hoạt", item.WarrantyCode, "Warranty", "WarrantyRecord", item.Id);
+            }
+        }
+
+        // Map claim sang DTO đầy đủ kèm updates để màn admin warranty và user-side cùng dùng.
         private static WarrantyClaimDto ToClaimDto(WarrantyClaim item) => new()
         {
             Id = item.Id,
@@ -595,6 +690,7 @@ namespace BaseCore.Services
             Updates = item.Updates.OrderBy(x => x.CreatedAt).Select(ToUpdateDto).ToList()
         };
 
+        // Map từng cập nhật claim bảo hành sang DTO timeline.
         private static WarrantyClaimUpdateDto ToUpdateDto(WarrantyClaimUpdate item) => new()
         {
             Id = item.Id,

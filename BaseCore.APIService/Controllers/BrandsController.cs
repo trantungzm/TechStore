@@ -1,7 +1,6 @@
-using BaseCore.Repository;
+using BaseCore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BaseCore.APIService.Controllers
 {
@@ -9,11 +8,11 @@ namespace BaseCore.APIService.Controllers
     [ApiController]
     public class BrandsController : ControllerBase
     {
-        private readonly AppDbContext _db;
+        private readonly IBrandService _brandService;
 
-        public BrandsController(AppDbContext db)
+        public BrandsController(IBrandService brandService)
         {
-            _db = db;
+            _brandService = brandService;
         }
 
         /// <summary>
@@ -22,26 +21,6 @@ namespace BaseCore.APIService.Controllers
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> Get([FromQuery] int? categoryId)
-        {
-            var query = _db.Brands.AsNoTracking().Where(b => b.IsActive);
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                query = query.Where(b => b.CategoryId == categoryId.Value);
-            }
-
-            var brands = await query
-                .OrderBy(b => b.Name)
-                .Select(b => new BrandDto { Id = b.Id, Name = b.Name, CategoryId = b.CategoryId })
-                .ToListAsync();
-
-            return Ok(brands);
-        }
-    }
-
-    public class BrandDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public int CategoryId { get; set; }
+            => Ok(await _brandService.GetActiveBrandsAsync(categoryId));
     }
 }

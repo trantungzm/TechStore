@@ -6,6 +6,8 @@ using System.Security.Cryptography;
 
 namespace BaseCore.Services
 {
+    // Service nghiệp vụ đơn hàng: chịu trách nhiệm tạo đơn, giữ chỗ tồn kho,
+    // điều khiển workflow trạng thái và nối sang coupon/inventory/warranty.
     public class OrderService : IOrderService
     {
         private static readonly HashSet<string> ValidStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -55,6 +57,7 @@ namespace BaseCore.Services
         private readonly IOrderTimelineRepositoryEF _timelineRepository;
         private readonly IOrderCancellationRepositoryEF _cancellationRepository;
         private readonly IProductRepositoryEF _productRepository;
+        private readonly IProductVariantRepositoryEF _variantRepository;
         private readonly IWarehouseRepositoryEF _warehouseRepository;
         private readonly IStockItemRepositoryEF _stockItemRepository;
         private readonly IOrderDetailStockItemRepositoryEF _orderDetailStockItemRepository;
@@ -69,6 +72,7 @@ namespace BaseCore.Services
             IOrderTimelineRepositoryEF timelineRepository,
             IOrderCancellationRepositoryEF cancellationRepository,
             IProductRepositoryEF productRepository,
+            IProductVariantRepositoryEF variantRepository,
             IWarehouseRepositoryEF warehouseRepository,
             IStockItemRepositoryEF stockItemRepository,
             IOrderDetailStockItemRepositoryEF orderDetailStockItemRepository,
@@ -82,6 +86,7 @@ namespace BaseCore.Services
             _timelineRepository = timelineRepository;
             _cancellationRepository = cancellationRepository;
             _productRepository = productRepository;
+            _variantRepository = variantRepository;
             _warehouseRepository = warehouseRepository;
             _stockItemRepository = stockItemRepository;
             _orderDetailStockItemRepository = orderDetailStockItemRepository;
@@ -91,18 +96,22 @@ namespace BaseCore.Services
             _notificationService = notificationService;
         }
 
+        // Storefront "đơn hàng của tôi" dùng hàm này để lấy danh sách gọn cho user hiện tại.
         public async Task<List<OrderListDto>> GetOrdersByUserIdAsync(Guid userId)
         {
             var orders = await _orderRepository.GetByUserAsync(userId);
             return orders.Select(ToListDto).ToList();
         }
 
+        // Màn admin orders gọi vào đây để lọc/search/paging toàn bộ đơn hàng.
         public async Task<(List<OrderListDto> Orders, int TotalCount)> GetAllOrdersAsync(OrderSearchDto search)
         {
             var result = await _orderRepository.SearchAsync(search);
             return (result.Orders.Select(ToListDto).ToList(), result.TotalCount);
         }
 
+        // Gom toàn bộ dữ liệu detail của đơn: item, timeline, cancellation, coupon
+        // để FE có thể hiển thị màn chi tiết chỉ từ một endpoint.
         public async Task<OrderDetailDto?> GetOrderWithDetailsAsync(int id)
         {
             var order = await _orderRepository.GetWithDetailsAsync(id);
@@ -114,17 +123,22 @@ namespace BaseCore.Services
             return ToDetailDto(order, details, timeline, cancellations.FirstOrDefault(), coupons);
         }
 
+        // Kiểm tra ownership đơn hàng để controller storefront chặn truy cập chéo user.
         public async Task<bool> CanAccessOrderAsync(int id, Guid userId)
         {
             var order = await _orderRepository.GetByIdAsync(id);
             return order?.UserId == userId;
         }
 
+        // Tạo đơn luôn chạy trong transaction vì một lần submit checkout sẽ chạm
+        // tới tồn kho, order, order details, serial reserve và coupon commit.
         public Task<OrderDetailDto> CreateOrderAsync(Guid? userId, CreateOrderDto dto)
         {
             return _orderRepository.ExecuteInTransactionAsync(() => CreateOrderCoreAsync(userId, dto));
         }
 
+        // Phần lõi checkout: validate request, trừ tồn optimistic locking,
+        // tính tổng tiền/coupon/phí ship, tạo order rồi reserve serial/IMEI nếu cần.
         private async Task<OrderDetailDto> CreateOrderCoreAsync(Guid? userId, CreateOrderDto dto)
         {
             ValidateCreateOrder(dto);
@@ -156,22 +170,35 @@ namespace BaseCore.Services
                     {
                         throw new InvalidOperationException($"Insufficient stock for {product.Name}");
                     }
-                    variant.Stock -= item.Quantity;
-                    variant.UpdatedAt = now;
+                    // Use atomic stock decrement with optimistic locking
+                    var rowsAffected = await _variantRepository.DecrementStockAsync(variant.Id, item.Quantity, variant.Version);
+                    if (rowsAffected == 0)
+                    {
+                        throw new InvalidOperationException($"Stock update failed for {product.Name} (concurrent update or insufficient stock)");
+                    }
+                    // Refresh variant to get updated version
+                    variant = await _variantRepository.GetByIdAsync(variant.Id);
                 }
                 else
                 {
-                    if (product.Stock < item.Quantity)
+                    if ((product.TotalStock ?? 0) < item.Quantity)
                     {
                         throw new InvalidOperationException($"Insufficient stock for {product.Name}");
                     }
-                    product.Stock -= item.Quantity;
+                    // Use atomic stock decrement with optimistic locking
+                    var rowsAffected = await _productRepository.DecrementStockAsync(product.Id, item.Quantity, product.Version);
+                    if (rowsAffected == 0)
+                    {
+                        throw new InvalidOperationException($"Stock update failed for {product.Name} (concurrent update or insufficient stock)");
+                    }
+                    // Refresh product to get updated version
+                    product = await _productRepository.GetByIdAsync(product.Id);
                 }
 
                 product.UpdatedAt = now;
                 productsToUpdate.Add(product);
 
-                var unitPrice = variant?.Price ?? product.Price;
+                var unitPrice = variant?.Price ?? product.BasePrice ?? product.MinPrice ?? 0;
                 var totalPrice = unitPrice * item.Quantity;
                 subtotal += totalPrice;
 
@@ -181,9 +208,9 @@ namespace BaseCore.Services
                     VariantId = variant?.Id,
                     ProductName = product.Name,
                     ProductImage = variant?.ImageUrl ?? product.ImageUrl,
-                    Sku = variant?.Sku ?? product.Sku,
-                    SelectedColor = variant?.ColorName,
-                    SelectedVersion = variant?.VariantName ?? variant?.Storage ?? variant?.Ram,
+                    Sku = variant?.Sku,
+                    SelectedColor = null,
+                    SelectedVersion = variant?.VariantName,
                     Quantity = item.Quantity,
                     UnitPrice = unitPrice,
                     TotalPrice = totalPrice,
@@ -193,7 +220,7 @@ namespace BaseCore.Services
 
             var shippingMethod = NormalizeShippingMethod(dto.ShippingMethod);
             var paymentMethod = NormalizePaymentMethod(dto.PaymentMethod);
-            var paymentStatus = "Unpaid";
+            var paymentStatus = ResolveInitialPaymentStatus(shippingMethod, paymentMethod);
             var shippingFee = shippingMethod == "StorePickup" ? 0 : await _orderRepository.GetDefaultShippingFeeAsync();
 
             Warehouse? pickupWarehouse = null;
@@ -218,7 +245,6 @@ namespace BaseCore.Services
 
             var pickupSlotStartAt = dto.PickupSlotStartAt ?? dto.ExpectedPickupTime;
             var pickupSlotEndAt = dto.PickupSlotEndAt;
-            var deliveryAddress = BuildShippingAddress(dto, shippingMethod);
             var productDiscount = 0m;
             var shippingDiscount = 0m;
             ValidateCouponsResultDto? couponValidation = null;
@@ -277,7 +303,7 @@ namespace BaseCore.Services
                 PaymentStatus = paymentStatus,
                 TransactionId = dto.TransactionId?.Trim(),
                 ShippingMethod = shippingMethod,
-                ShippingAddress = deliveryAddress,
+                ShippingAddress = BuildShippingAddress(dto, shippingMethod),
                 Province = shippingMethod == "Delivery" ? dto.Province?.Trim() : null,
                 District = shippingMethod == "Delivery" ? dto.District?.Trim() : null,
                 Ward = shippingMethod == "Delivery" ? dto.Ward?.Trim() : null,
@@ -313,8 +339,12 @@ namespace BaseCore.Services
                 if (!product.RequiresSerialTracking) continue;
 
                 var available = await _stockItemRepository.GetAvailableAsync(detail.ProductId, detail.VariantId, detail.Quantity, shippingMethod == "StorePickup" ? pickupWarehouseId : null);
-                
-                // Allow back-order if not enough stock items available (assign serials for available items only)
+                if (available.Count < detail.Quantity)
+                {
+                    var name = detail.ProductName ?? product.Name ?? $"#{detail.ProductId}";
+                    throw new InvalidOperationException($"Khong du serial/IMEI trong kho de xuat ban cho san pham {name}.");
+                }
+
                 var serials = new List<string>();
                 foreach (var item in available)
                 {
@@ -334,11 +364,7 @@ namespace BaseCore.Services
                     serials.Add(item.SerialOrImei);
                 }
 
-                // If not all units have serials assigned, it's a back-order
-                if (serials.Count > 0)
-                {
-                    detail.SerialOrImei = serials.Count == 1 ? serials[0] : string.Join(", ", serials);
-                }
+                detail.SerialOrImei = serials.Count == 1 ? serials[0] : string.Join(", ", serials);
                 await _orderDetailRepository.UpdateAsync(detail);
             }
 
@@ -364,6 +390,8 @@ namespace BaseCore.Services
             return (await GetOrderWithDetailsAsync(order.Id))!;
         }
 
+        // Quick action từ màn admin đi vào đây. Service kiểm soát toàn bộ transition,
+        // auto reserve/sold stock item, restore stock khi hủy và kích hoạt bảo hành khi hoàn tất.
         public async Task<OrderDetailDto?> UpdateStatusAsync(int id, UpdateOrderStatusDto dto, Guid? updatedByUserId)
         {
             var order = await _orderRepository.GetByIdAsync(id);
@@ -395,27 +423,17 @@ namespace BaseCore.Services
                     finalStatus.Contains("Cancel", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(finalStatus, "Cancelled", StringComparison.OrdinalIgnoreCase);
 
+                var effectivePaymentStatus =
+                    !string.IsNullOrWhiteSpace(dto.PaymentStatus)
+                        ? requestedPaymentStatus
+                        : (ShouldAutoMarkPaidOnCompletion(order, finalStatus) ? "Paid" : NormalizePaymentStatus(order.PaymentStatus));
+
                 if (string.Equals(finalStatus, "Completed", StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(requestedPaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+                    !string.Equals(effectivePaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException("Store pickup order can be completed only when payment status is Paid");
                 }
 
-                if (!isCancellationFlow &&
-                    string.Equals(finalStatus, "Completed", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(currentStatus, "ReadyForPickup", StringComparison.OrdinalIgnoreCase))
-                {
-                    var expected = order.PickupVerificationPin?.Trim();
-                    var provided = dto.PickupVerificationPin?.Trim();
-                    if (string.IsNullOrWhiteSpace(expected))
-                    {
-                        throw new InvalidOperationException("Pickup verification pin is not set");
-                    }
-                    if (string.IsNullOrWhiteSpace(provided) || !string.Equals(expected, provided, StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new InvalidOperationException("Invalid pickup verification pin");
-                    }
-                }
             }
 
             if (!string.Equals(currentStatus, finalStatus, StringComparison.OrdinalIgnoreCase))
@@ -450,10 +468,6 @@ namespace BaseCore.Services
                 {
                     order.ReadyForPickupAt ??= now;
                     order.PickupExpiresAt = order.ReadyForPickupAt.Value.AddHours(48);
-                    if (string.IsNullOrWhiteSpace(order.PickupVerificationPin))
-                    {
-                        order.PickupVerificationPin = GeneratePickupPin();
-                    }
                 }
             }
 
@@ -467,7 +481,14 @@ namespace BaseCore.Services
                 order.PaymentStatus = NormalizeCancelledPaymentStatus(order.PaymentStatus);
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.PaymentStatus)) order.PaymentStatus = requestedPaymentStatus;
+            if (!string.IsNullOrWhiteSpace(dto.PaymentStatus))
+            {
+                order.PaymentStatus = requestedPaymentStatus;
+            }
+            else if (ShouldAutoMarkPaidOnCompletion(order, finalStatus))
+            {
+                order.PaymentStatus = "Paid";
+            }
 
             if (!string.IsNullOrWhiteSpace(dto.TransactionId))
             {
@@ -497,8 +518,7 @@ namespace BaseCore.Services
                 {
                     var orderCode = string.IsNullOrWhiteSpace(order.OrderCode) ? $"#{order.Id}" : order.OrderCode;
                     var location = string.IsNullOrWhiteSpace(order.StorePickupLocation) ? "chi nhanh da chon" : order.StorePickupLocation;
-                    var pin = string.IsNullOrWhiteSpace(order.PickupVerificationPin) ? "—" : order.PickupVerificationPin;
-                    await _notificationService.CreateAsync(order.UserId, "Don hang da san sang nhan", $"Don hang {orderCode} da SAN SANG! Kinh moi ban den {location} de nhan hang. Ma nhan hang cua ban la: {pin}.", "Order", "Order", order.Id);
+                    await _notificationService.CreateAsync(order.UserId, "Don hang da san sang nhan", $"Don hang {orderCode} da SAN SANG! Kinh moi ban den {location} de nhan hang.", "Order", "Order", order.Id);
                 }
             }
             catch
@@ -520,6 +540,8 @@ namespace BaseCore.Services
             return await GetOrderWithDetailsAsync(order.Id);
         }
 
+        // User gửi yêu cầu hủy đơn không hủy trực tiếp ngay mà tạo bản ghi review,
+        // giúp admin có luồng duyệt/từ chối riêng trên màn quản trị đơn hàng.
         public async Task<OrderDetailDto?> CancelOrderAsync(int id, string? reason, Guid? requestedByUserId)
         {
             var order = await _orderRepository.GetByIdAsync(id);
@@ -556,6 +578,8 @@ namespace BaseCore.Services
             return await GetOrderWithDetailsAsync(order.Id);
         }
 
+        // Admin duyệt yêu cầu hủy. Nếu chấp nhận thì trả tồn kho và cập nhật payment status,
+        // nếu từ chối thì đẩy đơn sang CancelRejected để tiếp tục xử lý.
         public async Task<OrderDetailDto?> ReviewCancellationAsync(int id, ReviewCancelOrderDto dto, Guid? reviewedByUserId)
         {
             var order = await _orderRepository.GetByIdAsync(id);
@@ -570,8 +594,7 @@ namespace BaseCore.Services
             cancellation.ReviewedAt = now;
             await _cancellationRepository.UpdateAsync(cancellation);
 
-            var resumeStatus = dto.Approved ? "Cancelled" : await ResolveStatusBeforeCancellationAsync(order.Id);
-            order.Status = resumeStatus;
+            order.Status = dto.Approved ? "Cancelled" : "CancelRejected";
             order.CancelReviewedAt = now;
             order.CancelReviewedByUserId = reviewedByUserId;
             order.CancelReviewNote = dto.AdminNote?.Trim();
@@ -591,47 +614,19 @@ namespace BaseCore.Services
                 dto.Approved ? "Yeu cau huy don da duoc chap nhan" : "Yeu cau huy don bi tu choi",
                 dto.AdminNote,
                 reviewedByUserId);
-            if (!dto.Approved)
-            {
-                await AddTimeline(
-                    order.Id,
-                    order.Status,
-                    "Don hang tiep tuc xu ly",
-                    null,
-                    reviewedByUserId);
-            }
 
             return await GetOrderWithDetailsAsync(order.Id);
         }
 
-        private async Task<string> ResolveStatusBeforeCancellationAsync(int orderId)
-        {
-            var timeline = await _timelineRepository.GetByOrderAsync(orderId);
-            var cancelIndex = timeline.FindLastIndex(x =>
-                string.Equals(NormalizeStatus(x.Status), "CancelRequested", StringComparison.OrdinalIgnoreCase));
-
-            var candidates = cancelIndex > 0
-                ? timeline.Take(cancelIndex).Reverse()
-                : timeline.AsEnumerable().Reverse();
-
-            foreach (var item in candidates)
-            {
-                var status = NormalizeStatus(item.Status);
-                if (IsResumableOrderStatus(status))
-                {
-                    return status;
-                }
-            }
-
-            return "Processing";
-        }
-
+        // Trả về riêng timeline khi FE chỉ cần lịch sử trạng thái mà không tải full detail.
         public async Task<List<OrderTimelineDto>> GetTimelineAsync(int id)
         {
             var timeline = await _timelineRepository.GetByOrderAsync(id);
             return timeline.Select(ToTimelineDto).ToList();
         }
 
+        // Job nền cho store-pickup: tự hủy các đơn đã quá hạn nhận tại cửa hàng
+        // để giải phóng tồn kho và giữ workflow vận hành sạch.
         public async Task<int> AutoCancelExpiredPickupOrdersAsync(int batchSize = 100)
         {
             var now = DateTime.UtcNow;
@@ -665,6 +660,8 @@ namespace BaseCore.Services
             return cancelled;
         }
 
+        // Khi đơn bị hủy, service hoàn trả cả stock số lượng lẫn serial/IMEI đã reserve,
+        // xóa link OrderDetailStockItem và reset dữ liệu gắn với đơn.
         private async Task RestoreStock(int orderId)
         {
             var details = await _orderDetailRepository.GetByOrderAsync(orderId);
@@ -701,11 +698,24 @@ namespace BaseCore.Services
                 if (detail.VariantId.HasValue)
                 {
                     var variant = product.Variants.FirstOrDefault(x => x.Id == detail.VariantId.Value);
-                    if (variant != null) variant.Stock += detail.Quantity;
+                    if (variant != null)
+                    {
+                        // Use atomic stock increment with optimistic locking
+                        var rowsAffected = await _variantRepository.IncrementStockAsync(variant.Id, detail.Quantity, variant.Version);
+                        if (rowsAffected == 0)
+                        {
+                            throw new InvalidOperationException($"Stock restore failed for {product.Name} (concurrent update)");
+                        }
+                    }
                 }
                 else
                 {
-                    product.Stock += detail.Quantity;
+                    // Use atomic stock increment with optimistic locking
+                    var rowsAffected = await _productRepository.IncrementStockAsync(product.Id, detail.Quantity, product.Version);
+                    if (rowsAffected == 0)
+                    {
+                        throw new InvalidOperationException($"Stock restore failed for {product.Name} (concurrent update)");
+                    }
                 }
                 detail.SerialOrImei = null;
                 await _orderDetailRepository.UpdateAsync(detail);
@@ -715,6 +725,7 @@ namespace BaseCore.Services
             }
         }
 
+        // Timeline là lịch sử business của đơn để FE/admin trace lại từng mốc xử lý.
         private async Task AddTimeline(int orderId, string status, string title, string? note, Guid? createdByUserId)
         {
             await _timelineRepository.AddAsync(new OrderTimeline
@@ -728,14 +739,7 @@ namespace BaseCore.Services
             });
         }
 
-        private static string GeneratePickupPin(int digits = 6)
-        {
-            var len = Math.Clamp(digits, 4, 8);
-            var maxExclusive = (int)Math.Pow(10, len);
-            var value = RandomNumberGenerator.GetInt32(0, maxExclusive);
-            return value.ToString().PadLeft(len, '0');
-        }
-
+        // Validate dữ liệu checkout trước khi chạm vào tồn kho và tạo bản ghi đơn hàng.
         private static void ValidateCreateOrder(CreateOrderDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.CustomerName)) throw new InvalidOperationException("Customer name is required");
@@ -744,17 +748,15 @@ namespace BaseCore.Services
             if (!string.IsNullOrWhiteSpace(dto.CustomerEmail) && !dto.CustomerEmail.Contains('@')) throw new InvalidOperationException("Customer email is invalid");
             if (string.IsNullOrWhiteSpace(dto.PaymentMethod)) throw new InvalidOperationException("Payment method is required");
             if (string.IsNullOrWhiteSpace(dto.ShippingMethod)) throw new InvalidOperationException("Shipping method is required");
-            NormalizePaymentMethod(dto.PaymentMethod);
+            var paymentMethod = NormalizePaymentMethod(dto.PaymentMethod);
             if (dto.Items == null || dto.Items.Count == 0) throw new InvalidOperationException("Order items are required");
             if (dto.Items.Any(x => x.ProductId <= 0 || x.Quantity <= 0)) throw new InvalidOperationException("Invalid order item");
 
             var shippingMethod = NormalizeShippingMethod(dto.ShippingMethod);
-            var hasStructuredDeliveryAddress =
-                !string.IsNullOrWhiteSpace(dto.Province) &&
-                !string.IsNullOrWhiteSpace(dto.Ward) &&
-                !string.IsNullOrWhiteSpace(dto.AddressDetail);
-            var hasFullDeliveryAddress = !string.IsNullOrWhiteSpace(dto.ShippingAddress);
-            if (shippingMethod == "Delivery" && !hasFullDeliveryAddress && !hasStructuredDeliveryAddress)
+            EnsureValidPaymentMethodForShipping(shippingMethod, paymentMethod);
+            if (shippingMethod == "Delivery" &&
+                (string.IsNullOrWhiteSpace(dto.Province) ||
+                 string.IsNullOrWhiteSpace(dto.Ward)))
             {
                 throw new InvalidOperationException("Delivery address is required");
             }
@@ -773,6 +775,7 @@ namespace BaseCore.Services
             }
         }
 
+        // Chuẩn hóa order status từ input text và reject giá trị ngoài state machine.
         private static string NormalizeStatus(string? status)
         {
             var value = string.IsNullOrWhiteSpace(status) ? "Pending" : status.Trim();
@@ -780,6 +783,7 @@ namespace BaseCore.Services
             return ValidStatuses.First(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Chuẩn hóa payment status để mọi luồng update lưu đúng tập giá trị cho phép.
         private static string NormalizePaymentStatus(string? status)
         {
             var value = string.IsNullOrWhiteSpace(status) ? "Unpaid" : status.Trim();
@@ -787,6 +791,7 @@ namespace BaseCore.Services
             return ValidPaymentStatuses.First(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Hỗ trợ nhiều alias payment method từ FE nhưng luôn lưu về canonical value.
         private static string NormalizePaymentMethod(string? value)
         {
             var raw = string.IsNullOrWhiteSpace(value) ? "COD" : value.Trim();
@@ -805,6 +810,7 @@ namespace BaseCore.Services
             return ValidPaymentMethods.First(x => string.Equals(x, normalized, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Chuẩn hóa delivery/store-pickup để các nhánh nghiệp vụ dùng thống nhất.
         private static string NormalizeShippingMethod(string? value)
         {
             var raw = string.IsNullOrWhiteSpace(value) ? "Delivery" : value.Trim();
@@ -819,16 +825,51 @@ namespace BaseCore.Services
             return ValidShippingMethods.First(x => string.Equals(x, normalized, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Khi đơn bị hủy, payment status sẽ chuyển sang Cancelled hoặc Refunded tùy trạng thái cũ.
         private static string NormalizeCancelledPaymentStatus(string? currentStatus)
         {
             return string.Equals(currentStatus, "Paid", StringComparison.OrdinalIgnoreCase) ? "Refunded" : "Cancelled";
         }
 
-        private static bool IsResumableOrderStatus(string status)
+        // Ràng buộc payment method hợp lệ theo từng hình thức giao/nhận.
+        private static void EnsureValidPaymentMethodForShipping(string shippingMethod, string paymentMethod)
         {
-            return status is "Pending" or "Confirmed" or "Processing" or "ReadyForPickup" or "Shipping" or "Shipped" or "Delivered";
+            if (shippingMethod == "StorePickup")
+            {
+                if (paymentMethod != "StorePayment" && paymentMethod != "BankTransfer")
+                {
+                    throw new InvalidOperationException("Store pickup only supports cash at store or bank transfer");
+                }
+                return;
+            }
+
+            if (paymentMethod != "COD" && paymentMethod != "BankTransfer")
+            {
+                throw new InvalidOperationException("Delivery only supports COD or bank transfer");
+            }
         }
 
+        // Suy ra payment status ban đầu ngay khi tạo đơn.
+        private static string ResolveInitialPaymentStatus(string shippingMethod, string paymentMethod)
+        {
+            EnsureValidPaymentMethodForShipping(shippingMethod, paymentMethod);
+            return paymentMethod == "BankTransfer" ? "Paid" : "Unpaid";
+        }
+
+        // Một số luồng như COD hoặc thanh toán tại cửa hàng sẽ tự coi là đã thanh toán khi completed.
+        private static bool ShouldAutoMarkPaidOnCompletion(Order order, string finalStatus)
+        {
+            if (!string.Equals(finalStatus, "Completed", StringComparison.OrdinalIgnoreCase)) return false;
+            if (string.Equals(order.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var shippingMethod = NormalizeShippingMethod(order.ShippingMethod);
+            var paymentMethod = NormalizePaymentMethod(order.PaymentMethod);
+
+            return (shippingMethod == "StorePickup" && paymentMethod == "StorePayment")
+                || (shippingMethod == "Delivery" && paymentMethod == "COD");
+        }
+
+        // Khóa chặt state machine đơn hàng để mọi thao tác từ admin/user đều đi đúng luồng.
         private static void EnsureAllowedTransition(string currentStatus, string nextStatus)
         {
             if (string.Equals(currentStatus, nextStatus, StringComparison.OrdinalIgnoreCase)) return;
@@ -838,6 +879,8 @@ namespace BaseCore.Services
             }
         }
 
+        // Các trường fulfillment như hãng vận chuyển, tracking, shipped/delivered time
+        // được cập nhật tập trung ở đây để không rải logic trong controller.
         private static void ApplyFulfillmentFields(Order order, UpdateOrderStatusDto dto, string status, DateTime now)
         {
             if (!string.IsNullOrWhiteSpace(dto.Carrier)) order.Carrier = dto.Carrier.Trim();
@@ -851,6 +894,8 @@ namespace BaseCore.Services
             }
         }
 
+        // Gom phần metadata hoàn tiền/hoàn trả của đơn để các bước update status
+        // có thể dùng lại cùng một logic.
         private static void ApplyRefundReturnFields(Order order, UpdateOrderStatusDto dto, string status, DateTime now)
         {
             var refundStatus = NormalizeOptionalRefundStatus(dto.RefundStatus);
@@ -868,6 +913,7 @@ namespace BaseCore.Services
             }
         }
 
+        // Chuẩn hóa refund status nếu request có gửi kèm thông tin hoàn tiền.
         private static string? NormalizeOptionalRefundStatus(string? status)
         {
             if (string.IsNullOrWhiteSpace(status)) return null;
@@ -877,6 +923,7 @@ namespace BaseCore.Services
             return allowed.First(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Chuẩn hóa return status cho các case hoàn trả sau bán.
         private static string? NormalizeOptionalReturnStatus(string? status)
         {
             if (string.IsNullOrWhiteSpace(status)) return null;
@@ -886,18 +933,21 @@ namespace BaseCore.Services
             return allowed.First(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Sinh mã đơn hàng thân thiện để hiển thị cho người dùng và đối soát nội bộ.
         private static string GenerateOrderCode(int id, DateTime createdAt)
         {
             return $"CNTHHT-{createdAt:yyyyMMdd}-{id:0000}";
         }
 
+        // Tạo chuỗi địa chỉ giao hàng từ field nhập tay hoặc ghép từ ward/province.
         private static string? BuildShippingAddress(CreateOrderDto dto, string shippingMethod)
         {
             if (shippingMethod == "StorePickup") return null;
             if (!string.IsNullOrWhiteSpace(dto.ShippingAddress)) return dto.ShippingAddress.Trim();
-            return string.Join(", ", new[] { dto.AddressDetail, dto.Ward, dto.District, dto.Province }.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!.Trim()));
+            return string.Join(", ", new[] { dto.Ward, dto.Province }.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!.Trim()));
         }
 
+        // Quy đổi status kỹ thuật sang title dễ đọc trong timeline/order history.
         private static string TimelineTitle(string status)
         {
             return status switch
@@ -919,6 +969,7 @@ namespace BaseCore.Services
             };
         }
 
+        // DTO rút gọn cho danh sách đơn hàng, vẫn giữ đủ thông tin thanh toán/giao nhận quan trọng.
         private static OrderListDto ToListDto(Order order)
         {
             return new OrderListDto
@@ -946,7 +997,6 @@ namespace BaseCore.Services
                 PickupSlotEndAt = order.PickupSlotEndAt,
                 ReadyForPickupAt = order.ReadyForPickupAt,
                 PickupExpiresAt = order.PickupExpiresAt,
-                PickupVerificationPin = order.PickupVerificationPin,
                 Carrier = order.Carrier,
                 TrackingCode = order.TrackingCode,
                 ShippedAt = order.ShippedAt,
@@ -958,17 +1008,13 @@ namespace BaseCore.Services
                 RefundTransactionId = order.RefundTransactionId,
                 ReturnStatus = order.ReturnStatus,
                 ReturnedAt = order.ReturnedAt,
-                CancelReason = order.CancelReason,
-                CancelRequestedAt = order.CancelRequestedAt,
-                CancelReviewedAt = order.CancelReviewedAt,
-                CancelReviewedByUserId = order.CancelReviewedByUserId,
-                CancelReviewNote = order.CancelReviewNote,
                 ItemCount = order.OrderDetails?.Sum(x => x.Quantity) ?? 0,
                 CreatedAt = order.CreatedAt,
                 UpdatedAt = order.UpdatedAt
             };
         }
 
+        // Snapshot chi tiết trả về cho FE: từ entity đơn + danh sách con sang DTO duy nhất.
         private static OrderDetailDto ToDetailDto(Order order, List<OrderDetail> details, List<OrderTimeline> timeline, OrderCancellation? cancellation, List<OrderCouponDto>? coupons = null)
         {
             var dto = new OrderDetailDto
@@ -1036,6 +1082,7 @@ namespace BaseCore.Services
             return dto;
         }
 
+        // Gom serial/IMEI từ nhiều nguồn để item detail luôn hiển thị được số máy đã cấp.
         private static OrderItemDetailDto ToItemDto(OrderDetail detail)
         {
             var serialOrImei = detail.SerialOrImei;
@@ -1069,6 +1116,7 @@ namespace BaseCore.Services
             };
         }
 
+        // Map timeline entity sang DTO trả về cho FE.
         private static OrderTimelineDto ToTimelineDto(OrderTimeline item)
         {
             return new OrderTimelineDto
@@ -1083,6 +1131,7 @@ namespace BaseCore.Services
             };
         }
 
+        // Map bản ghi yêu cầu hủy để màn chi tiết đơn có thể hiển thị quyết định review.
         private static OrderCancellationDto ToCancellationDto(OrderCancellation item)
         {
             return new OrderCancellationDto

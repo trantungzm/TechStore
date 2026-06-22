@@ -4,48 +4,10 @@ import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import { t } from '../../utils/store';
 
-const serviceItems = [
-    { icon: 'fas fa-sync-alt', title: 'Free Return', text: '30 days money back guarantee!' },
-    { icon: 'fab fa-telegram-plane', title: 'Free Shipping', text: 'Free shipping on all order' },
-    { icon: 'fas fa-life-ring', title: 'Support 24/7', text: 'We support online 24 hrs a day' },
-    { icon: 'fas fa-credit-card', title: 'Receive Gift Card', text: 'Recieve gift all over oder $50' },
-    { icon: 'fas fa-lock', title: 'Secure Payment', text: 'We Value Your Security' },
-    { icon: 'fas fa-headset', title: 'Online Service', text: 'Free return products in 30 days' },
-];
-
 const offers = [];
 
 const BestsellerSection = ({ products }) => (
     <>
-        {/* Service strip */}
-        <motion.section
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6 }}
-            className="ts-container py-12"
-        >
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-border)] shadow-[var(--shadow-soft)] md:grid-cols-3 lg:grid-cols-6">
-                {serviceItems.map((item, idx) => (
-                    <motion.div
-                        key={item.title}
-                        initial={{ opacity: 0, y: 12 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.2 }}
-                        transition={{ delay: idx * 0.05, duration: 0.4 }}
-                        whileHover={{ y: -2 }}
-                        className="group flex items-center gap-3 bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-surface-2)]"
-                    >
-                        <i className={`${item.icon} text-xl text-[var(--color-accent)] transition-transform duration-300 group-hover:scale-110`}></i>
-                        <div className="min-w-0">
-                            <p className="ts-eyebrow text-[10px]">{t(item.title)}</p>
-                            <p className="mt-1 text-xs leading-tight text-[var(--color-fg-muted)]">{t(item.text)}</p>
-                        </div>
-                    </motion.div>
-                ))}
-            </div>
-        </motion.section>
-
         {/* Offers */}
         <section className="ts-container py-12">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

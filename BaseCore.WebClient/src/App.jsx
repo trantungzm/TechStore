@@ -6,22 +6,24 @@ import { WishlistProvider } from './contexts/WishlistContext';
 import { CompareProvider } from './contexts/CompareContext';
 import { StoreSettingsProvider } from './contexts/StoreSettingsContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import MainLayout from './components/MainLayout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Users from './pages/Users';
-import Categories from './pages/Categories';
-import AdminSuppliers from './pages/AdminSuppliers';
-import AdminOrders from './pages/AdminOrders';
-import AdminCoupons from './pages/AdminCoupons';
-import AdminBanners from './pages/AdminBanners';
-import AdminInventory from './pages/AdminInventory';
-import AdminRepairs from './pages/AdminRepairs';
-import AdminTickets from './pages/AdminTickets';
-import AdminWarranty from './pages/AdminWarranty';
-import Roles from './pages/Roles';
-import StoreLayout from './components/store/StoreLayout';
+import { FullScreenLoading } from './components/common/Loading';
+import { ADMIN_PANEL_ROLES, STOCK_ROLES, RETURN_ROLES } from './constants/roles';
+import MainLayout from './layout/MainLayout';
+import Login from './pages/auth/Login';
+import Dashboard from './pages/admin/Dashboard';
+import Products from './pages/admin/Products';
+import Users from './pages/admin/Users';
+import Categories from './pages/admin/Categories';
+import AdminSuppliers from './pages/admin/AdminSuppliers';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminBanners from './pages/admin/AdminBanners';
+import AdminInventory from './pages/admin/AdminInventory';
+import AdminRepairs from './pages/admin/AdminRepairs';
+import AdminTickets from './pages/admin/AdminTickets';
+import AdminWarranty from './pages/admin/AdminWarranty';
+import Roles from './pages/admin/Roles';
+import StoreLayout from './layout/StoreLayout';
 import ScrollToTop from './components/store/ScrollToTop';
 import AppNotifications from './components/AppNotifications';
 import Home from './pages/store/Home';
@@ -46,15 +48,7 @@ const PublicRoute = ({ children }) => {
     const location = useLocation();
 
     if (loading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-gradient-to-br from-white via-[var(--color-background)] to-[var(--color-surface-2)]">
-                <div
-                    className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-primary)]"
-                    role="status"
-                    aria-label="Loading"
-                />
-            </div>
-        );
+        return <FullScreenLoading />;
     }
 
     if (isAuthenticated) {
@@ -127,7 +121,7 @@ function AppRoutes() {
             <Route
                 path="/admin"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <Dashboard />
                         </MainLayout>
@@ -137,7 +131,7 @@ function AppRoutes() {
             <Route
                 path="/admin/products"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <Products />
                         </MainLayout>
@@ -157,7 +151,7 @@ function AppRoutes() {
             <Route
                 path="/admin/suppliers"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse']}>
+                    <ProtectedRoute allowedRoles={STOCK_ROLES}>
                         <MainLayout>
                             <AdminSuppliers />
                         </MainLayout>
@@ -187,7 +181,7 @@ function AppRoutes() {
             <Route
                 path="/admin/orders"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse']}>
+                    <ProtectedRoute allowedRoles={STOCK_ROLES}>
                         <MainLayout>
                             <AdminOrders />
                         </MainLayout>
@@ -217,7 +211,7 @@ function AppRoutes() {
             <Route
                 path="/admin/inventory"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <AdminInventory />
                         </MainLayout>
@@ -227,7 +221,7 @@ function AppRoutes() {
             <Route
                 path="/admin/inventory/receipts"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse']}>
+                    <ProtectedRoute allowedRoles={STOCK_ROLES}>
                         <MainLayout>
                             <AdminInventory />
                         </MainLayout>
@@ -237,7 +231,7 @@ function AppRoutes() {
             <Route
                 path="/admin/inventory/serials"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <AdminInventory />
                         </MainLayout>
@@ -247,7 +241,7 @@ function AppRoutes() {
             <Route
                 path="/admin/inventory/returns"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Technical']}>
+                    <ProtectedRoute allowedRoles={RETURN_ROLES}>
                         <MainLayout>
                             <AdminInventory />
                         </MainLayout>
@@ -257,7 +251,7 @@ function AppRoutes() {
             <Route
                 path="/admin/warranty"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <AdminWarranty />
                         </MainLayout>
@@ -267,7 +261,7 @@ function AppRoutes() {
             <Route
                 path="/admin/repairs"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <AdminRepairs />
                         </MainLayout>
@@ -277,7 +271,7 @@ function AppRoutes() {
             <Route
                 path="/admin/tickets"
                 element={
-                    <ProtectedRoute allowedRoles={['Admin', 'Warehouse', 'Technical']}>
+                    <ProtectedRoute allowedRoles={ADMIN_PANEL_ROLES}>
                         <MainLayout>
                             <AdminTickets />
                         </MainLayout>

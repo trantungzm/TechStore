@@ -12,6 +12,9 @@ export const getCartItemKey = (itemOrProduct) => {
     return `${productId}:${variantId !== undefined && variantId !== null && variantId !== '' ? `variant:${variantId}` : 'base'}`;
 };
 
+// Khoá định danh dòng giỏ hàng (ưu tiên key đã lưu, nếu không thì suy ra từ product/variant).
+export const getItemKey = (item) => item.cartItemKey || getCartItemKey(item);
+
 export const CartProvider = ({ children }) => {
     const { user } = useAuth();
     const isViewOnly = isStoreViewOnlyUser(user);

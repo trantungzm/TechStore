@@ -267,6 +267,9 @@ namespace BaseCore.DTO.Store
         public string? PaymentMethod { get; set; }
         public string? PaymentStatus { get; set; }
         public string? TransactionId { get; set; }
+        public string? PaymentBankName { get; set; }
+        public string? PaymentBankAccountNumber { get; set; }
+        public string? PaymentBankAccountHolder { get; set; }
         public string? Notes { get; set; }
         public bool InvoiceRequired { get; set; }
         public string? InvoiceCompanyName { get; set; }

@@ -376,6 +376,7 @@ const storefrontVi = {
     'Address': 'Địa chỉ',
     'Mail Us': 'Email',
     'Telephone': 'Điện thoại',
+    'Working Hours': 'Giờ làm việc',
     'Newsletter': 'Bản tin',
     'Customer Service': 'Dịch vụ khách hàng',
     'Returns': 'Đổi trả',
@@ -431,38 +432,35 @@ const storefrontVi = {
     'Compare': 'So sánh',
     'Remove': 'Xóa',
     'Action': 'Hành động',
+    'Voucher': 'Voucher',
+    'Sale': 'Giảm giá',
+    'New': 'Mới',
+    'No reviews': 'Chưa có đánh giá',
+    'No image': 'Chưa có ảnh',
+    'Choose variant': 'Chọn phiên bản',
+    'Customer Support': 'Hỗ trợ khách hàng',
+    'Policies': 'Chính sách',
+    'About TechStore': 'Về TechStore',
+    'Payment Methods': 'Phương thức thanh toán',
+    'Shipping Partners': 'Đối tác vận chuyển',
 };
 
 export const t = (key) => {
-    const lang = localStorage.getItem('language') || 'English';
+    const lang = localStorage.getItem('language') || 'Vietnamese';
     return storefrontVi[key] || dictionary[lang]?.[key] || key;
 };
 
 export const resolveProductImage = (product) => {
-    const imageUrl = product?.imageUrl?.trim();
+    const imageUrl = product?.imageUrl?.trim() || product?.ImageUrl?.trim();
     if (imageUrl) {
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
             return imageUrl;
         }
         if (imageUrl.startsWith('/electro/img/')) return '';
-        // For uploaded images under /uploads, try to resolve to the API service when
-        // frontend is served from a different origin (common in local dev).
+        // For /uploads paths: return as relative URL.
+        // In dev mode, Vite proxy forwards /uploads -> API service (port 5001).
+        // In production, the API gateway serves /uploads directly.
         if (imageUrl.startsWith('/uploads')) {
-            try {
-                const origin = window.location.origin || '';
-                const hostname = window.location.hostname || '';
-                const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
-                // If running on localhost and current origin port isn't the API service
-                // default (5001), build an absolute URL to port 5001 so images load from
-                // the API service where uploads are stored.
-                const portMatch = origin.match(/:(\d+)$/);
-                const currentPort = portMatch ? Number(portMatch[1]) : (window.location.protocol === 'https:' ? 443 : 80);
-                if (isLocal && currentPort !== 5001) {
-                    return `${window.location.protocol}//${hostname}:5001${imageUrl}`;
-                }
-            } catch (e) {
-                // ignore and fall back to relative path
-            }
             return imageUrl;
         }
 
@@ -523,11 +521,12 @@ export const getProductCategoryName = (product, fallback = 'Sản phẩm') => {
     return categoryNameById[Number(product?.categoryId ?? product?.CategoryId)] || fallback;
 };
 
-export const STORE_VIEW_ONLY_ROLES = ['Admin', 'Warehouse', 'Technical'];
+export const STORE_VIEW_ONLY_MESSAGE = 'Tài khoản nhân viên chỉ xem khu vực cửa hàng. Vui lòng dùng tài khoản khách hàng để thao tác.';
 
-export const isStoreViewOnlyUser = (user) => STORE_VIEW_ONLY_ROLES.includes(user?.role);
-
-export const STORE_VIEW_ONLY_MESSAGE = 'Tài khoản nội bộ chỉ được xem cửa hàng, không thể thực hiện thao tác mua hàng.';
+export const isStoreViewOnlyUser = (user) => {
+    const role = user?.role || user?.Role;
+    return ['Admin', 'Warehouse', 'Technical', 'Warranty', 'CustomerService'].includes(role);
+};
 
 export const getPostLoginPath = (user, requestedPath) => {
     const role = user?.role;
@@ -536,7 +535,7 @@ export const getPostLoginPath = (user, requestedPath) => {
     const isAdminArea = requestedPath?.startsWith('/admin');
 
     if (isAdmin || isStaff) {
-        return requestedPath || '/admin';
+        return isAdminArea ? requestedPath : '/admin';
     }
 
     if (requestedPath) {
@@ -570,15 +569,43 @@ export const setPageMeta = ({ title, description }) => {
 };
 
 export const toast = (message, variant = 'primary') => {
-    if (!message) return;
-    // Dùng hệ thống thông báo toàn app (AppNotifications) để hiện ở cả storefront lẫn admin.
-    // Map biến thể cũ 'primary' -> 'info'.
     window.dispatchEvent(
-        new CustomEvent('app:toast', {
+        new CustomEvent('store:toast', {
             detail: {
-                message: String(message),
-                variant: variant === 'primary' ? 'info' : variant,
+                message: String(message || ''),
+                variant,
             },
         })
     );
+};
+
+// ── Helper dùng chung (gom từ các page/component để tránh lặp) ──────────────
+
+export const safeParseJson = (value, fallback) => {
+    try { return JSON.parse(value); } catch { return fallback; }
+};
+
+export const normalizeSearchText = (value = '') => String(value)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+
+export const parseServerDateTime = (value) => {
+    if (!value) return NaN;
+    const text = String(value);
+    const normalized = /(?:z|[+-]\d{2}:\d{2})$/i.test(text) ? text : `${text}Z`;
+    return new Date(normalized).getTime();
+};
+
+export const getProductOldPrice = (product) => {
+    const oldPrice = Number(product?.originalPrice ?? product?.OriginalPrice ?? product?.oldPrice ?? product?.OldPrice ?? 0);
+    const price = Number(product?.price ?? product?.Price ?? 0);
+    return oldPrice > price ? oldPrice : 0;
+};
+
+export const readApiError = (err, fallback) => {
+    const data = err?.response?.data;
+    return data?.message || data?.detail || data?.title || err?.message || fallback;
 };

@@ -6,6 +6,7 @@ using System.Security.Claims;
 
 namespace BaseCore.APIService.Controllers
 {
+    // Controller sửa chữa phục vụ cả kỹ thuật nội bộ và user theo dõi repair case của mình.
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -18,6 +19,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> Get([FromQuery] SupportSearchDto search)
         {
+            // Màn AdminRepairs lấy danh sách hồ sơ sửa chữa từ đây.
             var result = await _service.GetRepairsAsync(search);
             return Ok(Paged(result.Items, result.TotalCount, search.Page, search.PageSize));
         }
@@ -52,6 +54,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Intake([FromBody] CreateRepairIntakeDto dto)
         {
+            // Technical tiếp nhận thiết bị vào quy trình sửa chữa.
             var item = await _service.IntakeAsync(dto, CurrentUserId());
             return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
         }
@@ -60,6 +63,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateRepairCaseDto dto)
         {
+            // Update ghi chú/nội dung xử lý của repair case.
             var item = await _service.UpdateAsync(id, dto);
             return item == null ? NotFound(new { message = "Repair khong ton tai." }) : Ok(item);
         }
@@ -68,6 +72,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Technical")]
         public async Task<IActionResult> Status(int id, [FromBody] UpdateRepairStatusDto dto)
         {
+            // Endpoint tách riêng cho việc đổi bước xử lý sửa chữa nếu cần gọi độc lập.
             var item = await _service.UpdateStatusAsync(id, dto, CurrentUserId());
             return item == null ? NotFound(new { message = "Repair khong ton tai." }) : Ok(item);
         }

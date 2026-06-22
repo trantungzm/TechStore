@@ -254,6 +254,7 @@ namespace BaseCore.APIService.Controllers
             var order = session.OrderId.HasValue
                 ? await _db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == session.OrderId.Value)
                 : null;
+            var qr = GetQrPaymentInfo(session);
 
             return Ok(new
             {
@@ -263,6 +264,10 @@ namespace BaseCore.APIService.Controllers
                 status,
                 orderStatus = order?.Status,
                 paymentStatus = order?.PaymentStatus,
+                bankName = qr.BankName,
+                accountNumber = qr.AccountNumber,
+                accountHolder = qr.AccountHolder,
+                qrUrl = qr.QrUrl,
                 expiresAt = AsUtc(session.ExpiresAt),
                 paidAt = AsUtc(session.PaidAt)
             });
@@ -289,15 +294,83 @@ namespace BaseCore.APIService.Controllers
             });
         }
 
-        private static object ToDto(PaymentSession s) => new
+        private static object ToDto(PaymentSession s)
         {
-            sessionId = s.SessionId,
-            token = s.Token,
-            orderId = s.OrderId,
-            amount = s.Amount,
-            status = s.Status,
-            expiresAt = AsUtc(s.ExpiresAt)
-        };
+            var qr = GetQrPaymentInfo(s);
+            return new
+            {
+                sessionId = s.SessionId,
+                token = s.Token,
+                orderId = s.OrderId,
+                amount = s.Amount,
+                status = s.Status,
+                bankName = qr.BankName,
+                accountNumber = qr.AccountNumber,
+                accountHolder = qr.AccountHolder,
+                qrUrl = qr.QrUrl,
+                expiresAt = AsUtc(s.ExpiresAt)
+            };
+        }
+
+        private static QrPaymentInfo GetQrPaymentInfo(PaymentSession session)
+        {
+            // Keep old pending sessions usable; new sessions carry the bank selected at checkout.
+            var bankName = "Vietcombank";
+            var accountNumber = "1012345678";
+            var accountHolder = "CNTHHT Store";
+
+            if (!string.IsNullOrWhiteSpace(session.OrderPayloadJson))
+            {
+                try
+                {
+                    var payload = JsonSerializer.Deserialize<CreateOrderDto>(session.OrderPayloadJson, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    if (!string.IsNullOrWhiteSpace(payload?.PaymentBankName)) bankName = payload.PaymentBankName.Trim();
+                    if (!string.IsNullOrWhiteSpace(payload?.PaymentBankAccountNumber)) accountNumber = payload.PaymentBankAccountNumber.Trim();
+                    if (!string.IsNullOrWhiteSpace(payload?.PaymentBankAccountHolder)) accountHolder = payload.PaymentBankAccountHolder.Trim();
+                }
+                catch (JsonException)
+                {
+                    // Invalid legacy checkout metadata should not hide the payment QR.
+                }
+            }
+
+            var bankCode = NormalizeBankCode(bankName);
+            var cleanAccount = new string(accountNumber.Where(char.IsLetterOrDigit).ToArray());
+            var query = new List<string>
+            {
+                $"amount={Uri.EscapeDataString(Math.Round(session.Amount).ToString("0", System.Globalization.CultureInfo.InvariantCulture))}",
+                $"addInfo={Uri.EscapeDataString(session.SessionId)}"
+            };
+            if (!string.IsNullOrWhiteSpace(accountHolder))
+                query.Add($"accountName={Uri.EscapeDataString(accountHolder)}");
+
+            var qrUrl = $"https://img.vietqr.io/image/{Uri.EscapeDataString(bankCode)}-{Uri.EscapeDataString(cleanAccount)}-compact.png?{string.Join("&", query)}";
+            return new QrPaymentInfo(bankName, accountNumber, accountHolder, qrUrl);
+        }
+
+        private static string NormalizeBankCode(string bankName)
+        {
+            var key = new string(bankName.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+            return key switch
+            {
+                "vietcombank" or "vcb" => "VCB",
+                "techcombank" or "tcb" => "TCB",
+                "mbbank" or "mb" => "MB",
+                "bidv" => "BIDV",
+                "vietinbank" or "vietin" => "ICB",
+                "agribank" => "VBA",
+                "acb" => "ACB",
+                "sacombank" => "STB",
+                "tpbank" => "TPB",
+                "vpbank" => "VPB",
+                _ => bankName.Trim().ToUpperInvariant()
+            };
+        }
+
+        private sealed record QrPaymentInfo(string BankName, string AccountNumber, string AccountHolder, string QrUrl);
 
         private static void NormalizeCheckoutPayload(CreateOrderDto payload)
         {

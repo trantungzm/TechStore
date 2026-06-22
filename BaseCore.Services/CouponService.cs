@@ -4,6 +4,8 @@ using BaseCore.Repository.EFCore;
 
 namespace BaseCore.Services
 {
+    // Service nghiệp vụ coupon: đứng giữa controller và repository để xử lý
+    // rule khuyến mãi, validate điều kiện áp dụng và ghi nhận coupon vào đơn hàng.
     public class CouponService : ICouponService
     {
         private static readonly HashSet<string> CouponTypes = new(StringComparer.OrdinalIgnoreCase) { "Product", "Shipping" };
@@ -33,6 +35,8 @@ namespace BaseCore.Services
             _productRepository = productRepository;
         }
 
+        // Admin dùng hàm này để lấy danh sách coupon có kèm trạng thái "đã claim chưa"
+        // cho user hiện tại, giúp FE render đúng nút nhận/áp dụng.
         public async Task<(List<CouponDto> Items, int TotalCount)> GetCouponsAsync(CouponSearchDto search, Guid? userId = null)
         {
             var result = await _couponRepository.SearchAsync(search);
@@ -48,6 +52,8 @@ namespace BaseCore.Services
             return ToDto(coupon, claimed.Contains(coupon.Id));
         }
 
+        // Tạo coupon mới: validate rule kinh doanh, chuẩn hóa dữ liệu rồi lưu coupon
+        // cùng phạm vi áp dụng (scope) để các bước validate sau này dùng lại.
         public async Task<CouponDto> CreateAsync(CouponCreateDto dto, Guid? userId)
         {
             ValidateCoupon(dto);
@@ -89,6 +95,8 @@ namespace BaseCore.Services
             return ToDto((await _couponRepository.GetDetailAsync(coupon.Id))!);
         }
 
+        // Cập nhật coupon theo cùng cấu trúc payload từ màn admin; scope cũ sẽ được thay
+        // toàn bộ để backend luôn bám đúng cấu hình mới nhất trên giao diện.
         public async Task<CouponDto?> UpdateAsync(int id, CouponUpdateDto dto)
         {
             ValidateCoupon(dto);
@@ -170,6 +178,8 @@ namespace BaseCore.Services
             return (result.Items.Select(ToUserCouponDto).ToList(), result.TotalCount);
         }
 
+        // Người dùng "nhận" coupon công khai vào ví. Tại đây service kiểm tra quota toàn cục,
+        // quota theo user rồi mới tạo UserCoupon và tăng bộ đếm đã claim.
         public async Task<UserCouponDto> ClaimAsync(int couponId, Guid userId)
         {
             var coupon = await _couponRepository.GetDetailAsync(couponId)
@@ -195,6 +205,9 @@ namespace BaseCore.Services
             return ToUserCouponDto((await _userCouponRepository.GetDetailAsync(userCoupon.Id))!);
         }
 
+        // Đây là bước checkout quan trọng nhất của luồng coupon:
+        // dựng giỏ hàng từ product/variant thật, tính subtotal/shipping rồi validate
+        // lần lượt coupon sản phẩm và coupon vận chuyển trước khi tạo đơn.
         public async Task<ValidateCouponsResultDto> ValidateAsync(Guid? userId, ValidateCouponsDto dto, bool requireUserCoupon)
         {
             if (dto.CartItems == null || dto.CartItems.Count == 0) throw new InvalidOperationException("Giỏ hàng không có sản phẩm.");
@@ -211,7 +224,7 @@ namespace BaseCore.Services
                     ?? throw new InvalidOperationException("Sản phẩm không tồn tại.");
                 var variant = item.VariantId.HasValue ? product.Variants.FirstOrDefault(v => v.Id == item.VariantId.Value && v.ProductId == product.Id) : null;
                 if (item.VariantId.HasValue && variant == null) throw new InvalidOperationException("Phiên bản sản phẩm không tồn tại.");
-                var unitPrice = variant?.Price ?? product.Price;
+                var unitPrice = variant?.Price ?? product.BasePrice ?? product.MinPrice ?? 0;
                 items.Add(new CartItem(product, variant, item.Quantity, unitPrice));
             }
 
@@ -251,6 +264,9 @@ namespace BaseCore.Services
             return result;
         }
 
+        // Sau khi order được tạo thành công, service "commit" coupon vào đơn:
+        // đánh dấu user coupon đã dùng, tăng used quantity và tạo snapshot OrderCoupon
+        // để lịch sử đơn không bị ảnh hưởng nếu coupon gốc thay đổi sau này.
         public async Task<List<OrderCouponDto>> CommitOrderCouponsAsync(int orderId, ValidateCouponsResultDto validation)
         {
             var created = new List<OrderCouponDto>();
@@ -298,6 +314,8 @@ namespace BaseCore.Services
             return items.Select(ToOrderCouponDto).ToList();
         }
 
+        // Vòng quay voucher ngày: kiểm tra user đã quay hôm nay chưa, chọn thưởng theo
+        // trọng số và nếu trúng coupon thì tái sử dụng luôn flow ClaimAsync ở trên.
         public async Task<VoucherSpinResultDto> SpinAsync(Guid userId)
         {
             var now = DateTime.UtcNow;
@@ -358,6 +376,7 @@ namespace BaseCore.Services
             return new VoucherSpinResultDto { ResultType = "NoReward", Message = "Chúc bạn may mắn lần sau.", NextSpinAt = today.AddDays(1) };
         }
 
+        // Dashboard/admin dùng hàm này để lấy số liệu tổng quan coupon từ dữ liệu đã phát sinh.
         public async Task<CouponStatsDto> GetStatsAsync()
         {
             var all = (await _couponRepository.GetAllAsync()).ToList();
@@ -410,6 +429,9 @@ namespace BaseCore.Services
             return result;
         }
 
+        // Validate cho từng coupon cụ thể. Hàm này gom toàn bộ rule áp dụng:
+        // loại coupon, thời gian hiệu lực, min order, payment method, daily limit
+        // và phạm vi sản phẩm đủ điều kiện để trả về kết quả dùng được cho checkout.
         private async Task<ApplyCouponResultDto?> ValidateOneAsync(Guid? userId, int? userCouponId, int? couponId, string expectedType, bool requireUserCoupon, List<CartItem> items, decimal subtotal, string shippingMethod, decimal shippingFee, string paymentMethod)
         {
             if (!userCouponId.HasValue && !couponId.HasValue) return null;
@@ -626,6 +648,8 @@ namespace BaseCore.Services
             return result.Items.Where(x => x.Status != "Removed").Select(x => x.CouponId).ToHashSet();
         }
 
+        // Chuẩn hóa scope từ form admin sang entity. Nếu admin không chọn gì thì mặc định
+        // coupon áp dụng cho toàn bộ catalog ("All").
         private static IEnumerable<CouponScope> BuildScopes(int couponId, IEnumerable<CouponScopeDto> scopes, DateTime now)
         {
             var normalized = scopes.Where(s => !string.IsNullOrWhiteSpace(s.ScopeType)).Select(s => new CouponScope
@@ -640,6 +664,8 @@ namespace BaseCore.Services
             return normalized.Count == 0 ? new[] { new CouponScope { CouponId = couponId, ScopeType = "All", CreatedAt = now } } : normalized;
         }
 
+        // Map entity sang DTO hiển thị cho FE, đồng thời tính trạng thái runtime
+        // như Active/Expired/OutOfStock và các cờ CanClaim/CanUse.
         private static CouponDto ToDto(Coupon coupon, bool isClaimed = false)
         {
             var now = DateTime.UtcNow;
@@ -731,6 +757,8 @@ namespace BaseCore.Services
             };
         }
 
+        // Trạng thái coupon không lưu cứng hoàn toàn trong DB mà được suy ra từ
+        // cờ active, thời gian hiệu lực và quota còn lại.
         private static string GetStatus(Coupon coupon, DateTime now)
         {
             if (!coupon.IsActive) return "Disabled";

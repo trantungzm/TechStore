@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getCartItemKey, useCart } from '../../contexts/CartContext';
+import { getCartItemKey, getItemKey, useCart } from '../../contexts/CartContext';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 import { orderApi, couponApi, settingsApi, paymentApi } from '../../services/api';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import PageHero from '../../components/store/PageHero';
-import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, parseServerDateTime, resolveProductImage, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
 import {
     calculateProductCouponDiscount,
     calculateShippingCouponDiscount,
@@ -47,13 +47,6 @@ const parseDateInput = (value) => {
     if (!match) return null;
     const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
     return Number.isNaN(date.getTime()) ? null : date;
-};
-
-const parseServerDateTime = (value) => {
-    if (!value) return NaN;
-    const text = String(value);
-    const normalized = /(?:z|[+-]\d{2}:\d{2})$/i.test(text) ? text : `${text}Z`;
-    return new Date(normalized).getTime();
 };
 
 const getSlotEndAt = (dateValue, slot) => {
@@ -108,7 +101,6 @@ const toApiPaymentMethod = (method) => ({
 
 const getCreatedOrder = (payload) => payload?.order || payload || {};
 const getCreatedOrderItems = (payload, fallback) => payload?.items || payload?.details || fallback;
-const getItemKey = (item) => item.cartItemKey || getCartItemKey(item);
 
 const normalizeBankText = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
 const BANK_CODE_ALIASES = {
@@ -142,6 +134,13 @@ const buildVietQrUrl = ({ bankName, accountNumber, amount, addInfo, accountName 
     if (addInfo) params.set('addInfo', addInfo);
     if (accountName) params.set('accountName', accountName);
     return `https://img.vietqr.io/image/${bankCode}-${account}-compact.png?${params.toString()}`;
+};
+
+// Logo ngân hàng (khác với mã QR): dùng API logo của VietQR theo mã ngân hàng.
+const buildBankLogoUrl = (bankName) => {
+    const code = getBankCode(bankName);
+    if (!code) return '';
+    return `https://api.vietqr.io/img/${encodeURIComponent(code)}.png`;
 };
 
 // 6 ngân hàng nhận chuyển khoản mặc định (dùng khi cửa hàng chưa cấu hình settings.bankAccounts).
@@ -200,6 +199,16 @@ const Checkout = () => {
             if (!map.has(Number(couponId))) map.set(Number(couponId), Number(userCouponId));
         });
         return map;
+    }, [myCoupons]);
+
+    // Tập id phiếu đã sử dụng (theo trạng thái user-coupon) -> không cho áp dụng lại.
+    const usedCouponIds = useMemo(() => {
+        const set = new Set();
+        (myCoupons || []).forEach((uc) => {
+            const isUsed = uc?.status === 'Used' || !!uc?.usedAt;
+            if (isUsed && uc?.couponId != null) set.add(Number(uc.couponId));
+        });
+        return set;
     }, [myCoupons]);
 
     const persistedCoupons = useMemo(() => {
@@ -476,15 +485,16 @@ const Checkout = () => {
         if (appliedProductCoupon || appliedShippingCoupon) return;
 
         const byUserCouponId = new Map((myCoupons || []).map((uc) => [Number(uc?.id), uc]));
+        const isUcUsed = (uc) => uc?.status === 'Used' || !!uc?.usedAt;
         if (persistedCoupons.productUserCouponId) {
             const uc = byUserCouponId.get(Number(persistedCoupons.productUserCouponId));
             const c = coupons.find((x) => Number(x.apiId) === Number(uc?.couponId));
-            if (c) setAppliedProductCoupon({ ...c, userCouponId: Number(uc.id) });
+            if (c && !isUcUsed(uc)) setAppliedProductCoupon({ ...c, userCouponId: Number(uc.id) });
         }
         if (persistedCoupons.shippingUserCouponId) {
             const uc = byUserCouponId.get(Number(persistedCoupons.shippingUserCouponId));
             const c = coupons.find((x) => Number(x.apiId) === Number(uc?.couponId));
-            if (c) setAppliedShippingCoupon({ ...c, userCouponId: Number(uc.id) });
+            if (c && !isUcUsed(uc)) setAppliedShippingCoupon({ ...c, userCouponId: Number(uc.id) });
         }
     }, [coupons, myCoupons, selectedCartItems.length]);
 
@@ -590,6 +600,10 @@ const Checkout = () => {
     };
 
     const applyCoupon = (coupon) => {
+        if (usedCouponIds.has(Number(coupon.apiId))) {
+            setCouponMessage(`Phiếu ${coupon.code} đã được sử dụng, không thể áp dụng lại.`);
+            return;
+        }
         const v = validateSelectedCouponForCart(coupon.code, selectedCartItems, productSubtotal, shippingFee, coupons, claimedIds);
         if (!v.valid) {
             const missing = v.missingAmount > 0 ? ` Còn thiếu ${formatCurrency(v.missingAmount)}.` : '';
@@ -694,6 +708,9 @@ const Checkout = () => {
             pickupSlotStartAt: deliveryMethod === 'pickup' ? pickupSlot.startAtIso : null,
             pickupSlotEndAt: deliveryMethod === 'pickup' ? pickupSlot.endAtIso : null,
             paymentMethod: toApiPaymentMethod(paymentMethod),
+            paymentBankName: paymentMethod === 'bank' ? selectedOnlineBank?.bankName || null : null,
+            paymentBankAccountNumber: paymentMethod === 'bank' ? selectedOnlineBank?.accountNumber || null : null,
+            paymentBankAccountHolder: paymentMethod === 'bank' ? selectedOnlineBank?.accountHolder || null : null,
             notes: customerInfo.notes.trim() || null,
             invoiceRequired: false,
             invoiceCompanyName: null,
@@ -825,26 +842,36 @@ const Checkout = () => {
     const renderCouponCard = ({ coupon, valid, message, missingAmount, productDiscount: ppd, shippingDiscount: psd }) => {
         const isApplied = coupon.couponType === 'product' ? appliedProductCoupon?.id === coupon.id : appliedShippingCoupon?.id === coupon.id;
         const discountPreview = coupon.couponType === 'product' ? ppd : psd;
+        const isUsed = usedCouponIds.has(Number(coupon.apiId));
+        const canApply = valid && !isUsed;
         return (
             <div
                 key={coupon.id}
                 className={cn(
                     "flex flex-col gap-2 rounded-xl border p-4 transition-colors md:flex-row md:items-center",
                     isApplied ? "border-[var(--color-accent)]/60 bg-[var(--color-accent)]/5" : "border-[var(--color-border)] bg-[var(--color-surface-2)]",
-                    !valid && "opacity-60"
+                    (!valid || isUsed) && "opacity-60"
                 )}
             >
                 <div className="min-w-0 flex-1">
                     <span className="ts-mono rounded-sm bg-[var(--color-accent)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent)]">{coupon.code}</span>
-                    <span className="ml-2 inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] text-[var(--color-fg-dim)]">Đã nhận</span>
+                    {isUsed ? (
+                        <span className="ml-2 inline-flex rounded-full border border-red-500/40 bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-600">Đã sử dụng</span>
+                    ) : (
+                        <span className="ml-2 inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] text-[var(--color-fg-dim)]">Đã nhận</span>
+                    )}
                     <p className="mt-2 text-sm font-medium text-[var(--color-fg)]">{getCouponDescription(coupon)}</p>
-                    {discountPreview > 0 && valid && <p className="mt-1 text-[11px] text-emerald-600">Dự kiến giảm {formatCurrency(discountPreview)}</p>}
-                    {!valid && <p className="mt-1 text-[11px] text-red-600">{missingAmount > 0 ? `Còn thiếu ${formatCurrency(missingAmount)}` : message}</p>}
+                    {discountPreview > 0 && canApply && <p className="mt-1 text-[11px] text-emerald-600">Dự kiến giảm {formatCurrency(discountPreview)}</p>}
+                    {isUsed
+                        ? <p className="mt-1 text-[11px] text-red-600">Phiếu này đã được sử dụng.</p>
+                        : !valid && <p className="mt-1 text-[11px] text-red-600">{missingAmount > 0 ? `Còn thiếu ${formatCurrency(missingAmount)}` : message}</p>}
                 </div>
                 {isApplied ? (
                     <button onClick={() => removeCoupon(coupon.couponType)} className="ts-btn ts-btn-outline px-3 py-1.5 text-xs">Bỏ</button>
                 ) : (
-                    <button onClick={() => applyCoupon(coupon)} disabled={!valid} className="ts-btn ts-btn-primary px-3 py-1.5 text-xs">Áp dụng</button>
+                    <button onClick={() => applyCoupon(coupon)} disabled={!canApply} className="ts-btn ts-btn-primary px-3 py-1.5 text-xs">
+                        {isUsed ? 'Đã dùng' : 'Áp dụng'}
+                    </button>
                 )}
             </div>
         );
@@ -1362,12 +1389,20 @@ const Checkout = () => {
                                                                 type="button"
                                                                 onClick={() => setSelectedOnlineBankId(bank.id)}
                                                                 className={cn(
-                                                                    "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
+                                                                    "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
                                                                     selectedOnlineBank?.id === bank.id
                                                                         ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
                                                                         : "border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)]"
                                                                 )}
                                                             >
+                                                                <img
+                                                                    src={buildBankLogoUrl(bank.bankName)}
+                                                                    alt=""
+                                                                    aria-hidden="true"
+                                                                    className="h-4 w-auto max-w-[56px] object-contain"
+                                                                    loading="lazy"
+                                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                                />
                                                                 {bank.bankName}
                                                             </button>
                                                         ))}

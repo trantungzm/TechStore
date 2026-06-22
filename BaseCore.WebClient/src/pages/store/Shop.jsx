@@ -6,7 +6,7 @@ import ProductCard from '../../components/store/ProductCard';
 import PageHero from '../../components/store/PageHero';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
-import { resolveProductImage, setPageMeta, t } from '../../utils/store';
+import { normalizeSearchText, resolveProductImage, safeParseJson, setPageMeta, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const RECENTLY_VIEWED_KEY = 'electro_recently_viewed_products';
@@ -62,21 +62,10 @@ const categoryDescriptionMap = {
     headphone: 'Tai nghe theo thương hiệu, nhu cầu sử dụng và công nghệ âm thanh.',
 };
 
-const safeParseJson = (value, fallback) => {
-    try { return JSON.parse(value); } catch { return fallback; }
-};
-
 const normalizeRecentProduct = (product) => {
     if (!product) return null;
     return { id: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl, categoryId: product.categoryId };
 };
-
-const normalizeSearchText = (value = '') => String(value)
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase();
 
 const getProductSearchText = (product) => {
     const variantText = Array.isArray(product?.variants)

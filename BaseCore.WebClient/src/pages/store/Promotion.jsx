@@ -3,12 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import CouponCard from '../../components/store/CouponCard';
 import VoucherSpinWheel from '../../components/store/VoucherSpinWheel';
 import PageHero from '../../components/store/PageHero';
-import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { canClaimCoupon, getCouponClaimStatus, isCouponClaimed } from '../../utils/couponUtils';
 import { couponApi } from '../../services/api';
-import { formatCurrency, isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE } from '../../utils/store';
+import { formatCurrency, setPageMeta } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const filters = [
@@ -21,9 +20,7 @@ const filters = [
 ];
 
 const Promotion = () => {
-    const { user } = useAuth();
     const { items, totalAmount } = useCart();
-    const isViewOnly = isStoreViewOnlyUser(user);
     const [activeFilter, setActiveFilter] = useState('all');
     const [claimedIds, setClaimedIds] = useState([]);
     const [message, setMessage] = useState('');
@@ -32,18 +29,33 @@ const Promotion = () => {
     const [conditionCoupon, setConditionCoupon] = useState(null);
     const { coupons, loading: couponsLoading } = usePublicCoupons();
 
-    // SỬA LỖI: Thêm [coupons] vào dependency array để cập nhật khi dữ liệu API về
-    const claimableCoupons = useMemo(() => coupons.filter((coupon) => coupon.code), [coupons]);
-    const spinRewards = useMemo(() => coupons.filter((coupon) => coupon.spinWeight > 0), [coupons]);
-    
-    const context = useMemo(() => ({ 
-        currentHour: new Date().getHours(), 
-        subtotal: totalAmount, 
-        cartItems: items 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6;
+
+    const isProductCoupon = (coupon) => Array.isArray(coupon?.productIds) && coupon.productIds.length > 0;
+    const isSpinCoupon = (coupon) => Boolean(coupon?.isSpinReward || coupon?.spinEnabled || Number(coupon?.spinWeight || 0) > 0);
+    const promotionCoupons = useMemo(() => coupons.filter((coupon) => coupon.code && !isProductCoupon(coupon)), [coupons]);
+
+    const claimableCoupons = useMemo(
+        () => promotionCoupons.filter((coupon) => !isSpinCoupon(coupon)),
+        [promotionCoupons]
+    );
+    const spinRewards = useMemo(
+        () => promotionCoupons.filter((coupon) => isSpinCoupon(coupon)),
+        [promotionCoupons]
+    );
+
+    const context = useMemo(() => ({
+        currentHour: new Date().getHours(),
+        subtotal: totalAmount,
+        cartItems: items
     }), [items, totalAmount]);
 
-    const claimedCoupons = useMemo(() => claimableCoupons.filter((c) => claimedIds.includes(c.id)), [claimableCoupons, claimedIds]);
-    
+    const claimedCoupons = useMemo(
+        () => promotionCoupons.filter((coupon) => isCouponClaimed(coupon.id, claimedIds)),
+        [promotionCoupons, claimedIds]
+    );
+
     const availableCount = useMemo(
         () => claimableCoupons.filter((c) => getCouponClaimStatus(c, context, claimedIds).status === 'available').length,
         [claimableCoupons, context, claimedIds]
@@ -54,7 +66,7 @@ const Promotion = () => {
             title: 'Phiếu giảm giá | TechStore',
             description: 'Nhận phiếu mua hàng và phiếu vận chuyển để tiết kiệm hơn khi thanh toán.',
         });
-        
+
         const loadClaimedCoupons = async () => {
             try {
                 const myCoupons = await couponApi.getMy({ page: 1, pageSize: 100 });
@@ -74,12 +86,8 @@ const Promotion = () => {
     };
 
     const handleClaim = async (coupon) => {
-        if (isViewOnly) {
-            showMessage(STORE_VIEW_ONLY_MESSAGE);
-            return;
-        }
         if (claimingIds.includes(coupon.id)) return;
-        
+
         // Tối ưu: Lấy giờ thực tế ngay tại thời điểm click chuột thay vì dùng context cũ
         const currentContext = { ...context, currentHour: new Date().getHours() };
 
@@ -124,10 +132,6 @@ const Promotion = () => {
     };
 
     const handleSpinReward = async (reward) => {
-        if (isViewOnly) {
-            showMessage(STORE_VIEW_ONLY_MESSAGE);
-            return;
-        }
         try {
             const myCoupons = await couponApi.getMy({ page: 1, pageSize: 100 });
             const ids = myCoupons.data?.items?.map((c) => String(c.couponId)) || [];
@@ -167,11 +171,29 @@ const Promotion = () => {
         return true;
     });
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeFilter]);
+
+    const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage);
+    const currentCoupons = filteredCoupons.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const paginationGroup = useMemo(() => {
+        if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        if (currentPage <= 3) return [1, 2, 3, 4, '...', totalPages];
+        if (currentPage >= totalPages - 2) return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+    }, [currentPage, totalPages]);
+
     return (
         <>
-            <PageHero title="Phiếu giảm giá" current="Khuyến mãi" kicker="Ưu đãi" />
+            <PageHero title="Phiếu giảm giá" current="Promotion" kicker="Vouchers" />
 
             <section className="ts-container py-12">
+                <div className="mb-6 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 text-sm text-[var(--color-fg-muted)]">
+                    Mã gắn riêng cho sản phẩm chỉ hiển thị ở đúng trang chi tiết sản phẩm. Trang này chỉ hiển thị phiếu khuyến mãi chung và phiếu quay thưởng.
+                </div>
+
                 {/* Dashboard thống kê số lượng ví */}
                 <div className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-border)] md:grid-cols-3">
                     <div className="flex items-center gap-3 bg-[var(--color-surface)] p-5">
@@ -198,7 +220,7 @@ const Promotion = () => {
                         </div>
                         <div>
                             <p className="ts-eyebrow text-[10px]">Tổng phiếu</p>
-                            <p className="ts-mono mt-1 text-lg font-semibold">{claimableCoupons.length}</p>
+                            <p className="ts-mono mt-1 text-lg font-semibold">{promotionCoupons.length}</p>
                         </div>
                     </div>
                 </div>
@@ -255,11 +277,11 @@ const Promotion = () => {
                             Đang tải phiếu từ SQL Server...
                         </p>
                     ) : filteredCoupons.length === 0 ? (
-                        <p className="col-span-full rounded-md border border-dashed border-[var(--color-border)] p-12 text-center text-sm text-[var(--color-fg-dim)]">
+                        <p className="col-span-full ts-panel border-dashed p-12 text-center text-sm text-[var(--color-fg-dim)]">
                             Không có phiếu phù hợp.
                         </p>
                     ) : (
-                        filteredCoupons.map((coupon) => {
+                        currentCoupons.map((coupon) => {
                             const status = getCouponStatus(coupon);
                             return (
                                 <CouponCard
@@ -278,6 +300,51 @@ const Promotion = () => {
                         })
                     )}
                 </motion.div>
+
+                {totalPages > 1 && (
+                    <div className="mt-8 flex justify-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                            disabled={currentPage === 1}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:opacity-50"
+                        >
+                            <i className="fas fa-chevron-left text-xs"></i>
+                        </button>
+                        {paginationGroup.map((page, index) => {
+                            if (page === '...') {
+                                return (
+                                    <span key={`ellipsis-${index}`} className="flex h-10 w-4 items-end justify-center pb-2 text-[var(--color-fg-muted)]">
+                                        ...
+                                    </span>
+                                );
+                            }
+                            return (
+                                <button
+                                    key={page}
+                                    type="button"
+                                    onClick={() => { setCurrentPage(page); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                                    className={cn(
+                                        "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors text-sm font-medium",
+                                        currentPage === page
+                                            ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-md"
+                                            : "border-[var(--color-border)] bg-white text-[var(--color-fg)] hover:border-[var(--color-primary)]"
+                                    )}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        })}
+                        <button
+                            type="button"
+                            onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                            disabled={currentPage === totalPages}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-fg-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:opacity-50"
+                        >
+                            <i className="fas fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                )}
             </section>
 
             <AnimatePresence>
@@ -287,7 +354,7 @@ const Promotion = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-                        onClick={(e) => {
+                        onMouseDown={(e) => {
                             if (e.target === e.currentTarget) closeCondition();
                         }}
                     >
@@ -297,7 +364,6 @@ const Promotion = () => {
                             exit={{ opacity: 0, y: 10, scale: 0.98 }}
                             transition={{ duration: 0.2 }}
                             className="w-full max-w-lg rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)]"
-                            onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] p-5">
                                 <div className="min-w-0">
@@ -343,13 +409,13 @@ const Promotion = () => {
                                     {Number(conditionCoupon.minOrder || 0) > 0 && (
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-[var(--color-fg-dim)]">Đơn tối thiểu</span>
-                                            <span className="ts-mono font-medium">{formatCurrency(conditionCoupon.minOrder || 0)}</span>
+                                            <span className="font-medium">{formatCurrency(conditionCoupon.minOrder || 0)}</span>
                                         </div>
                                     )}
                                     {conditionCoupon.maxDiscount != null && (
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-[var(--color-fg-dim)]">Giảm tối đa</span>
-                                            <span className="ts-mono font-medium">{formatCurrency(conditionCoupon.maxDiscount || 0)}</span>
+                                            <span className="font-medium">{formatCurrency(conditionCoupon.maxDiscount || 0)}</span>
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between gap-3">

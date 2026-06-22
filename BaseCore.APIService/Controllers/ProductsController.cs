@@ -8,6 +8,7 @@ using System.Text.Json;
 
 namespace BaseCore.APIService.Controllers
 {
+    // Controller sản phẩm phục vụ cả storefront và các màn admin như Products/Dashboard/Inventory.
     /// <summary>
     /// Product API Controller
     /// Teaching: RESTful API, CRUD Operations, EF Core (Bài 10, 11)
@@ -46,6 +47,7 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
+            // Danh sách sản phẩm dùng lại ở nhiều nơi: shop storefront, admin products, dropdown nhập kho, dashboard.
             var effectivePage = Math.Max(1, page);
             var effectivePageSize = Math.Clamp(pageSize, 1, 100);
             var canIncludeInactive = includeInactive && User.IsInRole("Admin");
@@ -81,6 +83,24 @@ namespace BaseCore.APIService.Controllers
                 page = effectivePage,
                 pageSize = effectivePageSize,
                 totalPages = (int)Math.Ceiling((double)totalCount / effectivePageSize)
+            });
+        }
+
+        [HttpGet("stats")]
+        [Authorize(Roles = "Admin,Warehouse,Technical")]
+        public async Task<IActionResult> GetStats([FromQuery] ProductSearchDto search)
+        {
+            // Dashboard và AdminProducts dùng để lấy số liệu tồn kho tổng quan.
+            var canIncludeInactive = search.IncludeInactive && User.IsInRole("Admin");
+            search.IncludeInactive = canIncludeInactive;
+
+            var stats = await _productService.GetInventoryStatsAsync(search);
+            return Ok(new
+            {
+                totalCount = stats.TotalCount,
+                available = stats.AvailableCount,
+                low = stats.LowCount,
+                outOfStock = stats.OutCount
             });
         }
 
@@ -121,6 +141,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
+            // Tạo sản phẩm từ form quản trị; xử lý sâu nằm ở ProductService.
             var product = await _productService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = product.Id }, StoreDtoMapper.ToDetailDto(product));
         }
@@ -132,6 +153,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
         {
+            // Cập nhật master data sản phẩm, biến thể, ảnh và giá.
             var product = await _productService.UpdateAsync(id, dto);
             if (product == null) return NotFound(new { message = "Product not found" });
             return Ok(StoreDtoMapper.ToDetailDto(product));
@@ -166,6 +188,7 @@ namespace BaseCore.APIService.Controllers
 
         private async Task<Dictionary<int, (double RatingAverage, int RatingCount)>> GetProductRatingMapAsync(IEnumerable<int> productIds)
         {
+            // Dashboard/store detail tận dụng ticket review để tính rating mà không cần bảng rating riêng.
             var ids = productIds.Distinct().ToList();
             if (ids.Count == 0) return new Dictionary<int, (double, int)>();
 

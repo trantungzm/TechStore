@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { ADMIN_PANEL_ROLES } from '../constants/roles';
 import { authApi } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -95,6 +96,9 @@ export const AuthProvider = ({ children }) => {
         return roles.includes(user.role);
     };
 
+    // Roles allowed into the admin panel (must match the /admin ProtectedRoute guards).
+    const canAccessAdminPanel = () => hasRole(ADMIN_PANEL_ROLES);
+
     const value = {
         user,
         login,
@@ -102,6 +106,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAdmin,
         hasRole,
+        canAccessAdminPanel,
         isAuthenticated: !!user,
         loading,
     };

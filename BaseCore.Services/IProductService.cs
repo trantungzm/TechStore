@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 namespace BaseCore.Services
 {
+    public record ProductInventoryStats(int TotalCount, int AvailableCount, int LowCount, int OutCount);
+
     public interface IProductService
     {
         Task<List<Product>> GetAllProductsAsync();
@@ -14,6 +16,7 @@ namespace BaseCore.Services
         Task<bool> DeleteAsync(int id);
         Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize);
         Task<(List<Product> Products, int TotalCount)> SearchAsync(ProductSearchDto search);
+        Task<ProductInventoryStats> GetInventoryStatsAsync(ProductSearchDto search);
         Task<List<string>> GetBrandsAsync();
     }
 }

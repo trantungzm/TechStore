@@ -4,14 +4,8 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useCompare } from '../../contexts/CompareContext';
 import { useWishlist } from '../../contexts/WishlistContext';
-import { formatCurrency, getProductCategoryName, resolveProductImage, t } from '../../utils/store';
+import { formatCurrency, getProductCategoryName, getProductOldPrice, resolveProductImage, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
-
-const getProductOldPrice = (product) => {
-    const oldPrice = Number(product?.originalPrice ?? product?.OriginalPrice ?? product?.oldPrice ?? product?.OldPrice ?? 0);
-    const price = Number(product?.price ?? product?.Price ?? 0);
-    return oldPrice > price ? oldPrice : 0;
-};
 
 const ProductMiniCard = ({ product, onAddToCart }) => {
     const { addItem, items = [] } = useCart();

@@ -3,18 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { paymentApi } from '../../services/api';
 import { getCartItemKey, useCart } from '../../contexts/CartContext';
 import PageHero from '../../components/store/PageHero';
-import { formatCurrency, t } from '../../utils/store';
+import { formatCurrency, parseServerDateTime, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const CHECKOUT_SELECTION_KEY = 'store_checkout_selected_items';
 const CHECKOUT_COUPON_KEY = 'store_checkout_applied_coupons';
-
-const parseServerDateTime = (value) => {
-    if (!value) return NaN;
-    const text = String(value);
-    const normalized = /(?:z|[+-]\d{2}:\d{2})$/i.test(text) ? text : `${text}Z`;
-    return new Date(normalized).getTime();
-};
 
 const PaymentWaiting = () => {
     const { sessionId } = useParams();
@@ -24,6 +17,7 @@ const PaymentWaiting = () => {
     const [paymentExpired, setPaymentExpired] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(null);
     const [secondsLeft, setSecondsLeft] = useState(null);
+    const [qrLoadFailed, setQrLoadFailed] = useState(false);
     const { removeItem, clearCart } = useCart();
     const cartClearedRef = useRef(false);
 
@@ -211,10 +205,24 @@ const PaymentWaiting = () => {
                     </p>
 
                     <div className="mx-auto mt-6 w-56 rounded-xl border border-[var(--color-border)] bg-white p-3">
-                        <div className="aspect-square w-full bg-gray-100 rounded flex items-center justify-center">
-                            <i className="fas fa-qrcode text-4xl text-gray-300"></i>
-                        </div>
-                        <p className="mt-2 text-xs text-[var(--color-fg-dim)]">Mã QR sẽ hiển thị ở đây (từ session data)</p>
+                        {sessionData.qrUrl && !qrLoadFailed ? (
+                            <img
+                                src={sessionData.qrUrl}
+                                alt={`QR thanh toán ${sessionData.bankName || ''}`.trim()}
+                                className="aspect-square w-full object-contain"
+                                onError={() => setQrLoadFailed(true)}
+                            />
+                        ) : (
+                            <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded bg-gray-100 px-3 text-gray-400">
+                                <i className="fas fa-qrcode text-4xl"></i>
+                                <span className="text-xs">Không tải được mã QR</span>
+                            </div>
+                        )}
+                        {sessionData.bankName && (
+                            <p className="mt-2 text-xs text-[var(--color-fg-dim)]">
+                                {sessionData.bankName} · <span className="ts-mono">{sessionData.accountNumber}</span>
+                            </p>
+                        )}
                     </div>
 
                     <div className="mt-4 flex items-center justify-center gap-2">

@@ -25,6 +25,14 @@ export default defineConfig({
                         res.end(JSON.stringify({ message: 'Backend not available. Make sure backend is running on port 5000' }));
                     });
                 }
+            },
+            // Uploaded files (product images, attachments) are served as static
+            // files directly by the API service on port 5001. The Ocelot gateway
+            // on 5000 only routes /api/*, so /uploads must go straight to 5001.
+            '/uploads': {
+                target: 'http://localhost:5001',
+                changeOrigin: true,
+                secure: false,
             }
         }
     }

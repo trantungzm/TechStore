@@ -9,7 +9,10 @@ const normalizeText = (value) => String(value || '')
 
 const getProductFromItem = (item) => item?.product || item || {};
 
-export const isCouponClaimed = (couponId, claimedIds = []) => claimedIds.includes(couponId);
+export const isCouponClaimed = (couponId, claimedIds = []) => {
+    const target = String(couponId ?? '');
+    return claimedIds.map((id) => String(id ?? '')).includes(target);
+};
 
 export const getCartSubtotal = (cartItems = []) => (
     cartItems.reduce((sum, item) => sum + Number(getProductFromItem(item).price || 0) * Number(item.quantity || 1), 0)
@@ -176,14 +179,8 @@ export const getAvailableCouponsForProduct = (product, couponList = [], context 
     couponList
         .filter((coupon) => coupon?.code && coupon?.isActive && !isCouponExpired(coupon))
         .filter((coupon) => {
-            if (coupon.appliesTo === 'shipping') return true;
-            if (coupon.appliesTo === 'all') return true;
             const scope = getScope(coupon);
-            if (scope.isAll) return true;
-            if (scope.productIds.length && matchProductId(product, scope.productIds)) return true;
-            if (scope.categoryIds.length && matchCategory(product, scope.categoryIds)) return true;
-            if (scope.brands.length && matchBrand(product, scope.brands)) return true;
-            return false;
+            return scope.productIds.length > 0 && matchProductId(product, scope.productIds);
         })
         .map((coupon) => ({
             coupon,
@@ -237,7 +234,7 @@ const couponAppliesToCart = (coupon, cartItems = []) => {
     if (scope.productIds.length && cartItems.some((item) => matchProductId(item, scope.productIds))) return true;
     if (scope.categoryIds.length && cartItems.some((item) => matchCategory(item, scope.categoryIds))) return true;
     if (scope.brands.length && cartItems.some((item) => matchBrand(item, scope.brands))) return true;
-    return true;
+    return false;
 };
 
 export const validateCouponForCart = (codeOrId, cartItems = [], subtotal = getCartSubtotal(cartItems), shippingFee = 0, couponList = [], claimedIds = []) => {

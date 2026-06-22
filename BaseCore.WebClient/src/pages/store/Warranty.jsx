@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHero from '../../components/store/PageHero';
-import { isStoreViewOnlyUser, setPageMeta, STORE_VIEW_ONLY_MESSAGE, toast } from '../../utils/store';
+import { setPageMeta, toast } from '../../utils/store';
 import { cn } from '../../utils/cn';
 import { repairApi, uploadApi, warrantyApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
+import { claimStatusLabel, repairStatusLabel, warrantyStatusLabel } from '../../utils/warrantyStatus';
 
 const policyGroups = [
     {
@@ -65,12 +66,7 @@ const monthsBetween = (from, to) => {
     return Math.floor(diffDays / 30);
 };
 
-const statusLabel = (status) => ({
-    NotActivated: 'Chưa kích hoạt',
-    Active: 'Đang bảo hành',
-    Expired: 'Hết hạn',
-    Cancelled: 'Đã hủy',
-}[status] || status || '—');
+const statusLabel = warrantyStatusLabel;
 
 const statusStyle = (status) => {
     const base = "rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider";
@@ -83,43 +79,13 @@ const statusStyle = (status) => {
 const CLAIM_TIMELINE = ['Pending', 'Confirmed', 'Received', 'Diagnosing', 'Repairing', 'ReadyToReturn', 'Delivered', 'Completed'];
 const REPAIR_TIMELINE = ['Pending', 'Intake', 'Diagnosing', 'WaitingCustomerApproval', 'WaitingParts', 'Repairing', 'Testing', 'Completed', 'Delivered'];
 
-// Nhãn tiếng Việt cho trạng thái yêu cầu bảo hành (claim) và phiếu sửa chữa (repair).
-const CLAIM_STATUS_LABELS = {
-    Pending: 'Chờ xử lý',
-    Confirmed: 'Đã xác nhận',
-    Approved: 'Đã duyệt',
-    Received: 'Đã tiếp nhận',
-    Diagnosing: 'Đang kiểm tra',
-    InProgress: 'Đang xử lý',
-    Repairing: 'Đang sửa chữa',
-    ReadyToReturn: 'Sẵn sàng trả máy',
-    Delivered: 'Đã trả máy',
-    Completed: 'Hoàn tất',
-    Rejected: 'Từ chối',
-    Cancelled: 'Đã hủy',
-};
-const REPAIR_STATUS_LABELS = {
-    Pending: 'Chờ xử lý',
-    Intake: 'Tiếp nhận',
-    Diagnosing: 'Đang chẩn đoán',
-    WaitingCustomerApproval: 'Chờ khách duyệt',
-    WaitingParts: 'Chờ linh kiện',
-    Repairing: 'Đang sửa chữa',
-    Testing: 'Kiểm thử',
-    Completed: 'Hoàn tất',
-    Delivered: 'Đã trả máy',
-    Cancelled: 'Đã hủy',
-};
-const claimStatusLabel = (s) => CLAIM_STATUS_LABELS[s] || s || '—';
-const repairStatusLabel = (s) => REPAIR_STATUS_LABELS[s] || s || '—';
-
 const timelineIndex = (status, steps) => {
     const s = String(status || '').trim();
     const idx = steps.findIndex((x) => x === s);
     return idx >= 0 ? idx : 0;
 };
 
-const Timeline = ({ steps = [], current = '', labels = {} }) => {
+const Timeline = ({ steps = [], current = '', getLabel = claimStatusLabel }) => {
     const currentIdx = timelineIndex(current, steps);
     return (
         <div className="mt-3 flex flex-wrap items-center gap-1">
@@ -134,7 +100,7 @@ const Timeline = ({ steps = [], current = '', labels = {} }) => {
                             )}>
                                 <i className={`fas ${idx < currentIdx ? 'fa-check' : 'fa-circle text-[6px]'}`}></i>
                             </div>
-                            <span className={cn("text-[11px]", done ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)]")}>{labels[step] || step}</span>
+                            <span className={cn("text-[11px]", done ? "text-[var(--color-fg)]" : "text-[var(--color-fg-dim)]")}>{getLabel(step)}</span>
                         </div>
                         {idx < steps.length - 1 && (
                             <div className={cn("h-px w-6", done && idx < currentIdx ? "bg-[var(--color-primary)]/60" : "bg-[var(--color-border)]")} />
@@ -147,8 +113,7 @@ const Timeline = ({ steps = [], current = '', labels = {} }) => {
 };
 
 const Warranty = () => {
-    const { isAuthenticated, loading: authLoading, user } = useAuth();
-    const isViewOnly = isStoreViewOnlyUser(user);
+    const { isAuthenticated, loading: authLoading } = useAuth();
     const settings = useStoreSettings();
     const hotline = settings.hotline || '';
     const hotlineTel = hotline.replace(/\s+/g, '');
@@ -291,7 +256,6 @@ const Warranty = () => {
 
     const handleActivate = async () => {
         if (!selectedWarranty) return;
-        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         setActivating(true);
         try {
             const res = await warrantyApi.activate(selectedWarranty.id);
@@ -327,7 +291,6 @@ const Warranty = () => {
     const handleSubmitClaim = async (e) => {
         e.preventDefault();
         if (!selectedWarranty) return;
-        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         const issue = issueDescription.trim();
         if (issue.length < 15) return toast('Mô tả lỗi tối thiểu 15 ký tự.', 'danger');
         if (!receiveMethod) return toast('Vui lòng chọn hình thức gửi.', 'danger');
@@ -387,7 +350,6 @@ const Warranty = () => {
     };
 
     const handlePublicActivate = async (warranty) => {
-        if (isViewOnly) return toast(STORE_VIEW_ONLY_MESSAGE, 'warning');
         const serialOrImei = publicLookup.serialOrImei.trim() || warranty?.serialOrImei || '';
         const phone = publicLookup.phone.trim();
         const orderCode = publicLookup.orderCode.trim() || null;
@@ -435,13 +397,13 @@ const Warranty = () => {
 
                 <section className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Chính sách</p>
+                        <p className="ts-eyebrow text-[var(--color-primary)]">Chính sách</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Chính sách bảo hành điện tử</h2>
                     </div>
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
                         {policyGroups.map((g) => (
-                            <article key={g.title} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-                                <i className={`fas ${g.icon} text-2xl text-[var(--color-accent)]`}></i>
+                            <article key={g.title} className="ts-panel p-6">
+                                <i className={`fas ${g.icon} text-2xl text-[var(--color-primary)]`}></i>
                                 <h3 className="ts-display mt-4 text-lg">{g.title}</h3>
                                 <ul className="mt-4 space-y-2 text-sm text-[var(--color-fg-muted)]">
                                     {g.items.map((item) => (
@@ -458,14 +420,14 @@ const Warranty = () => {
 
                 <section id="public-lookup" className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Tra cứu</p>
+                        <p className="ts-eyebrow text-[var(--color-primary)]">Tra cứu</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Tra cứu bảo hành</h2>
                         <p className="mx-auto mt-2 max-w-2xl text-sm text-[var(--color-fg-muted)]">
                             Nhập Serial/IMEI, mã đơn hoặc SĐT để kiểm tra bảo hành điện tử.
                         </p>
                     </div>
 
-                    <div className="mx-auto max-w-3xl rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                    <div className="ts-panel mx-auto max-w-3xl p-6">
                         <form onSubmit={handlePublicLookup} className="grid grid-cols-1 gap-3 md:grid-cols-3">
                             <input
                                 value={publicLookup.serialOrImei}
@@ -492,12 +454,12 @@ const Warranty = () => {
                             </div>
                         </form>
 
-                        {publicLookupState.error && <p className="mt-3 text-xs text-red-400">{publicLookupState.error}</p>}
+                        {publicLookupState.error && <p className="mt-3 text-xs text-red-700">{publicLookupState.error}</p>}
 
                         {Array.isArray(publicLookupState.result) && publicLookupState.result.length > 0 && (
                             <div className="mt-5 space-y-3">
                                 {publicLookupState.result.map((w) => (
-                                    <div key={w.id} className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                    <div key={w.id} className="rounded-[20px] border border-[var(--color-border)] bg-white/70 p-4">
                                         <div className="flex flex-wrap items-start justify-between gap-3">
                                             <div>
                                                 <p className="ts-eyebrow text-[10px]">Sản phẩm</p>
@@ -513,10 +475,10 @@ const Warranty = () => {
                                             <p><span className="ts-eyebrow block text-[10px]">Mã BH</span><span className="ts-mono">{w.warrantyCode}</span></p>
                                         </div>
                                         {w.status === 'NotActivated' && (
-                                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3">
+                                            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-amber-200">Chưa kích hoạt</p>
-                                                    <p className="mt-0.5 text-xs text-amber-200/80">Nhập đúng SĐT mua hàng để kích hoạt ngay khi mở máy lần đầu.</p>
+                                                    <p className="text-sm font-semibold text-amber-700">Chưa kích hoạt</p>
+                                                    <p className="mt-0.5 text-xs text-amber-700/80">Nhập đúng SĐT mua hàng để kích hoạt ngay khi mở máy lần đầu.</p>
                                                 </div>
                                                 <button
                                                     type="button"
@@ -538,7 +500,7 @@ const Warranty = () => {
                 <section id="my-devices" className="mb-16">
                     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <p className="ts-eyebrow text-[var(--color-accent)]">Thiết bị của tôi</p>
+                            <p className="ts-eyebrow text-[var(--color-primary)]">Thiết bị của tôi</p>
                             <h2 className="ts-display mt-2 text-3xl">Sản phẩm của tôi</h2>
                             <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
                                 {authLoading ? 'Đang kiểm tra đăng nhập...' : !isAuthenticated ? 'Đăng nhập để xem thiết bị đã mua.' : loading ? 'Đang tải...' : `${warranties.length} thiết bị`}
@@ -556,7 +518,7 @@ const Warranty = () => {
                     </div>
 
                     {!isAuthenticated ? (
-                        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                        <div className="ts-panel p-6">
                             <p className="text-sm text-[var(--color-fg-muted)]">
                                 Trung tâm bảo hành hiển thị thiết bị theo Serial/IMEI trong tài khoản của bạn. Vui lòng đăng nhập để tiếp tục.
                             </p>
@@ -581,7 +543,7 @@ const Warranty = () => {
                             <button onClick={loadWarranties} className="ml-auto ts-btn ts-btn-outline px-3 py-1 text-xs">Thử lại</button>
                         </div>
                     ) : warranties.length === 0 ? (
-                        <div className="flex flex-col items-center rounded-md border border-dashed border-[var(--color-border)] py-16 text-center">
+                        <div className="ts-panel flex flex-col items-center border-dashed py-16 text-center">
                             <i className="fas fa-box-open text-4xl text-[var(--color-fg-dim)]"></i>
                             <h4 className="ts-display mt-6 text-xl">Chưa có thiết bị nào</h4>
                             <p className="mt-2 max-w-xl text-sm text-[var(--color-fg-muted)]">
@@ -598,10 +560,10 @@ const Warranty = () => {
                                         type="button"
                                         onClick={() => setSelectedId(w.id)}
                                         className={cn(
-                                            "w-full rounded-md border p-5 text-left transition-colors",
+                                            "w-full rounded-[22px] border bg-white/75 p-5 text-left shadow-[var(--shadow-soft)] transition-colors",
                                             selectedId === w.id
                                                 ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
-                                                : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)]"
+                                                : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
                                         )}
                                     >
                                         <div className="flex items-start justify-between gap-3">
@@ -620,14 +582,14 @@ const Warranty = () => {
                                 ))}
                             </div>
 
-                            <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6 lg:col-span-2">
+                            <div className="ts-panel p-6 lg:col-span-2">
                                 {!selectedWarranty ? (
                                     <p className="text-sm text-[var(--color-fg-muted)]">Chọn một thiết bị để xem chi tiết.</p>
                                 ) : (
                                     <>
                                         <div className="flex flex-wrap items-start justify-between gap-4">
                                             <div className="flex items-start gap-4">
-                                                <div className="h-14 w-14 overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)]">
+                                                <div className="h-14 w-14 overflow-hidden rounded-xl border border-[var(--color-border)] bg-white/75 shadow-[var(--shadow-soft)]">
                                                     {selectedWarranty.productImage && !imageErrors[selectedWarranty.id] ? (
                                                         <>
                                                             {imageLoading[selectedWarranty.id] && (
@@ -680,43 +642,43 @@ const Warranty = () => {
                                         </div>
 
                                         <div className="mt-6 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                                            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                            <div className="rounded-xl border border-[var(--color-border)] bg-white/68 p-4">
                                                 <p className="ts-eyebrow text-[10px]">Ngày mua</p>
                                                 <p className="mt-1 font-medium text-[var(--color-fg)]">{formatDate(selectedWarranty.purchaseDate)}</p>
                                             </div>
-                                            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                            <div className="rounded-xl border border-[var(--color-border)] bg-white/68 p-4">
                                                 <p className="ts-eyebrow text-[10px]">Ngày kích hoạt</p>
                                                 <p className="mt-1 font-medium text-[var(--color-fg)]">{formatDate(selectedWarranty.activatedAt)}</p>
                                             </div>
-                                            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                            <div className="rounded-xl border border-[var(--color-border)] bg-white/68 p-4">
                                                 <p className="ts-eyebrow text-[10px]">Thời hạn</p>
                                                 <p className="mt-1 font-medium text-[var(--color-fg)]">{selectedWarranty.warrantyMonths || 0} tháng</p>
                                             </div>
-                                            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                            <div className="rounded-xl border border-[var(--color-border)] bg-white/68 p-4">
                                                 <p className="ts-eyebrow text-[10px]">Ngày hết hạn</p>
                                                 <p className="mt-1 font-medium text-[var(--color-fg)]">{formatDate(selectedWarranty.expiresAt)}</p>
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                        <div className="mt-6 rounded-[20px] border border-[var(--color-border)] bg-white/68 p-4">
                                             <div className="flex items-center justify-between gap-3">
                                                 <p className="text-sm font-medium text-[var(--color-fg)]">Đã sử dụng bảo hành</p>
                                                 <p className="ts-mono text-xs text-[var(--color-fg-muted)]">{usage.used} / {usage.total || 0} tháng</p>
                                             </div>
                                             <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
                                                 <div
-                                                    className="h-2 rounded-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)]"
+                                                    className="h-2 rounded-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)]"
                                                     style={{ width: `${Math.min(100, Math.max(0, usage.percent))}%` }}
                                                 />
                                             </div>
                                         </div>
 
                                         {selectedWarranty.status === 'NotActivated' && (
-                                            <div className="mt-6 rounded-md border border-amber-500/40 bg-amber-500/10 p-5">
+                                            <div className="mt-6 rounded-[20px] border border-amber-500/30 bg-amber-500/10 p-5">
                                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                                     <div>
-                                                        <p className="text-sm font-semibold text-amber-200">Bảo hành chưa kích hoạt</p>
-                                                        <p className="mt-1 text-xs text-amber-200/80">Kích hoạt khi bạn khởi động thiết bị lần đầu để bắt đầu tính thời hạn bảo hành.</p>
+                                                        <p className="text-sm font-semibold text-amber-700">Bảo hành chưa kích hoạt</p>
+                                                        <p className="mt-1 text-xs text-amber-700/80">Kích hoạt khi bạn khởi động thiết bị lần đầu để bắt đầu tính thời hạn bảo hành.</p>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -747,11 +709,11 @@ const Warranty = () => {
 
                 <section id="submit-claim" className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Gửi yêu cầu</p>
+                        <p className="ts-eyebrow text-[var(--color-primary)]">Gửi yêu cầu</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Gửi yêu cầu sửa chữa</h2>
                     </div>
 
-                    <div className="mx-auto max-w-3xl rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                    <div className="ts-panel mx-auto max-w-3xl p-6">
                         {!isAuthenticated ? (
                             <div className="flex flex-col items-center gap-3 py-10 text-center">
                                 <i className="fas fa-lock text-3xl text-[var(--color-fg-dim)]"></i>
@@ -761,9 +723,9 @@ const Warranty = () => {
                         ) : !selectedWarranty ? (
                             <p className="text-sm text-[var(--color-fg-muted)]">Chọn một thiết bị trong “Sản phẩm của tôi” để tạo yêu cầu.</p>
                         ) : selectedWarranty.status === 'NotActivated' ? (
-                            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-5">
-                                <p className="text-sm font-semibold text-amber-200">Thiết bị chưa kích hoạt bảo hành</p>
-                                <p className="mt-1 text-xs text-amber-200/80">Kích hoạt khi bạn khởi động thiết bị lần đầu, sau đó mới tạo yêu cầu.</p>
+                            <div className="rounded-[20px] border border-amber-500/30 bg-amber-500/10 p-5">
+                                <p className="text-sm font-semibold text-amber-700">Thiết bị chưa kích hoạt bảo hành</p>
+                                <p className="mt-1 text-xs text-amber-700/80">Kích hoạt khi bạn khởi động thiết bị lần đầu, sau đó mới tạo yêu cầu.</p>
                                 <button type="button" onClick={handleActivate} disabled={activating} className={cn("ts-btn ts-btn-primary mt-4", activating && "opacity-70")}>
                                     <i className="fas fa-bolt"></i>{activating ? 'Đang kích hoạt...' : 'Kích hoạt lần đầu'}
                                 </button>
@@ -771,17 +733,17 @@ const Warranty = () => {
                         ) : (
                             <>
                                 {submitMessage && (
-                                    <div className="mb-5 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
-                                        <strong className="text-sm text-emerald-300">{submitMessage}</strong>
+                                    <div className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+                                        <strong className="text-sm text-emerald-700">{submitMessage}</strong>
                                         {submitCode && (
                                             <p className="mt-1 ts-mono text-xs text-[var(--color-fg-muted)]">
-                                                Mã yêu cầu: <strong className="text-[var(--color-accent)]">{submitCode}</strong>
+                                                Mã yêu cầu: <strong className="text-[var(--color-primary)]">{submitCode}</strong>
                                             </p>
                                         )}
                                     </div>
                                 )}
 
-                                <div className="mb-5 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4 text-sm">
+                                <div className="mb-5 rounded-[20px] border border-[var(--color-border)] bg-white/68 p-4 text-sm">
                                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                         <p><span className="ts-eyebrow block text-[10px]">Thiết bị</span><strong className="text-[var(--color-fg)]">{selectedWarranty.productName || '—'}</strong></p>
                                         <p><span className="ts-eyebrow block text-[10px]">IMEI/Serial</span><span className="ts-mono text-[var(--color-fg)]">{selectedWarranty.serialOrImei || '—'}</span></p>
@@ -799,7 +761,7 @@ const Warranty = () => {
                                         <div className="flex gap-3">
                                             {[['StoreDropOff', 'Mang tới cửa hàng'], ['Shipping', 'Chuyển phát']].map(([val, label]) => (
                                                 <label key={val} className={cn(
-                                                    "flex flex-1 cursor-pointer items-center gap-2 rounded-sm border px-4 py-2.5 text-sm transition-colors",
+                                                    "flex flex-1 cursor-pointer items-center gap-2 rounded-xl border bg-white/70 px-4 py-2.5 text-sm transition-colors",
                                                     receiveMethod === val
                                                         ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-fg)]"
                                                         : "border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)]"
@@ -820,14 +782,14 @@ const Warranty = () => {
 
                                     <label className="block">
                                         <span className="ts-eyebrow mb-1.5 block text-[10px]">Ảnh lỗi (tối đa 3)</span>
-                                        <div className="flex items-center gap-3 rounded-sm border border-dashed border-[var(--color-border)] p-4">
+                                        <div className="flex items-center gap-3 rounded-xl border border-dashed border-[var(--color-border)] bg-white/60 p-4">
                                             <i className="fas fa-camera text-[var(--color-fg-dim)]"></i>
                                             <input type="file" accept="image/*" multiple onChange={handleAttachmentChange} className="text-xs text-[var(--color-fg-muted)] file:mr-3 file:rounded-sm file:border file:border-[var(--color-border)] file:bg-[var(--color-surface-2)] file:px-3 file:py-1 file:text-xs file:text-[var(--color-fg)]" />
                                         </div>
                                         {attachmentPreviews.length > 0 && (
                                             <div className="mt-3 flex gap-2">
                                                 {attachmentPreviews.map((image) => (
-                                                    <img key={image.url} src={image.url} alt={image.name} className="h-16 w-16 rounded-sm object-cover" />
+                                                    <img key={image.url} src={image.url} alt={image.name} className="h-16 w-16 rounded-xl object-cover" />
                                                 ))}
                                             </div>
                                         )}
@@ -844,12 +806,12 @@ const Warranty = () => {
 
                 <section id="repair-history" className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Lịch sử</p>
+                        <p className="ts-eyebrow text-[var(--color-primary)]">Lịch sử</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Lịch sử bảo hành & sửa chữa</h2>
                     </div>
 
                     <div className="mx-auto max-w-4xl space-y-6">
-                        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                        <div className="ts-panel p-6">
                             <div className="flex items-center justify-between gap-3">
                                 <h3 className="ts-display text-lg">Yêu cầu bảo hành</h3>
                                 {claimsLoading && <span className="text-xs text-[var(--color-fg-muted)]">Đang tải...</span>}
@@ -863,7 +825,7 @@ const Warranty = () => {
                             ) : (
                                 <div className="mt-4 space-y-3">
                                     {claims.map((c) => (
-                                        <div key={c.id} className="rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-4">
+                                        <div key={c.id} className="rounded-[20px] border border-[var(--color-border)] bg-white/68 p-4">
                                             <div className="flex flex-wrap items-center justify-between gap-3">
                                                 <div>
                                                     <p className="ts-eyebrow text-[10px]">Mã yêu cầu</p>
@@ -871,7 +833,7 @@ const Warranty = () => {
                                                 </div>
                                                 <span className={statusStyle(c.status === 'Completed' ? 'Active' : c.status)}>{claimStatusLabel(c.status)}</span>
                                             </div>
-                                            <Timeline steps={CLAIM_TIMELINE} current={c.status} labels={CLAIM_STATUS_LABELS} />
+                                            <Timeline steps={CLAIM_TIMELINE} current={c.status} />
                                             <div className="mt-3 grid grid-cols-1 gap-3 text-xs text-[var(--color-fg-muted)] sm:grid-cols-3">
                                                 <p><span className="ts-eyebrow block text-[10px]">Ngày tạo</span>{formatDate(c.createdAt)}</p>
                                                 <p><span className="ts-eyebrow block text-[10px]">Nhận máy</span>{formatDate(c.receivedAt)}</p>
@@ -896,7 +858,7 @@ const Warranty = () => {
                             )}
                         </div>
 
-                        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                        <div className="ts-panel p-6">
                             <div className="flex items-center justify-between gap-3">
                                 <h3 className="ts-display text-lg">Phiếu sửa chữa</h3>
                                 {repairsLoading && <span className="text-xs text-[var(--color-fg-muted)]">Đang tải...</span>}
@@ -910,7 +872,7 @@ const Warranty = () => {
                             ) : (
                                 <div className="mt-4 space-y-3">
                                     {repairs.map((r) => (
-                                        <div key={r.id} className="overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-background)]">
+                                        <div key={r.id} className="overflow-hidden rounded-[20px] border border-[var(--color-border)] bg-white/68">
                                             <button
                                                 type="button"
                                                 onClick={() => toggleRepair(r.id)}
@@ -919,7 +881,7 @@ const Warranty = () => {
                                                 <div>
                                                     <p className="ts-mono text-sm">{r.repairCode}</p>
                                                     <p className="mt-1 text-xs text-[var(--color-fg-muted)]">Tiếp nhận: {formatDate(r.receivedAt)} • Trạng thái: {repairStatusLabel(r.status)}</p>
-                                                    <Timeline steps={REPAIR_TIMELINE} current={r.status} labels={REPAIR_STATUS_LABELS} />
+                                                    <Timeline steps={REPAIR_TIMELINE} current={r.status} getLabel={repairStatusLabel} />
                                                 </div>
                                                 <i className={cn("fas fa-chevron-down text-xs text-[var(--color-fg-dim)] transition-transform", repairOpenId === r.id && "rotate-180")}></i>
                                             </button>
@@ -952,7 +914,7 @@ const Warranty = () => {
 
                 <section className="mb-16">
                     <div className="mb-8 text-center">
-                        <p className="ts-eyebrow text-[var(--color-accent)]">Hỏi đáp</p>
+                        <p className="ts-eyebrow text-[var(--color-primary)]">Hỏi đáp</p>
                         <h2 className="ts-display mt-3 text-2xl md:text-3xl">Câu hỏi thường gặp</h2>
                     </div>
                     <div className="mx-auto max-w-3xl space-y-3">
@@ -977,7 +939,7 @@ const Warranty = () => {
                 <section className="rounded-md border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] p-8 md:p-12">
                     <div className="grid gap-8 md:grid-cols-2">
                         <div>
-                            <p className="ts-eyebrow text-[var(--color-accent)]">Hỗ trợ nhanh</p>
+                            <p className="ts-eyebrow text-[var(--color-primary)]">Hỗ trợ nhanh</p>
                             <h2 className="ts-display mt-3 text-2xl">Cần hỗ trợ thêm?</h2>
                             <p className="mt-3 text-sm text-[var(--color-fg-muted)]">Liên hệ TechStore để được tư vấn bảo hành điện tử và hỗ trợ gửi sản phẩm.</p>
                             <div className="mt-6 flex flex-wrap gap-3">
@@ -986,9 +948,9 @@ const Warranty = () => {
                             </div>
                         </div>
                         <div className="space-y-3 text-sm">
-                            {hotline && <p className="flex items-center gap-3"><i className="fas fa-phone-alt w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Hotline:</span><strong className="ts-mono text-[var(--color-fg)]">{hotline}</strong></p>}
-                            {supportEmail && <p className="flex items-center gap-3"><i className="fas fa-envelope w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Email:</span><strong className="text-[var(--color-fg)]">{supportEmail}</strong></p>}
-                            {supportTime && <p className="flex items-center gap-3"><i className="fas fa-clock w-5 text-[var(--color-accent)]"></i><span className="text-[var(--color-fg-dim)]">Giờ:</span><strong className="text-[var(--color-fg)]">{supportTime}</strong></p>}
+                            {hotline && <p className="flex items-center gap-3"><i className="fas fa-phone-alt w-5 text-[var(--color-primary)]"></i><span className="text-[var(--color-fg-dim)]">Hotline:</span><strong className="ts-mono text-[var(--color-fg)]">{hotline}</strong></p>}
+                            {supportEmail && <p className="flex items-center gap-3"><i className="fas fa-envelope w-5 text-[var(--color-primary)]"></i><span className="text-[var(--color-fg-dim)]">Email:</span><strong className="text-[var(--color-fg)]">{supportEmail}</strong></p>}
+                            {supportTime && <p className="flex items-center gap-3"><i className="fas fa-clock w-5 text-[var(--color-primary)]"></i><span className="text-[var(--color-fg-dim)]">Giờ:</span><strong className="text-[var(--color-fg)]">{supportTime}</strong></p>}
                         </div>
                     </div>
                 </section>

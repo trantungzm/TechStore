@@ -38,6 +38,14 @@ const formatTime = (value) => {
     }
 };
 
+const appendMessageOnce = (messages, newMessage) => {
+    if (!newMessage) return messages;
+    if (newMessage.id != null && messages.some((message) => message.id === newMessage.id)) {
+        return messages;
+    }
+    return [...messages, newMessage];
+};
+
 export default function ChatWidget() {
     const { isAuthenticated, user } = useAuth();
     const isViewOnly = isStoreViewOnlyUser(user);
@@ -48,6 +56,7 @@ export default function ChatWidget() {
     const [ticketId, setTicketId] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
+    const [sending, setSending] = useState(false);
     const connectionRef = useRef(null);
     const scrollRef = useRef(null);
 
@@ -106,7 +115,11 @@ export default function ChatWidget() {
         connectionRef.current = connection;
 
         connection.on('ReceiveMessage', (newMessage) => {
-            setMessages((prev) => [...prev, newMessage]);
+            setMessages((prev) => appendMessageOnce(prev, newMessage));
+        });
+
+        connection.onreconnected(() => {
+            connection.invoke('JoinTicketRoom', String(ticketId)).catch(() => { });
         });
 
         connection
@@ -145,19 +158,25 @@ export default function ChatWidget() {
 
     const handleSendMessage = async () => {
         const text = inputText.trim();
-        if (!text || !ticketId) return;
+        if (!text || !ticketId || sending) return;
         if (isViewOnly) {
             setInputText(STORE_VIEW_ONLY_MESSAGE);
             return;
         }
         setInputText('');
+        setSending(true);
         try {
-            await ticketApi.addUpdate(ticketId, {
+            const response = await ticketApi.addUpdate(ticketId, {
                 message: text,
                 senderName: user?.name || user?.username || 'Khach hang',
             });
+            // Do not depend on the SignalR echo: the connection can still be
+            // joining/reconnecting when the REST request finishes.
+            setMessages((prev) => appendMessageOnce(prev, response?.data));
         } catch {
             setInputText(text);
+        } finally {
+            setSending(false);
         }
     };
 
@@ -251,16 +270,16 @@ export default function ChatWidget() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                 placeholder="Nhập tin nhắn..."
                                 className="flex-1 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
-                                disabled={!ticketId}
+                                disabled={!ticketId || sending}
                             />
                             <button
                                 type="button"
                                 onClick={handleSendMessage}
                                 className={cn(
                                     'rounded-md px-3 py-2 text-sm font-semibold text-white',
-                                    ticketId ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90' : 'bg-[var(--color-border)]'
+                                    ticketId && !sending ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90' : 'bg-[var(--color-border)]'
                                 )}
-                                disabled={!ticketId}
+                                disabled={!ticketId || sending}
                             >
                                 Gửi
                             </button>

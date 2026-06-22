@@ -852,6 +852,11 @@ namespace BaseCore.Services
         private async Task<int> BackfillTagsForAsync(Product product, ProductVariant? variant, int need, DateTime now, Guid? userId)
         {
             if (need <= 0) return 0;
+            var warehouseId = (await _warehouseRepository.GetDefaultAsync())?.Id;
+            if (!warehouseId.HasValue)
+            {
+                throw new InvalidOperationException("Khong tim thay kho mac dinh de tao tem ton kho");
+            }
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var newCodes = await GenerateInternalCodesAsync(product, variant, need, seen);
             var created = 0;
@@ -861,6 +866,7 @@ namespace BaseCore.Services
                 {
                     ProductId = product.Id,
                     VariantId = variant?.Id,
+                    WarehouseId = warehouseId,
                     SerialOrImei = ic,
                     InternalCode = ic,
                     IsAutoTag = true,
@@ -872,7 +878,7 @@ namespace BaseCore.Services
                     CreatedAt = now,
                     Note = "Backfill khi đối soát tồn kho"
                 });
-                await AddMovement(product.Id, variant?.Id, si.Id, null, "Adjust", 1, null, "InStock", "Manual", null, "Backfill đối soát tồn kho", userId);
+                await AddMovement(product.Id, variant?.Id, si.Id, warehouseId, "Adjust", 1, null, "InStock", "Manual", null, "Backfill đối soát tồn kho", userId);
                 created++;
             }
             return created;

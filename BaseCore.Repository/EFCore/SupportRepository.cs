@@ -14,6 +14,8 @@ namespace BaseCore.Repository.EFCore
         Task<(List<WarrantyRecord> Items, int TotalCount)> SearchAsync(SupportSearchDto search);
     }
 
+    // Warranty record là "sổ bảo hành" của từng thiết bị bán ra; repository này phục vụ
+    // cả lookup public lẫn màn admin warranty.
     public class WarrantyRecordRepositoryEF : Repository<WarrantyRecord>, IWarrantyRecordRepositoryEF
     {
         public WarrantyRecordRepositoryEF(AppDbContext context) : base(context) { }
@@ -23,6 +25,7 @@ namespace BaseCore.Repository.EFCore
             return _dbSet.AnyAsync(x => x.OrderDetailId == orderDetailId && x.StockItemId == stockItemId);
         }
 
+        // Lookup theo serial/order/phone đúng các kịch bản mà FE và form public đang hỗ trợ.
         public Task<List<WarrantyRecord>> LookupAsync(string? serialOrImei, string? orderCode, string? phone)
         {
             var query = DetailQuery();
@@ -64,6 +67,7 @@ namespace BaseCore.Repository.EFCore
 
         public Task<WarrantyRecord?> GetDetailAsync(int id) => DetailQuery().FirstOrDefaultAsync(x => x.Id == id);
 
+        // Search danh sách bảo hành cho màn admin warranty.
         public async Task<(List<WarrantyRecord> Items, int TotalCount)> SearchAsync(SupportSearchDto search)
         {
             var query = DetailQuery();
@@ -98,6 +102,7 @@ namespace BaseCore.Repository.EFCore
             return (items, total);
         }
 
+        // Include order/order detail/product/variant/stock item để service có đủ dữ liệu map DTO.
         private IQueryable<WarrantyRecord> DetailQuery()
         {
             return _dbSet.Include(x => x.Order).Include(x => x.OrderDetail).Include(x => x.Product).Include(x => x.Variant).Include(x => x.StockItem);
@@ -112,6 +117,7 @@ namespace BaseCore.Repository.EFCore
         Task<WarrantyClaim?> GetLatestByWarrantyAsync(int warrantyId);
     }
 
+    // Repository claim bảo hành: cung cấp dữ liệu cho màn claims và luồng tạo repair case.
     public class WarrantyClaimRepositoryEF : Repository<WarrantyClaim>, IWarrantyClaimRepositoryEF
     {
         public WarrantyClaimRepositoryEF(AppDbContext context) : base(context) { }
@@ -124,6 +130,7 @@ namespace BaseCore.Repository.EFCore
             return query.OrderByDescending(x => x.CreatedAt).ToListAsync();
         }
 
+        // Search claim theo claim code, serial, customer, trạng thái, ưu tiên.
         public async Task<(List<WarrantyClaim> Items, int TotalCount)> SearchAsync(SupportSearchDto search)
         {
             var query = DetailQuery();
@@ -141,6 +148,7 @@ namespace BaseCore.Repository.EFCore
             return await Page(query, search);
         }
 
+        // Query chi tiết claim kèm warranty, product, stock item và updates timeline.
         private IQueryable<WarrantyClaim> DetailQuery() => _dbSet.Include(x => x.Warranty).Include(x => x.Product).Include(x => x.Variant).Include(x => x.StockItem).Include(x => x.Updates);
         private static async Task<(List<WarrantyClaim>, int)> Page(IQueryable<WarrantyClaim> query, SupportSearchDto search)
         {
@@ -169,6 +177,7 @@ namespace BaseCore.Repository.EFCore
         Task<(List<RepairCase> Items, int TotalCount)> SearchAsync(SupportSearchDto search);
         Task<(List<RepairCase> Items, int TotalCount)> SearchByUserAsync(Guid userId, SupportSearchDto search);
     }
+    // Repair case là lớp nối giữa warranty claim, ticket và thiết bị thực tế ngoài kho.
     public class RepairCaseRepositoryEF : Repository<RepairCase>, IRepairCaseRepositoryEF
     {
         public RepairCaseRepositoryEF(AppDbContext context) : base(context) { }
@@ -180,6 +189,7 @@ namespace BaseCore.Repository.EFCore
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
         public Task<RepairCase?> GetByWarrantyClaimIdAsync(int warrantyClaimId) => DetailQuery().FirstOrDefaultAsync(x => x.WarrantyClaimId == warrantyClaimId);
+        // Search toàn bộ ca sửa chữa cho admin/technical.
         public async Task<(List<RepairCase> Items, int TotalCount)> SearchAsync(SupportSearchDto search)
         {
             var query = DetailQuery();
@@ -200,6 +210,7 @@ namespace BaseCore.Repository.EFCore
             var size = Math.Clamp(search.PageSize, 1, 100);
             return (await query.OrderByDescending(x => x.CreatedAt).Skip((page - 1) * size).Take(size).ToListAsync(), total);
         }
+        // Customer chỉ nhìn thấy các ca sửa chữa gắn với claim/ticket của chính mình.
         public async Task<(List<RepairCase> Items, int TotalCount)> SearchByUserAsync(Guid userId, SupportSearchDto search)
         {
             var query = DetailQuery().Where(x => (x.WarrantyClaim != null && x.WarrantyClaim.UserId == userId) || (x.Ticket != null && x.Ticket.UserId == userId));
@@ -216,6 +227,7 @@ namespace BaseCore.Repository.EFCore
             var size = Math.Clamp(search.PageSize, 1, 100);
             return (await query.OrderByDescending(x => x.CreatedAt).Skip((page - 1) * size).Take(size).ToListAsync(), total);
         }
+        // Query chi tiết repair để service có thể đồng bộ ngược trạng thái giữa các module.
         private IQueryable<RepairCase> DetailQuery() => _dbSet.Include(x => x.WarrantyClaim).Include(x => x.Ticket).Include(x => x.StockItem).Include(x => x.Product).Include(x => x.Variant).Include(x => x.Updates);
     }
 
@@ -235,11 +247,13 @@ namespace BaseCore.Repository.EFCore
         Task<List<SupportTicket>> GetByUserAsync(Guid userId);
         Task<(List<SupportTicket> Items, int TotalCount)> SearchAsync(SupportSearchDto search);
     }
+    // Repository ticket hỗ trợ, phục vụ cả storefront "ticket của tôi" và màn admin ticket.
     public class SupportTicketRepositoryEF : Repository<SupportTicket>, ISupportTicketRepositoryEF
     {
         public SupportTicketRepositoryEF(AppDbContext context) : base(context) { }
         public Task<SupportTicket?> GetDetailAsync(int id) => DetailQuery().FirstOrDefaultAsync(x => x.Id == id);
         public Task<List<SupportTicket>> GetByUserAsync(Guid userId) => DetailQuery().Where(x => x.UserId == userId).OrderByDescending(x => x.CreatedAt).ToListAsync();
+        // Search ticket theo mã, tiêu đề, mô tả, khách hàng, serial và các cờ workflow.
         public async Task<(List<SupportTicket> Items, int TotalCount)> SearchAsync(SupportSearchDto search)
         {
             var query = DetailQuery();
@@ -262,6 +276,7 @@ namespace BaseCore.Repository.EFCore
             var size = Math.Clamp(search.PageSize, 1, 100);
             return (await query.OrderByDescending(x => x.CreatedAt).Skip((page - 1) * size).Take(size).ToListAsync(), total);
         }
+        // Include các thực thể liên quan để FE hiển thị ticket trong bối cảnh đơn/bảo hành/sản phẩm.
         private IQueryable<SupportTicket> DetailQuery() => _dbSet.Include(x => x.RelatedOrder).Include(x => x.RelatedProduct).Include(x => x.RelatedWarranty).Include(x => x.Updates);
     }
 
@@ -269,6 +284,7 @@ namespace BaseCore.Repository.EFCore
     {
         Task<List<SupportTicketUpdate>> GetByTicketAsync(int ticketId, bool includeInternal);
     }
+    // Bảng message/update của ticket, có hỗ trợ ẩn internal note với phía khách hàng.
     public class SupportTicketUpdateRepositoryEF : Repository<SupportTicketUpdate>, ISupportTicketUpdateRepositoryEF
     {
         public SupportTicketUpdateRepositoryEF(AppDbContext context) : base(context) { }
@@ -286,6 +302,7 @@ namespace BaseCore.Repository.EFCore
         Task<int> CountUnreadAsync(Guid userId);
         Task<List<Notification>> GetUnreadByUserAsync(Guid userId);
     }
+    // Notification là tầng read model cho user biết đơn/ticket/bảo hành đã đổi trạng thái.
     public class NotificationRepositoryEF : Repository<Notification>, INotificationRepositoryEF
     {
         public NotificationRepositoryEF(AppDbContext context) : base(context) { }

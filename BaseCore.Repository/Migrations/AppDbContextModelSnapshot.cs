@@ -79,10 +79,17 @@ namespace BaseCore.Repository.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClickCount")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CtaLabel")
                         .IsRequired()
@@ -94,8 +101,14 @@ namespace BaseCore.Repository.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
@@ -106,6 +119,9 @@ namespace BaseCore.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Kicker")
                         .IsRequired()
@@ -127,6 +143,12 @@ namespace BaseCore.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("SubTitle")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -139,6 +161,13 @@ namespace BaseCore.Repository.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ViewCount")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1937,65 +1966,6 @@ namespace BaseCore.Repository.Migrations
                     b.ToTable("OrderTimelines");
                 });
 
-            modelBuilder.Entity("BaseCore.Entities.PaymentSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("OrderPayloadJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<string>("TransactionId")
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("SessionId")
-                        .IsUnique();
-
-                    b.ToTable("PaymentSessions");
-                });
-
             modelBuilder.Entity("BaseCore.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -2006,6 +1976,10 @@ namespace BaseCore.Repository.Migrations
 
                     b.Property<int?>("BackupSupplierId")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("BasePrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Brand")
                         .HasMaxLength(120)
@@ -2048,6 +2022,14 @@ namespace BaseCore.Repository.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
+                    b.Property<decimal?>("MaxPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MinPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -2057,23 +2039,12 @@ namespace BaseCore.Repository.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<bool>("RequiresSerialTracking")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Sku")
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
                     b.Property<string>("Slug")
-                        .HasMaxLength(220)
-                        .HasColumnType("nvarchar(220)");
-
-                    b.Property<int>("Stock")
-                        .HasColumnType("int");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<int?>("SupplierId")
                         .HasColumnType("int");
@@ -2082,8 +2053,14 @@ namespace BaseCore.Repository.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("nvarchar(80)");
 
+                    b.Property<int?>("TotalStock")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
 
                     b.Property<int>("WarrantyMonths")
                         .ValueGeneratedOnAdd()
@@ -2108,6 +2085,7 @@ namespace BaseCore.Repository.Migrations
                         new
                         {
                             Id = 1,
+                            BasePrice = 28990000m,
                             Brand = "Apple",
                             CategoryId = 1,
                             CreatedAt = new DateTime(2026, 5, 18, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2118,16 +2096,18 @@ namespace BaseCore.Repository.Migrations
                             IsDiscounted = true,
                             IsFeatured = true,
                             IsNewArrival = true,
+                            MaxPrice = 35990000m,
+                            MinPrice = 28990000m,
                             Name = "iPhone 15 Pro",
-                            OriginalPrice = 32990000m,
-                            Price = 28990000m,
                             RequiresSerialTracking = true,
-                            Stock = 12,
+                            TotalStock = 12,
+                            Version = 0,
                             WarrantyMonths = 12
                         },
                         new
                         {
                             Id = 2,
+                            BasePrice = 21990000m,
                             Brand = "Samsung",
                             CategoryId = 1,
                             CreatedAt = new DateTime(2026, 5, 18, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2138,16 +2118,18 @@ namespace BaseCore.Repository.Migrations
                             IsDiscounted = true,
                             IsFeatured = true,
                             IsNewArrival = true,
+                            MaxPrice = 25490000m,
+                            MinPrice = 21990000m,
                             Name = "Samsung Galaxy S24",
-                            OriginalPrice = 24990000m,
-                            Price = 21990000m,
                             RequiresSerialTracking = true,
-                            Stock = 15,
+                            TotalStock = 15,
+                            Version = 0,
                             WarrantyMonths = 12
                         },
                         new
                         {
                             Id = 3,
+                            BasePrice = 31990000m,
                             Brand = "Apple",
                             CategoryId = 2,
                             CreatedAt = new DateTime(2026, 5, 18, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2158,16 +2140,18 @@ namespace BaseCore.Repository.Migrations
                             IsDiscounted = true,
                             IsFeatured = true,
                             IsNewArrival = false,
+                            MaxPrice = 38990000m,
+                            MinPrice = 31990000m,
                             Name = "MacBook Air M3",
-                            OriginalPrice = 35990000m,
-                            Price = 31990000m,
                             RequiresSerialTracking = true,
-                            Stock = 10,
+                            TotalStock = 10,
+                            Version = 0,
                             WarrantyMonths = 12
                         },
                         new
                         {
                             Id = 4,
+                            BasePrice = 35990000m,
                             Brand = "Dell",
                             CategoryId = 2,
                             CreatedAt = new DateTime(2026, 5, 18, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2178,16 +2162,18 @@ namespace BaseCore.Repository.Migrations
                             IsDiscounted = true,
                             IsFeatured = true,
                             IsNewArrival = false,
+                            MaxPrice = 44990000m,
+                            MinPrice = 35990000m,
                             Name = "Dell XPS 15",
-                            OriginalPrice = 39990000m,
-                            Price = 35990000m,
                             RequiresSerialTracking = true,
-                            Stock = 8,
+                            TotalStock = 8,
+                            Version = 0,
                             WarrantyMonths = 12
                         },
                         new
                         {
                             Id = 5,
+                            BasePrice = 5990000m,
                             Brand = "Apple",
                             CategoryId = 7,
                             CreatedAt = new DateTime(2026, 5, 18, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -2198,11 +2184,12 @@ namespace BaseCore.Repository.Migrations
                             IsDiscounted = true,
                             IsFeatured = false,
                             IsNewArrival = false,
+                            MaxPrice = 5990000m,
+                            MinPrice = 5990000m,
                             Name = "AirPods Pro",
-                            OriginalPrice = 6990000m,
-                            Price = 5990000m,
                             RequiresSerialTracking = true,
-                            Stock = 25,
+                            TotalStock = 25,
+                            Version = 0,
                             WarrantyMonths = 12
                         });
                 });
@@ -2332,13 +2319,8 @@ namespace BaseCore.Repository.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ColorCode")
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
-
-                    b.Property<string>("ColorName")
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
+                    b.Property<string>("AttributesJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -2352,20 +2334,21 @@ namespace BaseCore.Repository.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<decimal?>("OriginalPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("Price")
+                    b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Ram")
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
 
                     b.Property<string>("Sku")
                         .HasMaxLength(80)
@@ -2374,10 +2357,6 @@ namespace BaseCore.Repository.Migrations
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
-                    b.Property<string>("Storage")
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -2385,9 +2364,16 @@ namespace BaseCore.Repository.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("nvarchar(160)");
 
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("Sku")
+                        .IsUnique()
+                        .HasFilter("[Sku] IS NOT NULL");
 
                     b.ToTable("ProductVariants");
                 });
@@ -6551,9 +6537,6 @@ namespace BaseCore.Repository.Migrations
                     b.Property<string>("BankAccountNumber")
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)");
-
-                    b.Property<string>("BankAccountsJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BankName")
                         .HasMaxLength(160)

@@ -67,6 +67,94 @@ const multipart = (files, fieldName) => {
 
 const withItems = (request) => request.then((res) => ({ ...res, data: unwrapPagedItems(res.data) }));
 
+const pickFirstNumber = (...values) => {
+    for (const value of values) {
+        if (value === null || value === undefined || value === '') continue;
+        const numeric = Number(value);
+        if (Number.isFinite(numeric)) return numeric;
+    }
+    return 0;
+};
+
+const pickFirstPositiveNumber = (...values) => {
+    for (const value of values) {
+        if (value === null || value === undefined || value === '') continue;
+        const numeric = Number(value);
+        if (Number.isFinite(numeric) && numeric > 0) return numeric;
+    }
+    return 0;
+};
+
+const countActiveVariants = (variants = []) => (
+    Array.isArray(variants)
+        ? variants.filter((variant) => variant?.isActive !== false && variant?.IsActive !== false).length
+        : 0
+);
+
+const normalizeVariantShape = (variant, fallbackPrice = 0) => {
+    if (!variant || typeof variant !== 'object' || Array.isArray(variant)) return variant;
+    const price = pickFirstPositiveNumber(variant.price, variant.basePrice, fallbackPrice);
+    const oldPrice = pickFirstPositiveNumber(variant.oldPrice, variant.originalPrice);
+    return {
+        ...variant,
+        price,
+        oldPrice: oldPrice > price ? oldPrice : 0,
+        originalPrice: oldPrice > price ? oldPrice : null,
+    };
+};
+
+const normalizeProductShape = (product) => {
+    if (!product || typeof product !== 'object' || Array.isArray(product)) return product;
+
+    const price = pickFirstPositiveNumber(product.price, product.minPrice, product.basePrice, product.maxPrice);
+    const stock = pickFirstNumber(product.stock, product.totalStock);
+    const variantCount = countActiveVariants(product.variants);
+    const variantOriginalPrice = Array.isArray(product.variants)
+        ? Math.max(
+            0,
+            ...product.variants.map((variant) => pickFirstPositiveNumber(variant?.oldPrice, variant?.originalPrice))
+        )
+        : 0;
+    const legacyOriginalPrice = variantCount === 0 && Number(product.maxPrice || 0) > price
+        ? Number(product.maxPrice || 0)
+        : 0;
+    const oldPrice = pickFirstPositiveNumber(product.oldPrice, product.originalPrice, variantOriginalPrice, legacyOriginalPrice);
+
+    return {
+        ...product,
+        price,
+        oldPrice: oldPrice > price ? oldPrice : 0,
+        originalPrice: oldPrice > price ? oldPrice : null,
+        stock,
+        variantCount,
+        variants: Array.isArray(product.variants)
+            ? product.variants.map((variant) => normalizeVariantShape(variant, price))
+            : product.variants,
+    };
+};
+
+const normalizeProductResponse = (response) => {
+    const data = response?.data;
+    if (Array.isArray(data?.items)) {
+        return {
+            ...response,
+            data: {
+                ...data,
+                items: data.items.map(normalizeProductShape),
+            },
+        };
+    }
+
+    if (data && typeof data === 'object' && !Array.isArray(data) && ('id' in data || 'Id' in data)) {
+        return {
+            ...response,
+            data: normalizeProductShape(data),
+        };
+    }
+
+    return response;
+};
+
 export const authApi = {
     login: (username, password) => api.post('/auth/login', { username, password }).then(normalizeLoginResponse),
     register: (data) => api.post('/auth/register', data).then((response) => {
@@ -127,10 +215,11 @@ export const uploadApi = {
 };
 
 export const productApi = {
-    getAllRemote: (params = {}) => api.get('/products', { params }),
-    getAll: (params = {}) => api.get('/products', { params }),
-    search: (params = {}) => api.get('/products', { params }),
-    getById: (id, params = {}) => api.get(`/products/${id}`, { params }),
+    getAllRemote: (params = {}) => api.get('/products', { params }).then(normalizeProductResponse),
+    getAll: (params = {}) => api.get('/products', { params }).then(normalizeProductResponse),
+    search: (params = {}) => api.get('/products', { params }).then(normalizeProductResponse),
+    getStats: (params = {}) => api.get('/products/stats', { params }),
+    getById: (id, params = {}) => api.get(`/products/${id}`, { params }).then(normalizeProductResponse),
     getBrands: () => api.get('/products/brands'),
     create: (data) => api.post('/products', data),
     update: (id, data) => api.put(`/products/${id}`, data),
@@ -158,21 +247,6 @@ export const orderApi = {
     updateStatus: (id, data) => api.put(`/orders/${id}/status`, data),
     cancel: (id, data) => api.put(`/orders/${id}/cancel`, data),
     reviewCancellation: (id, data) => api.put(`/orders/${id}/cancellation-review`, data),
-};
-
-export const paymentApi = {
-    createSession: (orderId, amount) => api.post('/payments/sessions', { orderId, amount }),
-    createPendingSession: (orderPayload, amount) => api.post('/payments/sessions', { orderPayload, amount }),
-    getStatus: (sessionId) => api.get(`/payments/${sessionId}/status`),
-    getDetail: (sessionId) => api.get(`/payments/${sessionId}/detail`),
-    getDevInfo: (sessionId) => api.get(`/payments/${sessionId}/dev-info`),
-    // Mock (test bằng Postman): xác nhận thanh toán QR thành công
-    mockConfirm: (sessionIdOrData, data) => {
-        if (typeof sessionIdOrData === 'string') {
-            return api.post(`/payments/${sessionIdOrData}/mock-confirm`, data);
-        }
-        return api.post('/payments/mock-confirm', sessionIdOrData);
-    },
 };
 
 export const specApi = {
@@ -242,10 +316,15 @@ export const financeApi = {
     getPartners: () => api.get('/finance/partners'),
 };
 
+export const paymentApi = {
+    createSession: (orderId, amount) => api.post('/payments/sessions', { orderId, amount }),
+    createPendingSession: (orderPayload, amount) => api.post('/payments/sessions', { orderPayload, amount }),
+    getStatus: (sessionId) => api.get(`/payments/${sessionId}/status`),
+    getDetail: (sessionId) => api.get(`/payments/${sessionId}/detail`),
+};
+
 export const inventoryApi = {
     createReceipt: (data) => api.post('/inventory/receipts', data),
-    createOpeningStock: (data) => api.post('/inventory/opening-stock', data),
-    hasOpeningStock: (productId) => api.get(`/inventory/products/${productId}/has-opening-stock`),
     getSuppliers: (params = {}) => withItems(api.get('/suppliers', { params })),
     createSupplier: (data) => api.post('/suppliers', data),
     updateSupplier: (id, data) => api.put(`/suppliers/${id}`, data),
@@ -263,8 +342,6 @@ export const inventoryApi = {
         restockStatus: data?.statusAfter || 'InStock',
         note: data?.note || null,
     }),
-    reconcileStock: (backfillTags = false) => api.post('/inventory/reconcile-stock', { backfillTags }),
-    backfillInternalCodes: () => api.post('/inventory/backfill-internal-codes'),
 };
 
 export const supplierApi = {
@@ -287,13 +364,15 @@ export const recommendationApi = {
 };
 
 export const bannerApi = {
-    getActive: () => api.get('/banners/active'),
+    getActive: (position = 1) => api.get('/banners/active', { params: { position } }),
     getAll: (params = {}) => api.get('/banners', { params }),
     getById: (id) => api.get(`/banners/${id}`),
     create: (data) => api.post('/banners', data),
     update: (id, data) => api.put(`/banners/${id}`, data),
     delete: (id) => api.delete(`/banners/${id}`),
     toggle: (id) => api.put(`/banners/${id}/toggle`),
+    trackClick: (id) => api.post(`/banners/${id}/click`),
+    trackView: (id) => api.post(`/banners/${id}/view`),
 };
 
 export default api;

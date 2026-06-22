@@ -6,6 +6,9 @@ using System.Security.Claims;
 
 namespace BaseCore.APIService.Controllers
 {
+    // Controller coupon tách rõ hai nhánh:
+    // 1) user-side: public, my, claim, validate, spin
+    // 2) admin-side: stats, analytics, CRUD coupon.
     [Route("api/[controller]")]
     [ApiController]
     public class CouponsController : ControllerBase
@@ -21,6 +24,7 @@ namespace BaseCore.APIService.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Public([FromQuery] CouponSearchDto search)
         {
+            // Trang Promotion/storefront dùng endpoint này để lấy danh sách coupon public.
             var result = await _couponService.GetPublicAsync(search, CurrentUserId());
             return Ok(new
             {
@@ -36,6 +40,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> My([FromQuery] UserCouponSearchDto search)
         {
+            // Ví coupon của người dùng sau khi đã claim hoặc trúng vòng quay.
             var userId = CurrentUserId();
             if (!userId.HasValue) return Unauthorized(new { message = "Ban can dang nhap de xem vi phieu." });
             var result = await _couponService.GetMyAsync(userId.Value, search);
@@ -53,6 +58,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> Claim(int id)
         {
+            // User nhận coupon vào ví cá nhân.
             var userId = CurrentUserId();
             if (!userId.HasValue) return Unauthorized(new { message = "Ban can dang nhap de nhan phieu." });
             return Ok(await _couponService.ClaimAsync(id, userId.Value));
@@ -62,6 +68,7 @@ namespace BaseCore.APIService.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Validate([FromBody] ValidateCouponsDto dto)
         {
+            // Backend kiểm điều kiện áp mã: scope, min order, payment method, shipping...
             return Ok(await _couponService.ValidateAsync(CurrentUserId(), dto, requireUserCoupon: false));
         }
 
@@ -85,6 +92,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Stats()
         {
+            // AdminCoupons dùng để render top cards tổng quan.
             return Ok(await _couponService.GetStatsAsync());
         }
 
@@ -99,6 +107,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll([FromQuery] CouponSearchDto search)
         {
+            // Danh sách coupon quản trị có filter/paging riêng với storefront.
             var result = await _couponService.GetCouponsAsync(search, CurrentUserId());
             return Ok(new
             {
@@ -123,6 +132,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CouponCreateDto dto)
         {
+            // Tạo coupon mới từ form admin.
             var item = await _couponService.CreateAsync(dto, CurrentUserId());
             return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
         }
@@ -131,6 +141,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] CouponUpdateDto dto)
         {
+            // Cập nhật coupon hiện có; phần validate chi tiết nằm trong service.
             var item = await _couponService.UpdateAsync(id, dto);
             if (item == null) return NotFound(new { message = "Phieu giam gia khong ton tai." });
             return Ok(item);
@@ -149,6 +160,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Toggle(int id)
         {
+            // Bật/tắt nhanh coupon từ bảng quản trị mà không cần mở form.
             var item = await _couponService.ToggleAsync(id);
             if (item == null) return NotFound(new { message = "Phieu giam gia khong ton tai." });
             return Ok(item);

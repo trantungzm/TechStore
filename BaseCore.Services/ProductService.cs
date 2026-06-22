@@ -234,6 +234,73 @@ namespace BaseCore.Services
             return await _productRepository.SearchAsync(search);
         }
 
+        public async Task<ProductInventoryStats> GetInventoryStatsAsync(ProductSearchDto search)
+        {
+            var query = search ?? new ProductSearchDto();
+            var first = await _productRepository.SearchAsync(new ProductSearchDto
+            {
+                Keyword = query.Keyword,
+                CategoryId = query.CategoryId,
+                CategoryIds = query.CategoryIds,
+                CategorySlug = query.CategorySlug,
+                Brand = query.Brand,
+                MinPrice = query.MinPrice,
+                MaxPrice = query.MaxPrice,
+                InStock = query.InStock,
+                IsFeatured = query.IsFeatured,
+                IsBestSeller = query.IsBestSeller,
+                IsNewArrival = query.IsNewArrival,
+                IsDiscounted = query.IsDiscounted,
+                IncludeInactive = query.IncludeInactive,
+                SortBy = query.SortBy,
+                Page = 1,
+                PageSize = 100
+            });
+
+            var products = new List<Product>(first.Products);
+            var totalPages = (int)Math.Ceiling(first.TotalCount / 100d);
+
+            for (var page = 2; page <= totalPages; page++)
+            {
+                var next = await _productRepository.SearchAsync(new ProductSearchDto
+                {
+                    Keyword = query.Keyword,
+                    CategoryId = query.CategoryId,
+                    CategoryIds = query.CategoryIds,
+                    CategorySlug = query.CategorySlug,
+                    Brand = query.Brand,
+                    MinPrice = query.MinPrice,
+                    MaxPrice = query.MaxPrice,
+                    InStock = query.InStock,
+                    IsFeatured = query.IsFeatured,
+                    IsBestSeller = query.IsBestSeller,
+                    IsNewArrival = query.IsNewArrival,
+                    IsDiscounted = query.IsDiscounted,
+                    IncludeInactive = query.IncludeInactive,
+                    SortBy = query.SortBy,
+                    Page = page,
+                    PageSize = 100
+                });
+                products.AddRange(next.Products);
+            }
+
+            var available = 0;
+            var low = 0;
+            var outOfStock = 0;
+
+            foreach (var product in products)
+            {
+                var activeVariants = product.Variants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+                var stock = activeVariants.Count > 0 ? activeVariants.Sum(v => v.Stock) : product.Stock;
+
+                if (stock > 0) available++;
+                if (stock <= 0) outOfStock++;
+                else if (stock <= 5) low++;
+            }
+
+            return new ProductInventoryStats(first.TotalCount, available, low, outOfStock);
+        }
+
         public Task<List<string>> GetBrandsAsync()
         {
             return _productRepository.GetBrandsAsync();
@@ -294,7 +361,7 @@ namespace BaseCore.Services
                     ColorCode = Clean(v.ColorCode),
                     Storage = Clean(v.Storage),
                     Ram = Clean(v.Ram),
-                    Price = v.Price,
+                    Price = v.Price ?? 0,
                     OriginalPrice = v.OriginalPrice,
                     Stock = 0, // Tồn variant chỉ tăng qua Nhập kho (Inventory)
                     Sku = Clean(v.Sku),
@@ -371,7 +438,7 @@ namespace BaseCore.Services
                     existing.ColorCode = Clean(dto.ColorCode);
                     existing.Storage = Clean(dto.Storage);
                     existing.Ram = Clean(dto.Ram);
-                    existing.Price = dto.Price;
+                    existing.Price = dto.Price ?? existing.Price;
                     existing.OriginalPrice = dto.OriginalPrice;
                     existing.Sku = Clean(dto.Sku);
                     existing.ImageUrl = Clean(dto.ImageUrl);
@@ -389,7 +456,7 @@ namespace BaseCore.Services
                         ColorCode = Clean(dto.ColorCode),
                         Storage = Clean(dto.Storage),
                         Ram = Clean(dto.Ram),
-                        Price = dto.Price,
+                        Price = dto.Price ?? product.BasePrice ?? product.MinPrice ?? 0,
                         OriginalPrice = dto.OriginalPrice,
                         Stock = 0,
                         Sku = Clean(dto.Sku),

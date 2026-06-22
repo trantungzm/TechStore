@@ -8,17 +8,18 @@ import { useWishlist } from '../../contexts/WishlistContext';
 import { useCompare } from '../../contexts/CompareContext';
 import PageHero from '../../components/store/PageHero';
 import ProductCard from '../../components/store/ProductCard';
+import ProductGridSection from '../../components/store/ProductGridSection';
+import ReviewModal from '../../components/store/ReviewModal';
+import ReviewsSection from '../../components/store/ReviewsSection';
+import QASection from '../../components/store/QASection';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { canClaimCoupon, getAvailableCouponsForProduct, getCouponClaimStatus } from '../../utils/couponUtils';
-import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
+import { formatCurrency, isStoreViewOnlyUser, resolveProductImage, safeParseJson, setPageMeta, STORE_VIEW_ONLY_MESSAGE, t } from '../../utils/store';
 import { cn } from '../../utils/cn';
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedProducts';
 const PRODUCT_DETAIL_CACHE_KEY = 'electro_product_detail_cache';
 
-const safeParseJson = (value, fallback) => {
-    try { return JSON.parse(value); } catch { return fallback; }
-};
 
 const normalizeText = (value) => String(value || '')
     .normalize('NFD')
@@ -878,10 +879,10 @@ const ProductDetail = () => {
                 </nav>
 
                 {/* Main grid */}
-                <div className="grid gap-10 lg:grid-cols-[1.05fr_1fr]">
+                <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] lg:justify-center">
                     {/* Gallery */}
-                    <div>
-                        <div className="relative aspect-square overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
+                    <div className="min-w-0 w-full max-w-[520px] justify-self-center lg:justify-self-start">
+                        <div className="relative aspect-square w-full overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]">
                             {activeImage || productImage ? (
                                 <img src={activeImage || productImage} alt={productName} className="h-full w-full object-contain p-12" />
                             ) : (
@@ -912,14 +913,14 @@ const ProductDetail = () => {
                             )}
                         </div>
                         {galleryImages.length > 1 && (
-                            <div className="mt-4 flex gap-2 overflow-x-auto">
+                            <div className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-1">
                                 {galleryImages.map((image) => (
                                     <button
                                         key={image}
                                         type="button"
                                         onClick={() => setActiveImage(image)}
                                         className={cn(
-                                            "h-20 w-20 shrink-0 overflow-hidden rounded-sm border-2 bg-[var(--color-surface)] p-1 transition-all",
+                                            "h-16 w-16 shrink-0 overflow-hidden rounded-sm border-2 bg-[var(--color-surface)] p-1 transition-all",
                                             activeImage === image ? "border-[var(--color-primary)]" : "border-[var(--color-border)] opacity-60 hover:opacity-100"
                                         )}
                                     >
@@ -931,19 +932,21 @@ const ProductDetail = () => {
                     </div>
 
                     {/* Info */}
-                    <div>
+                    <div className="min-w-0">
                         <p className="ts-eyebrow text-[var(--color-accent)]">{productCategoryName}</p>
-                        <h1 className="ts-display mt-3 text-3xl text-[var(--color-fg)] md:text-4xl">{productName}</h1>
+                        <h1 className="ts-display mt-3 break-words text-3xl text-[var(--color-fg)] md:text-4xl">{productName}</h1>
 
                         <div className="mt-4 flex items-center gap-3">
-                            <Stars value={reviewSummary.average || 4} />
+                            <Stars value={reviewSummary.average} />
                             <span className="text-xs text-[var(--color-fg-dim)]">
-                                {reviewSummary.total > 0 ? `${reviewSummary.total} đánh giá` : 'Chưa có đánh giá'}
+                                {reviewSummary.total > 0
+                                    ? `${reviewSummary.average.toFixed(1)} · ${reviewSummary.total} đánh giá`
+                                    : 'Chưa có đánh giá'}
                             </span>
                         </div>
 
-                        <div className="mt-6 flex items-baseline gap-3">
-                            <span className="ts-mono text-4xl font-semibold ts-gradient-text">{formatCurrency(productPrice)}</span>
+                        <div className="mt-6 flex flex-wrap items-baseline gap-3">
+                            <span className="ts-mono text-3xl font-semibold ts-gradient-text sm:text-4xl">{formatCurrency(productPrice)}</span>
                             {oldPrice > productPrice && (
                                 <del className="ts-mono text-base text-[var(--color-fg-dim)]">{formatCurrency(oldPrice)}</del>
                             )}
@@ -1240,261 +1243,61 @@ const ProductDetail = () => {
                         )}
 
                         {activeTab === 'reviews' && (
-                            <div>
-                                {reviewMsg && (
-                                    <div className="mb-4 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-300">{reviewMsg}</div>
-                                )}
-                                {productReviews.length > 0 ? (
-                                    <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-                                        <aside className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-                                            <p className="ts-display text-4xl">{reviewSummary.average.toFixed(1)}<span className="text-base text-[var(--color-fg-dim)]">/5</span></p>
-                                            <Stars value={reviewSummary.average} />
-                                            <p className="mt-2 text-xs text-[var(--color-fg-muted)]">{reviewSummary.total} đánh giá</p>
-                                            <div className="mt-4 space-y-2">
-                                                {[5, 4, 3, 2, 1].map((star) => (
-                                                    <div key={star} className="flex items-center gap-2 text-xs">
-                                                        <span className="ts-mono w-6 text-[var(--color-fg-dim)]">{star}★</span>
-                                                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
-                                                            <div
-                                                                className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-primary)]"
-                                                                style={{ width: `${reviewSummary.total ? (reviewSummary.distribution[star] / reviewSummary.total) * 100 : 0}%` }}
-                                                            />
-                                                        </div>
-                                                        <span className="ts-mono w-6 text-right text-[var(--color-fg-muted)]">{reviewSummary.distribution[star]}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <button type="button" onClick={openReviewModal} className="ts-btn ts-btn-primary mt-5 w-full text-xs">Viết đánh giá</button>
-                                        </aside>
-
-                                        <div className="space-y-4">
-                                            {visibleReviews.map((review) => (
-                                                <article key={review.id} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div>
-                                                            <h5 className="text-sm font-semibold text-[var(--color-fg)]">{review.customerName}</h5>
-                                                            <span className="text-[11px] text-[var(--color-fg-dim)]">{review.date}</span>
-                                                        </div>
-                                                        <Stars value={review.rating} />
-                                                    </div>
-                                                    <p className="mt-3 text-sm leading-relaxed text-[var(--color-fg-muted)]">{review.content}</p>
-                                                    {Object.keys(review.experienceRatings || {}).length > 0 && (
-                                                        <div className="mt-3 flex flex-wrap gap-2">
-                                                            {Object.entries(review.experienceRatings).map(([k, v]) => (
-                                                                <span key={k} className="ts-pill">{k}: {v}/5</span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {review.images?.length > 0 && (
-                                                        <div className="mt-3 flex gap-2">
-                                                            {review.images.map((image, i) => (
-                                                                <img key={i} src={image} alt="" className="h-20 w-20 rounded-sm object-cover" />
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {review.adminResponses?.length > 0 && (
-                                                        <div className="mt-4 space-y-3 border-t border-[var(--color-border)] pt-4">
-                                                            {review.adminResponses.map((response, i) => (
-                                                                <div key={i} className="rounded-md bg-[var(--color-surface-2)] p-3">
-                                                                    <div className="flex items-center gap-2 mb-2">
-                                                                        <i className="fas fa-headset text-[var(--color-accent)] text-xs"></i>
-                                                                        <span className="text-xs font-semibold text-[var(--color-accent)]">{response.adminName}</span>
-                                                                        <span className="text-[10px] text-[var(--color-fg-dim)]">{response.createdAt ? new Date(response.createdAt).toLocaleDateString('vi-VN') : ''}</span>
-                                                                    </div>
-                                                                    <p className="text-sm text-[var(--color-fg-muted)]">{response.content}</p>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </article>
-                                            ))}
-                                            {productReviews.length > 3 && (
-                                                <button type="button" onClick={() => setShowAllReviews((v) => !v)} className="ts-btn ts-btn-ghost w-full text-xs">
-                                                    {showAllReviews ? 'Thu gọn' : `Xem thêm ${productReviews.length - 3} đánh giá`}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center rounded-md border border-dashed border-[var(--color-border)] py-16 text-center">
-                                        <i className="far fa-comment text-3xl text-[var(--color-fg-dim)]"></i>
-                                        <p className="mt-4 text-sm text-[var(--color-fg-muted)]">Chưa có đánh giá nào cho sản phẩm này.</p>
-                                        <button type="button" onClick={openReviewModal} className="ts-btn ts-btn-primary mt-4 text-xs">Viết đánh giá đầu tiên</button>
-                                    </div>
-                                )}
-                            </div>
+                            <ReviewsSection
+                                reviewMsg={reviewMsg}
+                                reviews={productReviews}
+                                summary={reviewSummary}
+                                visibleReviews={visibleReviews}
+                                showAll={showAllReviews}
+                                onToggleShowAll={() => setShowAllReviews((v) => !v)}
+                                onWriteReview={openReviewModal}
+                                Stars={Stars}
+                            />
                         )}
 
                         {activeTab === 'qna' && (
-                            <div className="space-y-6">
-                                <form onSubmit={handleSubmitQuestion} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-                                    <p className="ts-eyebrow text-[var(--color-accent)]">Hỏi chúng tôi</p>
-                                    <h4 className="ts-display mt-2 text-lg">Đặt câu hỏi về sản phẩm</h4>
-                                    <textarea
-                                        rows="3"
-                                        value={questionInput}
-                                        onChange={(e) => { setQuestionInput(e.target.value); setQuestionError(''); }}
-                                        placeholder="Viết câu hỏi của bạn..."
-                                        className="ts-input mt-3 resize-none"
-                                    />
-                                    {questionError && <p className="mt-2 text-xs text-red-400">{questionError}</p>}
-                                    {questionMsg && <p className="mt-2 text-xs text-emerald-400">{questionMsg}</p>}
-                                    <button type="submit" className="ts-btn ts-btn-primary mt-3 text-xs">Gửi câu hỏi</button>
-                                </form>
-
-                                {productQuestions.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {productQuestions.map((item) => {
-                                            const expanded = expandedQuestionIds.includes(item.id);
-                                            const hasAnswer = Array.isArray(item.repliesTree) && item.repliesTree.length > 0;
-                                            return (
-                                                <article key={item.id} className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-                                                    <div className="flex gap-3">
-                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-2)] text-xs font-bold text-[var(--color-fg-muted)]">
-                                                            {String(item.customerName || 'K')[0].toUpperCase()}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="flex items-baseline gap-2">
-                                                                <strong className="text-sm text-[var(--color-fg)]">{item.customerName}</strong>
-                                                                <span className="text-[11px] text-[var(--color-fg-dim)]">{formatRelativeTime(item.createdAt)}</span>
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-[var(--color-fg-muted)]">{item.question}</p>
-                                                            <div className="mt-2 flex items-center gap-3 text-[11px]">
-                                                                {hasAnswer ? (
-                                                                    <button type="button" onClick={() => toggleQuestionAnswer(item.id)} className="text-[var(--color-accent)] hover:underline">
-                                                                        {expanded ? 'Thu gọn phản hồi' : 'Xem phản hồi'}
-                                                                    </button>
-                                                                ) : (
-                                                                    <span className="text-[var(--color-fg-dim)]">Đang chờ phản hồi</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {hasAnswer && expanded && renderQuestionReplies(item.repliesTree)}
-                                                </article>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <p className="rounded-md border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-fg-dim)]">Chưa có câu hỏi nào cho sản phẩm này.</p>
-                                )}
-                            </div>
+                            <QASection
+                                onSubmit={handleSubmitQuestion}
+                                questionInput={questionInput}
+                                onQuestionChange={(e) => { setQuestionInput(e.target.value); setQuestionError(''); }}
+                                questionError={questionError}
+                                questionMsg={questionMsg}
+                                questions={productQuestions}
+                                expandedIds={expandedQuestionIds}
+                                onToggle={toggleQuestionAnswer}
+                                renderReplies={renderQuestionReplies}
+                                formatRelativeTime={formatRelativeTime}
+                            />
                         )}
                     </div>
                 </div>
 
                 {/* Review Modal */}
-                {reviewModalOpen && (
-                    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" onClick={() => setReviewModalOpen(false)}>
-                        <div className="w-full max-w-lg overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
-                                <h4 className="ts-display text-lg">Đánh giá & nhận xét</h4>
-                                <button
-                                    type="button"
-                                    onClick={() => setReviewModalOpen(false)}
-                                    aria-label="Đóng"
-                                    className="text-[var(--color-fg-dim)] hover:text-[var(--color-fg)]"
-                                >
-                                    <i className="fas fa-times text-sm"></i>
-                                </button>
-                            </div>
-                            <form onSubmit={handleSubmitReview} className="max-h-[70vh] overflow-y-auto p-5">
-                                <div className="mb-4 flex items-center gap-3 rounded-sm border border-[var(--color-border)] bg-[var(--color-background)] p-2">
-                                    {displayImage || productImage ? (
-                                        <img src={displayImage || productImage} alt={productName} className="h-12 w-12 rounded-sm object-contain" />
-                                    ) : (
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-[var(--color-surface-2)] text-[var(--color-fg-dim)]">
-                                            <i className="far fa-image"></i>
-                                        </div>
-                                    )}
-                                    <strong className="text-sm text-[var(--color-fg)]">{productName}</strong>
-                                </div>
-
-                                <div className="mb-5">
-                                    <p className="ts-eyebrow mb-2 text-[10px]">Đánh giá chung</p>
-                                    <StarPicker value={reviewRating} onChange={(r) => { setReviewRating(r); setReviewError(''); }} />
-                                </div>
-
-                                <div className="mb-5">
-                                    <p className="ts-eyebrow mb-2 text-[10px]">Theo trải nghiệm</p>
-                                    <div className="space-y-2">
-                                        {reviewExperienceItems.map((criterion) => (
-                                            <div key={criterion} className="flex items-center justify-between gap-3 rounded-sm border border-[var(--color-border)] px-3 py-2">
-                                                <span className="text-xs text-[var(--color-fg-muted)]">{criterion}</span>
-                                                <StarPicker
-                                                    value={experienceRatings[criterion] || 0}
-                                                    onChange={(r) => setExperienceRatings((c) => ({ ...c, [criterion]: r }))}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="mb-5">
-                                    <textarea
-                                        rows="4"
-                                        value={reviewContent}
-                                        onChange={(e) => { setReviewContent(e.target.value); setReviewError(''); }}
-                                        placeholder="Chia sẻ cảm nhận về sản phẩm (tối thiểu 15 ký tự)"
-                                        className="ts-input resize-none"
-                                    />
-                                </div>
-
-                                <div className="mb-5">
-                                    <label className="ts-btn ts-btn-outline inline-flex cursor-pointer text-xs">
-                                        <input type="file" accept="image/*" multiple onChange={handleReviewImageChange} disabled={reviewImages.length >= 3} className="hidden" />
-                                        <i className="fas fa-camera"></i>Thêm hình ảnh
-                                    </label>
-                                    {reviewImages.length > 0 && (
-                                        <div className="mt-3 flex gap-2">
-                                            {reviewImages.map((image) => (
-                                                <div key={image.id} className="relative">
-                                                    <img src={image.preview} alt={image.name} className="h-16 w-16 rounded-sm object-cover" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeReviewImage(image.id)}
-                                                        aria-label="Xóa ảnh"
-                                                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-danger)] text-[10px] text-white"
-                                                    >
-                                                        <i className="fas fa-times"></i>
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {reviewError && <p className="mb-4 rounded-sm border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">{reviewError}</p>}
-
-                                <button type="submit" className="ts-btn ts-btn-primary w-full">Gửi đánh giá</button>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                <ReviewModal
+                    open={reviewModalOpen}
+                    onClose={() => setReviewModalOpen(false)}
+                    onSubmit={handleSubmitReview}
+                    productName={productName}
+                    image={displayImage || productImage}
+                    StarPicker={StarPicker}
+                    rating={reviewRating}
+                    onRatingChange={(r) => { setReviewRating(r); setReviewError(''); }}
+                    experienceItems={reviewExperienceItems}
+                    experienceRatings={experienceRatings}
+                    onExperienceChange={(criterion, r) => setExperienceRatings((c) => ({ ...c, [criterion]: r }))}
+                    content={reviewContent}
+                    onContentChange={(e) => { setReviewContent(e.target.value); setReviewError(''); }}
+                    onImageChange={handleReviewImageChange}
+                    images={reviewImages}
+                    onRemoveImage={removeReviewImage}
+                    error={reviewError}
+                />
 
                 {/* Related */}
-                {computedRelatedProducts.length > 0 && (
-                    <section className="mt-20">
-                        <h3 className="ts-display mb-8 text-2xl">Sản phẩm liên quan</h3>
-                        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-                            {computedRelatedProducts.map((item) => (
-                                <ProductCard key={item.id} product={item} />
-                            ))}
-                        </div>
-                    </section>
-                )}
+                <ProductGridSection title="Sản phẩm liên quan" products={computedRelatedProducts} />
 
                 {/* Recently viewed */}
-                {recentlyViewedProducts.length > 0 && (
-                    <section className="mt-20">
-                        <h3 className="ts-display mb-8 text-2xl">Sản phẩm đã xem gần đây</h3>
-                        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-                            {recentlyViewedProducts.map((item) => (
-                                <ProductCard key={item.id} product={item} />
-                            ))}
-                        </div>
-                    </section>
-                )}
+                <ProductGridSection title="Sản phẩm đã xem gần đây" products={recentlyViewedProducts} />
             </section>
         </>
     );

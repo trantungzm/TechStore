@@ -89,7 +89,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=DESKTOP-4OOLD03\\SQLEXPRESS;Database=techstore;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;TrustServerCertificate=True";
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection chưa được cấu hình (appsettings).");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(sqlConnectionString));
 
@@ -99,7 +99,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 // JWT Authentication Key
-var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "CHANGE_ME_TO_A_LONG_RANDOM_SECRET");
+var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("Jwt:SecretKey chưa được cấu hình (appsettings)."));
 var issuer = builder.Configuration["Jwt:Issuer"];
 var audience = builder.Configuration["Jwt:Audience"];
 builder.Services.AddAuthentication(x =>

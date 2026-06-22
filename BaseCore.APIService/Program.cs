@@ -1,19 +1,13 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using BaseCore.APIService;
+using BaseCore.APIService.Extensions;
 using BaseCore.APIService.Hubs;
 using BaseCore.APIService.Validators;
 using BaseCore.Repository;
-using BaseCore.Repository.EFCore;
-using BaseCore.Services;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,174 +33,15 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CategoryUpsertDtoValidator>();
 builder.Services.AddSignalR();
 
-builder.Services.AddEndpointsApiExplorer();
-
-// Swagger Configuration
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "BaseCore API Service",
-        Version = "v1",
-        Description = "Business Logic Microservice - Products, Categories, Orders (Bài 10, 11)"
-    });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter JWT token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "bearer"
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("CorsPolicy", policy =>
-    {
-        var origin = builder.Configuration["Cors:WithOrigin"];
-        if (builder.Environment.IsDevelopment() || string.IsNullOrWhiteSpace(origin))
-        {
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-            return;
-        }
-
-        policy.WithOrigins(origin).AllowAnyMethod().AllowAnyHeader();
-    });
-});
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Server=.\\SQLEXPRESS;Database=techstore;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;TrustServerCertificate=True";
-    options.UseSqlServer(sqlConnectionString);
-});
-
-builder.Services.AddScoped<IProductRepositoryEF, ProductRepositoryEF>();
-builder.Services.AddScoped<ICategoryRepositoryEF, CategoryRepositoryEF>();
-builder.Services.AddScoped<IOrderRepositoryEF, OrderRepositoryEF>();
-builder.Services.AddScoped<IOrderDetailRepositoryEF, OrderDetailRepositoryEF>();
-builder.Services.AddScoped<IOrderTimelineRepositoryEF, OrderTimelineRepositoryEF>();
-builder.Services.AddScoped<IOrderCancellationRepositoryEF, OrderCancellationRepositoryEF>();
-builder.Services.AddScoped<IWarehouseRepositoryEF, WarehouseRepositoryEF>();
-builder.Services.AddScoped<ISupplierRepositoryEF, SupplierRepositoryEF>();
-builder.Services.AddScoped<ICategorySupplierRepositoryEF, CategorySupplierRepositoryEF>();
-builder.Services.AddScoped<IStockItemRepositoryEF, StockItemRepositoryEF>();
-builder.Services.AddScoped<IGoodsReceiptRepositoryEF, GoodsReceiptRepositoryEF>();
-builder.Services.AddScoped<IGoodsReceiptLineRepositoryEF, GoodsReceiptLineRepositoryEF>();
-builder.Services.AddScoped<IGoodsReceiptSerialRepositoryEF, GoodsReceiptSerialRepositoryEF>();
-builder.Services.AddScoped<IStockMovementRepositoryEF, StockMovementRepositoryEF>();
-builder.Services.AddScoped<IInventoryReturnRepositoryEF, InventoryReturnRepositoryEF>();
-builder.Services.AddScoped<IOrderDetailStockItemRepositoryEF, OrderDetailStockItemRepositoryEF>();
-builder.Services.AddScoped<IInventoryTransactionRepositoryEF, InventoryTransactionRepositoryEF>();
-builder.Services.AddScoped<IWarrantyRecordRepositoryEF, WarrantyRecordRepositoryEF>();
-builder.Services.AddScoped<IWarrantyClaimRepositoryEF, WarrantyClaimRepositoryEF>();
-builder.Services.AddScoped<IWarrantyClaimUpdateRepositoryEF, WarrantyClaimUpdateRepositoryEF>();
-builder.Services.AddScoped<IRepairCaseRepositoryEF, RepairCaseRepositoryEF>();
-builder.Services.AddScoped<IRepairUpdateRepositoryEF, RepairUpdateRepositoryEF>();
-builder.Services.AddScoped<ISupportTicketRepositoryEF, SupportTicketRepositoryEF>();
-builder.Services.AddScoped<ISupportTicketUpdateRepositoryEF, SupportTicketUpdateRepositoryEF>();
-builder.Services.AddScoped<IUserRepositoryEF, UserRepositoryEF>();
-builder.Services.AddScoped<INotificationRepositoryEF, NotificationRepositoryEF>();
-builder.Services.AddScoped<IAttachmentRepositoryEF, AttachmentRepositoryEF>();
-builder.Services.AddScoped<ICouponRepositoryEF, CouponRepositoryEF>();
-builder.Services.AddScoped<ICouponScopeRepositoryEF, CouponScopeRepositoryEF>();
-builder.Services.AddScoped<IUserCouponRepositoryEF, UserCouponRepositoryEF>();
-builder.Services.AddScoped<IOrderCouponRepositoryEF, OrderCouponRepositoryEF>();
-builder.Services.AddScoped<IVoucherSpinRepositoryEF, VoucherSpinRepositoryEF>();
-
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IWarrantyService, WarrantyService>();
-builder.Services.AddScoped<IRepairService, RepairService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
-builder.Services.AddScoped<ICouponService, CouponService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IInventoryService, InventoryService>();
-builder.Services.AddHostedService<PickupTimeoutBackgroundService>();
-
-// JWT Authentication
-var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "CHANGE_ME_TO_A_LONG_RANDOM_SECRET");
-var issuer = builder.Configuration["Jwt:Issuer"];
-var audience = builder.Configuration["Jwt:Audience"];
-builder.Services.AddAuthentication(x =>
-{
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(x =>
-{
-    x.RequireHttpsMetadata = false;
-    x.SaveToken = true;
-    x.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            var accessToken = context.Request.Query["access_token"];
-            var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrWhiteSpace(accessToken) && path.StartsWithSegments("/techstoreChatHub"))
-            {
-                context.Token = accessToken;
-            }
-            return Task.CompletedTask;
-        }
-    };
-    x.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
-        ValidIssuer = issuer,
-        ValidateAudience = !string.IsNullOrWhiteSpace(audience),
-        ValidAudience = audience
-    };
-});
+builder.Services.AddSwaggerDocs();
+builder.Services.AddCorsPolicy(builder.Configuration, builder.Environment);
+builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddDomainServices();
+builder.Services.AddJwtAuth(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
-        var exception = feature?.Error;
-        var statusCode = exception is InvalidOperationException ? StatusCodes.Status400BadRequest : StatusCodes.Status500InternalServerError;
-
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/problem+json";
-
-        var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
-        {
-            Status = statusCode,
-            Title = statusCode == StatusCodes.Status400BadRequest ? "Bad Request" : "Server Error",
-            Detail = app.Environment.IsDevelopment() 
-                ? exception?.ToString() 
-                : exception?.Message,
-            Instance = feature?.Path
-        };
-        problem.Extensions["traceId"] = context.TraceIdentifier;
-
-        if (app.Environment.IsDevelopment())
-        {
-            problem.Extensions["stackTrace"] = exception?.StackTrace;
-            problem.Extensions["innerException"] = exception?.InnerException?.ToString();
-        }
-
-        await context.Response.WriteAsJsonAsync(problem);
-    });
-});
+app.UseApiExceptionHandler();
 
 // Runtime must read/write only the configured SQL Server techstore database.
 // Apply schema/data changes explicitly instead of seeding automatically on startup.
@@ -215,13 +50,13 @@ if (autoMigrateOnStartup)
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    
+
     // Create database and apply migrations
     try
     {
         db.Database.Migrate();
         await db.SeedDataAsync();
-    
+
         Console.WriteLine("Database migrated and seeded successfully");
     }
     catch (Exception ex)

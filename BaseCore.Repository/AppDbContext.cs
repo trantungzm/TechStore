@@ -89,8 +89,6 @@ namespace BaseCore.Repository
                 entity.Property(e => e.CreatedBy).HasMaxLength(100);
                 entity.Property(e => e.ModifiedBy).HasMaxLength(100);
                 entity.Property(e => e.CreatedUser).HasMaxLength(100);
-                entity.Ignore(e => e.RoleModule);
-                entity.Ignore(e => e.UserRole);
                 entity.HasIndex(e => e.Name).IsUnique();
             });
 
@@ -249,8 +247,6 @@ namespace BaseCore.Repository
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.Slug).HasMaxLength(220);
-                entity.Property(e => e.Sku).HasMaxLength(80);
-                entity.Property(e => e.Price).HasPrecision(18, 2);
                 entity.Property(e => e.OriginalPrice).HasPrecision(18, 2);
                 entity.Property(e => e.Description).HasMaxLength(1000);
                 entity.Property(e => e.LongDescription).HasMaxLength(4000);
@@ -316,10 +312,6 @@ namespace BaseCore.Repository
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.VariantName).HasMaxLength(160);
-                entity.Property(e => e.ColorName).HasMaxLength(80);
-                entity.Property(e => e.ColorCode).HasMaxLength(32);
-                entity.Property(e => e.Storage).HasMaxLength(80);
-                entity.Property(e => e.Ram).HasMaxLength(80);
                 entity.Property(e => e.Price).HasPrecision(18, 2);
                 entity.Property(e => e.OriginalPrice).HasPrecision(18, 2);
                 entity.Property(e => e.Sku).HasMaxLength(80);

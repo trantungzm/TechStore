@@ -86,12 +86,12 @@ const DEFAULT_HERO = {
 };
 
 const serviceItems = [
-    { icon: 'fas fa-sync-alt', title: 'Free Return', text: '30 days money back guarantee!' },
-    { icon: 'fab fa-telegram-plane', title: 'Free Shipping', text: 'Free shipping on all order' },
-    { icon: 'fas fa-life-ring', title: 'Support 24/7', text: 'We support online 24 hrs a day' },
-    { icon: 'fas fa-credit-card', title: 'Receive Gift Card', text: 'Recieve gift all over oder $50' },
-    { icon: 'fas fa-lock', title: 'Secure Payment', text: 'We Value Your Security' },
-    { icon: 'fas fa-headset', title: 'Online Service', text: 'Free return products in 30 days' },
+    { icon: 'fas fa-sync-alt', title: 'Free Return', text: '30 days money back guarantee!', to: '/warranty' },
+    { icon: 'fab fa-telegram-plane', title: 'Free Shipping', text: 'Free shipping on all order', to: '/shop' },
+    { icon: 'fas fa-life-ring', title: 'Support 24/7', text: 'We support online 24 hrs a day', to: '/tickets' },
+    { icon: 'fas fa-credit-card', title: 'Receive Gift Card', text: 'Recieve gift all over oder $50', to: '/promotion' },
+    { icon: 'fas fa-lock', title: 'Secure Payment', text: 'We Value Your Security', to: '/cart' },
+    { icon: 'fas fa-headset', title: 'Online Service', text: 'Free return products in 30 days', to: '/tickets' },
 ];
 
 const offerCards = [];
@@ -321,22 +321,35 @@ const Home = () => {
                 transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
                 className="ts-container py-12"
             >
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-border)] shadow-[var(--shadow-soft)] md:grid-cols-3 lg:grid-cols-6">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
                     {serviceItems.map((item, idx) => (
                         <motion.div
                             key={item.title}
-                            initial={{ opacity: 0, y: 12 }}
+                            initial={{ opacity: 0, y: 14 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.2 }}
                             transition={{ delay: idx * 0.06, duration: 0.5 }}
-                            whileHover={{ y: -2 }}
-                            className="group flex items-start gap-3 bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-surface-2)]"
                         >
-                            <i className={`${item.icon} mt-1 text-lg text-[var(--color-accent)] transition-transform duration-300 group-hover:scale-110`}></i>
-                            <div className="min-w-0">
-                                <p className="ts-eyebrow text-[10px]">{t(item.title)}</p>
-                                <p className="mt-1 text-xs leading-tight text-[var(--color-fg-muted)]">{t(item.text)}</p>
-                            </div>
+                            <Link
+                                to={item.to}
+                                className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[var(--color-primary)]/30 hover:shadow-[var(--shadow-card)]"
+                            >
+                                {/* khối sáng mờ ở góc, đậm dần khi hover */}
+                                <span className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-accent)]/20 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                                {/* icon orb gradient + glow */}
+                                <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] text-white shadow-[0_10px_24px_-8px_var(--color-primary)] transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+                                    <i className={`${item.icon} text-lg`}></i>
+                                </span>
+                                <div className="relative min-w-0 flex-1">
+                                    <p className="ts-eyebrow text-[10px]">{t(item.title)}</p>
+                                    <p className="mt-1.5 text-xs leading-snug text-[var(--color-fg-muted)]">{t(item.text)}</p>
+                                </div>
+                                {/* CTA hiện khi hover */}
+                                <span className="relative inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-primary)] opacity-0 -translate-y-1 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                                    Xem thêm
+                                    <i className="fas fa-arrow-right text-[9px] transition-transform duration-300 group-hover:translate-x-0.5"></i>
+                                </span>
+                            </Link>
                         </motion.div>
                     ))}
                 </div>
@@ -378,42 +391,6 @@ const Home = () => {
             </section>
 
             <OurProductsSection products={miniProducts} loading={loading} onAddToCart={handleAddToCart} />
-
-            {/* TEMPLATE BANNERS */}
-            <section className="ts-container py-12">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <motion.div
-                        initial={{ opacity: 0, x: -30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{ duration: 0.7 }}
-                    >
-                        <Link to="/shop" className="group relative block aspect-[16/9] overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)]">
-                            <span className="absolute inset-0 bg-gradient-to-br from-[var(--color-surface-2)] via-[var(--color-surface)] to-[var(--color-background)] transition-transform duration-700 group-hover:scale-110" />
-                            <div className="relative z-10 flex h-full flex-col items-start justify-center gap-3 bg-gradient-to-r from-white/90 via-white/60 to-transparent p-8">
-                                <h3 className="ts-display text-3xl text-[var(--color-fg)]">EOS Rebel<br /><span className="ts-gradient-text">T7i Kit</span></h3>
-                                <p className="ts-mono text-xl text-[var(--color-fg-muted)]">$899.99</p>
-                                <span className="ts-btn ts-btn-primary mt-2 group/btn">{t('Shop Now')} <i className="fas fa-arrow-right text-xs transition-transform group-hover/btn:translate-x-1"></i></span>
-                            </div>
-                        </Link>
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0, x: 30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{ duration: 0.7, delay: 0.1 }}
-                    >
-                        <Link to="/shop" className="group relative block aspect-[16/9] overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)] transition-shadow duration-500 hover:shadow-[var(--shadow-lift)]">
-                            <span className="absolute inset-0 bg-gradient-to-br from-[var(--color-background)] via-[var(--color-surface)] to-[var(--color-surface-2)] transition-transform duration-700 group-hover:scale-110" />
-                            <div className="relative z-10 flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-r from-transparent via-white/60 to-white/90 p-8 text-center">
-                                <h3 className="ts-display text-4xl text-[var(--color-fg)] tracking-wider">GIẢM <span className="ts-gradient-text">50%</span></h3>
-                                <p className="text-sm uppercase tracking-[0.3em] text-[var(--color-fg-muted)]">Flash Sale</p>
-                                <span className="ts-btn ts-btn-outline mt-2">{t('Shop Now')}</span>
-                            </div>
-                        </Link>
-                    </motion.div>
-                </div>
-            </section>
 
             {/* ALL ITEMS CAROUSEL */}
             <motion.section

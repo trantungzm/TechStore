@@ -4,6 +4,8 @@ using BaseCore.Repository.EFCore;
 
 namespace BaseCore.Services
 {
+    // Service sửa chữa: gom luồng tiếp nhận máy, cập nhật tiến độ repair case
+    // và đồng bộ ngược trạng thái sang claim, ticket, stock item.
     public class RepairService : IRepairService
     {
         private readonly IRepairCaseRepositoryEF _repairRepository;
@@ -25,30 +27,36 @@ namespace BaseCore.Services
             _notificationService = notificationService;
         }
 
+        // Admin repairs dùng hàm này để lấy danh sách ca sửa chữa theo bộ lọc chung.
         public async Task<(List<RepairCaseDto> Items, int TotalCount)> GetRepairsAsync(SupportSearchDto search)
         {
             var result = await _repairRepository.SearchAsync(search);
             return (result.Items.Select(ToDto).ToList(), result.TotalCount);
         }
 
+        // Danh sách repair case của chính khách hàng đang đăng nhập.
         public async Task<(List<RepairCaseDto> Items, int TotalCount)> GetMyRepairsAsync(Guid userId, SupportSearchDto search)
         {
             var result = await _repairRepository.SearchByUserAsync(userId, search);
             return (result.Items.Select(ToDto).ToList(), result.TotalCount);
         }
 
+        // Customer side dùng hàm này để xem chi tiết một ca sửa chữa của mình.
         public async Task<RepairCaseDto?> GetMyRepairAsync(Guid userId, int id)
         {
             var item = await _repairRepository.GetDetailByUserAsync(userId, id);
             return item == null ? null : ToDto(item);
         }
 
+        // Admin/staff lấy chi tiết repair case mà không bị ràng buộc ownership.
         public async Task<RepairCaseDto?> GetRepairAsync(int id)
         {
             var item = await _repairRepository.GetDetailAsync(id);
             return item == null ? null : ToDto(item);
         }
 
+        // Tiếp nhận sửa chữa có thể đi từ warranty claim, ticket hoặc tra cứu serial/IMEI.
+        // Đây là điểm nối chính giữa hậu mãi, bảo hành và kho.
         public async Task<RepairCaseDto> IntakeAsync(CreateRepairIntakeDto dto, Guid? userId)
         {
             WarrantyClaim? claim = dto.WarrantyClaimId.HasValue ? await _claimRepository.GetDetailAsync(dto.WarrantyClaimId.Value) : null;
@@ -101,6 +109,8 @@ namespace BaseCore.Services
             return (await GetRepairAsync(item.Id))!;
         }
 
+        // Cập nhật thông tin kỹ thuật chi tiết như chẩn đoán, giải pháp, chi phí,
+        // nhưng chưa đổi workflow status của repair case.
         public async Task<RepairCaseDto?> UpdateAsync(int id, UpdateRepairCaseDto dto)
         {
             var item = await _repairRepository.GetDetailAsync(id);
@@ -120,6 +130,8 @@ namespace BaseCore.Services
             return await GetRepairAsync(id);
         }
 
+        // Chuyển trạng thái repair case và đồng bộ mạch hậu mãi đi kèm:
+        // warranty claim, support ticket và stock item đều được cập nhật theo.
         public async Task<RepairCaseDto?> UpdateStatusAsync(int id, UpdateRepairStatusDto dto, Guid? userId)
         {
             var item = await _repairRepository.GetDetailAsync(id);
@@ -165,25 +177,30 @@ namespace BaseCore.Services
             return await GetRepairAsync(id);
         }
 
+        // Timeline riêng của repair case để FE hiển thị lịch sử thao tác.
         public Task<List<RepairUpdateDto>> GetUpdatesAsync(int repairId) => _updateRepository.GetByRepairAsync(repairId).ContinueWith(t => t.Result.Select(ToUpdateDto).ToList());
 
+        // Lưu lại từng bước tiến độ để FE có timeline/history của ca sửa chữa.
         private async Task AddUpdate(int repairId, string status, string title, string? message, Guid? userId)
         {
             await _updateRepository.AddAsync(new RepairUpdate { RepairCaseId = repairId, Status = status, Title = title, Message = message, CreatedAt = DateTime.UtcNow, CreatedByUserId = userId });
         }
 
+        // Chuẩn hóa priority để tránh lưu các giá trị tự do ngoài danh sách cho phép.
         private static string NormalizePriority(string? value)
         {
             var allowed = new[] { "Low", "Normal", "High", "Urgent" };
             return allowed.FirstOrDefault(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase)) ?? "Normal";
         }
 
+        // Chuẩn hóa status nhằm giữ workflow sửa chữa nhất quán giữa admin và customer side.
         private static string NormalizeStatus(string value)
         {
             var allowed = new[] { "Pending", "Intake", "Diagnosing", "WaitingCustomerApproval", "WaitingParts", "Repairing", "Testing", "Completed", "Delivered", "Cancelled", "Rejected" };
             return allowed.FirstOrDefault(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase)) ?? throw new InvalidOperationException("Trang thai sua chua khong hop le.");
         }
 
+        // Title hiển thị cho notification/timeline theo từng trạng thái sửa chữa.
         private static string RepairTitle(string status) => status switch
         {
             "Diagnosing" => "Kỹ thuật đang kiểm tra",
@@ -194,11 +211,13 @@ namespace BaseCore.Services
             _ => "Cập nhật sửa chữa"
         };
 
+        // Map entity sang DTO để màn admin và màn theo dõi sửa chữa của khách cùng dùng một shape.
         private static RepairCaseDto ToDto(RepairCase item) => new()
         {
             Id = item.Id, RepairCode = item.RepairCode, WarrantyClaimId = item.WarrantyClaimId, TicketId = item.TicketId, StockItemId = item.StockItemId, ProductId = item.ProductId, VariantId = item.VariantId, SerialOrImei = item.SerialOrImei, CustomerName = item.CustomerName, CustomerPhone = item.CustomerPhone, ProductName = item.ProductName ?? item.Product?.Name, IssueDescription = item.IssueDescription, Diagnosis = item.Diagnosis, Solution = item.Solution, TechnicianId = item.TechnicianId, Status = item.Status, Priority = item.Priority, ReceivedAt = item.ReceivedAt, EstimatedCompletionAt = item.EstimatedCompletionAt, CompletedAt = item.CompletedAt, CostEstimate = item.CostEstimate, FinalCost = item.FinalCost, IsWarrantyCovered = item.IsWarrantyCovered, CustomerApprovedCost = item.CustomerApprovedCost, Note = item.Note, CreatedAt = item.CreatedAt, UpdatedAt = item.UpdatedAt
         };
 
+        // Map từng bản ghi update sang DTO timeline.
         private static RepairUpdateDto ToUpdateDto(RepairUpdate item) => new() { Id = item.Id, RepairCaseId = item.RepairCaseId, Status = item.Status, Title = item.Title, Message = item.Message, CreatedAt = item.CreatedAt, CreatedByUserId = item.CreatedByUserId };
     }
 }

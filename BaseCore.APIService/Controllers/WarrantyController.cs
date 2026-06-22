@@ -6,6 +6,7 @@ using System.Security.Claims;
 
 namespace BaseCore.APIService.Controllers
 {
+    // Controller bảo hành phục vụ cả user-side lookup/claim và admin-side quản trị claim/warranty.
     [Route("api/[controller]")]
     [ApiController]
     public class WarrantyController : ControllerBase
@@ -17,6 +18,7 @@ namespace BaseCore.APIService.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Lookup([FromQuery] string? serialOrImei, [FromQuery] string? orderCode, [FromQuery] string? phone)
         {
+            // Lookup công khai theo serial hoặc orderCode + phone ở màn Warranty người dùng.
             var result = await _service.LookupAsync(serialOrImei, orderCode, phone);
             return result.Found ? Ok(result) : NotFound(result);
         }
@@ -33,6 +35,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> All([FromQuery] SupportSearchDto search)
         {
+            // AdminWarranty tab danh sách bảo hành dùng endpoint này.
             var result = await _service.GetAllWarrantiesAsync(search);
             return Ok(Paged(result.Items, result.TotalCount, search.Page, search.PageSize));
         }
@@ -51,6 +54,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Technical")]
         public async Task<IActionResult> ActivateAdmin([FromBody] ActivateWarrantyDto dto)
         {
+            // Technical kích hoạt thủ công khi xử lý tại quầy hoặc trong màn sửa chữa.
             var item = await _service.ActivateAsStaffAsync(dto.WarrantyId, CurrentUserId());
             return item == null ? NotFound(new { message = "Bao hanh khong ton tai." }) : Ok(item);
         }
@@ -67,6 +71,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize]
         public async Task<IActionResult> CreateClaim([FromBody] CreateWarrantyClaimDto dto)
         {
+            // User gửi yêu cầu bảo hành, sau đó claim sẽ xuất hiện trong màn AdminWarranty.
             var claim = await _service.CreateClaimAsync(dto, CurrentUserId());
             return Ok(new { claim.Id, claim.ClaimCode, claim.Status, message = "Yeu cau bao hanh cua ban da duoc gui. Chung toi se lien he lai trong thoi gian som nhat." });
         }
@@ -84,6 +89,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Admin,Warehouse,Technical")]
         public async Task<IActionResult> AllClaims([FromQuery] SupportSearchDto search)
         {
+            // Tab quản trị yêu cầu bảo hành đọc dữ liệu từ đây.
             var result = await _service.GetClaimsAsync(search);
             return Ok(Paged(result.Items, result.TotalCount, search.Page, search.PageSize));
         }
@@ -100,6 +106,7 @@ namespace BaseCore.APIService.Controllers
         [Authorize(Roles = "Technical")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateWarrantyClaimStatusDto dto)
         {
+            // Technical đổi trạng thái claim; service sẽ đồng bộ timeline và trạng thái thiết bị nếu cần.
             var claim = await _service.UpdateClaimStatusAsync(id, dto, CurrentUserId());
             return claim == null ? NotFound(new { message = "Yeu cau bao hanh khong ton tai." }) : Ok(claim);
         }

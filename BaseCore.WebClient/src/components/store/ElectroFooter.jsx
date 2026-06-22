@@ -1,36 +1,33 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { t } from '../../utils/store';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
 
 const footerGroups = [
     {
-        title: 'Customer Service',
+        title: 'Hỗ trợ khách hàng',
         links: [
-            { label: 'Returns', to: '/shop' },
-            { label: 'Order History', to: '/orders' },
-            { label: 'Site Map', to: '/' },
-            { label: 'Wishlist', to: '/wishlist' },
+            { label: 'Trung tâm hỗ trợ', to: '/tickets' },
+            { label: 'Lịch sử đơn hàng', to: '/orders' },
+            { label: 'Sản phẩm yêu thích', to: '/wishlist' },
+            { label: 'So sánh sản phẩm', to: '/compare' },
         ],
     },
     {
-        title: 'Information',
+        title: 'Chính sách',
         links: [
-            { label: 'About Us', to: '/' },
-            { label: 'Delivery infomation', to: '/shop' },
-            { label: 'Privacy Policy', to: '/' },
-            { label: 'Terms & Conditions', to: '/' },
-            { label: 'FAQ', to: '/' },
+            { label: 'Bảo hành', to: '/warranty' },
+            { label: 'Thông tin vận chuyển', to: '/shop' },
+            { label: 'Đổi trả', to: '/tickets' },
+            { label: 'Điều khoản & điều kiện', to: '/' },
         ],
     },
     {
-        title: 'Extras',
+        title: 'Về TechStore',
         links: [
-            { label: 'Brands', to: '/shop' },
-            { label: 'Gift Vouchers', to: '/cart' },
-            { label: 'Affiliates', to: '/' },
-            { label: 'Wishlist', to: '/wishlist' },
-            { label: 'Track Your Order', to: '/orders' },
+            { label: 'Giới thiệu', to: '/' },
+            { label: 'Khuyến mãi', to: '/promotion' },
+            { label: 'Sản phẩm', to: '/shop' },
+            { label: 'Liên hệ', to: '/tickets' },
         ],
     },
 ];
@@ -39,10 +36,10 @@ const ElectroFooter = () => {
     const settings = useStoreSettings();
     const storeName = settings.storeName || 'TechStore';
     const contactItems = [
-        settings.address && { icon: 'fas fa-map-marker-alt', title: 'Address', text: settings.address },
-        settings.supportEmail && { icon: 'fas fa-envelope', title: 'Mail Us', text: settings.supportEmail },
-        settings.hotline && { icon: 'fas fa-phone-alt', title: 'Telephone', text: settings.hotline },
-        settings.supportTime && { icon: 'fas fa-clock', title: 'Working Hours', text: settings.supportTime },
+        settings.address && { icon: 'fas fa-map-marker-alt', title: 'Địa chỉ', text: settings.address },
+        settings.supportEmail && { icon: 'fas fa-envelope', title: 'Email', text: settings.supportEmail },
+        settings.hotline && { icon: 'fas fa-phone-alt', title: 'Hotline', text: settings.hotline },
+        settings.supportTime && { icon: 'fas fa-clock', title: 'Giờ làm việc', text: settings.supportTime },
     ].filter(Boolean);
     const socials = [
         settings.facebookUrl && { icon: 'fab fa-facebook-f', href: settings.facebookUrl, label: 'Facebook' },
@@ -50,89 +47,124 @@ const ElectroFooter = () => {
     ].filter(Boolean);
 
     return (
-    <footer className="relative mt-32 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[var(--color-primary)]/40 to-transparent" />
+        <footer className="mt-24 pb-6">
+            <div className="ts-container">
+                <div className="overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface-glass)] shadow-[var(--shadow-soft)] backdrop-blur-xl">
+                    {/* dải gradient mảnh ở mép trên */}
+                    <div className="h-1 w-full bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-primary)]" />
 
-        <div className="ts-container py-20">
-            <div className="grid grid-cols-2 gap-8 border-b border-[var(--color-border)] pb-12 md:grid-cols-4">
-                {contactItems.map((item) => (
-                    <div key={item.title} className="group">
-                        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-accent)] transition-colors group-hover:border-[var(--color-primary)] group-hover:text-[var(--color-primary)]">
-                            <i className={item.icon}></i>
+                    {/* Hàng thông tin liên hệ */}
+                    {contactItems.length > 0 && (
+                        <div className="grid grid-cols-1 gap-4 border-b border-[var(--color-border)] px-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
+                            {contactItems.map((item) => (
+                                <div key={item.title} className="flex items-start gap-3">
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] text-white shadow-[0_10px_24px_-8px_var(--color-primary)]">
+                                        <i className={item.icon}></i>
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="ts-eyebrow mb-1 text-[10px]">{item.title}</p>
+                                        <p className="text-sm leading-snug text-[var(--color-fg-muted)] break-words">{item.text}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <p className="ts-eyebrow mb-2">{t(item.title)}</p>
-                        <p className="text-sm text-[var(--color-fg-muted)]">{item.text}</p>
-                    </div>
-                ))}
-            </div>
+                    )}
 
-            <div className="grid grid-cols-1 gap-12 py-16 md:grid-cols-2 lg:grid-cols-4">
-                <div className="lg:col-span-1">
-                    <Link to="/" className="ts-display text-2xl text-[var(--color-fg)]">
-                        {storeName}
-                    </Link>
-                    <p className="mt-5 text-sm leading-relaxed text-[var(--color-fg-muted)]">
-                        Sản phẩm công nghệ được tuyển chọn — chính hãng, bảo hành minh bạch, dịch vụ tận tâm.
-                    </p>
-                    <p className="ts-eyebrow mt-8 mb-3">{t('Newsletter')}</p>
-                    <form
-                        onSubmit={(event) => event.preventDefault()}
-                        className="flex items-center gap-2 border border-[var(--color-border)] bg-[var(--color-background)] p-1 transition-colors focus-within:border-[var(--color-primary)]"
-                    >
-                        <input
-                            type="email"
-                            placeholder={t('Enter your email')}
-                            className="flex-1 bg-transparent px-3 py-2 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-fg-faint)] focus:outline-none"
-                        />
-                        <button type="submit" className="ts-btn ts-btn-primary px-4 py-2 text-xs">
-                            {t('SignUp')}
-                        </button>
-                    </form>
+                    {/* Thân footer */}
+                    <div className="grid grid-cols-1 gap-10 px-6 py-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-10">
+                        {/* Cột thương hiệu */}
+                        <div>
+                            <Link to="/" className="ts-display text-2xl text-[var(--color-fg)]">
+                                Tech<span className="ts-gradient-text">Store</span>
+                            </Link>
+                            <p className="mt-4 max-w-sm text-sm leading-relaxed text-[var(--color-fg-muted)]">
+                                Sản phẩm công nghệ được tuyển chọn — chính hãng, bảo hành minh bạch, dịch vụ tận tâm.
+                            </p>
 
-                    <div className="mt-8 flex items-center gap-3">
-                        {socials.map((s) => (
-                            <a
-                                key={s.label}
-                                href={s.href}
-                                aria-label={s.label}
-                                className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--color-border)] text-[var(--color-fg-muted)] transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                            <p className="ts-eyebrow mb-3 mt-7">Đăng ký nhận bản tin</p>
+                            <form
+                                onSubmit={(event) => event.preventDefault()}
+                                className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-white/80 p-1 shadow-[var(--shadow-soft)] transition-colors focus-within:border-[var(--color-primary)]"
                             >
-                                <i className={s.icon}></i>
-                            </a>
+                                <input
+                                    type="email"
+                                    placeholder="Nhập email của bạn"
+                                    className="flex-1 bg-transparent px-3 py-2 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-fg-faint)] focus:outline-none"
+                                />
+                                <button type="submit" className="ts-btn ts-btn-primary shrink-0 px-4 py-2 text-xs">
+                                    Đăng ký
+                                </button>
+                            </form>
+
+                            {socials.length > 0 && (
+                                <div className="mt-6 flex items-center gap-2.5">
+                                    {socials.map((s) => (
+                                        <a
+                                            key={s.label}
+                                            href={s.href}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            aria-label={s.label}
+                                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white/70 text-[var(--color-fg-muted)] transition-all hover:-translate-y-0.5 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                                        >
+                                            <i className={s.icon}></i>
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Các cột liên kết */}
+                        {footerGroups.map((group) => (
+                            <div key={group.title}>
+                                <p className="ts-eyebrow mb-5 text-[var(--color-primary)]">{group.title}</p>
+                                <ul className="space-y-3">
+                                    {group.links.map((link) => (
+                                        <li key={`${group.title}-${link.label}`}>
+                                            <Link
+                                                to={link.to}
+                                                className="group inline-flex items-center text-sm text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-fg)]"
+                                            >
+                                                <span className="mr-2 inline-block h-px w-3 bg-[var(--color-border-strong)] transition-all group-hover:w-5 group-hover:bg-[var(--color-primary)]" />
+                                                {link.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         ))}
                     </div>
-                </div>
 
-                {footerGroups.map((group) => (
-                    <div key={group.title}>
-                        <p className="ts-eyebrow mb-5 text-[var(--color-accent)]">{t(group.title)}</p>
-                        <ul className="space-y-3">
-                            {group.links.map((link) => (
-                                <li key={`${group.title}-${link.label}`}>
-                                    <Link
-                                        to={link.to}
-                                        className="group inline-flex items-center text-sm text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-fg)]"
-                                    >
-                                        <span className="mr-2 inline-block h-px w-3 bg-[var(--color-border-strong)] transition-all group-hover:w-5 group-hover:bg-[var(--color-primary)]" />
-                                        {t(link.label)}
-                                    </Link>
-                                </li>
+                    {/* Hàng tiện ích: thanh toán & vận chuyển */}
+                    <div className="grid grid-cols-1 gap-6 border-t border-[var(--color-border)] px-6 py-6 sm:grid-cols-2 lg:px-10">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <p className="ts-eyebrow mr-1">Thanh toán</p>
+                            {['COD', 'Chuyển khoản', 'Ví điện tử'].map((label) => (
+                                <span key={label} className="ts-pill">{label}</span>
                             ))}
-                        </ul>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                            <p className="ts-eyebrow mr-1">Vận chuyển</p>
+                            {['Giao hàng nhanh', 'Giao tiết kiệm', 'VNPost'].map((label) => (
+                                <span key={label} className="ts-pill">{label}</span>
+                            ))}
+                        </div>
                     </div>
-                ))}
-            </div>
-        </div>
 
-        <div className="border-t border-[var(--color-border)]">
-            <div className="ts-container flex flex-col items-center justify-between gap-3 py-6 md:flex-row">
-                <p className="text-xs text-[var(--color-fg-dim)]">
-                    © {new Date().getFullYear()} <Link to="/" className="text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-primary)]">{storeName}</Link> · Bản quyền được bảo lưu.
-                </p>
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-fg-dim)]">Crafted on BaseCore</p>
+                    {/* Dòng bản quyền */}
+                    <div className="flex flex-col items-center justify-between gap-2 border-t border-[var(--color-border)] bg-white/40 px-6 py-5 text-center md:flex-row md:text-left lg:px-10">
+                        <p className="text-xs text-[var(--color-fg-dim)]">
+                            © {new Date().getFullYear()}{' '}
+                            <Link to="/" className="text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-primary)]">{storeName}</Link>
+                            {' '}· Bản quyền được bảo lưu.
+                        </p>
+                        <p className="text-xs text-[var(--color-fg-dim)]">
+                            Chính hãng · Đổi trả · Bảo hành · Giao nhanh · Thanh toán an toàn
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </footer>
+        </footer>
     );
 };
 
