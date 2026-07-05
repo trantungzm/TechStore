@@ -75,6 +75,7 @@ Console.WriteLine(@"
  Gateway:        http://localhost:5000
  APIService:     http://localhost:5001
  AuthService:    http://localhost:5002
+ RustService:    http://localhost:7001 (/api/rust/*)
 ============================================================
 ");
 

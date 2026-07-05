@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCompare } from '../../contexts/CompareContext';
 import { useCart } from '../../contexts/CartContext';
 import PageHero from '../../components/store/PageHero';
 import { getProductSpecs } from './ProductDetail';
-import { productApi } from '../../services/api';
+import { rustApi } from '../../services/api';
 import { formatCurrency, resolveProductImage, setPageMeta, t } from '../../utils/store';
 
 const normalizeText = (value = '') => String(value)
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D')
     .toLowerCase();
@@ -92,30 +92,60 @@ const Compare = () => {
     const { compareItems, removeFromCompare, getCompareCategoryKey } = useCompare();
     const { addItem } = useCart();
     const [detailedCompareItems, setDetailedCompareItems] = useState(() => compareItems.slice(0, 2));
+    const [rustSpecRows, setRustSpecRows] = useState([]);
+    const [compareLoading, setCompareLoading] = useState(false);
+    const [compareError, setCompareError] = useState('');
     const products = detailedCompareItems.slice(0, 2);
     const comparableSpecs = useMemo(
-        () => (products.length >= 2 ? getComparableSpecs(products, getCompareCategoryKey) : []),
-        [products, getCompareCategoryKey]
+        () => {
+            if (compareLoading || compareError) return [];
+            if (rustSpecRows.length) {
+                return rustSpecRows
+                    .map((row) => ({
+                        label: row.label || row.specName,
+                        values: Array.isArray(row.values) ? row.values : [],
+                    }))
+                    .filter((row) => row.label && row.values.some((value) => value && value !== EMPTY_SPEC_VALUE));
+            }
+            return products.length >= 2 ? getComparableSpecs(products, getCompareCategoryKey) : [];
+        },
+        [products, getCompareCategoryKey, rustSpecRows, compareLoading, compareError]
     );
 
     useEffect(() => {
         let cancelled = false;
         const baseItems = compareItems.slice(0, 2);
         setDetailedCompareItems(baseItems);
+        setRustSpecRows([]);
+        setCompareError('');
 
-        if (baseItems.length === 0) return () => { cancelled = true; };
+        if (baseItems.length < 2) {
+            setCompareLoading(false);
+            return () => { cancelled = true; };
+        }
 
         const loadProductDetails = async () => {
-            const nextItems = await Promise.all(baseItems.map(async (item) => {
-                try {
-                    const response = await productApi.getById(item.id);
-                    return response.data?.id ? { ...item, ...response.data } : item;
-                } catch {
-                    return item;
+            setCompareLoading(true);
+            try {
+                const response = await rustApi.productCompare.compare(baseItems.map((item) => item.id));
+                const rustProducts = Array.isArray(response.data?.products) ? response.data.products : [];
+                const specRows = Array.isArray(response.data?.specRows) ? response.data.specRows : [];
+                if (!cancelled) {
+                    setRustSpecRows(specRows);
+                    setDetailedCompareItems(baseItems.map((item) => {
+                        const fromRust = rustProducts.find((product) => String(product.id) === String(item.id));
+                        return fromRust ? { ...item, ...fromRust } : item;
+                    }));
+                    setCompareError(rustProducts.length ? '' : 'Không nhận được dữ liệu sản phẩm từ Rust Compare API.');
                 }
-            }));
-
-            if (!cancelled) setDetailedCompareItems(nextItems);
+            } catch {
+                if (!cancelled) {
+                    setRustSpecRows([]);
+                    setCompareError('Không tải được dữ liệu so sánh từ Rust API. Vui lòng kiểm tra Rust Service.');
+                }
+            } finally {
+                if (!cancelled) setCompareLoading(false);
+            }
         };
 
         loadProductDetails();
@@ -131,7 +161,7 @@ const Compare = () => {
 
     return (
         <>
-            <PageHero title="So sánh sản phẩm" current="So sánh" kicker="Đối chiếu" />
+            <PageHero title="So sánh sản phẩm" current="So sánh" kicker="Đổi chiều" />
 
             <section className="ts-container py-12">
                 {products.length < 2 ? (
@@ -188,16 +218,37 @@ const Compare = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {comparableSpecs.map((row) => (
-                                    <tr key={row.label}>
-                                        <th className="bg-[var(--color-surface-2)] text-left text-xs font-medium uppercase tracking-wider text-[var(--color-fg-dim)]">{row.label}</th>
-                                        {row.values.map((value, i) => (
-                                            <td key={`${row.label}-${products[i].id}`} className="text-sm text-[var(--color-fg)]">
+                                {compareLoading ? (
+                                    <tr>
+                                        <td colSpan={products.length + 1} className="py-10 text-center text-sm text-[var(--color-fg-muted)]">
+                                            <i className="fas fa-spinner fa-spin mr-2"></i>
+                                            Đang tải thông số so sánh từ Rust API...
+                                        </td>
+                                    </tr>
+                                ) : compareError ? (
+                                    <tr>
+                                        <td colSpan={products.length + 1} className="py-10 text-center text-sm text-rose-500">
+                                            {compareError}
+                                        </td>
+                                    </tr>
+                                ) : comparableSpecs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={products.length + 1} className="py-10 text-center text-sm text-[var(--color-fg-muted)]">
+                                            Chưa có thông số so sánh.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    comparableSpecs.map((row) => (
+                                        <tr key={row.label}>
+                                            <th className="bg-[var(--color-surface-2)] text-left text-xs font-medium uppercase tracking-wider text-[var(--color-fg-dim)]">{row.label}</th>
+                                            {row.values.map((value, i) => (
+                                                <td key={`${row.label}-${products[i].id}`} className="text-sm text-[var(--color-fg)]">
                                                     {value || <span className="text-[var(--color-fg-dim)]">—</span>}
                                                 </td>
                                             ))}
                                         </tr>
-                                    ))}
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -208,3 +259,6 @@ const Compare = () => {
 };
 
 export default Compare;
+
+
+

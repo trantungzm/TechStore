@@ -1,6 +1,15 @@
 {
   "Routes": [
     {
+      "DownstreamPathTemplate": "/api/rust/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/rust/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
+    },
+    {
       "DownstreamPathTemplate": "/api/auth/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

@@ -5,7 +5,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useCompare } from '../../contexts/CompareContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useStoreSettings } from '../../contexts/StoreSettingsContext';
-import { orderApi, productApi } from '../../services/api';
+import { orderApi, productApi, rustApi } from '../../services/api';
 import { countUnseenOrderUpdates } from '../../utils/orderUpdates';
 import { usePublicCoupons } from '../../hooks/usePublicCoupons';
 import { getAvailableCouponsForProduct } from '../../utils/couponUtils';
@@ -210,24 +210,30 @@ const ElectroHeader = () => {
     }, []);
 
     useEffect(() => {
+        if (!searchOpen) return undefined;
+
         let active = true;
-        const loadProducts = async () => {
+        const timer = window.setTimeout(async () => {
             try {
-                const response = await productApi.getAll({ page: 1, pageSize: 1000 });
-                const products = response.data?.items || [];
-                if (active && products.length) {
-                    setSearchProducts(products);
+                if (trimmedKeyword && trimmedKeyword.length < 2) {
+                    if (active) setSearchProducts([]);
+                    return;
+                }
+                const response = await rustApi.searchSuggestions.get(trimmedKeyword, trimmedKeyword ? 6 : 8);
+                const products = response.data?.items || response.data || [];
+                if (active) {
+                    setSearchProducts(Array.isArray(products) ? products : []);
                 }
             } catch (error) {
                 console.error('Failed to load search suggestions', error);
             }
-        };
+        }, 180);
 
-        loadProducts();
         return () => {
             active = false;
+            window.clearTimeout(timer);
         };
-    }, []);
+    }, [searchOpen, trimmedKeyword]);
 
     const saveSearchKeyword = (value) => {
         const nextHistory = writeSearchHistory(value);

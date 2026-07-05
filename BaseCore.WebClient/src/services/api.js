@@ -363,6 +363,20 @@ export const recommendationApi = {
     setCrossSell: (productId, productIds = []) => api.put('/recommendations/cross-sell', { productIds }, { params: { productId } }),
 };
 
+export const rustApi = {
+    productCompare: {
+        compare: (productIds = []) => api.post('/rust/product-compare', { productIds }),
+    },
+    recommendations: {
+        getCrossSell: (productId, maxItems = 6) => api.get('/rust/recommendations/cross-sell', { params: { productId, maxItems } }),
+        getAutoCrossSell: (productId, maxItems = 6) => api.get('/rust/recommendations/auto-cross-sell', { params: { productId, maxItems } }),
+        getByProduct: (productId, maxItems = 6) => api.get('/rust/recommendations/auto-cross-sell', { params: { productId, maxItems } }),
+    },
+    searchSuggestions: {
+        get: (q = '', maxItems = 8) => api.get('/rust/search-suggestions', { params: { q, maxItems } }).then(normalizeProductResponse),
+    },
+};
+
 export const bannerApi = {
     getActive: (position = 1) => api.get('/banners/active', { params: { position } }),
     getAll: (params = {}) => api.get('/banners', { params }),

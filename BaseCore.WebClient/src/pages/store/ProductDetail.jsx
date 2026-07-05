@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
-import { productApi, couponApi } from '../../services/api';
+import { productApi, couponApi, rustApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
@@ -455,19 +455,25 @@ const ProductDetail = () => {
 
     useEffect(() => {
         setPageMeta({ title: `${t('Product Details')} | TechStore`, description: t('Product meta description') });
-        // Load claimed coupons from backend
+        if (!user) {
+            setClaimedCouponIds([]);
+            return;
+        }
+
+        let active = true;
         const loadClaimedCoupons = async () => {
             try {
                 const myCoupons = await couponApi.getMy({ page: 1, pageSize: 100 });
                 const claimedIds = myCoupons.data?.items?.map((c) => String(c.couponId)) || [];
-                setClaimedCouponIds(claimedIds);
+                if (active) setClaimedCouponIds(claimedIds);
             } catch (error) {
                 console.error('Failed to load claimed coupons:', error);
-                setClaimedCouponIds([]);
+                if (active) setClaimedCouponIds([]);
             }
         };
         loadClaimedCoupons();
-    }, []);
+        return () => { active = false; };
+    }, [user]);
 
     useEffect(() => {
         if (!Number.isFinite(numericId) || numericId <= 0) {
@@ -511,6 +517,18 @@ const ProductDetail = () => {
                 }
                 setProduct(data);
                 setRelatedProducts(getRelatedProductsFromLocalCatalog(data));
+                rustApi.recommendations.getAutoCrossSell(numericId, 4)
+                    .then((recommendationResponse) => {
+                        if (cancelled) return;
+                        const recommendedItems = recommendationResponse.data?.items || recommendationResponse.data || [];
+                        const recommendedProducts = Array.isArray(recommendedItems)
+                            ? recommendedItems.map((item) => item?.product || item?.Product || item).filter(Boolean)
+                            : [];
+                        if (recommendedProducts.length > 0) {
+                            setRelatedProducts(recommendedProducts);
+                        }
+                    })
+                    .catch(() => {});
                 rememberRecentProduct(data);
                 setRecentlyViewedProducts(safeParseJson(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]', []).filter((i) => i?.id !== data.id).slice(0, 4));
                 cacheProductDetail(data);
@@ -668,6 +686,10 @@ const ProductDetail = () => {
     const handleClaimCoupon = async (coupon) => {
         if (isViewOnly) {
             showCouponMessage(STORE_VIEW_ONLY_MESSAGE);
+            return;
+        }
+        if (!user) {
+            showCouponMessage('Vui lòng đăng nhập để nhận phiếu');
             return;
         }
         if (claimingCouponIds.includes(coupon.id)) return;
@@ -1212,14 +1234,16 @@ const ProductDetail = () => {
 
                     <div className="mt-8">
                         {activeTab === 'description' && (
-                            <div className="prose-luxury max-w-3xl space-y-4 text-sm leading-relaxed text-[var(--color-fg-muted)]">
-                                {descriptionParts.length > 0 ? descriptionParts.map((part, i) => (
-                                    Array.isArray(part) ? (
-                                        <ul key={i} className="list-disc space-y-1 pl-6">
-                                            {part.map((item) => <li key={item}>{item}</li>)}
-                                        </ul>
-                                    ) : <p key={i}>{part}</p>
-                                )) : <p className="italic">{t('No description')}</p>}
+                            <div>
+                                <div className="prose-luxury max-w-3xl space-y-4 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+                                    {descriptionParts.length > 0 ? descriptionParts.map((part, i) => (
+                                        Array.isArray(part) ? (
+                                            <ul key={i} className="list-disc space-y-1 pl-6">
+                                                {part.map((item) => <li key={item}>{item}</li>)}
+                                            </ul>
+                                        ) : <p key={i}>{part}</p>
+                                    )) : <p className="italic">{t('No description')}</p>}
+                                </div>
                             </div>
                         )}
 

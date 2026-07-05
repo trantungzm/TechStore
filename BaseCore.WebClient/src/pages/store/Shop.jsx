@@ -204,23 +204,24 @@ const getProductStats = (items = [], totalCount) => {
     return { totalProducts: totalCount || items.length, byId };
 };
 
-const fetchStoreCatalog = async () => {
-    const first = await productApi.getAll({ page: 1, pageSize: 100 });
-    const data = first.data || {};
-    const items = Array.isArray(data.items) ? data.items : [];
-    const totalPages = Number(data.totalPages || 1);
-    const pageSize = Number(data.pageSize || items.length || 100);
-    if (totalPages <= 1) return { items, totalCount: data.totalCount };
-    const rest = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, i) => productApi.getAll({ page: i + 2, pageSize }))
-    );
-    return {
-        items: [...items, ...rest.flatMap((r) => Array.isArray(r.data?.items) ? r.data.items : [])],
-        totalCount: data.totalCount,
-    };
+const getDisplayStock = (product) => {
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const activeVariants = variants.filter((variant) => variant?.isActive !== false && variant?.IsActive !== false);
+    if (activeVariants.length > 0) {
+        return activeVariants.reduce((sum, variant) => sum + Number(variant?.stock ?? variant?.Stock ?? 0), 0);
+    }
+    return Number(product?.stock ?? product?.Stock ?? product?.totalStock ?? product?.TotalStock ?? 0);
 };
 
 const PAGE_SIZE = 12;
+const CATALOG_PAGE_SIZE = 1000;
+
+const fetchStoreCatalog = async () => {
+    const response = await productApi.getAll({ page: 1, pageSize: CATALOG_PAGE_SIZE });
+    const data = response.data || {};
+    const items = Array.isArray(data.items) ? data.items : [];
+    return { items, totalCount: data.totalCount };
+};
 
 const Shop = () => {
     const [products, setProducts] = useState(() => getImmediateCatalog().slice(0, PAGE_SIZE));
@@ -234,6 +235,7 @@ const Shop = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(() => Math.ceil(getImmediateCatalog().length / PAGE_SIZE) || 1);
     const [loading, setLoading] = useState(false);
+    const [catalogLoading, setCatalogLoading] = useState(() => getImmediateCatalog().length === 0);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [openFilterSections, setOpenFilterSections] = useState({ price: true, status: true, offer: true });
     const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
@@ -338,8 +340,10 @@ const Shop = () => {
                 const { items, totalCount } = await fetchStoreCatalog();
                 setAllProducts(items);
                 setCategoryStats(getProductStats(items, totalCount));
+                setCatalogLoading(false);
             } catch (e) {
                 console.error('Failed to load products catalog', e);
+                setCatalogLoading(false);
             }
         };
 
@@ -415,7 +419,7 @@ const Shop = () => {
         if (activeCategoryId) {
             filtered = filtered.filter((p) => String(p.categoryId) === String(activeCategoryId));
         }
-        if (urlInStock) filtered = filtered.filter((p) => Number(p.stock || 0) > 0);
+        if (urlInStock) filtered = filtered.filter((p) => getDisplayStock(p) > 0);
         if (urlOffer === 'coupon') filtered = filtered.filter((p) => getAvailableCouponsForProduct(p, coupons).length > 0);
         else if (urlOffer === 'new') filtered = filtered.filter((p) => p.badge === 'New' || Number(p.id || 0) >= 20);
         else if (urlOffer === 'sale') filtered = filtered.filter((p) => p.badge === 'Sale' || Number(p.oldPrice || 0) > Number(p.price || 0));
@@ -841,7 +845,7 @@ const Shop = () => {
                             </div>
                         )}
 
-                        {loading ? (
+                        {catalogLoading || loading ? (
                             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 px-4">
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <div key={i} className="aspect-[3/4] animate-pulse rounded-md border border-[var(--color-border)] bg-[var(--color-surface)]" />

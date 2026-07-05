@@ -12,6 +12,7 @@ run-logs/
 artifacts/
 dist/
 build/
+RustService/**/target/
 dist-temp/
 dist-temp-inventory/
 *.timestamp-*.mjs

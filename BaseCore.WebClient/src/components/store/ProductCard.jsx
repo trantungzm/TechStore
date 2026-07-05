@@ -52,6 +52,16 @@ const Rating = ({ rating = 0 }) => (
     </div>
 );
 
+const getDisplayStock = (product) => {
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const activeVariants = variants.filter((variant) => variant?.isActive !== false && variant?.IsActive !== false);
+    if (activeVariants.length > 0) {
+        return activeVariants.reduce((sum, variant) => sum + Number(variant?.stock ?? variant?.Stock ?? 0), 0);
+    }
+    const stock = product?.stock ?? product?.Stock ?? product?.totalStock ?? product?.TotalStock;
+    return stock == null ? null : Number(stock);
+};
+
 const ProductCard = ({ product, onAddToCart }) => {
     const [isHovered, setIsHovered] = useState(false);
     const { addItem } = useCart();
@@ -63,8 +73,9 @@ const ProductCard = ({ product, onAddToCart }) => {
     const oldPrice = getProductOldPrice(product);
     const hasCoupon = hasScopedProductCoupon(product, coupons);
     const categoryName = getProductCategoryName(product);
-    const outOfStock = product.stock !== undefined && product.stock !== null && product.stock <= 0;
     const hasVariants = Array.isArray(product?.variants) && product.variants.some((variant) => variant?.isActive !== false);
+    const displayStock = getDisplayStock(product);
+    const outOfStock = displayStock !== null && Number.isFinite(displayStock) && displayStock <= 0;
     const rating = getProductRating(product);
     const ratingCount = getProductRatingCount(product);
     const productImage = resolveProductImage(product);

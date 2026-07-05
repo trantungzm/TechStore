@@ -1,0 +1,3670 @@
+
+HỌC VIỆN KỸ THUẬT QUÂN SỰBỘ MÔN CÔNG NGHỆ PHẦN MỀM
+----------
+
+TÀI LIỆU THIẾT KẾ CHI TIẾT PHẦM MỀM
+HỌC PHẦN: CÔNG NGHỆ PHẦN MỀM
+MÃ HỌC PHẦN: 77AP
+
+ĐỀ TÀI: WEBSITE KINH DOANH THIẾT BỊ CÔNG NGHỆ 
+
+Giáo viên hướng dẫn :	3// Nguyễn Thị Hiền
+Học viên thực hiện     :  	Dương Công Lương  – Lớp CNTT1/c159/d1
+Trần Thanh Tùng      – Lớp CNTT2/c159/d1
+Lê Thế Bình  	    – Lớp CNTT2/c159/d1
+ 				
+
+Hà Nội, Tháng 6 năm 2026
+MỤC LỤC
+
+ TOC \o &quot;1-3&quot; \h \z \u  HYPERLINK \l &quot;_Toc233052312&quot; MỤC LỤC	 PAGEREF _Toc233052312 \h 1
+ HYPERLINK \l &quot;_Toc233052313&quot; CHƯƠNG 1. GIỚI THIỆU	 PAGEREF _Toc233052313 \h 5
+		 HYPERLINK \l &quot;_Toc233052314&quot; 1.1. Mục đích	 PAGEREF _Toc233052314 \h 5
+		 HYPERLINK \l &quot;_Toc233052315&quot; 1.2. Phạm vi	 PAGEREF _Toc233052315 \h 5
+		 HYPERLINK \l &quot;_Toc233052316&quot; 1.4. Từ và thuật ngữ	 PAGEREF _Toc233052316 \h 5
+ HYPERLINK \l &quot;_Toc233052317&quot; CHƯƠNG 2. TỔNG QUAN HỆ THỐNG	 PAGEREF _Toc233052317 \h 7
+		 HYPERLINK \l &quot;_Toc233052318&quot; 2.1. Tổng quan	 PAGEREF _Toc233052318 \h 7
+		 HYPERLINK \l &quot;_Toc233052319&quot; 2.2. Các yêu cầu chức năng	 PAGEREF _Toc233052319 \h 7
+		 HYPERLINK \l &quot;_Toc233052320&quot; Use-case model	 PAGEREF _Toc233052320 \h 7
+		 HYPERLINK \l &quot;_Toc233052321&quot; Nhóm Use-case tác nhân Khách hàng	 PAGEREF _Toc233052321 \h 9
+		 HYPERLINK \l &quot;_Toc233052322&quot; Nhóm Use-case tác nhân Kỹ thuật viên	 PAGEREF _Toc233052322 \h 11
+		 HYPERLINK \l &quot;_Toc233052323&quot; Nhóm Use-case tác nhân Quản trị viên kho	 PAGEREF _Toc233052323 \h 12
+		 HYPERLINK \l &quot;_Toc233052324&quot; Nhóm Use-case tác nhân Quản trị viên hệ thống	 PAGEREF _Toc233052324 \h 13
+ HYPERLINK \l &quot;_Toc233052325&quot; CHƯƠNG 3. KIẾN TRÚC HỆ THỐNG	 PAGEREF _Toc233052325 \h 15
+		 HYPERLINK \l &quot;_Toc233052326&quot; 3.1. Mô hình kiến trúc	 PAGEREF _Toc233052326 \h 15
+		 HYPERLINK \l &quot;_Toc233052327&quot; 3.2. Cơ chế xác thực (Authentication)	 PAGEREF _Toc233052327 \h 16
+		 HYPERLINK \l &quot;_Toc233052328&quot; 3.3. Cơ chế phân quyền (Authorization)	 PAGEREF _Toc233052328 \h 16
+		 HYPERLINK \l &quot;_Toc233052329&quot; 3.4. Các sơ đồ tuần tự luồng chính	 PAGEREF _Toc233052329 \h 17
+		 HYPERLINK \l &quot;_Toc233052330&quot; 3.5. Thiết kế đáp ứng yêu cầu phi chức năng	 PAGEREF _Toc233052330 \h 18
+ HYPERLINK \l &quot;_Toc233052331&quot; CHƯƠNG 4. THIẾT KẾ LỚP	 PAGEREF _Toc233052331 \h 19
+		 HYPERLINK \l &quot;_Toc233052332&quot; 4.1. Khung kiến trúc lớp	 PAGEREF _Toc233052332 \h 19
+		 HYPERLINK \l &quot;_Toc233052333&quot; 4.2. Module Product	 PAGEREF _Toc233052333 \h 20
+		 HYPERLINK \l &quot;_Toc233052334&quot; 4.3. Module Inventory	 PAGEREF _Toc233052334 \h 21
+		 HYPERLINK \l &quot;_Toc233052335&quot; 4.4. Module Order	 PAGEREF _Toc233052335 \h 22
+		 HYPERLINK \l &quot;_Toc233052336&quot; 4.5. Module Coupon	 PAGEREF _Toc233052336 \h 23
+		 HYPERLINK \l &quot;_Toc233052337&quot; 4.6. Module Warranty &amp; Repair	 PAGEREF _Toc233052337 \h 24
+		 HYPERLINK \l &quot;_Toc233052338&quot; 4.7. Module Support &amp; Notification	 PAGEREF _Toc233052338 \h 25
+		 HYPERLINK \l &quot;_Toc233052339&quot; 4.8. Module Auth &amp; Phân quyền	 PAGEREF _Toc233052339 \h 26
+		 HYPERLINK \l &quot;_Toc233052340&quot; 4.9. Thiết kế chi tiết các hàm (giả mã &amp; sơ đồ khối)	 PAGEREF _Toc233052340 \h 26
+		 HYPERLINK \l &quot;_Toc233052341&quot; 1. QUY ƯỚC TRÌNH BÀY	 PAGEREF _Toc233052341 \h 27
+		 HYPERLINK \l &quot;_Toc233052342&quot; 2. MODULE AUTH – XÁC THỰC &amp; PHÂN QUYỀN	 PAGEREF _Toc233052342 \h 28
+		 HYPERLINK \l &quot;_Toc233052343&quot; 3. MODULE ORDER – ĐẶT HÀNG	 PAGEREF _Toc233052343 \h 31
+		 HYPERLINK \l &quot;_Toc233052344&quot; 4. MODULE INVENTORY – KHO	 PAGEREF _Toc233052344 \h 38
+		 HYPERLINK \l &quot;_Toc233052345&quot; 5. MODULE COUPON – KHUYẾN MÃI	 PAGEREF _Toc233052345 \h 41
+		 HYPERLINK \l &quot;_Toc233052346&quot; 6. MODULE WARRANTY – BẢO HÀNH	 PAGEREF _Toc233052346 \h 46
+		 HYPERLINK \l &quot;_Toc233052347&quot; 7. MODULE PAYMENT – THANH TOÁN	 PAGEREF _Toc233052347 \h 48
+		 HYPERLINK \l &quot;_Toc233052348&quot; 8. MODULE NOTIFICATION – THÔNG BÁO	 PAGEREF _Toc233052348 \h 50
+ HYPERLINK \l &quot;_Toc233052349&quot; CHƯƠNG 5. THIẾT KẾ DỮ LIỆU	 PAGEREF _Toc233052349 \h 51
+		 HYPERLINK \l &quot;_Toc233052350&quot; 5.1. Tổng quan mô hình dữ liệu	 PAGEREF _Toc233052350 \h 51
+		 HYPERLINK \l &quot;_Toc233052351&quot; 5.2. Danh sách bảng dữ liệu	 PAGEREF _Toc233052351 \h 54
+		 HYPERLINK \l &quot;_Toc233052352&quot; 5.3. Đặc tả chi tiết các bảng	 PAGEREF _Toc233052352 \h 56
+		 HYPERLINK \l &quot;_Toc233052353&quot; 5.3.1. Bảng Users	 PAGEREF _Toc233052353 \h 56
+		 HYPERLINK \l &quot;_Toc233052354&quot; 5.3.2. Bảng Roles	 PAGEREF _Toc233052354 \h 57
+		 HYPERLINK \l &quot;_Toc233052355&quot; 5.3.3. Bảng Products	 PAGEREF _Toc233052355 \h 57
+		 HYPERLINK \l &quot;_Toc233052356&quot; 5.3.4. Bảng Categories	 PAGEREF _Toc233052356 \h 59
+		 HYPERLINK \l &quot;_Toc233052357&quot; 5.3.5. Bảng ProductCategories	 PAGEREF _Toc233052357 \h 59
+		 HYPERLINK \l &quot;_Toc233052358&quot; 5.3.6. Bảng Brands	 PAGEREF _Toc233052358 \h 59
+		 HYPERLINK \l &quot;_Toc233052359&quot; 5.3.7. Bảng ProductImages	 PAGEREF _Toc233052359 \h 59
+		 HYPERLINK \l &quot;_Toc233052360&quot; 5.3.8. Bảng ProductVariants	 PAGEREF _Toc233052360 \h 60
+		 HYPERLINK \l &quot;_Toc233052361&quot; 5.3.9. Bảng SpecDefinitions	 PAGEREF _Toc233052361 \h 60
+		 HYPERLINK \l &quot;_Toc233052362&quot; 5.3.10. Bảng SpecOptions	 PAGEREF _Toc233052362 \h 61
+		 HYPERLINK \l &quot;_Toc233052363&quot; 5.3.11. Bảng ProductSpecValues	 PAGEREF _Toc233052363 \h 62
+		 HYPERLINK \l &quot;_Toc233052364&quot; 5.3.12. Bảng ProductRecommendations	 PAGEREF _Toc233052364 \h 62
+		 HYPERLINK \l &quot;_Toc233052365&quot; 5.3.13. Bảng Banners	 PAGEREF _Toc233052365 \h 62
+		 HYPERLINK \l &quot;_Toc233052366&quot; 5.3.14. Bảng Orders	 PAGEREF _Toc233052366 \h 63
+		 HYPERLINK \l &quot;_Toc233052367&quot; 5.3.15. Bảng OrderDetails	 PAGEREF _Toc233052367 \h 65
+		 HYPERLINK \l &quot;_Toc233052368&quot; 5.3.16. Bảng OrderDetailStockItems	 PAGEREF _Toc233052368 \h 66
+		 HYPERLINK \l &quot;_Toc233052369&quot; 5.3.17. Bảng OrderTimelines	 PAGEREF _Toc233052369 \h 66
+		 HYPERLINK \l &quot;_Toc233052370&quot; 5.3.18. Bảng OrderCancellations	 PAGEREF _Toc233052370 \h 66
+		 HYPERLINK \l &quot;_Toc233052371&quot; 5.3.19. Bảng PaymentSessions	 PAGEREF _Toc233052371 \h 67
+		 HYPERLINK \l &quot;_Toc233052372&quot; 5.3.20. Bảng Coupons	 PAGEREF _Toc233052372 \h 67
+		 HYPERLINK \l &quot;_Toc233052373&quot; 5.3.21. Bảng CouponScopes	 PAGEREF _Toc233052373 \h 68
+		 HYPERLINK \l &quot;_Toc233052374&quot; 5.3.22. Bảng UserCoupons	 PAGEREF _Toc233052374 \h 69
+		 HYPERLINK \l &quot;_Toc233052375&quot; 5.3.23. Bảng OrderCoupons	 PAGEREF _Toc233052375 \h 69
+		 HYPERLINK \l &quot;_Toc233052376&quot; 5.3.24. Bảng VoucherSpins	 PAGEREF _Toc233052376 \h 70
+		 HYPERLINK \l &quot;_Toc233052377&quot; 5.3.25. Bảng Warehouses	 PAGEREF _Toc233052377 \h 70
+		 HYPERLINK \l &quot;_Toc233052378&quot; 5.3.26. Bảng Suppliers	 PAGEREF _Toc233052378 \h 71
+		 HYPERLINK \l &quot;_Toc233052379&quot; 5.3.27. Bảng CategorySuppliers	 PAGEREF _Toc233052379 \h 71
+		 HYPERLINK \l &quot;_Toc233052380&quot; 5.3.28. Bảng StockItems	 PAGEREF _Toc233052380 \h 72
+		 HYPERLINK \l &quot;_Toc233052381&quot; 5.3.29. Bảng GoodsReceipts	 PAGEREF _Toc233052381 \h 73
+		 HYPERLINK \l &quot;_Toc233052382&quot; 5.3.30. Bảng GoodsReceiptLines	 PAGEREF _Toc233052382 \h 73
+		 HYPERLINK \l &quot;_Toc233052383&quot; 5.3.31. Bảng GoodsReceiptSerials	 PAGEREF _Toc233052383 \h 74
+		 HYPERLINK \l &quot;_Toc233052384&quot; 5.3.32. Bảng StockMovements	 PAGEREF _Toc233052384 \h 74
+		 HYPERLINK \l &quot;_Toc233052385&quot; 5.3.33. Bảng InventoryReturns	 PAGEREF _Toc233052385 \h 74
+		 HYPERLINK \l &quot;_Toc233052386&quot; 5.3.34. Bảng InventoryTransactions	 PAGEREF _Toc233052386 \h 75
+		 HYPERLINK \l &quot;_Toc233052387&quot; 5.3.35. Bảng WarrantyRecords	 PAGEREF _Toc233052387 \h 76
+		 HYPERLINK \l &quot;_Toc233052388&quot; 5.3.36. Bảng WarrantyClaims	 PAGEREF _Toc233052388 \h 77
+		 HYPERLINK \l &quot;_Toc233052389&quot; 5.3.37. Bảng WarrantyClaimUpdates	 PAGEREF _Toc233052389 \h 78
+		 HYPERLINK \l &quot;_Toc233052390&quot; 5.3.38. Bảng RepairCases	 PAGEREF _Toc233052390 \h 78
+		 HYPERLINK \l &quot;_Toc233052391&quot; 5.3.39. Bảng RepairUpdates	 PAGEREF _Toc233052391 \h 79
+		 HYPERLINK \l &quot;_Toc233052392&quot; 5.3.40. Bảng SupportTickets	 PAGEREF _Toc233052392 \h 80
+		 HYPERLINK \l &quot;_Toc233052393&quot; 5.3.41. Bảng SupportTicketUpdates	 PAGEREF _Toc233052393 \h 81
+		 HYPERLINK \l &quot;_Toc233052394&quot; 5.3.42. Bảng Notifications	 PAGEREF _Toc233052394 \h 81
+		 HYPERLINK \l &quot;_Toc233052395&quot; 5.3.43. Bảng Attachments	 PAGEREF _Toc233052395 \h 82
+		 HYPERLINK \l &quot;_Toc233052396&quot; 5.3.44. Bảng StoreSettings	 PAGEREF _Toc233052396 \h 82
+		 HYPERLINK \l &quot;_Toc233052397&quot; 5.4. Ràng buộc và toàn vẹn dữ liệu	 PAGEREF _Toc233052397 \h 83
+ HYPERLINK \l &quot;_Toc233052398&quot; CHƯƠNG 6. THIẾT KẾ GIAO DIỆN NGƯỜI DÙNG	 PAGEREF _Toc233052398 \h 84
+		 HYPERLINK \l &quot;_Toc233052399&quot; 6.1. Tổng quan giao diện và điều hướng	 PAGEREF _Toc233052399 \h 84
+		 HYPERLINK \l &quot;_Toc233052400&quot; 6.2. Giao diện khu cửa hàng (Store)	 PAGEREF _Toc233052400 \h 84
+		 HYPERLINK \l &quot;_Toc233052401&quot; 6.2.1. Trang chủ	 PAGEREF _Toc233052401 \h 84
+		 HYPERLINK \l &quot;_Toc233052402&quot; 6.2.2. Cửa hàng và chi tiết sản phẩm	 PAGEREF _Toc233052402 \h 85
+		 HYPERLINK \l &quot;_Toc233052403&quot; 6.2.3. Giỏ hàng và Thanh toán	 PAGEREF _Toc233052403 \h 86
+		 HYPERLINK \l &quot;_Toc233052404&quot; 6.2.4. Đơn hàng của tôi	 PAGEREF _Toc233052404 \h 89
+		 HYPERLINK \l &quot;_Toc233052405&quot; 6.2.5. Bảo hành và Hỗ trợ	 PAGEREF _Toc233052405 \h 90
+		 HYPERLINK \l &quot;_Toc233052406&quot; 6.2.6. Khuyến mãi và Yêu thích	 PAGEREF _Toc233052406 \h 91
+		 HYPERLINK \l &quot;_Toc233052407&quot; 6.3. Giao diện khu quản trị (Admin)	 PAGEREF _Toc233052407 \h 92
+		 HYPERLINK \l &quot;_Toc233052408&quot; 6.3.1. Dashboard	 PAGEREF _Toc233052408 \h 92
+		 HYPERLINK \l &quot;_Toc233052409&quot; 6.3.2. Quản lý sản phẩm &amp; danh mục	 PAGEREF _Toc233052409 \h 93
+		 HYPERLINK \l &quot;_Toc233052410&quot; 6.3.3. Quản lý kho &amp; nhà cung cấp	 PAGEREF _Toc233052410 \h 94
+		 HYPERLINK \l &quot;_Toc233052411&quot; 6.3.4. Quản lý đơn hàng	 PAGEREF _Toc233052411 \h 95
+		 HYPERLINK \l &quot;_Toc233052412&quot; 6.3.5. Quản lý khuyến mãi	 PAGEREF _Toc233052412 \h 96
+		 HYPERLINK \l &quot;_Toc233052413&quot; 6.3.6. Quản lý bảo hành &amp; sửa chữa	 PAGEREF _Toc233052413 \h 96
+		 HYPERLINK \l &quot;_Toc233052414&quot; 6.3.7. Quản lý hỗ trợ	 PAGEREF _Toc233052414 \h 97
+		 HYPERLINK \l &quot;_Toc233052415&quot; 6.3.8. Quản lý người dùng &amp; vai trò	 PAGEREF _Toc233052415 \h 98
+		 HYPERLINK \l &quot;_Toc233052416&quot; 6.4. Giao diện xác thực	 PAGEREF _Toc233052416 \h 99
+		 HYPERLINK \l &quot;_Toc233052417&quot; 6.4.1. Đăng nhập	 PAGEREF _Toc233052417 \h 99
+ HYPERLINK \l &quot;_Toc233052418&quot; CHƯƠNG 7. TỔNG KẾT THIẾT KẾ	 PAGEREF _Toc233052418 \h 100
+		 HYPERLINK \l &quot;_Toc233052419&quot; 7.1. Bảng tổng kết kết quả thiết kế	 PAGEREF _Toc233052419 \h 100
+		 HYPERLINK \l &quot;_Toc233052420&quot; 7.2. Bảng công nghệ sử dụng	 PAGEREF _Toc233052420 \h 100
+		 HYPERLINK \l &quot;_Toc233052421&quot; 7.3. Kết luận	 PAGEREF _Toc233052421 \h 101
+ HYPERLINK \l &quot;_Toc233052422&quot; TÀI LIỆU THAM KHẢO	 PAGEREF _Toc233052422 \h 102
+
+CHƯƠNG 1. GIỚI THIỆU
+1.1. Mục đích
+Tài liệu này cung cấp thiết kế chi tiết về kiến trúc, các lớp xử lý, dữ liệu cũng như các mối ràng buộc giữa các thực thể dữ liệu trong hệ thống Website kinh doanh thiết bị công nghệ TechStore.
+Tài liệu này được sử dụng để:
+Nhân viên kiểm thử: Lập kịch bản test và số liệu test dựa trên thiết kế các chức năng, luồng nghiệp vụ và ràng buộc dữ liệu.
+Thành viên đội phát triển: Xây dựng và hiện thực các phân hệ nghiệp vụ chức năng theo đúng thiết kế lớp và thiết kế dữ liệu.
+Nhân viên thiết kế GUI: Tham khảo để thiết kế giao diện khu cửa hàng (Store) và khu quản trị (Admin).
+Khách hàng: Xác nhận tính đúng đắn của thiết kế so với yêu cầu đã được đặc tả.
+1.2. Phạm vi
+Tài liệu này phục vụ cho việc phát triển và bảo trì dự án TechStore — hệ thống thương mại điện tử bán thiết bị công nghệ, được xây dựng theo kiến trúc microservice (API Gateway, AuthService, APIService) với giao diện người dùng dạng Single Page Application.
+Phạm vi gồm: kiến trúc tổng thể và phân tầng; xác thực (JWT) và phân quyền (RBAC); thiết kế lớp; thiết kế cơ sở dữ liệu; thiết kế giao diện. Tài liệu không bao trùm hạ tầng triển khai sản xuất và tích hợp thanh toán thật của bên thứ ba (hiện dùng luồng QR mô phỏng).
+1.3. Từ và thuật ngữ
+Từ/thuật ngữ
+Ý nghĩa
+Diễn giải
+SDD
+Software Design Document
+Tài liệu thiết kế phần mềm
+SRS
+Software Requirements Specification
+Tài liệu đặc tả yêu cầu phần mềm
+API
+Application Programming Interface
+Giao diện lập trình ứng dụng
+API Gateway
+—
+Cổng trung gian định tuyến request (Ocelot)
+Ocelot
+—
+Thư viện API Gateway cho .NET
+SPA
+Single Page Application
+Ứng dụng web một trang (React)
+JWT
+JSON Web Token
+Token xác thực người dùng
+RBAC
+Role-Based Access Control
+Phân quyền dựa trên vai trò
+ORM
+Object-Relational Mapping
+Ánh xạ đối tượng – quan hệ (EF Core)
+Entity
+Thực thể
+Lớp ánh xạ tới một bảng dữ liệu
+DTO
+Data Transfer Object
+Đối tượng truyền dữ liệu giữa các tầng
+PK / FK
+Primary/Foreign Key
+Khóa chính / khóa ngoại
+ERD
+Entity Relationship Diagram
+Sơ đồ quan hệ thực thể
+Serial/IMEI
+—
+Mã định danh duy nhất của từng đơn vị sản phẩm
+StockItem
+Đơn vị tồn kho
+Bản ghi tồn kho ứng với một máy/Serial cụ thể
+Coupon (Khuyến mãi)
+—
+Mã giảm giá
+Khách vãng lai
+Guest
+Người dùng chưa đăng nhập (tác nhân phụ theo SRS)
+PBKDF2
+Password-Based Key Derivation Function 2
+Thuật toán băm mật khẩu
+TBD
+To be decided
+Nội dung chưa được quyết định
+CHƯƠNG 2. TỔNG QUAN HỆ THỐNG
+TechStore là website kinh doanh thiết bị công nghệ cho phép khách hàng tìm kiếm, so sánh, đặt mua sản phẩm trực tuyến và sử dụng các dịch vụ hậu mãi (bảo hành, sửa chữa, hỗ trợ). Đặc thù mặt hàng công nghệ là mỗi đơn vị sản phẩm có định danh duy nhất (Serial/IMEI) và chính sách bảo hành theo từng máy, nên hệ thống quản lý tồn kho ở mức từng đơn vị vật lý.
+2.1. Tổng quan
+Hệ thống theo kiến trúc microservice: SPA (React/Vite) ⇄ API Gateway (Ocelot) ⇄ AuthService &amp; APIService ⇄ SQL Server (EF Core). Các module nghiệp vụ chính: Product, Inventory, Order, Coupon, Warranty, Repair, Support (Ticket), Notification, Auth (quản lý người dùng &amp; phân quyền) và Dashboard.
+2.2. Các yêu cầu chức năng
+Use-case model
+Hệ thống có 5 tác nhân (Khách vãng lai là tác nhân phụ theo SRS):
+Tác nhân
+Mô tả
+Khách vãng lai (phụ)
+Chưa đăng nhập; xem/tìm/so sánh sản phẩm, tra cứu bảo hành, gửi ticket
+Khách hàng
+Đã đăng nhập; đặt hàng, thanh toán, theo dõi đơn, gửi yêu cầu bảo hành
+Kỹ thuật viên
+Tiếp nhận và xử lý bảo hành, sửa chữa, ticket kỹ thuật
+Quản trị viên kho
+Nhập hàng, quản lý Serial/IMEI, tồn kho, đổi trả
+Quản trị viên hệ thống
+Quản lý danh mục, sản phẩm, giá, khuyến mãi, người dùng, báo cáo
+
+Hình 2.1: Biểu đồ Use-case tổng quan của hệ thống TechStore
+Lưu ý: Đặc tả chi tiết từng use-case nằm ở SRS; tài liệu này chỉ liệt kê và tham chiếu để tránh trùng lặp. Các biểu đồ use-case (Hình 2.1–2.5) trích từ SRS.
+Nhóm Use-case tác nhân Khách hàng
+
+Hình 2.2: Biểu đồ Use-case tác nhân Khách hàng
+Mã UC
+Tên Use-case
+UC-G01
+Đăng nhập
+UC-G02
+Đăng xuất
+UC-G03
+Thay đổi mật khẩu
+UC-G04
+Cập nhật thông tin cá nhân
+UC-C01
+Tìm kiếm sản phẩm
+UC-C02
+Lọc sản phẩm theo thông số kỹ thuật
+UC-C03
+Xem chi tiết và thông số sản phẩm
+UC-C04
+So sánh sản phẩm
+UC-C05
+Xem gợi ý sản phẩm mua kèm
+UC-C06
+Quản lý giỏ hàng
+UC-C07
+Đặt hàng
+UC-C08
+Tính và chọn trả góp (lộ trình)
+UC-C09
+Thanh toán đơn hàng
+UC-C10
+Theo dõi đơn hàng
+UC-C11
+Tra cứu bảo hành điện tử
+UC-C12
+Gửi yêu cầu hỗ trợ (Ticket)
+UC-C13
+Theo dõi ticket hỗ trợ
+UC-C14
+Gửi yêu cầu bảo hành
+Nhóm Use-case tác nhân Kỹ thuật viên
+
+Hình 2.3: Biểu đồ Use-case tác nhân Kỹ thuật viên
+Mã UC
+Tên Use-case
+UC-T01
+Tiếp nhận yêu cầu bảo hành
+UC-T02
+Cập nhật tình trạng sửa chữa
+UC-T03
+Xử lý ticket hỗ trợ kỹ thuật
+UC-T04
+Tư vấn kỹ thuật trực tuyến
+Nhóm Use-case tác nhân Quản trị viên kho
+
+Hình 2.4: Biểu đồ Use-case tác nhân Quản trị viên kho
+Mã UC
+Tên Use-case
+UC-W01
+Nhập hàng theo lô
+UC-W02
+Quản lý IMEI/Serial
+UC-W03
+Theo dõi tồn kho
+UC-W04
+Xử lý hàng đổi trả
+Nhóm Use-case tác nhân Quản trị viên hệ thống
+
+Hình 2.5: Biểu đồ Use-case tác nhân Quản trị viên hệ thống
+Mã UC
+Tên Use-case
+UC-A01
+Quản lý danh mục kỹ thuật
+UC-A02
+Cấu hình bộ thông số động
+UC-A03
+Quản lý sản phẩm
+UC-A04
+Thiết lập giá bán
+UC-A05
+Quản lý đối tác vận chuyển (lộ trình)
+UC-A06
+Quản lý cảnh báo hàng tồn kho lâu ngày
+UC-A07
+Quản lý tài khoản người dùng
+UC-A08
+Xem báo cáo tài chính / kinh doanh
+UC-A09
+Quản lý gợi ý sản phẩm mua kèm (Cross-sell)
+CHƯƠNG 3. KIẾN TRÚC HỆ THỐNG
+3.1. Mô hình kiến trúc
+Hệ thống theo kiến trúc microservice, tách biệt Client và Backend; mọi yêu cầu đi qua API Gateway; các dịch vụ backend chia sẻ chung cơ sở dữ liệu qua tầng Repository/EF Core.
+
+Hình 3.1: Sơ đồ các thành phần của phần mềm TechStore
+Client (Frontend)
+SPA React/Vite gồm khu Store và Admin; giao tiếp HTTP (axios) và realtime qua SignalR; gắn JWT ở header Authorization.
+API Gateway
+Ocelot tiếp nhận và định tuyến yêu cầu tới dịch vụ downstream, phục vụ tệp tĩnh SPA. Gateway chỉ định tuyến, không tự xác thực JWT — token được kiểm tra ở downstream.
+AuthService
+Xác thực và quản lý người dùng; phát hành JWT chứa định danh và vai trò.
+APIService
+Xử lý nghiệp vụ chính theo phân tầng Controller → Service → Repository; host SignalR Hub và background service xử lý đơn nhận hàng quá hạn.
+Repositories / Database
+Lớp Repository (EF Core) ánh xạ entity ↔ bảng qua AppDbContext; CSDL SQL Server techstore. Migration áp dụng thủ công.
+Lưu ý: Quyết định kiến trúc: mô hình “microservice chia tiến trình nhưng dùng chung CSDL” (shared database) — điểm lệch có chủ đích so với database-per-service nhằm đơn giản hóa trong phạm vi đồ án.
+3.2. Cơ chế xác thực (Authentication)
+JWT Bearer do AuthService phát hành; mật khẩu băm PBKDF2 (HMAC-SHA1, 10.000 vòng, có salt); token ký HMAC-SHA256, chứa claim định danh/tên đăng nhập/vai trò, hạn 8 giờ; mọi dịch vụ xác thực bằng cùng khóa bí mật.
+Lưu ý: Rủi ro bảo mật: mã nguồn còn nhánh so khớp mật khẩu plain-text cho tài khoản cũ chưa có salt — khuyến nghị loại bỏ trước khi triển khai thật.
+
+Hình 3.2: Sequence Diagram chức năng Đăng nhập và phát hành JWT
+3.3. Cơ chế phân quyền (Authorization)
+RBAC: UserType ↔ RoleType. Bảng quy ước thống nhất tên tác nhân nghiệp vụ và tên vai trò kỹ thuật (dùng trong [Authorize]):
+Tác nhân nghiệp vụ
+Vai trò kỹ thuật (Role)
+RoleType
+Mô tả
+Khách hàng
+User
+0
+Đã đăng nhập, mua hàng
+Quản trị viên hệ thống
+Admin
+1
+Toàn quyền quản trị
+Quản trị viên kho
+Warehouse
+2
+Nghiệp vụ kho
+Kỹ thuật viên
+Technical
+3
+Bảo hành, sửa chữa, hỗ trợ
+Khách vãng lai
+(ẩn danh)
+—
+Chức năng công khai
+Lưu ý: Frontend có cờ BYPASS_AUTH bỏ qua kiểm tra đăng nhập khu admin khi phát triển — phải = false khi triển khai.
+3.4. Các sơ đồ tuần tự luồng chính
+
+Hình 3.3: Sequence Diagram chức năng Đặt hàng và Thanh toán QR (mock)
+Client tạo đơn → OrderService tạo Order + OrderDetails + OrderTimeline → tạo PaymentSession → Client polling trạng thái → khi xác nhận, cập nhật đơn và đẩy thông báo.
+
+Hình 3.4: Sequence Diagram chức năng Nhập kho theo Serial/IMEI
+QTV kho gửi phiếu nhập → InventoryService tạo GoodsReceipt + Lines → sinh từng StockItem theo Serial/IMEI hoặc mã tem tự sinh → ghi GoodsReceiptSerial và StockMovement → cập nhật tồn kho tổng hợp.
+3.5. Thiết kế đáp ứng yêu cầu phi chức năng
+Bảo mật: JWT, RBAC ở tầng server, băm mật khẩu PBKDF2.
+Hiệu năng: truy vấn phân trang; tách dịch vụ; SignalR thay polling liên tục.
+Tin cậy: xử lý lỗi tập trung (ProblemDetails); background service giải phóng đơn quá hạn.
+Tương thích: SPA trình duyệt hiện đại; backend .NET đa nền tảng; SQL Server.
+Truy vết: nhật ký StockMovement, OrderTimeline, *Update.
+CHƯƠNG 4. THIẾT KẾ LỚP
+Hệ thống tổ chức theo khuôn mẫu phân tầng: Controller → Service → Repository (EF Core) → AppDbContext → Entity.
+4.1. Khung kiến trúc lớp
+
+Hình 4.1: Biểu đồ lớp khung kiến trúc tổng quát
+Lớp
+Vai trò
+XxxController
+Endpoint REST, kiểm tra phân quyền, ánh xạ DTO
+IXxxService / XxxService
+Logic nghiệp vụ
+IRepository&lt;T&gt; / Repository&lt;T&gt;
+Truy cập dữ liệu tổng quát
+AppDbContext
+Ánh xạ entity ↔ bảng
+Entity
+Thực thể ánh xạ tới bảng
+4.2. Module Product
+
+Hình 4.2: Biểu đồ lớp module Product
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+ProductsController
+CRUD sản phẩm, biến thể, thông số
+Service
+ProductService
+Logic sản phẩm, tính giá/tồn
+Repository
+ProductRepositoryEF, ProductVariantRepositoryEF, CategoryRepositoryEF
+Truy vấn
+Entity
+Product, ProductVariant, Category, Brand, Spec*, Banner
+Thực thể catalog
+4.3. Module Inventory
+
+Hình 4.3: Biểu đồ lớp module Inventory
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+InventoryController, SuppliersController
+Nhập kho, serial, tồn kho, đổi trả
+Service
+InventoryService
+Sinh StockItem theo serial
+Repository
+StockItem*/GoodsReceipt*/StockMovement* RepositoryEF
+Truy vấn kho
+Entity
+StockItem, GoodsReceipt*, StockMovement, InventoryReturn, Warehouse, Supplier
+Thực thể kho
+4.4. Module Order
+
+Hình 4.4: Biểu đồ lớp module Order
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+OrdersController, PaymentsController
+Tạo/duyệt đơn, thanh toán
+Service
+OrderService, PickupTimeoutBackgroundService
+Đặt hàng, xuất kho, timeout
+Repository
+Order*/OrderDetail* RepositoryEF
+Truy vấn đơn
+Entity
+Order, OrderDetail, OrderTimeline, PaymentSession
+Thực thể đơn hàng
+4.5. Module Coupon
+
+Hình 4.5: Biểu đồ lớp module Coupon
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+CouponsController
+CRUD coupon, vòng quay
+Service
+CouponService
+Kiểm tra điều kiện, tính giảm
+Repository
+Coupon*/UserCoupon*/OrderCoupon* RepositoryEF
+Truy vấn coupon
+Entity
+Coupon, CouponScope, UserCoupon, OrderCoupon, VoucherSpin
+Thực thể khuyến mãi
+4.6. Module Warranty &amp; Repair
+
+Hình 4.6: Biểu đồ lớp module Warranty &amp; Repair
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+WarrantyController, RepairsController
+Bảo hành, sửa chữa
+Service
+WarrantyService, RepairService
+Logic hậu mãi
+Repository
+Warranty*/Repair* RepositoryEF
+Truy vấn
+Entity
+WarrantyRecord, WarrantyClaim, RepairCase, RepairUpdate
+Thực thể hậu mãi
+4.7. Module Support &amp; Notification
+
+Hình 4.7: Biểu đồ lớp module Support &amp; Notification
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+TicketsController, NotificationsController, TechStoreChatHub
+Hỗ trợ, thông báo realtime
+Service
+TicketService, NotificationService
+Logic ticket/thông báo
+Repository
+SupportTicket*/Notification* RepositoryEF
+Truy vấn
+Entity
+SupportTicket, SupportTicketUpdate, Notification, Attachment
+Thực thể hỗ trợ
+4.8. Module Auth &amp; Phân quyền
+
+Hình 4.8: Biểu đồ lớp module Auth &amp; Phân quyền
+Thành phần
+Lớp / Tệp nguồn
+Trách nhiệm chính
+Controller
+AuthController, UserController, RolesController
+Đăng nhập, quản lý người dùng/vai trò
+Service
+UserService
+Xác thực, băm mật khẩu
+Repository
+UserRepository, UserRepositoryEF
+Truy vấn người dùng
+Entity
+User, Role; TokenHelper
+Tài khoản &amp; sinh token
+Lưu ý: Module Dashboard không có tầng backend riêng (tổng hợp từ các API). Hệ thống chưa hiện thực module Đánh giá sản phẩm (Review).
+4.9. Thiết kế chi tiết các hàm (giả mã &amp; sơ đồ khối)
+1. QUY ƯỚC TRÌNH BÀY
+Theo yêu cầu, mô tả một hàm chỉ bằng tên và một dòng là chưa đủ; cần mô tả chi tiết cách hàm thực hiện. Mỗi hàm dưới đây trình bày theo cấu trúc: chữ ký → bảng đặc tả (Mục đích, Đầu vào, Đầu ra, Tiền/Hậu điều kiện) → giả mã từng bước → sơ đồ khối.
+Ký hiệu sơ đồ khối: hình bo tròn = Bắt đầu/Kết thúc; hình chữ nhật = bước xử lý; hình thoi = điều kiện rẽ nhánh (Đúng/Sai); hình bình hành = vào/ra dữ liệu (return); nhánh phụ tô hồng = ném ngoại lệ (throw).
+CopyFrom(entity) : void
+Mục đích
+Sao chép giá trị các thuộc tính từ một thực thể nguồn sang thực thể hiện tại
+Đầu vào
+entity: thực thể nguồn cùng kiểu
+Đầu ra
+void
+Tiền điều kiện
+entity cùng kiểu
+Hậu điều kiện
+Các thuộc tính (trừ khóa chính) của đối tượng = giá trị của entity
+Giả mã (pseudocode):
+HÀM CopyFrom(entity) TRẢ VỀ void
+BẮT ĐẦU
+    NẾU entity == null THÌ KẾT THÚC
+    VỚI MỖI thuộc tính p CỦA đối tượng hiện tại LẶP
+        NẾU p KHÔNG PHẢI khóa chính (Id) VÀ entity CÓ thuộc tính p THÌ
+            this.p ← entity.p
+    HẾT LẶP
+KẾT THÚC
+2. MODULE AUTH – XÁC THỰC &amp; PHÂN QUYỀN
+Authenticate(username, password) : User | null
+Mục đích
+Xác minh đăng nhập, trả về người dùng hợp lệ
+Đầu vào
+username, password
+Đầu ra
+User nếu hợp lệ, ngược lại null
+Tiền điều kiện
+username, password không rỗng
+Hậu điều kiện
+Trả về User khi mật khẩu khớp (PBKDF2 hoặc plain-text legacy)
+Giả mã (pseudocode):
+HÀM Authenticate(username, password) TRẢ VỀ User | null
+BẮT ĐẦU
+    NẾU username rỗng HOẶC password rỗng THÌ TRẢ VỀ null
+    user ← userRepository.GetByUsername(username)
+    NẾU user == null THÌ TRẢ VỀ null
+    NẾU user.Salt CÓ dữ liệu THÌ
+        isValid ← IsValidPassword(password, user.Salt, user.Password)   // PBKDF2
+    NGƯỢC LẠI
+        isValid ← (password == user.Password)        // tài khoản cũ chưa băm
+    NẾU NOT isValid THÌ TRẢ VỀ null
+    TRẢ VỀ user
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm Authenticate
+HashPassword(password) : (hashed, salt)
+Mục đích
+Băm mật khẩu kèm muối ngẫu nhiên
+Đầu vào
+password
+Đầu ra
+Chuỗi băm Base64 và salt
+Tiền điều kiện
+password không rỗng
+Hậu điều kiện
+Mỗi lần sinh salt mới ngẫu nhiên
+Giả mã (pseudocode):
+HÀM HashPassword(password) TRẢ VỀ (hashed, salt)
+BẮT ĐẦU
+    salt ← chuỗi ngẫu nhiên 128 bit (RandomNumberGenerator)
+    hashed ← PBKDF2(password, salt, PRF = HMAC-SHA1, vòng lặp = 10000, độ dài = 256 bit)
+    TRẢ VỀ (Base64(hashed), salt)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm HashPassword
+GenerateToken(secretKey, phút, userId, userName, role, issuer, audience) : string
+Mục đích
+Sinh JWT chứa định danh &amp; vai trò
+Đầu vào
+Khóa bí mật, thời hạn, userId, userName, role, issuer, audience
+Đầu ra
+Chuỗi JWT đã ký
+Tiền điều kiện
+secretKey hợp lệ
+Hậu điều kiện
+Token ký HMAC-SHA256, hết hạn sau “phút”
+Giả mã (pseudocode):
+HÀM GenerateToken(secretKey, phút, userId, userName, role, issuer, audience) TRẢ VỀ string
+BẮT ĐẦU
+    claims ← { Name = userName, NameIdentifier = userId, Role = role }
+    descriptor ← { Subject = claims, Expires = now + phút, Issuer, Audience,
+                   SigningCredentials = HMAC-SHA256(secretKey) }
+    token ← JwtSecurityTokenHandler.CreateToken(descriptor)
+    TRẢ VỀ WriteToken(token)
+KẾT THÚC
+3. MODULE ORDER – ĐẶT HÀNG
+CreateOrder(userId, dto) : OrderDetailDto
+Mục đích
+Tạo đơn: trừ tồn, tính tiền, áp coupon, lưu đơn
+Đầu vào
+userId (nullable), dto
+Đầu ra
+OrderDetailDto
+Tiền điều kiện
+dto hợp lệ; còn hàng
+Hậu điều kiện
+Đơn + dòng hàng + timeline lưu trong 1 transaction; tồn đã trừ
+Giả mã (pseudocode):
+HÀM CreateOrder(userId, dto) TRẢ VỀ OrderDetailDto      // chạy trong TRANSACTION
+BẮT ĐẦU
+    ValidateCreateOrder(dto);  subtotal ← 0;  details ← []
+    VỚI MỖI item TRONG dto.Items LẶP
+        product ← productRepo.GetById(item.ProductId)
+        NẾU product == null HOẶC NOT product.IsActive THÌ NÉM lỗi &quot;không khả dụng&quot;
+        NẾU item CÓ VariantId THÌ
+            NẾU variant.Stock &lt; item.Quantity THÌ NÉM lỗi &quot;Hết hàng&quot;
+            rows ← variantRepo.DecrementStock(variant.Id, item.Quantity, variant.Version)  // optimistic lock
+        NGƯỢC LẠI
+            NẾU product.TotalStock &lt; item.Quantity THÌ NÉM lỗi &quot;Hết hàng&quot;
+            rows ← productRepo.DecrementStock(product.Id, item.Quantity, product.Version)
+        NẾU rows == 0 THÌ NÉM lỗi &quot;Xung đột cập nhật / hết hàng&quot;
+        subtotal ← subtotal + (variant?.Price ?? product.BasePrice) * item.Quantity
+        THÊM OrderDetail(...) VÀO details
+    HẾT LẶP
+    shippingFee ← (giao tại cửa hàng) ? 0 : phí ship mặc định
+    NẾU có coupon THÌ
+        NẾU userId == null THÌ NÉM lỗi &quot;cần đăng nhập&quot;
+        kq ← couponService.Validate(userId, ...);  NẾU NOT kq.IsValid THÌ NÉM lỗi kq.Message
+        productDiscount ← kq.ProductDiscount;  shippingDiscount ← kq.ShippingDiscount
+    total ← subtotal − productDiscount + shippingFee − shippingDiscount
+    orderRepo.Add(order);  orderRepo.AddDetails(details);  THÊM OrderTimeline(&quot;Pending&quot;)
+    couponService.CommitOrderCoupons(order.Id, kq)
+    TRẢ VỀ MapToDto(order)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm CreateOrder
+CancelOrder(id, reason, requestedByUserId) : OrderDetailDto | null
+Mục đích
+Khách gửi yêu cầu hủy đơn
+Đầu vào
+id đơn, lý do, người yêu cầu
+Đầu ra
+OrderDetailDto hoặc null
+Tiền điều kiện
+Đơn chưa hoàn tất/chưa hủy
+Hậu điều kiện
+Tạo OrderCancellation(Pending), đơn chuyển &quot;CancelRequested&quot;
+Giả mã (pseudocode):
+HÀM CancelOrder(id, reason, requestedByUserId) TRẢ VỀ OrderDetailDto | null
+BẮT ĐẦU
+    order ← orderRepo.GetById(id)
+    NẾU order == null THÌ TRẢ VỀ null
+    NẾU order.Status ∈ {Completed, Cancelled} THÌ NÉM lỗi &quot;Không thể hủy đơn đã hoàn tất/đã hủy&quot;
+    pending ← cancellationRepo.GetPendingByOrder(id)
+    NẾU pending == null THÌ
+        cancellationRepo.Add(OrderCancellation(id, requestedBy, reason, Status=&quot;Pending&quot;))
+    order.Status ← &quot;CancelRequested&quot;;  order.CancelReason ← reason;  order.CancelRequestedAt ← now
+    orderRepo.Update(order);  AddTimeline(id, &quot;CancelRequested&quot;, &quot;Khách yêu cầu hủy đơn&quot;)
+    TRẢ VỀ GetOrderWithDetails(id)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm CancelOrder
+ReviewCancellation(id, dto, reviewer) : OrderDetailDto | null
+Mục đích
+Admin duyệt/từ chối yêu cầu hủy
+Đầu vào
+id đơn, dto (Approved, ghi chú), người duyệt
+Đầu ra
+OrderDetailDto hoặc null
+Tiền điều kiện
+Có yêu cầu hủy Pending
+Hậu điều kiện
+Nếu duyệt: hoàn tồn kho + đơn &quot;Cancelled&quot;; nếu từ chối: &quot;CancelRejected&quot;
+Giả mã (pseudocode):
+HÀM ReviewCancellation(id, dto, reviewer) TRẢ VỀ OrderDetailDto | null
+BẮT ĐẦU
+    order ← orderRepo.GetById(id);  NẾU order == null THÌ TRẢ VỀ null
+    cancellation ← cancellationRepo.GetPendingByOrder(id)
+    NẾU cancellation == null THÌ NÉM lỗi &quot;Không có yêu cầu hủy đang chờ&quot;
+    cancellation.Status ← dto.Approved ? &quot;Approved&quot; : &quot;Rejected&quot;;  lưu ghi chú, người duyệt
+    NẾU dto.Approved THÌ
+        order.Status ← &quot;Cancelled&quot;;  RestoreStock(order.Id)   // hoàn tồn + serial đã giữ
+        order.PaymentStatus ← chuẩn hóa trạng thái thanh toán khi hủy
+    NGƯỢC LẠI
+        order.Status ← &quot;CancelRejected&quot;
+    orderRepo.Update(order);  AddTimeline(id, order.Status, ...)
+    TRẢ VỀ GetOrderWithDetails(id)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm ReviewCancellation
+AutoCancelExpiredPickup(batchSize = 100) : int
+Mục đích
+Job nền tự hủy đơn nhận tại cửa hàng quá hạn
+Đầu vào
+batchSize
+Đầu ra
+Số đơn đã hủy
+Tiền điều kiện
+Chạy định kỳ bởi background service
+Hậu điều kiện
+Đơn quá hạn được hủy, hoàn tồn kho, gửi thông báo
+Giả mã (pseudocode):
+HÀM AutoCancelExpiredPickup(batchSize = 100) TRẢ VỀ int     // job nền
+BẮT ĐẦU
+    items ← orderRepo.GetExpiredPickupOrders(now, batchSize)
+    NẾU items rỗng THÌ TRẢ VỀ 0
+    cancelled ← 0
+    VỚI MỖI order TRONG items LẶP
+        THỬ
+            order.Status ← &quot;Cancelled&quot;;  order.CancelReviewNote ← &quot;Quá hạn lấy&quot;
+            order.PaymentStatus ← chuẩn hóa khi hủy;  RestoreStock(order.Id)
+            orderRepo.Update(order);  AddTimeline(order.Id, &quot;Cancelled&quot;, &quot;Quá hạn lấy&quot;)
+            notificationService.Create(order.UserId, &quot;Đơn hàng bị hủy&quot;, ...)
+            cancelled ← cancelled + 1
+        BẮT LỖI:  bỏ qua đơn lỗi, tiếp tục đơn kế tiếp
+    TRẢ VỀ cancelled
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm AutoCancelExpiredPickup
+4. MODULE INVENTORY – KHO
+CreateReceipt(dto, userId) : GoodsReceiptDto
+Mục đích
+Tạo phiếu nhập và sinh tồn kho theo từng đơn vị (Serial/IMEI)
+Đầu vào
+dto (NCC, danh mục, dòng hàng), userId
+Đầu ra
+GoodsReceiptDto
+Tiền điều kiện
+Có NCC; sản phẩm cùng danh mục
+Hậu điều kiện
+Mỗi đơn vị tạo 1 StockItem(InStock) + StockMovement; tồn tính lại từ StockItems
+Giả mã (pseudocode):
+HÀM CreateReceipt(dto, userId) TRẢ VỀ GoodsReceiptDto
+BẮT ĐẦU
+    ValidateReceipt(dto);  supplier ← ResolveSupplier(dto)
+    NẾU supplier == null THÌ NÉM lỗi &quot;Thiếu nhà cung cấp&quot;
+    VỚI MỖI line TRONG dto.Lines LẶP            // chuẩn bị mã hàng
+        product ← GetProduct(line.ProductId)
+        NẾU product.CategoryId ≠ categoryId THÌ NÉM lỗi &quot;khác danh mục&quot;
+        NẾU product.RequiresSerialTracking THÌ
+            codes[line] ← BuildStockCodes(...)   // Serial/IMEI thật hoặc tem tự sinh, chống trùng
+        NGƯỢC LẠI  tăng Stock của variant/product thêm line.Quantity
+    receipt ← GoodsReceipt(supplier, warehouse, ΣSL, Σtiền);  receiptRepo.Add(receipt)
+    receipt.ReceiptCode ← GenerateReceiptCode(receipt.Id)
+    VỚI MỖI line TRONG dto.Lines LẶP
+        receiptLineRepo.Add(GoodsReceiptLine(...))
+        NẾU product.RequiresSerialTracking THÌ
+            VỚI MỖI code TRONG codes[line] LẶP
+                stock ← stockItemRepo.Add(StockItem(serial/imei, Status=&quot;InStock&quot;))
+                receiptSerialRepo.Add(GoodsReceiptSerial(line, stock, code))
+                AddMovement(product, stock, &quot;Receipt&quot;, +1, → &quot;InStock&quot;)
+        NGƯỢC LẠI  AddMovement(product, &quot;Receipt&quot;, +line.Quantity, → &quot;InStock&quot;)
+    VỚI MỖI product LẶP:  RecomputeStock(product)
+    TRẢ VỀ GetReceipt(receipt.Id)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm CreateReceipt
+RecomputeStock(productId) : void
+Mục đích
+Tính lại tồn kho của sản phẩm từ StockItems
+Đầu vào
+productId
+Đầu ra
+void
+Tiền điều kiện
+Sản phẩm quản lý theo serial
+Hậu điều kiện
+product.TotalStock = số StockItem trạng thái InStock
+Giả mã (pseudocode):
+HÀM RecomputeStock(productId) TRẢ VỀ void
+BẮT ĐẦU
+    count ← stockItemRepo.CountInStock(productId)   // số StockItem trạng thái &quot;InStock&quot;
+    product ← productRepo.GetById(productId)
+    product.TotalStock ← count                       // tồn = số đơn vị còn trong kho
+    productRepo.Update(product)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm RecomputeStock
+5. MODULE COUPON – KHUYẾN MÃI
+Validate(userId, dto, requireUserCoupon) : ValidateCouponsResult
+Mục đích
+Kiểm tra &amp; tính giảm giá coupon trước khi đặt hàng
+Đầu vào
+userId, dto (giỏ hàng, coupon, phí ship)
+Đầu ra
+Kết quả: hợp lệ?, productDiscount, shippingDiscount, total
+Tiền điều kiện
+Giỏ hàng có sản phẩm
+Hậu điều kiện
+Mức giảm bị chặn trên bởi subtotal/phí ship
+Giả mã (pseudocode):
+HÀM Validate(userId, dto, requireUserCoupon) TRẢ VỀ ValidateCouponsResult
+BẮT ĐẦU
+    NẾU dto.CartItems rỗng THÌ NÉM lỗi &quot;Giỏ hàng không có sản phẩm&quot;
+    NẾU requireUserCoupon VÀ có coupon VÀ userId == null THÌ NÉM lỗi &quot;cần đăng nhập&quot;
+    items ← []
+    VỚI MỖI item TRONG dto.CartItems LẶP
+        product ← productRepo.GetById(item.ProductId)   // NÉM lỗi nếu không tồn tại
+        variant ← (item.VariantId) ? product.Variants[item.VariantId] : null
+        THÊM CartItem(product, variant, quantity, variant?.Price ?? product.BasePrice) VÀO items
+    subtotal ← Σ (unitPrice * quantity)
+    shippingFee ← (giao tại cửa hàng) ? 0 : dto.ShippingFee
+    productResult  ← ValidateOne(coupon sản phẩm,  items, subtotal, ...)
+    shippingResult ← ValidateOne(coupon vận chuyển, items, subtotal, ...)
+    VỚI MỖI r TRONG {productResult, shippingResult} LẶP
+        NẾU r.IsValid THÌ cộng r.DiscountAmount vào productDiscount/shippingDiscount
+        NGƯỢC LẠI  result.IsValid ← false;  THÊM r.Message
+    productDiscount ← min(productDiscount, subtotal)
+    shippingDiscount ← min(shippingDiscount, shippingFee)
+    total ← max(0, subtotal − productDiscount + shippingFee − shippingDiscount)
+    TRẢ VỀ result
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm Validate
+Claim(couponId, userId) : UserCouponDto
+Mục đích
+Người dùng nhận (lưu) một coupon
+Đầu vào
+couponId, userId
+Đầu ra
+UserCouponDto
+Tiền điều kiện
+Coupon còn hiệu lực, còn số lượng
+Hậu điều kiện
+Tạo UserCoupon(Claimed); tăng ClaimedQuantity
+Giả mã (pseudocode):
+HÀM Claim(couponId, userId) TRẢ VỀ UserCouponDto
+BẮT ĐẦU
+    coupon ← couponRepo.GetDetail(couponId)
+    NẾU coupon == null THÌ NÉM lỗi &quot;Phiếu giảm giá không tồn tại&quot;
+    ValidateClaimable(coupon)        // còn hiệu lực, còn số lượng, công khai
+    count ← userCouponRepo.CountClaimed(userId, couponId)
+    NẾU count ≥ max(1, coupon.PerUserLimit) THÌ NÉM lỗi &quot;Bạn đã nhận phiếu này&quot;
+    userCouponRepo.Add(UserCoupon(userId, coupon, Status=&quot;Claimed&quot;, ExpiredAt=coupon.EndAt))
+    coupon.ClaimedQuantity ← coupon.ClaimedQuantity + 1;  couponRepo.Update(coupon)
+    TRẢ VỀ ToUserCouponDto(userCoupon)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm Claim
+Spin(userId) : VoucherSpinResult
+Mục đích
+Quay thưởng theo trọng số, giới hạn 1 lượt/ngày
+Đầu vào
+userId
+Đầu ra
+Coupon hoặc NoReward + thời điểm quay tiếp
+Tiền điều kiện
+Đã đăng nhập
+Hậu điều kiện
+Lưu 1 VoucherSpin/ngày; nếu trúng thì coupon đã được Claim
+Giả mã (pseudocode):
+HÀM Spin(userId) TRẢ VỀ VoucherSpinResult
+BẮT ĐẦU
+    today ← ngày hiện tại (UTC);  existing ← spinRepo.GetToday(userId, today)
+    NẾU existing ≠ null THÌ TRẢ VỀ { existing.ResultType, &quot;Đã quay hôm nay&quot;, NextSpinAt=today+1 }
+    rewards ← coupon (IsSpinReward, Active, Public) kèm trọng số + (NO_REWARD, 15)
+    NẾU rewards rỗng THÌ rewards ← bộ mặc định
+    ticket ← random(1 .. Σ trọng số)
+    selected ← chọn theo trọng số tích lũy (ticket ≤ tổng dồn)
+    NẾU selected ≠ NO_REWARD THÌ
+        coupon ← couponRepo.GetByCode(selected)
+        NẾU coupon ≠ null THÌ
+            userCoupon ← Claim(coupon.Id, userId)
+            spinRepo.Add(VoucherSpin(userId, today, coupon, &quot;Coupon&quot;))
+            TRẢ VỀ { &quot;Coupon&quot;, userCoupon, NextSpinAt=today+1 }
+    spinRepo.Add(VoucherSpin(userId, today, &quot;NoReward&quot;))
+    TRẢ VỀ { &quot;NoReward&quot;, &quot;Chúc bạn may mắn lần sau&quot;, NextSpinAt=today+1 }
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm Spin (vòng quay)
+6. MODULE WARRANTY – BẢO HÀNH
+CreateClaim(dto, userId) : WarrantyClaimDto
+Mục đích
+Tiếp nhận yêu cầu bảo hành, tạo hồ sơ nếu chưa có
+Đầu vào
+dto (WarrantyId/Serial/OrderCode, mô tả lỗi), userId
+Đầu ra
+WarrantyClaimDto
+Tiền điều kiện
+Tìm được sản phẩm/thiết bị; bảo hành còn hạn
+Hậu điều kiện
+Tạo WarrantyClaim(Pending); có thể tạo WarrantyRecord mới
+Giả mã (pseudocode):
+HÀM CreateClaim(dto, userId) TRẢ VỀ WarrantyClaimDto
+BẮT ĐẦU
+    ValidateClaim(dto)
+    warranty ← tìm theo WarrantyId; nếu chưa có → theo Serial/IMEI; rồi theo OrderCode + SĐT
+    NẾU warranty ≠ null VÀ (Status==&quot;Expired&quot; HOẶC ExpiresAt &lt; now) THÌ NÉM lỗi &quot;Bảo hành đã hết hạn&quot;
+    stockItem ← tra theo warranty.StockItemId hoặc theo Serial/IMEI
+    productId ← warranty?.ProductId ?? stockItem?.ProductId
+    NẾU productId ≤ 0 THÌ NÉM lỗi &quot;Không tìm thấy sản phẩm bảo hành&quot;
+    NẾU warranty == null THÌ
+        NẾU stockItem == null THÌ NÉM lỗi &quot;Không tìm thấy thiết bị&quot;
+        months ← product.WarrantyMonths &gt; 0 ? product.WarrantyMonths : 12
+        warranty ← tạo WarrantyRecord(serial, product, months, Status=&quot;NotActivated&quot;)
+        warranty.WarrantyCode ← &quot;BH-yyyyMMdd-####&quot;
+    claim ← tạo WarrantyClaim(warranty, product, serial, Status=&quot;Pending&quot;, mô tả lỗi)
+    thêm WarrantyClaimUpdate đầu tiên
+    TRẢ VỀ MapToDto(claim)
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm CreateClaim (bảo hành)
+7. MODULE PAYMENT – THANH TOÁN
+ConfirmSession(sessionId, token, amount, status, transactionId) : Result
+Mục đích
+Xác nhận thanh toán QR (mock), tạo/cập nhật đơn
+Đầu vào
+sessionId, token, amount, status, transactionId
+Đầu ra
+success + thông tin đơn, hoặc lỗi
+Tiền điều kiện
+Phiên còn hiệu lực, token đúng, số tiền khớp
+Hậu điều kiện
+Đơn &quot;Confirmed&quot;/&quot;Paid&quot;; phiên &quot;Paid&quot;
+Giả mã (pseudocode):
+HÀM ConfirmSession(sessionId, token, amount, status, transactionId) TRẢ VỀ Result
+BẮT ĐẦU
+    session ← db.PaymentSessions[sessionId];  NẾU session == null THÌ TRẢ VỀ 404
+    NẾU session.Token ≠ token THÌ TRẢ VỀ lỗi &quot;Token không hợp lệ&quot;
+    NẾU session.Status == &quot;Paid&quot; THÌ TRẢ VỀ lỗi &quot;Đã thanh toán trước đó&quot;
+    NẾU session.ExpiresAt ≤ now THÌ  session.Status ← &quot;Expired&quot;;  TRẢ VỀ lỗi &quot;Hết hạn&quot;
+    NẾU amount &gt; 0 VÀ round(amount) ≠ round(session.Amount) THÌ TRẢ VỀ lỗi &quot;Số tiền không khớp&quot;
+    NẾU status ≠ &quot;SUCCESS&quot; THÌ  session.Status ← &quot;Failed&quot;;  TRẢ VỀ success=false
+    session.TransactionId ← transactionId ?? &quot;MOCK&lt;timestamp&gt;&quot;
+    order ← db.Orders[session.OrderId]
+    NẾU order == null VÀ session.OrderPayloadJson ≠ null THÌ
+        payload ← deserialize(OrderPayloadJson);  payload.PaymentMethod ← &quot;BankTransfer&quot;
+        orderDto ← orderService.CreateOrder(session.UserId, payload);  session.OrderId ← orderDto.Id
+        order ← db.Orders[orderDto.Id]
+    NẾU order ≠ null THÌ
+        orderDto ← orderService.UpdateStatus(order.Id, &quot;Confirmed&quot;, PaymentStatus=&quot;Paid&quot;, transactionId)
+    session.Status ← &quot;Paid&quot;;  session.PaidAt ← now
+    TRẢ VỀ { success=true, orderId, orderCode, paymentStatus }
+KẾT THÚC
+Sơ đồ khối:
+
+Sơ đồ khối hàm ConfirmSession (mock-confirm)
+8. MODULE NOTIFICATION – THÔNG BÁO
+CreateNotification(userId, title, message, type, referenceType, referenceId) : void
+Mục đích
+Tạo một thông báo cá nhân cho người dùng
+Đầu vào
+userId, title, message, type, referenceType, referenceId
+Đầu ra
+void
+Tiền điều kiện
+userId không null (thông báo là dữ liệu cá nhân)
+Hậu điều kiện
+Lưu Notification(IsRead=false); có thể đẩy realtime qua SignalR
+Giả mã (pseudocode):
+HÀM CreateNotification(userId, title, message, type, referenceType, referenceId) TRẢ VỀ void
+BẮT ĐẦU
+    NẾU userId == null THÌ KẾT THÚC          // thông báo là dữ liệu cá nhân
+    repo.Add(Notification(userId, title, message, type, referenceType, referenceId, IsRead=false))
+    (tùy chọn) đẩy realtime tới Client qua SignalR Hub
+KẾT THÚC
+CHƯƠNG 5. THIẾT KẾ DỮ LIỆU
+CSDL SQL Server (database techstore) gồm 44 bảng ánh xạ từ BaseCore.Entities qua EF Core. Phần lớn bảng dùng khóa chính Id (int); riêng Users dùng uniqueidentifier và ProductCategories dùng khóa kép.
+5.1. Tổng quan mô hình dữ liệu
+
+Hình 5.1: Sơ đồ ERD tổng quan hệ thống TechStore
+Các bảng chia thành 8 nhóm nghiệp vụ, mỗi nhóm minh họa bằng một ERD (Hình 5.2–5.9):
+
+Hình 5.2: ERD nhóm Người dùng &amp; Phân quyền
+
+Hình 5.3: ERD nhóm Sản phẩm &amp; Danh mục
+
+Hình 5.4: ERD nhóm Đơn hàng &amp; Thanh toán
+
+Hình 5.5: ERD nhóm Kho &amp; Nhập hàng
+
+Hình 5.6: ERD nhóm Bảo hành &amp; Sửa chữa
+
+Hình 5.7: ERD nhóm Hỗ trợ &amp; Thông báo
+
+Hình 5.8: ERD nhóm Khuyến mãi
+
+Hình 5.9: ERD nhóm Cấu hình
+5.2. Danh sách bảng dữ liệu
+STT
+Tên bảng
+Mục đích
+PK
+1
+Users
+Tài khoản người dùng (khách hàng + nhân viên)
+Id
+2
+Roles
+Vai trò hệ thống (RBAC)
+Id
+3
+Products
+Sản phẩm bán trên website
+Id
+4
+Categories
+Danh mục sản phẩm
+Id
+5
+ProductCategories
+Bảng nối N–N Sản phẩm ↔ Danh mục (danh mục phụ)
+ProductId, CategoryId
+6
+Brands
+Thương hiệu thuộc một danh mục
+Id
+7
+ProductImages
+Ảnh phụ của sản phẩm
+Id
+8
+ProductVariants
+Biến thể sản phẩm (màu/RAM/bộ nhớ)
+Id
+9
+SpecDefinitions
+Định nghĩa thông số kỹ thuật theo danh mục
+Id
+10
+SpecOptions
+Giá trị tùy chọn của một thông số
+Id
+11
+ProductSpecValues
+Giá trị thông số thực tế của sản phẩm
+Id
+12
+ProductRecommendations
+Sản phẩm gợi ý mua kèm (cross/up-sell)
+Id
+13
+Banners
+Banner / khuyến mãi trang chủ
+Id
+14
+Orders
+Đơn hàng của khách
+Id
+15
+OrderDetails
+Dòng hàng trong đơn
+Id
+16
+OrderDetailStockItems
+Gán đơn vị tồn (serial) cho dòng hàng
+Id
+17
+OrderTimelines
+Lịch sử trạng thái đơn
+Id
+18
+OrderCancellations
+Yêu cầu hủy đơn và duyệt
+Id
+19
+PaymentSessions
+Phiên thanh toán QR (mock)
+Id
+20
+Coupons
+Mã giảm giá
+Id
+21
+CouponScopes
+Phạm vi áp dụng coupon
+Id
+22
+UserCoupons
+Coupon đã lưu/sử dụng của người dùng
+Id
+23
+OrderCoupons
+Coupon đã áp dụng vào đơn (snapshot)
+Id
+24
+VoucherSpins
+Lượt quay vòng quay may mắn
+Id
+25
+Warehouses
+Kho / điểm nhận hàng
+Id
+26
+Suppliers
+Nhà cung cấp
+Id
+27
+CategorySuppliers
+Bảng nối Danh mục ↔ NCC
+Id
+28
+StockItems
+Đơn vị tồn kho theo Serial/IMEI (nguồn sự thật tồn kho)
+Id
+29
+GoodsReceipts
+Phiếu nhập kho
+Id
+30
+GoodsReceiptLines
+Dòng hàng trong phiếu nhập
+Id
+31
+GoodsReceiptSerials
+Serial/IMEI nhập theo dòng phiếu
+Id
+32
+StockMovements
+Nhật ký dịch chuyển/đổi trạng thái tồn kho
+Id
+33
+InventoryReturns
+Phiếu trả hàng/hoàn về kho
+Id
+34
+InventoryTransactions
+Giao dịch xuất/nhập tồn (số lượng)
+Id
+35
+WarrantyRecords
+Hồ sơ bảo hành theo sản phẩm/serial
+Id
+36
+WarrantyClaims
+Yêu cầu bảo hành
+Id
+37
+WarrantyClaimUpdates
+Lịch sử xử lý yêu cầu bảo hành
+Id
+38
+RepairCases
+Phiếu sửa chữa
+Id
+39
+RepairUpdates
+Lịch sử xử lý phiếu sửa chữa
+Id
+40
+SupportTickets
+Phiếu yêu cầu hỗ trợ/CSKH
+Id
+41
+SupportTicketUpdates
+Tin nhắn/cập nhật trong ticket
+Id
+42
+Notifications
+Thông báo cá nhân/hệ thống
+Id
+43
+Attachments
+Tệp đính kèm đa hình
+Id
+44
+StoreSettings
+Cấu hình cửa hàng
+Id
+5.3. Đặc tả chi tiết các bảng
+5.3.1. Bảng Users
+Mục đích: Tài khoản người dùng (khách hàng + nhân viên).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+uniqueidentifier
+PK
+Khóa chính
+Name
+nvarchar
+-
+Họ tên
+UserName
+nvarchar
+-
+Tên đăng nhập
+Password
+nvarchar
+-
+Mật khẩu đã băm PBKDF2
+Salt
+varbinary
+-
+Muối băm mật khẩu
+Contact
+nvarchar
+-
+Thông tin liên hệ
+Email
+nvarchar
+-
+Email
+Phone
+nvarchar
+-
+Số điện thoại
+DateOfBirth
+datetime2
+-
+Ngày sinh
+Position
+nvarchar
+-
+Chức vụ (nhân viên)
+Image
+nvarchar
+-
+Ảnh đại diện
+IsActive
+bit
+-
+Trạng thái kích hoạt
+UserType
+int
+-
+Loại tài khoản (0=User,1=Admin,2=Warehouse,3=Technical)
+Created
+datetime2
+-
+Ngày tạo
+5.3.2. Bảng Roles
+Mục đích: Vai trò hệ thống (RBAC).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Guid
+uniqueidentifier
+-
+Định danh phụ
+Name
+nvarchar
+-
+Tên vai trò
+Description
+nvarchar
+-
+Mô tả
+RoleType
+int
+-
+Mã loại vai trò (khớp UserType)
+IsActive
+bit
+-
+Đang dùng
+IsDeleted
+bit
+-
+Đã xóa mềm
+CreatedBy
+nvarchar
+-
+Người tạo
+Created
+datetime2
+-
+Ngày tạo
+ModifiedBy
+nvarchar
+-
+Người sửa
+Modified
+datetime2
+-
+Ngày sửa
+5.3.3. Bảng Products
+Mục đích: Sản phẩm bán trên website.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Name
+nvarchar
+-
+Tên sản phẩm
+Slug
+nvarchar
+-
+Đường dẫn thân thiện
+BasePrice
+decimal
+-
+Giá cơ sở
+MinPrice
+decimal
+-
+Giá thấp nhất theo biến thể
+MaxPrice
+decimal
+-
+Giá cao nhất theo biến thể
+OriginalPrice
+decimal
+-
+Giá gốc (gạch)
+TotalStock
+int
+-
+Tồn tổng hợp (suy ra từ StockItems)
+Version
+int
+-
+Phiên bản
+ImageUrl
+nvarchar
+-
+Ảnh chính
+Description
+nvarchar
+-
+Mô tả ngắn
+LongDescription
+nvarchar
+-
+Mô tả chi tiết
+Brand
+nvarchar
+-
+Tên hãng (chuỗi)
+SupplierId
+int
+FK
+→ Suppliers (NCC chính)
+BackupSupplierId
+int
+FK
+→ Suppliers (NCC dự phòng)
+SupplyType
+nvarchar
+-
+Hình thức cung ứng
+WarrantyProvider
+nvarchar
+-
+Đơn vị bảo hành
+CategoryId
+int
+FK
+→ Categories (danh mục chính)
+IsActive
+bit
+-
+Đang bán
+IsFeatured
+bit
+-
+Nổi bật
+IsBestSeller
+bit
+-
+Bán chạy
+IsNewArrival
+bit
+-
+Hàng mới
+IsDiscounted
+bit
+-
+Đang giảm giá
+RequiresSerialTracking
+bit
+-
+Bắt buộc quản lý theo serial
+WarrantyMonths
+int
+-
+Số tháng bảo hành
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.4. Bảng Categories
+Mục đích: Danh mục sản phẩm.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Name
+nvarchar
+-
+Tên danh mục
+Description
+nvarchar
+-
+Mô tả
+5.3.5. Bảng ProductCategories
+Mục đích: Bảng nối N–N Sản phẩm ↔ Danh mục (danh mục phụ).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+ProductId
+int
+PK, FK
+→ Products
+CategoryId
+int
+PK, FK
+→ Categories
+5.3.6. Bảng Brands
+Mục đích: Thương hiệu thuộc một danh mục.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Name
+nvarchar
+-
+Tên hãng
+CategoryId
+int
+FK
+→ Categories
+IsActive
+bit
+-
+Đang dùng
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.7. Bảng ProductImages
+Mục đích: Ảnh phụ của sản phẩm.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+ImageUrl
+nvarchar
+-
+Đường dẫn ảnh
+AltText
+nvarchar
+-
+Mô tả ảnh
+SortOrder
+int
+-
+Thứ tự
+IsPrimary
+bit
+-
+Ảnh đại diện
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.8. Bảng ProductVariants
+Mục đích: Biến thể sản phẩm (màu/RAM/bộ nhớ).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+VariantName
+nvarchar
+-
+Tên biến thể
+Price
+decimal
+-
+Giá bán
+OriginalPrice
+decimal
+-
+Giá gốc
+AttributesJson
+nvarchar
+-
+Thuộc tính (JSON)
+Stock
+int
+-
+Tồn biến thể
+Sku
+nvarchar
+-
+Mã SKU
+ImageUrl
+nvarchar
+-
+Ảnh biến thể
+IsActive
+bit
+-
+Đang bán
+IsDefault
+bit
+-
+Biến thể mặc định
+Version
+int
+-
+Phiên bản
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.9. Bảng SpecDefinitions
+Mục đích: Định nghĩa thông số kỹ thuật theo danh mục.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+CategoryId
+int
+FK
+→ Categories
+Name
+nvarchar
+-
+Tên thông số
+Code
+nvarchar
+-
+Mã thông số
+DataType
+nvarchar
+-
+Kiểu dữ liệu
+InputType
+nvarchar
+-
+Kiểu nhập liệu
+Unit
+nvarchar
+-
+Đơn vị
+SortOrder
+int
+-
+Thứ tự
+IsRequired
+bit
+-
+Bắt buộc
+IsFilterable
+bit
+-
+Dùng để lọc
+IsComparable
+bit
+-
+Dùng để so sánh
+AllowCustomValue
+bit
+-
+Cho nhập giá trị tự do
+IsActive
+bit
+-
+Đang dùng
+IsVariantAxis
+bit
+-
+Là trục phân biệt biến thể
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.10. Bảng SpecOptions
+Mục đích: Giá trị tùy chọn của một thông số.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+SpecDefinitionId
+int
+FK
+→ SpecDefinitions
+Value
+nvarchar
+-
+Giá trị
+DisplayOrder
+int
+-
+Thứ tự hiển thị
+IsActive
+bit
+-
+Đang dùng
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.11. Bảng ProductSpecValues
+Mục đích: Giá trị thông số thực tế của sản phẩm.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+SpecDefinitionId
+int
+FK
+→ SpecDefinitions
+SpecOptionId
+int
+FK
+→ SpecOptions
+ValueText
+nvarchar
+-
+Giá trị dạng văn bản
+ValueNumber
+decimal
+-
+Giá trị dạng số
+ValueBool
+bit
+-
+Giá trị dạng luận lý
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.12. Bảng ProductRecommendations
+Mục đích: Sản phẩm gợi ý mua kèm (cross/up-sell).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+RecommendedProductId
+int
+FK
+→ Products (sản phẩm gợi ý)
+Type
+nvarchar
+-
+Loại gợi ý
+SortOrder
+int
+-
+Thứ tự
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.13. Bảng Banners
+Mục đích: Banner / khuyến mãi trang chủ.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Kicker
+nvarchar
+-
+Dòng dẫn
+Title
+nvarchar
+-
+Tiêu đề
+SubTitle
+nvarchar
+-
+Tiêu đề phụ
+CtaLabel
+nvarchar
+-
+Nhãn nút
+CtaTo
+nvarchar
+-
+Liên kết nút
+ImageUrl
+nvarchar
+-
+Ảnh banner
+OfferTitle
+nvarchar
+-
+Tiêu đề ưu đãi
+OfferDiscount
+nvarchar
+-
+Mức ưu đãi
+OfferProduct
+nvarchar
+-
+Sản phẩm ưu đãi
+DisplayOrder
+int
+-
+Thứ tự
+IsActive
+bit
+-
+Đang hiển thị
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.14. Bảng Orders
+Mục đích: Đơn hàng của khách.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+OrderCode
+nvarchar
+-
+Mã đơn
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CustomerName
+nvarchar
+-
+Tên khách
+CustomerPhone
+nvarchar
+-
+SĐT khách
+CustomerEmail
+nvarchar
+-
+Email khách
+OrderDate
+datetime2
+-
+Ngày đặt
+Subtotal
+decimal
+-
+Tạm tính
+ProductDiscount
+decimal
+-
+Giảm giá sản phẩm
+ShippingFee
+decimal
+-
+Phí vận chuyển
+ShippingDiscount
+decimal
+-
+Giảm phí vận chuyển
+TotalAmount
+decimal
+-
+Tổng tiền
+Status
+nvarchar
+-
+Trạng thái đơn
+PaymentMethod
+nvarchar
+-
+Phương thức thanh toán
+PaymentStatus
+nvarchar
+-
+Trạng thái thanh toán
+TransactionId
+nvarchar
+-
+Mã giao dịch
+ShippingMethod
+nvarchar
+-
+Phương thức giao
+ShippingAddress / Province / District / Ward / AddressDetail
+nvarchar
+-
+Nhóm trường địa chỉ giao hàng
+StorePickupLocation
+nvarchar
+-
+Điểm nhận tại cửa hàng
+PickupWarehouseId
+int
+FK
+→ Warehouses (kho nhận)
+PickupSlotStartAt / PickupSlotEndAt / ReadyForPickupAt / PickupExpiresAt
+datetime2
+-
+Nhóm mốc thời gian nhận hàng
+PickupVerificationPin
+nvarchar
+-
+Mã PIN nhận hàng
+Carrier / TrackingCode / ShippedAt / DeliveredAt / DeliveryFailedReason
+nvarchar/datetime2
+-
+Nhóm trường vận chuyển
+InvoiceRequired / InvoiceCompanyName / InvoiceTaxCode / InvoiceAddress / InvoiceEmail
+bit/nvarchar
+-
+Nhóm trường xuất hóa đơn
+RefundStatus / RefundAmount / RefundedAt / RefundTransactionId
+nvarchar/decimal/datetime2
+-
+Nhóm trường hoàn tiền
+ReturnStatus / ReturnedAt
+nvarchar/datetime2
+-
+Nhóm trường trả hàng
+CancelReason / CancelRequestedAt / CancelReviewedAt / CancelReviewedByUserId / CancelReviewNote
+nvarchar/datetime2/guid
+-
+Nhóm trường hủy đơn
+Notes
+nvarchar
+-
+Ghi chú
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+UpdatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+5.3.15. Bảng OrderDetails
+Mục đích: Dòng hàng trong đơn.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+OrderId
+int
+FK
+→ Orders
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+ProductName
+nvarchar
+-
+Tên SP (snapshot)
+ProductImage
+nvarchar
+-
+Ảnh SP (snapshot)
+Sku
+nvarchar
+-
+Mã SKU
+SelectedColor
+nvarchar
+-
+Màu đã chọn
+SelectedVersion
+nvarchar
+-
+Phiên bản đã chọn
+Quantity
+int
+-
+Số lượng
+UnitPrice
+decimal
+-
+Đơn giá
+TotalPrice
+decimal
+-
+Thành tiền
+SerialOrImei
+nvarchar
+-
+Serial/IMEI đã bán
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.16. Bảng OrderDetailStockItems
+Mục đích: Gán đơn vị tồn (serial) cho dòng hàng.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+OrderDetailId
+int
+FK
+→ OrderDetails
+StockItemId
+int
+FK
+→ StockItems
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.17. Bảng OrderTimelines
+Mục đích: Lịch sử trạng thái đơn.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+OrderId
+int
+FK
+→ Orders
+Status
+nvarchar
+-
+Trạng thái
+Title
+nvarchar
+-
+Tiêu đề
+Note
+nvarchar
+-
+Ghi chú
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Thời điểm
+5.3.18. Bảng OrderCancellations
+Mục đích: Yêu cầu hủy đơn và duyệt.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+OrderId
+int
+FK
+→ Orders
+RequestedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+Reason
+nvarchar
+-
+Lý do hủy
+Status
+nvarchar
+-
+Trạng thái duyệt
+AdminNote
+nvarchar
+-
+Ghi chú xử lý
+ReviewedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+RequestedAt
+datetime2
+-
+Thời điểm yêu cầu
+ReviewedAt
+datetime2
+-
+Thời điểm duyệt
+5.3.19. Bảng PaymentSessions
+Mục đích: Phiên thanh toán QR (mock).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+SessionId
+nvarchar
+-
+Mã phiên
+Token
+nvarchar
+-
+Token bí mật đối chiếu
+OrderId
+int
+FK*
+→ Orders (logic)
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+OrderPayloadJson
+nvarchar
+-
+Dữ liệu đơn (JSON)
+Amount
+decimal
+-
+Số tiền
+Status
+nvarchar
+-
+Pending/Paid/Expired
+TransactionId
+nvarchar
+-
+Mã giao dịch
+ExpiresAt
+datetime2
+-
+Hết hạn
+PaidAt
+datetime2
+-
+Thời điểm thanh toán
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.20. Bảng Coupons
+Mục đích: Mã giảm giá.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Code
+nvarchar
+-
+Mã coupon
+Name
+nvarchar
+-
+Tên
+Description
+nvarchar
+-
+Mô tả
+Type
+nvarchar
+-
+Loại (Product/Shipping…)
+DiscountType
+nvarchar
+-
+Kiểu giảm (Amount/Percent)
+DiscountValue
+decimal
+-
+Giá trị giảm
+MaxDiscountAmount
+decimal
+-
+Giảm tối đa
+MinOrderAmount
+decimal
+-
+Giá trị đơn tối thiểu
+StartAt
+datetime2
+-
+Bắt đầu
+EndAt
+datetime2
+-
+Kết thúc
+TotalQuantity
+int
+-
+Tổng số lượng
+UsedQuantity
+int
+-
+Đã dùng
+ClaimedQuantity
+int
+-
+Đã nhận
+PerUserLimit
+int
+-
+Giới hạn mỗi người
+IsActive / IsPublic / IsAutoClaimable / IsStackable / IsSpinReward
+bit
+-
+Nhóm cờ trạng thái
+SpinWeight
+int
+-
+Trọng số vòng quay
+AllowedPaymentMethods
+nvarchar
+-
+Phương thức TT áp dụng
+DailyUsageLimit
+int
+-
+Giới hạn dùng/ngày
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.21. Bảng CouponScopes
+Mục đích: Phạm vi áp dụng coupon.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+CouponId
+int
+FK
+→ Coupons
+ScopeType
+nvarchar
+-
+All/Product/Category/Brand
+ProductId
+int
+FK
+→ Products
+CategoryId
+int
+FK
+→ Categories
+Brand
+nvarchar
+-
+Tên hãng áp dụng
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.22. Bảng UserCoupons
+Mục đích: Coupon đã lưu/sử dụng của người dùng.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CouponId
+int
+FK
+→ Coupons
+ClaimedAt
+datetime2
+-
+Thời điểm nhận
+UsedAt
+datetime2
+-
+Thời điểm dùng
+Status
+nvarchar
+-
+Trạng thái
+ExpiredAt
+datetime2
+-
+Hết hạn
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.23. Bảng OrderCoupons
+Mục đích: Coupon đã áp dụng vào đơn (snapshot).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+OrderId
+int
+FK
+→ Orders
+CouponId
+int
+FK
+→ Coupons
+UserCouponId
+int
+FK
+→ UserCoupons
+CouponCode / CouponName / CouponType / DiscountType
+nvarchar
+-
+Snapshot thông tin coupon
+DiscountValue
+decimal
+-
+Giá trị giảm
+DiscountAmount
+decimal
+-
+Số tiền giảm thực tế
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.24. Bảng VoucherSpins
+Mục đích: Lượt quay vòng quay may mắn.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+SpinDate
+datetime2
+-
+Ngày quay
+RewardCouponId
+int
+FK
+→ Coupons (phần thưởng)
+RewardCode
+nvarchar
+-
+Mã thưởng
+ResultType
+nvarchar
+-
+Loại kết quả
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.25. Bảng Warehouses
+Mục đích: Kho / điểm nhận hàng.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+Name
+nvarchar
+-
+Tên kho
+Code
+nvarchar
+-
+Mã kho
+Address
+nvarchar
+-
+Địa chỉ
+IsActive
+bit
+-
+Đang hoạt động
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.26. Bảng Suppliers
+Mục đích: Nhà cung cấp.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+SupplierCode
+nvarchar
+-
+Mã NCC
+Name
+nvarchar
+-
+Tên NCC
+Phone / Email / Address / TaxCode / ContactPerson
+nvarchar
+-
+Thông tin liên hệ
+SupplierType
+int
+-
+Loại NCC (enum)
+Note
+nvarchar
+-
+Ghi chú
+IsActive
+bit
+-
+Đang dùng
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.27. Bảng CategorySuppliers
+Mục đích: Bảng nối Danh mục ↔ NCC.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+CategoryId
+int
+FK
+→ Categories
+SupplierId
+int
+FK
+→ Suppliers
+SortOrder
+int
+-
+Thứ tự
+IsActive
+bit
+-
+Đang dùng
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.28. Bảng StockItems
+Mục đích: Đơn vị tồn kho theo Serial/IMEI (nguồn sự thật tồn kho).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+WarehouseId
+int
+FK
+→ Warehouses
+SupplierId
+int
+FK
+→ Suppliers
+SerialOrImei
+nvarchar
+-
+Mã định danh chính
+SerialNumber
+nvarchar
+-
+Serial hãng
+Imei
+nvarchar
+-
+IMEI (15 số + Luhn)
+InternalCode
+nvarchar
+-
+Mã tem kho nội bộ
+Sku
+nvarchar
+-
+Mã SKU
+IsAutoTag
+bit
+-
+Mã tem tự sinh
+Status
+nvarchar
+-
+Trạng thái (InStock/Sold…)
+UnitCost
+decimal
+-
+Giá vốn
+SupplierName
+nvarchar
+-
+Tên NCC (snapshot)
+ReceivedAt
+datetime2
+-
+Ngày nhập
+SoldAt
+datetime2
+-
+Ngày bán
+OrderId
+int
+FK
+→ Orders
+OrderDetailId
+int
+FK
+→ OrderDetails
+CustomerId
+uniqueidentifier
+FK*
+→ Users (logic)
+Note
+nvarchar
+-
+Ghi chú
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.29. Bảng GoodsReceipts
+Mục đích: Phiếu nhập kho.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ReceiptCode
+nvarchar
+-
+Mã phiếu
+SupplierId
+int
+FK
+→ Suppliers
+SupplierName
+nvarchar
+-
+Tên NCC (snapshot)
+WarehouseId
+int
+FK
+→ Warehouses
+ReceivedAt
+datetime2
+-
+Ngày nhập
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+Note
+nvarchar
+-
+Ghi chú
+TotalQuantity
+int
+-
+Tổng số lượng
+TotalCost
+decimal
+-
+Tổng giá trị
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.30. Bảng GoodsReceiptLines
+Mục đích: Dòng hàng trong phiếu nhập.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+GoodsReceiptId
+int
+FK
+→ GoodsReceipts
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+Quantity
+int
+-
+Số lượng
+UnitCost
+decimal
+-
+Đơn giá nhập
+TotalCost
+decimal
+-
+Thành tiền
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.31. Bảng GoodsReceiptSerials
+Mục đích: Serial/IMEI nhập theo dòng phiếu.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+GoodsReceiptLineId
+int
+FK
+→ GoodsReceiptLines
+StockItemId
+int
+FK
+→ StockItems
+SerialOrImei
+nvarchar
+-
+Mã serial/IMEI
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.32. Bảng StockMovements
+Mục đích: Nhật ký dịch chuyển/đổi trạng thái tồn kho.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+StockItemId
+int
+FK
+→ StockItems
+WarehouseId
+int
+FK
+→ Warehouses
+Type
+nvarchar
+-
+Loại dịch chuyển
+Quantity
+int
+-
+Số lượng
+FromStatus / ToStatus
+nvarchar
+-
+Trạng thái trước/sau
+ReferenceType
+nvarchar
+-
+Loại tham chiếu
+ReferenceId
+int
+-
+Mã tham chiếu
+Note
+nvarchar
+-
+Ghi chú
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Thời điểm
+5.3.33. Bảng InventoryReturns
+Mục đích: Phiếu trả hàng/hoàn về kho.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ReturnCode
+nvarchar
+-
+Mã phiếu trả
+OrderId
+int
+FK
+→ Orders
+OrderDetailId
+int
+FK
+→ OrderDetails
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+StockItemId
+int
+FK
+→ StockItems
+SerialOrImei
+nvarchar
+-
+Serial/IMEI
+CustomerName / CustomerPhone
+nvarchar
+-
+Thông tin khách
+Reason
+nvarchar
+-
+Lý do trả
+Condition
+nvarchar
+-
+Tình trạng hàng
+Status
+nvarchar
+-
+Trạng thái
+RefundAmount
+decimal
+-
+Số tiền hoàn
+Note
+nvarchar
+-
+Ghi chú
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+ReviewedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+ReviewNote
+nvarchar
+-
+Ghi chú duyệt
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.34. Bảng InventoryTransactions
+Mục đích: Giao dịch xuất/nhập tồn (số lượng).
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+Type
+int
+-
+Loại giao dịch (enum)
+Quantity
+int
+-
+Số lượng
+UnitCost
+decimal
+-
+Đơn giá
+ReferenceId
+int
+-
+Mã tham chiếu
+Note
+nvarchar
+-
+Ghi chú
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Thời điểm
+5.3.35. Bảng WarrantyRecords
+Mục đích: Hồ sơ bảo hành theo sản phẩm/serial.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+WarrantyCode
+nvarchar
+-
+Mã bảo hành
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+OrderId
+int
+FK
+→ Orders
+OrderDetailId
+int
+FK
+→ OrderDetails
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+StockItemId
+int
+FK
+→ StockItems
+SerialOrImei
+nvarchar
+-
+Serial/IMEI
+CustomerName / CustomerPhone / CustomerEmail
+nvarchar
+-
+Thông tin khách
+ProductName / ProductImage
+nvarchar
+-
+Snapshot sản phẩm
+WarrantyMonths
+int
+-
+Số tháng bảo hành
+ActivatedAt / ExpiresAt / StartDate / EndDate
+datetime2
+-
+Mốc hiệu lực bảo hành
+Status
+nvarchar
+-
+Trạng thái
+Note
+nvarchar
+-
+Ghi chú
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.36. Bảng WarrantyClaims
+Mục đích: Yêu cầu bảo hành.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+ClaimCode
+nvarchar
+-
+Mã yêu cầu
+WarrantyId
+int
+FK
+→ WarrantyRecords
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+OrderId
+int
+FK
+→ Orders
+OrderDetailId
+int
+FK
+→ OrderDetails
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+StockItemId
+int
+FK
+→ StockItems
+SerialOrImei
+nvarchar
+-
+Serial/IMEI
+CustomerName / CustomerPhone / CustomerEmail
+nvarchar
+-
+Thông tin khách
+IssueDescription
+nvarchar
+-
+Mô tả lỗi
+ReceiveMethod
+nvarchar
+-
+Hình thức tiếp nhận
+ReturnAddress
+nvarchar
+-
+Địa chỉ trả máy
+Status
+nvarchar
+-
+Trạng thái
+Priority
+nvarchar
+-
+Mức ưu tiên
+ReceivedAt / CompletedAt
+datetime2
+-
+Mốc xử lý
+RejectedReason
+nvarchar
+-
+Lý do từ chối
+Note
+nvarchar
+-
+Ghi chú
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.37. Bảng WarrantyClaimUpdates
+Mục đích: Lịch sử xử lý yêu cầu bảo hành.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+WarrantyClaimId
+int
+FK
+→ WarrantyClaims
+Status
+nvarchar
+-
+Trạng thái
+Title
+nvarchar
+-
+Tiêu đề
+Message
+nvarchar
+-
+Nội dung
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Thời điểm
+5.3.38. Bảng RepairCases
+Mục đích: Phiếu sửa chữa.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+RepairCode
+nvarchar
+-
+Mã phiếu
+WarrantyClaimId
+int
+FK
+→ WarrantyClaims
+TicketId
+int
+FK
+→ SupportTickets
+StockItemId
+int
+FK
+→ StockItems
+ProductId
+int
+FK
+→ Products
+VariantId
+int
+FK
+→ ProductVariants
+SerialOrImei
+nvarchar
+-
+Serial/IMEI
+CustomerName / CustomerPhone / ProductName
+nvarchar
+-
+Thông tin khách &amp; SP
+IssueDescription
+nvarchar
+-
+Mô tả lỗi
+Diagnosis
+nvarchar
+-
+Chẩn đoán
+Solution
+nvarchar
+-
+Giải pháp
+TechnicianId
+uniqueidentifier
+FK*
+→ Users (kỹ thuật viên, logic)
+Status
+nvarchar
+-
+Trạng thái
+Priority
+nvarchar
+-
+Mức ưu tiên
+ReceivedAt / EstimatedCompletionAt / CompletedAt
+datetime2
+-
+Mốc xử lý
+CostEstimate
+decimal
+-
+Chi phí dự kiến
+FinalCost
+decimal
+-
+Chi phí cuối
+IsWarrantyCovered
+bit
+-
+Thuộc bảo hành
+CustomerApprovedCost
+bit
+-
+Khách duyệt chi phí
+Note
+nvarchar
+-
+Ghi chú
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.3.39. Bảng RepairUpdates
+Mục đích: Lịch sử xử lý phiếu sửa chữa.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+RepairCaseId
+int
+FK
+→ RepairCases
+Status
+nvarchar
+-
+Trạng thái
+Title
+nvarchar
+-
+Tiêu đề
+Message
+nvarchar
+-
+Nội dung
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Thời điểm
+5.3.40. Bảng SupportTickets
+Mục đích: Phiếu yêu cầu hỗ trợ/CSKH.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+TicketCode
+nvarchar
+-
+Mã ticket
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+Subject
+nvarchar
+-
+Tiêu đề
+Description
+nvarchar
+-
+Nội dung
+CustomerName / CustomerPhone / CustomerEmail
+nvarchar
+-
+Thông tin khách
+RelatedOrderId
+int
+FK
+→ Orders
+RelatedProductId
+int
+FK
+→ Products
+RelatedWarrantyId
+int
+FK
+→ WarrantyRecords
+SerialOrImei
+nvarchar
+-
+Serial/IMEI
+UserSessionId
+nvarchar
+-
+Phiên khách vãng lai
+Status
+nvarchar
+-
+Trạng thái
+Priority
+nvarchar
+-
+Mức ưu tiên
+Category
+nvarchar
+-
+Phân loại
+AssignedToUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt / UpdatedAt / ClosedAt
+datetime2
+-
+Mốc thời gian
+5.3.41. Bảng SupportTicketUpdates
+Mục đích: Tin nhắn/cập nhật trong ticket.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+TicketId
+int
+FK
+→ SupportTickets
+ParentMessageId
+int
+FK
+→ SupportTicketUpdates (tự tham chiếu)
+Message
+nvarchar
+-
+Nội dung
+SenderName
+nvarchar
+-
+Người gửi
+StatusAfter / PriorityAfter
+nvarchar
+-
+Trạng thái/ưu tiên sau cập nhật
+CreatedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+IsAdminReply
+bit
+-
+Phản hồi của nhân viên
+IsInternalNote
+bit
+-
+Ghi chú nội bộ
+CreatedAt
+datetime2
+-
+Thời điểm
+5.3.42. Bảng Notifications
+Mục đích: Thông báo cá nhân/hệ thống.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+UserId
+uniqueidentifier
+FK*
+→ Users (logic)
+Title
+nvarchar
+-
+Tiêu đề
+Message
+nvarchar
+-
+Nội dung
+Type
+nvarchar
+-
+Loại thông báo
+ReferenceType
+nvarchar
+-
+Loại đối tượng tham chiếu
+ReferenceId
+int
+-
+Mã đối tượng (đa hình)
+IsRead
+bit
+-
+Đã đọc
+CreatedAt
+datetime2
+-
+Thời điểm
+ReadAt
+datetime2
+-
+Thời điểm đọc
+5.3.43. Bảng Attachments
+Mục đích: Tệp đính kèm đa hình.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+EntityType
+nvarchar
+-
+Loại đối tượng gắn kèm
+EntityId
+int
+-
+Mã đối tượng (đa hình)
+FileName
+nvarchar
+-
+Tên tệp
+FileUrl
+nvarchar
+-
+Đường dẫn tệp
+ContentType
+nvarchar
+-
+Kiểu nội dung
+Size
+bigint
+-
+Kích thước
+UploadedByUserId
+uniqueidentifier
+FK*
+→ Users (logic)
+CreatedAt
+datetime2
+-
+Ngày tạo
+5.3.44. Bảng StoreSettings
+Mục đích: Cấu hình cửa hàng.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Mô tả
+Id
+int
+PK
+Khóa chính
+StoreName
+nvarchar
+-
+Tên cửa hàng
+Hotline
+nvarchar
+-
+Đường dây nóng
+SupportEmail
+nvarchar
+-
+Email hỗ trợ
+Address / WarrantyAddress
+nvarchar
+-
+Địa chỉ cửa hàng/bảo hành
+DefaultShippingFee
+decimal
+-
+Phí ship mặc định
+FreeShippingThreshold
+decimal
+-
+Ngưỡng miễn phí ship
+SupportTime
+nvarchar
+-
+Giờ hỗ trợ
+LogoUrl / FacebookUrl / ZaloUrl
+nvarchar
+-
+Liên kết thương hiệu
+BankName / BankAccountNumber / BankAccountHolder / BankAccountsJson
+nvarchar
+-
+Thông tin tài khoản nhận chuyển khoản
+CreatedAt
+datetime2
+-
+Ngày tạo
+UpdatedAt
+datetime2
+-
+Ngày cập nhật
+5.4. Ràng buộc và toàn vẹn dữ liệu
+FK: thực thi bằng khóa ngoại EF Core; trường FK* là tham chiếu logic tới Users.
+Bảng nối: ProductCategories (khóa kép); CategorySuppliers, OrderDetailStockItems, GoodsReceiptSerials, OrderCoupons (khóa Id riêng).
+Tự tham chiếu: ProductRecommendations, SupportTicketUpdates.
+CHECK: cột trạng thái của StockItems, InventoryReturns, Coupons, VoucherSpins, UserCoupons.
+Tồn kho suy ra từ StockItems (nguồn sự thật); migration áp dụng thủ công (seed Roles, Admin).
+CHƯƠNG 6. THIẾT KẾ GIAO DIỆN NGƯỜI DÙNG
+6.1. Tổng quan giao diện và điều hướng
+Giao diện React chia ba khu vực: Auth, Store (khách hàng/khách vãng lai), Admin (nhân viên). Truy cập Admin được kiểm soát bằng ProtectedRoute theo vai trò.
+
+Hình 6.1: Sơ đồ điều hướng màn hình (sitemap)
+6.2. Giao diện khu cửa hàng (Store)
+6.2.1. Trang chủ
+Tệp nguồn: pages/store/Home.jsx.
+Banner, danh mục, sản phẩm nổi bật/bán chạy/mới và khối khuyến mãi.
+
+Hình 6.2: Màn hình Trang chủ
+6.2.2. Cửa hàng và chi tiết sản phẩm
+Tệp nguồn: Shop.jsx, ProductDetail.jsx, Compare.jsx.
+Danh sách có lọc theo thông số, chi tiết biến thể/thông số, so sánh.
+
+Hình 6.3: Màn hình Cửa hàng và chi tiết sản phẩm
+6.2.3. Giỏ hàng và Thanh toán
+Tệp nguồn: Cart.jsx, Checkout.jsx, PaymentWaiting.jsx.
+Giỏ hàng, áp coupon, địa chỉ/nhận tại cửa hàng, thanh toán QR.
+
+Hình 6.4: Màn hình Giỏ hàng và Thanh toán
+6.2.4. Đơn hàng của tôi
+Tệp nguồn: Orders.jsx.
+Danh sách và chi tiết đơn, theo dõi tiến trình.
+
+Hình 6.5: Màn hình Đơn hàng của tôi
+6.2.5. Bảo hành và Hỗ trợ
+Tệp nguồn: Warranty.jsx, Tickets.jsx.
+Tra cứu/gửi bảo hành; gửi/theo dõi ticket.
+
+Hình 6.6: Màn hình Bảo hành và Hỗ trợ
+6.2.6. Khuyến mãi và Yêu thích
+Tệp nguồn: Promotion.jsx, Wishlist.jsx.
+Khuyến mãi/vòng quay và sản phẩm yêu thích.
+
+Hình 6.7: Màn hình Khuyến mãi và Yêu thích
+6.3. Giao diện khu quản trị (Admin)
+6.3.1. Dashboard
+Tệp nguồn: admin/Dashboard.jsx.
+Tổng hợp số liệu sản phẩm, đơn hàng, danh mục, người dùng.
+
+Hình 6.8: Màn hình Dashboard
+6.3.2. Quản lý sản phẩm &amp; danh mục
+Tệp nguồn: admin/Products.jsx, Categories.jsx, AdminBanners.jsx.
+CRUD sản phẩm, biến thể, thông số, danh mục, banner.
+
+Hình 6.9: Màn hình Quản lý sản phẩm &amp; danh mục
+6.3.3. Quản lý kho &amp; nhà cung cấp
+Tệp nguồn: admin/AdminInventory.jsx, AdminSuppliers.jsx.
+Nhập hàng, Serial/IMEI, tồn kho, đổi trả, NCC.
+
+Hình 6.10: Màn hình Quản lý kho &amp; nhà cung cấp
+6.3.4. Quản lý đơn hàng
+Tệp nguồn: admin/AdminOrders.jsx.
+Xử lý, duyệt, cập nhật trạng thái, hủy đơn.
+
+Hình 6.11: Màn hình Quản lý đơn hàng
+6.3.5. Quản lý khuyến mãi
+Tệp nguồn: admin/AdminCoupons.jsx.
+CRUD coupon, cấu hình vòng quay.
+
+Hình 6.12: Màn hình Quản lý khuyến mãi
+6.3.6. Quản lý bảo hành &amp; sửa chữa
+Tệp nguồn: admin/AdminWarranty.jsx, AdminRepairs.jsx.
+Tiếp nhận, xử lý bảo hành/sửa chữa.
+
+Hình 6.13: Màn hình Quản lý bảo hành &amp; sửa chữa
+6.3.7. Quản lý hỗ trợ
+Tệp nguồn: admin/AdminTickets.jsx.
+Xử lý và phản hồi ticket.
+
+Hình 6.14: Màn hình Quản lý hỗ trợ
+6.3.8. Quản lý người dùng &amp; vai trò
+Tệp nguồn: admin/Users.jsx, Roles.jsx.
+CRUD người dùng, phân vai trò.
+
+Hình 6.15: Màn hình Quản lý người dùng &amp; vai trò
+6.4. Giao diện xác thực
+6.4.1. Đăng nhập
+Tệp nguồn: auth/Login.jsx.
+Đăng nhập và điều hướng theo vai trò.
+
+Hình 6.16: Màn hình Đăng nhập
+CHƯƠNG 7. TỔNG KẾT THIẾT KẾ
+7.1. Bảng tổng kết kết quả thiết kế
+Hạng mục
+Số lượng
+Ghi chú
+Dịch vụ chạy độc lập
+3 + Gateway
+AuthService, APIService, AuditLog + ApiGateway (Ocelot)
+Project trong solution
+13
+Gồm thư viện dùng chung và dịch vụ
+Module nghiệp vụ
+10
+Product, Inventory, Order, Coupon, Warranty, Repair, Support, Notification, Auth, Dashboard
+Controller (API + Auth)
+21
+18 ở APIService + 3 ở AuthService
+Service nghiệp vụ
+11
+Kèm interface tương ứng
+Bảng cơ sở dữ liệu
+44
+Ánh xạ từ entity qua EF Core
+Migration
+48
+Áp dụng thủ công
+Vai trò (RBAC)
+4
+Admin, User, Warehouse, Technical
+Use-case được phủ
+35
+UC-G/C/T/W/A (2 use-case theo lộ trình)
+Sơ đồ trong tài liệu
+42
+Use-case 5, kiến trúc 1, sequence 3, class 8, ERD 9, sitemap+giao diện 16
+7.2. Bảng công nghệ sử dụng
+Tầng / Hạng mục
+Công nghệ
+Vai trò
+Frontend
+React 18 + Vite
+SPA, build/dev server
+Frontend
+react-router-dom, axios
+Định tuyến phía client, gọi API
+Frontend
+TailwindCSS (+ tailwind-merge, clsx), framer-motion, swiper
+Giao diện, hiệu ứng
+Frontend
+@microsoft/signalr
+Nhận thông báo realtime
+API Gateway
+Ocelot
+Định tuyến request, phục vụ SPA tĩnh
+Backend
+ASP.NET Core (.NET) Web API
+Dịch vụ nghiệp vụ &amp; xác thực
+Backend
+Entity Framework Core
+ORM, truy cập dữ liệu
+Backend
+FluentValidation
+Kiểm tra dữ liệu đầu vào
+Backend
+ASP.NET Core SignalR
+Hub thông báo thời gian thực
+Backend
+Swagger / Swashbuckle
+Tài liệu API
+Bảo mật
+JWT Bearer (HMAC-SHA256)
+Xác thực phiên đăng nhập
+Bảo mật
+PBKDF2 (HMAC-SHA1, 10.000 vòng)
+Băm mật khẩu
+Cơ sở dữ liệu
+Microsoft SQL Server
+Lưu trữ dữ liệu nghiệp vụ (techstore)
+7.3. Kết luận
+Tài liệu thiết kế chi tiết (SDD) đã trình bày đầy đủ kiến trúc tổng thể, cơ chế xác thực – phân quyền, thiết kế lớp cho 10 module nghiệp vụ, thiết kế cơ sở dữ liệu gồm 44 bảng và thiết kế giao diện người dùng của hệ thống TechStore, bám sát mã nguồn thực tế và yêu cầu trong tài liệu SRS.
+Thiết kế đã đáp ứng các mục tiêu trọng tâm: quản lý sản phẩm theo thông số kỹ thuật động, quản lý tồn kho ở mức từng đơn vị theo Serial/IMEI, quy trình đặt hàng – thanh toán, và các nghiệp vụ hậu mãi (bảo hành, sửa chữa, hỗ trợ). Kiến trúc microservice kết hợp API Gateway giúp tách bạch trách nhiệm và thuận tiện mở rộng.
+Một số hạng mục được ghi nhận để hoàn thiện trong tương lai: hiện thực hóa chức năng trả góp (UC-C08) và quản lý đối tác vận chuyển (UC-A05); xây dựng dịch vụ báo cáo riêng cho UC-A08; bổ sung module Đánh giá sản phẩm (Review); loại bỏ nhánh xác thực mật khẩu plain-text và chuyển sang cơ sở dữ liệu riêng cho từng dịch vụ khi mở rộng quy mô. Tài liệu này là cơ sở để đội phát triển hiện thực, đội kiểm thử lập kịch bản và các bên liên quan rà soát, phê duyệt.
+TÀI LIỆU THAM KHẢO
+Tài liệu Đặc tả Yêu cầu Phần mềm – TechStore (final v4).
+Biểu mẫu Thiết kế chi tiết: detaildesigntemplate.docx.
+Mã nguồn dự án: Solution BaseCore (BaseCore.sln).
+Microsoft. Tài liệu ASP.NET Core. https://learn.microsoft.com/aspnet/core.
+Microsoft. Tài liệu Entity Framework Core. https://learn.microsoft.com/ef/core.
+Ocelot API Gateway Documentation. https://ocelot.readthedocs.io.
+React Documentation. https://react.dev.
+Vite Documentation. https://vitejs.dev.
+VietQR API Documentation. https://www.vietqr.io.
+

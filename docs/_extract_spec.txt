@@ -1,0 +1,2055 @@
+
+HỌC VIỆN KỸ THUẬT QUÂN SỰBỘ MÔN CÔNG NGHỆ PHẦN MỀM
+----------
+
+TÀI LIỆU ĐẶC TẢ YÊU CẦU PHẦM MỀM
+HỌC PHẦN: CÔNG NGHỆ PHẦN MỀM
+MÃ HỌC PHẦN:77AP
+
+ĐỀ TÀI: WEBSITE KINH DOANH THIẾT BỊ CÔNG NGHỆ 
+
+Giáo viên hướng dẫn :   3// Nguyễn Thị Hiền
+Học viên thực hiện     :  	Dương Công Lương  – Lớp CNTT1/c159/d1
+Trần Thanh Tùng      – Lớp CNTT2/c159/d1
+Lê Thế Bình  	    – Lớp CNTT2/c159/d1
+ 				
+
+Hà Nội, Tháng 6 năm 2026
+
+MỤC LỤC
+
+ TOC \o &quot;1-3&quot; \h \z \u  HYPERLINK \l &quot;_Toc233036580&quot; I. GIỚI THIỆU	 PAGEREF _Toc233036580 \h 3
+		 HYPERLINK \l &quot;_Toc233036581&quot; 1.1. Mục đích tài liệu	 PAGEREF _Toc233036581 \h 3
+		 HYPERLINK \l &quot;_Toc233036582&quot; 1.2. Phạm vi tài liệu	 PAGEREF _Toc233036582 \h 3
+		 HYPERLINK \l &quot;_Toc233036583&quot; 1.3. Định nghĩa thuật ngữ và viết tắt	 PAGEREF _Toc233036583 \h 3
+		 HYPERLINK \l &quot;_Toc233036584&quot; 1.4. Vai trò và trách nhiệm	 PAGEREF _Toc233036584 \h 5
+		 HYPERLINK \l &quot;_Toc233036585&quot; 1.5. Mô tả tài liệu	 PAGEREF _Toc233036585 \h 6
+ HYPERLINK \l &quot;_Toc233036586&quot; II. TỔNG QUAN HỆ THỐNG	 PAGEREF _Toc233036586 \h 7
+		 HYPERLINK \l &quot;_Toc233036587&quot; 2.1. Phát biểu bài toán	 PAGEREF _Toc233036587 \h 7
+		 HYPERLINK \l &quot;_Toc233036588&quot; 2.2. Mục tiêu hệ thống	 PAGEREF _Toc233036588 \h 7
+		 HYPERLINK \l &quot;_Toc233036589&quot; 2.3. Phạm vi hệ thống	 PAGEREF _Toc233036589 \h 8
+		 HYPERLINK \l &quot;_Toc233036590&quot; 2.4. Người sử dụng hệ thống (Actor)	 PAGEREF _Toc233036590 \h 9
+		 HYPERLINK \l &quot;_Toc233036591&quot; 2.5. Mô hình phân rã chức năng và module nghiệp vụ	 PAGEREF _Toc233036591 \h 10
+		 HYPERLINK \l &quot;_Toc233036592&quot; 2.6. Biểu đồ hoạt động của hệ thống	 PAGEREF _Toc233036592 \h 12
+		 HYPERLINK \l &quot;_Toc233036593&quot; 2.6.1. Biểu đồ hoạt động chung	 PAGEREF _Toc233036593 \h 12
+		 HYPERLINK \l &quot;_Toc233036594&quot; 2.6.2. Biểu đồ hoạt động đặt hàng và thanh toán	 PAGEREF _Toc233036594 \h 13
+		 HYPERLINK \l &quot;_Toc233036595&quot; 2.6.3. Biểu đồ hoạt động bảo hành và sửa chữa	 PAGEREF _Toc233036595 \h 14
+		 HYPERLINK \l &quot;_Toc233036596&quot; 2.6.4. Biểu đồ hoạt động quản lý kho	 PAGEREF _Toc233036596 \h 15
+		 HYPERLINK \l &quot;_Toc233036597&quot; 2.7. Biểu đồ hoạt động quản trị hệ thống	 PAGEREF _Toc233036597 \h 16
+ HYPERLINK \l &quot;_Toc233036598&quot; III. ĐẶC TẢ YÊU CẦU CHỨC NĂNG	 PAGEREF _Toc233036598 \h 17
+		 HYPERLINK \l &quot;_Toc233036599&quot; 3.1. Biểu đồ Use-case tổng quan	 PAGEREF _Toc233036599 \h 17
+		 HYPERLINK \l &quot;_Toc233036600&quot; 3.2. Biểu đồ Use-case phân rã	 PAGEREF _Toc233036600 \h 18
+		 HYPERLINK \l &quot;_Toc233036601&quot; 3.2.1. Tác nhân Khách hàng	 PAGEREF _Toc233036601 \h 18
+		 HYPERLINK \l &quot;_Toc233036602&quot; 3.2.2. Tác nhân Kỹ thuật viên	 PAGEREF _Toc233036602 \h 20
+		 HYPERLINK \l &quot;_Toc233036603&quot; 3.2.3. Tác nhân Quản trị viên kho	 PAGEREF _Toc233036603 \h 21
+		 HYPERLINK \l &quot;_Toc233036604&quot; 3.2.4. Tác nhân Quản trị viên hệ thống	 PAGEREF _Toc233036604 \h 22
+		 HYPERLINK \l &quot;_Toc233036605&quot; 3.3. Đặc tả các Use-case	 PAGEREF _Toc233036605 \h 23
+		 HYPERLINK \l &quot;_Toc233036606&quot; 3.3.1. Use-case dùng chung	 PAGEREF _Toc233036606 \h 23
+		 HYPERLINK \l &quot;_Toc233036607&quot; 3.3.2. Use-case Khách hàng	 PAGEREF _Toc233036607 \h 27
+		 HYPERLINK \l &quot;_Toc233036608&quot; 3.3.3. Use-case Kỹ thuật viên	 PAGEREF _Toc233036608 \h 43
+		 HYPERLINK \l &quot;_Toc233036609&quot; 3.3.4. Use-case Quản trị viên kho	 PAGEREF _Toc233036609 \h 47
+		 HYPERLINK \l &quot;_Toc233036610&quot; 3.3.5. Use-case Quản trị viên hệ thống	 PAGEREF _Toc233036610 \h 53
+ HYPERLINK \l &quot;_Toc233036611&quot; IV. THIẾT KẾ GIAO DIỆN NGƯỜI DÙNG	 PAGEREF _Toc233036611 \h 63
+		 HYPERLINK \l &quot;_Toc233036612&quot; 4.1. Giao diện chung	 PAGEREF _Toc233036612 \h 63
+		 HYPERLINK \l &quot;_Toc233036613&quot; 4.2. Giao diện Khách hàng	 PAGEREF _Toc233036613 \h 65
+		 HYPERLINK \l &quot;_Toc233036614&quot; 4.3. Giao diện Kỹ thuật viên	 PAGEREF _Toc233036614 \h 72
+		 HYPERLINK \l &quot;_Toc233036615&quot; 4.4. Giao diện Quản trị viên kho	 PAGEREF _Toc233036615 \h 75
+		 HYPERLINK \l &quot;_Toc233036616&quot; 4.5. Giao diện Quản trị viên hệ thống	 PAGEREF _Toc233036616 \h 77
+ HYPERLINK \l &quot;_Toc233036617&quot; V. YÊU CẦU PHI CHỨC NĂNG	 PAGEREF _Toc233036617 \h 82
+		 HYPERLINK \l &quot;_Toc233036618&quot; 5.1. Yêu cầu về độ chính xác dữ liệu (Accuracy)	 PAGEREF _Toc233036618 \h 82
+		 HYPERLINK \l &quot;_Toc233036619&quot; 5.2. Yêu cầu về bảo mật (Security)	 PAGEREF _Toc233036619 \h 82
+		 HYPERLINK \l &quot;_Toc233036620&quot; 5.3. Yêu cầu về hiệu năng (Performance)	 PAGEREF _Toc233036620 \h 83
+		 HYPERLINK \l &quot;_Toc233036621&quot; 5.4. Yêu cầu về tính tin cậy (Reliability)	 PAGEREF _Toc233036621 \h 83
+		 HYPERLINK \l &quot;_Toc233036622&quot; 5.5. Yêu cầu về tính tương thích (Compatibility)	 PAGEREF _Toc233036622 \h 84
+		 HYPERLINK \l &quot;_Toc233036623&quot; 5.6. Một số yêu cầu phi chức năng bổ trợ	 PAGEREF _Toc233036623 \h 84
+
+I. GIỚI THIỆU
+1.1. Mục đích tài liệu
+Tài liệu này được xây dựng dựa trên quá trình khảo sát, phân tích và tổng hợp yêu cầu thực tế của dự án Website Kinh doanh Thiết bị Công nghệ (Tech Gadget &amp; Electronics Store). Tài liệu đóng vai trò là cơ sở chính thức, thống nhất cho toàn bộ vòng đời phát triển phần mềm, bao gồm các hoạt động thiết kế, lập trình, kiểm thử, bàn giao và bảo trì hệ thống.
+Nội dung tài liệu đặc tả đầy đủ các yêu cầu chức năng và yêu cầu phi chức năng của hệ thống, với các năng lực cốt lõi: quản lý thông số kỹ thuật động theo từng nhóm sản phẩm, công cụ so sánh sản phẩm, quản lý bảo hành điện tử thông qua số Serial/IMEI, kiểm soát tồn kho theo từng đơn vị thiết bị, cùng các phân hệ giao dịch và hậu mãi đi kèm.
+Tài liệu nhằm bảo đảm sự thống nhất về yêu cầu giữa các bên liên quan, bao gồm nhóm phân tích, nhóm phát triển, nhóm kiểm thử và phía khách hàng. Mọi thay đổi về yêu cầu trong quá trình triển khai đều phải được phản ánh vào tài liệu này thông qua quy trình quản lý thay đổi chính thức, nhằm duy trì tính nhất quán và khả năng truy vết của yêu cầu.
+1.2. Phạm vi tài liệu
+Tài liệu áp dụng cho hệ thống Tech Gadget &amp; Electronics Store – một nền tảng web (hỗ trợ đầy đủ trên trình duyệt di động) phục vụ hoạt động kinh doanh thiết bị công nghệ trực tuyến. Hệ thống được xây dựng để phục vụ bốn nhóm người dùng chính: Khách hàng, Kỹ thuật viên, Quản trị viên kho và Quản trị viên hệ thống.
+Phạm vi của tài liệu bao phủ các phân hệ nghiệp vụ trọng tâm: (i) quản lý sản phẩm và thông số kỹ thuật chuyên sâu; (ii) giao dịch và thanh toán; (iii) bảo hành và hậu mãi; (iv) quản trị kho theo từng đơn vị thiết bị; và (v) quản trị hệ thống.
+Trong phạm vi phiên bản 1.0, một số chức năng được xác định là mục tiêu nghiệp vụ nhưng chưa nằm trong phạm vi triển khai hiện tại hoặc mới được hiện thực ở mức cơ bản, bao gồm: chức năng trả góp (Installment), chức năng quản lý đối tác vận chuyển, và việc tích hợp cổng thanh toán thẻ/ví điện tử thực tế (phiên bản hiện tại hỗ trợ thanh toán chuyển khoản qua mã QR và thanh toán tại cửa hàng). Tài liệu không bao gồm thiết kế kỹ thuật chi tiết (kiến trúc cơ sở dữ liệu, đặc tả API, thiết kế lớp, cấu hình triển khai).
+1.3. Định nghĩa thuật ngữ và viết tắt
+Bảng 1.1 – Danh sách thuật ngữ và từ viết tắt
+STT
+Thuật ngữ / Viết tắt
+Ý nghĩa
+1
+SRS
+Software Requirements Specification – Tài liệu đặc tả yêu cầu phần mềm
+2
+UC
+Use Case – Kịch bản sử dụng hệ thống
+3
+Actor
+Tác nhân – Đối tượng tương tác với hệ thống (người dùng hoặc hệ thống ngoài)
+4
+IMEI
+International Mobile Equipment Identity – Mã định danh duy nhất của thiết bị di động (15 chữ số)
+5
+Serial Number
+Số sê-ri – Mã định danh duy nhất do nhà sản xuất gán cho từng thiết bị
+6
+SKU
+Stock Keeping Unit – Mã đơn vị quản lý hàng hóa
+7
+Dynamic Spec
+Bộ thông số động – Cấu hình thông số riêng theo từng nhóm sản phẩm
+8
+Compare Tool
+Công cụ so sánh sản phẩm theo các thông số kỹ thuật tương đương
+9
+Cross-sell
+Bán kèm – Gợi ý sản phẩm/phụ kiện tương thích với sản phẩm chính
+10
+Installment
+Trả góp – Hình thức thanh toán theo kỳ với lãi suất hàng tháng
+11
+CRM
+Customer Relationship Management – Quản lý quan hệ khách hàng
+12
+Ticket
+Phiếu yêu cầu hỗ trợ kỹ thuật / báo lỗi sản phẩm
+13
+Warranty Claim
+Phiếu yêu cầu bảo hành gắn với thiết bị cụ thể
+14
+Stock Item
+Đơn vị tồn kho – Một thiết bị vật lý cụ thể quản lý theo Serial/IMEI
+15
+Goods Receipt
+Phiếu nhập hàng theo lô
+16
+Aged Stock
+Hàng tồn kho lâu ngày
+17
+QR Payment
+Thanh toán bằng cách quét mã QR (qua chuyển khoản ngân hàng)
+18
+JWT
+JSON Web Token – Cơ chế xác thực và phân quyền người dùng
+19
+RBAC
+Role-Based Access Control – Phân quyền dựa trên vai trò
+20
+Guest
+Khách vãng lai – Người dùng chưa đăng nhập
+21
+BA / PM / DL
+Business Analyst / Project Manager / Developer Lead
+22
+CR
+Change Request – Yêu cầu thay đổi
+1.4. Vai trò và trách nhiệm
+Tài liệu được xây dựng dựa trên quá trình trao đổi, phân tích và thống nhất yêu cầu giữa nhóm thực hiện dự án và phía khách hàng/giảng viên hướng dẫn. Các bên có nghĩa vụ thực hiện đúng theo các nội dung đã được ghi nhận và thống nhất trong tài liệu.
+
+Bảng 1.2 – Vai trò và trách nhiệm các bên
+STT
+Vai trò
+Người đảm nhiệm
+Trách nhiệm chính
+1
+Business Analyst (BA)
+Nhóm phân tích
+Khảo sát, phân tích, ghi nhận yêu cầu; soạn thảo và cập nhật SRS
+2
+Project Manager (PM)
+Quản lý dự án
+Phê duyệt tài liệu; điều phối thay đổi yêu cầu; giám sát tiến độ
+3
+Developer Lead (DL)
+Trưởng nhóm phát triển
+Đánh giá tính khả thi kỹ thuật; phản hồi yêu cầu chưa rõ ràng
+4
+Tester Lead
+Trưởng nhóm kiểm thử
+Dựa vào SRS xây dựng kế hoạch và bộ test case
+5
+Khách hàng / Stakeholder
+Bên yêu cầu
+Xác nhận yêu cầu; phản hồi và chấp thuận thay đổi
+Tài liệu có thể được sửa đổi, bổ sung trong quá trình triển khai dự án dựa trên thỏa thuận giữa các bên liên quan, thông qua biểu mẫu Yêu cầu Thay đổi (Change Request – CR) được phê duyệt bởi PM.
+1.5. Mô tả tài liệu
+Tài liệu SRS của hệ thống Tech Gadget &amp; Electronics Store được cấu trúc thành các phần chính như sau:
+Phần I – Giới thiệu: trình bày mục đích, phạm vi, định nghĩa thuật ngữ, vai trò trách nhiệm và cấu trúc tài liệu.
+Phần II – Tổng quan hệ thống: mô tả bài toán, mục tiêu, phạm vi, các nhóm người dùng, mô hình phân rã chức năng và biểu đồ hoạt động.
+Phần III – Đặc tả yêu cầu chức năng: biểu đồ Use-case tổng quan, biểu đồ Use-case phân rã và đặc tả chi tiết các use case.
+Phần IV – Thiết kế giao diện người dùng: các giao diện (wireframe/mockup) minh họa cho những màn hình chính của hệ thống.
+Phần V – Yêu cầu phi chức năng: các ràng buộc về độ chính xác, bảo mật, hiệu năng, tính tin cậy và tính tương thích.
+II. TỔNG QUAN HỆ THỐNG
+2.1. Phát biểu bài toán
+Thiết bị công nghệ là nhóm hàng hóa có giá trị cao nhưng đồng thời có vòng đời sản phẩm ngắn, liên tục được thay thế bởi các thế hệ mới với cấu hình và công nghệ thay đổi nhanh chóng. Đặc thù này tạo ra những thách thức riêng cho cả người mua lẫn doanh nghiệp bán lẻ.
+Về phía người mua, hành vi tiêu dùng trong ngành công nghệ có tính cân nhắc cao: khách hàng thường so sánh cấu hình và giá cả giữa nhiều model trước khi ra quyết định, đồng thời đặc biệt quan tâm tới các dịch vụ đi kèm như bảo hành, trả góp và hỗ trợ kỹ thuật. Tuy nhiên, mỗi nhóm sản phẩm (điện thoại, laptop, máy tính để bàn) lại sở hữu một bộ thông số kỹ thuật khác biệt, khiến việc tra cứu và đối chiếu trở nên phức tạp nếu không có công cụ hỗ trợ phù hợp.
+Về phía doanh nghiệp, việc kinh doanh thiết bị công nghệ đòi hỏi mức độ kiểm soát chặt chẽ tới từng đơn vị thiết bị cụ thể. Mỗi máy cần được định danh và truy vết bằng số Serial/IMEI xuyên suốt vòng đời. Các phương thức quản lý truyền thống (thẻ bảo hành giấy, theo dõi tồn kho theo số lượng tổng) bộc lộ nhiều hạn chế: dễ thất lạc, khó xác thực, không đồng bộ tức thời, dẫn tới sai lệch tồn kho và khó khăn trong xử lý hậu mãi.
+Xuất phát từ thực trạng đó, hệ thống Tech Gadget &amp; Electronics Store được xây dựng nhằm cung cấp một giải pháp thương mại điện tử chuyên biệt cho ngành hàng công nghệ, lấy bốn yếu tố làm khác biệt cốt lõi: (i) quản lý thông số kỹ thuật chuyên sâu và cấu hình động; (ii) công cụ so sánh sản phẩm trực quan; (iii) số hóa bảo hành thông qua Serial/IMEI; và (iv) kiểm soát tồn kho tới từng đơn vị thiết bị.
+2.2. Mục tiêu hệ thống
+Hệ thống được xây dựng với tầm nhìn trở thành một điểm đến tin cậy cho cộng đồng người dùng công nghệ. Các mục tiêu cụ thể được trình bày trong bảng sau:
+
+Bảng 2.1 – Mục tiêu của hệ thống
+STT
+Mục tiêu
+Mô tả chi tiết
+1
+Chuyên sâu hóa dữ liệu sản phẩm
+Quản lý thông số kỹ thuật động, mỗi nhóm sản phẩm có bộ thông số riêng, bảo đảm dữ liệu chi tiết và chuẩn hóa.
+2
+Hỗ trợ ra quyết định mua sắm
+Cung cấp tìm kiếm, lọc theo thông số và so sánh trực quan nhiều sản phẩm cùng lúc.
+3
+Số hóa quản lý bảo hành
+Bảo hành điện tử dựa trên Serial/IMEI, tra cứu trực tuyến, loại bỏ thẻ bảo hành giấy.
+4
+Kiểm soát tồn kho tới từng thiết bị
+Nhập hàng theo lô, định danh từng máy bằng Serial/IMEI, truy vết và đồng bộ tồn kho tức thời.
+5
+Hoàn thiện quy trình hậu mãi
+Hệ thống Ticket, quy trình tiếp nhận và cập nhật tình trạng sửa chữa.
+6
+Tối ưu vận hành và quản trị
+Quản trị danh mục, giá bán, cảnh báo hàng tồn lâu ngày và báo cáo kinh doanh.
+2.3. Phạm vi hệ thống
+Hệ thống được xây dựng dưới dạng ứng dụng web (hỗ trợ đầy đủ trên trình duyệt di động), phục vụ hoạt động kinh doanh thiết bị công nghệ trực tuyến. Phạm vi hệ thống bao phủ các khía cạnh nghiệp vụ sau:
+Quản lý sản phẩm và thông số kỹ thuật: danh mục, sản phẩm, biến thể, bộ thông số động; tìm kiếm, lọc, xem chi tiết, so sánh và gợi ý mua kèm.
+Giao dịch và thanh toán: giỏ hàng, đặt hàng, áp mã giảm giá, thanh toán và theo dõi đơn hàng.
+Bảo hành và hậu mãi: tra cứu bảo hành theo Serial/IMEI, gửi yêu cầu bảo hành, xử lý ticket và quy trình sửa chữa.
+Quản trị kho: nhập lô, quản lý Serial/IMEI, theo dõi tồn kho, đổi trả và cảnh báo hàng tồn lâu ngày.
+Quản trị hệ thống: quản lý người dùng, danh mục, giá bán, gợi ý mua kèm và báo cáo vận hành.
+Trong phạm vi phiên bản 1.0, hệ thống hỗ trợ thanh toán chuyển khoản qua mã QR và thanh toán tại cửa hàng. Các chức năng trả góp, quản lý đối tác vận chuyển và tích hợp cổng thanh toán thẻ/ví điện tử thực tế thuộc lộ trình phát triển ở các phiên bản kế tiếp.
+2.4. Người sử dụng hệ thống (Actor)
+Hệ thống phục vụ bốn nhóm tác nhân chính, được phân tách rõ ràng về vai trò và quyền hạn nhằm bảo đảm an toàn và hiệu quả vận hành.
+Bảng 2.2 – Các tác nhân chính của hệ thống
+STT
+Người sử dụng
+Vai trò và chức năng chính
+1
+Khách hàng (Customer)
+Tra cứu thông số, tìm kiếm, lọc, so sánh sản phẩm; xem gợi ý mua kèm; quản lý giỏ hàng và đặt hàng; thanh toán; theo dõi đơn hàng; tra cứu bảo hành; gửi yêu cầu bảo hành; gửi và theo dõi ticket.
+2
+Kỹ thuật viên (Technical Staff)
+Tiếp nhận yêu cầu bảo hành/sửa chữa; cập nhật tình trạng sửa chữa; xử lý ticket; tư vấn, hỗ trợ kỹ thuật.
+3
+Quản trị viên kho (Stock Manager)
+Nhập hàng theo lô; quản lý Serial/IMEI từng thiết bị; theo dõi tồn kho; xử lý đổi trả.
+4
+Quản trị viên hệ thống (Admin)
+Quản lý danh mục, thông số động, sản phẩm, giá bán, gợi ý mua kèm; quản lý tài khoản; cảnh báo hàng tồn; báo cáo.
+Bên cạnh bốn tác nhân chính, hệ thống còn tương tác với một số tác nhân phụ và tác nhân ngoài sau:
+
+Bảng 2.3 – Các tác nhân phụ / tác nhân ngoài
+STT
+Tác nhân phụ / ngoài
+Vai trò trong hệ thống
+5
+Khách vãng lai (Guest)
+Người dùng chưa đăng nhập; thực hiện thao tác công khai: tìm kiếm, lọc, xem chi tiết, so sánh, giỏ hàng, tra cứu bảo hành, gửi ticket.
+6
+Đơn vị tài chính
+Đối tác ngoài tiếp nhận và phê duyệt hồ sơ trả góp.
+7
+Cổng thanh toán / Ngân hàng
+Hệ thống ngoài xử lý và xác nhận giao dịch thanh toán (QR).
+8
+Đối tác vận chuyển
+Đơn vị ngoài thực hiện giao nhận hàng hóa.
+2.5. Mô hình phân rã chức năng và module nghiệp vụ
+Hệ thống được phân rã thành năm phân hệ (module) nghiệp vụ chính, mỗi phân hệ đảm nhiệm một nhóm chức năng độc lập nhưng có quan hệ tương tác chặt chẽ với nhau.
+
+Hình 2.1 – Sơ đồ phân rã chức năng hệ thống
+(1) Module Quản lý sản phẩm. Mục tiêu: cung cấp dữ liệu sản phẩm chuyên sâu, hỗ trợ khách hàng lựa chọn thiết bị phù hợp. Chức năng chính: tìm kiếm; lọc theo thông số; xem chi tiết và thông số; so sánh sản phẩm; xem gợi ý sản phẩm mua kèm.
+(2) Module Giao dịch. Mục tiêu: xử lý luồng mua hàng và thanh toán cho các giao dịch giá trị cao. Chức năng chính: quản lý giỏ hàng; đặt hàng; tính và chọn trả góp (lộ trình); thanh toán; theo dõi đơn hàng.
+(3) Module Bảo hành và hậu mãi (CRM). Mục tiêu: số hóa hoạt động bảo hành và hỗ trợ khách hàng theo từng thiết bị. Chức năng chính: tra cứu bảo hành điện tử; gửi yêu cầu bảo hành; gửi và theo dõi ticket.
+(4) Module Quản trị kho (Inventory Control). Mục tiêu: kiểm soát tồn kho tới từng đơn vị thiết bị. Chức năng chính: nhập hàng theo lô; quản lý IMEI/Serial; theo dõi tồn kho; xử lý đổi trả.
+(5) Module Quản trị hệ thống. Mục tiêu: vận hành, cấu hình và giám sát toàn bộ hệ thống. Chức năng chính: quản lý danh mục; cấu hình thông số động; quản lý sản phẩm; thiết lập giá bán; quản lý đối tác vận chuyển (lộ trình); cảnh báo hàng tồn lâu ngày; quản lý tài khoản; cấu hình gợi ý mua kèm; xem báo cáo.
+2.6. Biểu đồ hoạt động của hệ thống
+2.6.1. Biểu đồ hoạt động chung
+
+Hình 2.2 – Biểu đồ hoạt động chung của hệ thống
+Người dùng truy cập website và thực hiện đăng nhập. Hệ thống kiểm tra thông tin xác thực; nếu hợp lệ, cấp phát phiên làm việc và hiển thị giao diện tương ứng với vai trò người dùng. Trường hợp không hợp lệ, hệ thống hiển thị thông báo lỗi và yêu cầu nhập lại. Sau khi đăng nhập thành công, người dùng thực hiện các nghiệp vụ phù hợp với phân quyền; hệ thống ghi nhận và đồng bộ dữ liệu tức thời trước khi kết thúc phiên làm việc.
+2.6.2. Biểu đồ hoạt động đặt hàng và thanh toán
+
+Hình 2.3 – Biểu đồ hoạt động đặt hàng và thanh toán
+Khách hàng chọn sản phẩm, thêm vào giỏ và đặt hàng. Tại bước xác nhận, khách hàng nhập thông tin giao nhận, áp mã giảm giá (nếu có) và chọn phương thức thanh toán. Hệ thống kiểm tra tính sẵn có và khóa tồn kho. Tại điểm quyết định 'Phương thức thanh toán?', luồng tách hai nhánh: chuyển khoản QR (khởi tạo phiên thanh toán có thời hạn, chờ xác nhận rồi cập nhật 'Đã thanh toán') hoặc thanh toán tại cửa hàng (ghi nhận đơn chờ, hoàn tất khi nhận hàng). Sau khi xác nhận, hệ thống ghi nhận tiến trình vào dòng thời gian đơn hàng.
+2.6.3. Biểu đồ hoạt động bảo hành và sửa chữa
+
+Hình 2.4 – Biểu đồ hoạt động bảo hành và sửa chữa
+Khách hàng tra cứu bảo hành bằng Serial/IMEI; hệ thống hiển thị thời hạn còn lại. Khi phát sinh sự cố, khách hàng gửi yêu cầu bảo hành hoặc phiếu hỗ trợ. Kỹ thuật viên tiếp nhận, lập hồ sơ sửa chữa gắn với thiết bị và cập nhật tình trạng theo các giai đoạn. Mỗi lần cập nhật, hệ thống đồng bộ trạng thái giữa hồ sơ sửa chữa, phiếu hỗ trợ và trạng thái đơn vị thiết bị trong kho, đồng thời gửi thông báo tới khách hàng. Quy trình kết thúc khi thiết bị được bàn giao.
+2.6.4. Biểu đồ hoạt động quản lý kho
+
+Hình 2.5 – Biểu đồ hoạt động quản lý kho
+Quản trị viên kho tạo phiếu nhập lô, khai báo nhà cung cấp, kho nhận và danh sách hàng hóa. Tại điểm quyết định 'Sản phẩm quản lý theo Serial/IMEI?', luồng tách hai nhánh: sản phẩm theo serial yêu cầu nhập/định danh Serial/IMEI cho từng đơn vị (kèm kiểm tra hợp lệ) và sinh đơn vị tồn kho; sản phẩm không theo serial cập nhật số lượng thông thường. Sau khi nhập, hệ thống tính lại tồn kho và ghi nhận biến động. Trong vận hành, hệ thống tiếp tục theo dõi trạng thái từng thiết bị, xử lý đổi trả và cảnh báo hàng tồn vượt ngưỡng.
+2.7. Biểu đồ hoạt động quản trị hệ thống
+
+Hình 2.6 – Biểu đồ hoạt động quản trị hệ thống
+Sau khi đăng nhập với quyền quản trị, hệ thống hiển thị bảng điều khiển (Dashboard) cùng các chỉ số vận hành. Tại điểm quyết định 'Loại thao tác quản trị?', luồng tách thành các nhánh: (i) quản lý danh mục và cấu hình thông số động; (ii) quản lý sản phẩm, giá bán và gợi ý mua kèm; (iii) quản lý tài khoản và phân quyền; (iv) theo dõi báo cáo và cảnh báo hàng tồn. Sau mỗi thao tác, hệ thống kiểm tra hợp lệ, lưu thay đổi và cập nhật giao diện.
+III. ĐẶC TẢ YÊU CẦU CHỨC NĂNG
+3.1. Biểu đồ Use-case tổng quan
+
+Hình 3.1 – Biểu đồ Use-case tổng quan
+Biểu đồ Use-case tổng quan thể hiện mối quan hệ giữa bốn tác nhân chính (Khách hàng, Kỹ thuật viên, Quản trị viên kho, Quản trị viên hệ thống) và các tác nhân phụ/ngoài (Khách vãng lai, Đơn vị tài chính, Cổng thanh toán/Ngân hàng, Đối tác vận chuyển) với các nhóm chức năng tương ứng. Các use case dùng chung được tách riêng nhằm tránh trùng lặp.
+3.2. Biểu đồ Use-case phân rã
+3.2.1. Tác nhân Khách hàng
+
+Hình 3.2 – Biểu đồ Use-case tác nhân Khách hàng
+Bảng 3.1 – Danh sách use case của tác nhân Khách hàng
+Mã
+Tên Use case
+UC-C01
+Tìm kiếm sản phẩm
+UC-C02
+Lọc sản phẩm theo thông số kỹ thuật
+UC-C03
+Xem chi tiết và thông số sản phẩm
+UC-C04
+So sánh sản phẩm
+UC-C05
+Xem gợi ý sản phẩm mua kèm
+UC-C06
+Quản lý giỏ hàng
+UC-C07
+Đặt hàng
+UC-C08
+Tính và chọn trả góp (lộ trình)
+UC-C09
+Thanh toán đơn hàng
+UC-C10
+Theo dõi đơn hàng
+UC-C11
+Tra cứu bảo hành điện tử
+UC-C12
+Gửi yêu cầu hỗ trợ (Ticket)
+UC-C13
+Theo dõi ticket hỗ trợ
+UC-C14
+Gửi yêu cầu bảo hành
+3.2.2. Tác nhân Kỹ thuật viên
+
+Hình 3.3 – Biểu đồ Use-case tác nhân Kỹ thuật viên
+Bảng 3.2 – Danh sách use case của tác nhân Kỹ thuật viên
+Mã
+Tên Use case
+UC-T01
+Tiếp nhận yêu cầu bảo hành
+UC-T02
+Cập nhật tình trạng sửa chữa
+UC-T03
+Xử lý ticket hỗ trợ kỹ thuật
+UC-T04
+Tư vấn kỹ thuật trực tuyến (mở rộng của UC-T03)
+3.2.3. Tác nhân Quản trị viên kho
+
+Hình 3.4 – Biểu đồ Use-case tác nhân Quản trị viên kho
+Bảng 3.3 – Danh sách use case của tác nhân Quản trị viên kho
+Mã
+Tên Use case
+UC-W01
+Nhập hàng theo lô
+UC-W02
+Quản lý IMEI/Serial
+UC-W03
+Theo dõi tồn kho
+UC-W04
+Xử lý hàng đổi trả
+3.2.4. Tác nhân Quản trị viên hệ thống
+
+Hình 3.5 – Biểu đồ Use-case tác nhân Quản trị viên hệ thống
+Bảng 3.4 – Danh sách use case của tác nhân Quản trị viên hệ thống
+Mã
+Tên Use case
+UC-A01
+Quản lý danh mục kỹ thuật
+UC-A02
+Cấu hình bộ thông số động
+UC-A03
+Quản lý sản phẩm
+UC-A04
+Thiết lập giá bán
+UC-A05
+Quản lý đối tác vận chuyển (lộ trình)
+UC-A06
+Quản lý cảnh báo hàng tồn kho lâu ngày
+UC-A07
+Quản lý tài khoản người dùng
+UC-A08
+Xem báo cáo tài chính / kinh doanh
+UC-A09
+Quản lý gợi ý sản phẩm mua kèm (Cross-sell)
+3.3. Đặc tả các Use-case
+3.3.1. Use-case dùng chung
+Bảng 3.5 – Đặc tả UC-G01 – Đăng nhập
+Mã Use case
+UC-G01
+Tên Use case
+Đăng nhập
+Tác nhân
+Khách hàng, Kỹ thuật viên, Quản trị viên kho, Quản trị viên hệ thống
+Mô tả
+Tác nhân đăng nhập vào hệ thống để sử dụng các chức năng phù hợp với vai trò.
+Sự kiện kích hoạt
+Kích nút &quot;Đăng nhập&quot; trên giao diện.
+Tiền điều kiện
+Tác nhân đã có tài khoản trên hệ thống.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập tài khoản và mật khẩu. → (Hệ thống) Kiểm tra các trường đã hợp lệ chưa.
+2. (Tác nhân) Yêu cầu đăng nhập. → (Hệ thống) Xác thực thông tin; cấp mã thông báo phiên (JWT).
+3. → (Hệ thống) Hiển thị giao diện theo vai trò người dùng.
+Luồng sự kiện thay thế
+2a. Trường bắt buộc bỏ trống → thông báo lỗi.
+2b. Tài khoản/mật khẩu sai → thông báo lỗi.
+2c. Sai mật khẩu quá 5 lần liên tiếp → tạm khóa tài khoản 5 phút.
+Hậu điều kiện
+Tác nhân đăng nhập thành công vào hệ thống.
+Bảng 3.6 – Dữ liệu đầu vào – UC-G01
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Tên tài khoản
+Input text
+Có
+Chữ cái, chữ số; không dấu cách.
+nguyen_van_a
+2
+Mật khẩu
+Password
+Có
+Tối thiểu 6 ký tự.
+Abc123
+
+Bảng 3.7 – Đặc tả UC-G02 – Đăng xuất
+Mã Use case
+UC-G02
+Tên Use case
+Đăng xuất
+Tác nhân
+Tất cả người dùng đã đăng nhập
+Mô tả
+Tác nhân kết thúc phiên làm việc và rời khỏi hệ thống.
+Sự kiện kích hoạt
+Kích nút &quot;Đăng xuất&quot;.
+Tiền điều kiện
+Tác nhân đang đăng nhập.
+Luồng sự kiện chính
+1. (Tác nhân) Kích &quot;Đăng xuất&quot;. → (Hệ thống) Hủy phiên làm việc, xóa mã thông báo phiên.
+2. → (Hệ thống) Chuyển về trang chủ/đăng nhập.
+Luồng sự kiện thay thế
+Không có.
+Hậu điều kiện
+Phiên làm việc kết thúc.
+
+Bảng 3.8 – Đặc tả UC-G03 – Thay đổi mật khẩu
+Mã Use case
+UC-G03
+Tên Use case
+Thay đổi mật khẩu
+Tác nhân
+Tất cả người dùng đã đăng nhập
+Mô tả
+Tác nhân thay đổi mật khẩu tài khoản.
+Sự kiện kích hoạt
+Kích &quot;Thay đổi mật khẩu&quot; trong menu hồ sơ.
+Tiền điều kiện
+Tác nhân đã đăng nhập thành công.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập mật khẩu cũ, mật khẩu mới và xác nhận. → (Hệ thống) Kiểm tra các trường hợp lệ chưa.
+2. (Tác nhân) Yêu cầu thay đổi. → (Hệ thống) Kiểm tra mật khẩu cũ đúng và xác nhận trùng khớp.
+3. → (Hệ thống) Cập nhật mật khẩu mới; thông báo thành công.
+Luồng sự kiện thay thế
+2a. Mật khẩu cũ sai hoặc xác nhận không khớp → thông báo lỗi.
+Hậu điều kiện
+Mật khẩu mới được cập nhật.
+Bảng 3.9 – Dữ liệu đầu vào – UC-G03
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Mật khẩu cũ
+Password
+Có
+Tối thiểu 6 ký tự.
+Abc123
+2
+Mật khẩu mới
+Password
+Có
+Tối thiểu 6 ký tự, có hoa &amp; thường.
+NewAbc123
+3
+Nhập lại mật khẩu mới
+Password
+Có
+Trùng mật khẩu mới.
+NewAbc123
+
+Bảng 3.10 – Đặc tả UC-G04 – Cập nhật thông tin cá nhân
+Mã Use case
+UC-G04
+Tên Use case
+Cập nhật thông tin cá nhân
+Tác nhân
+Tất cả người dùng đã đăng nhập
+Mô tả
+Tác nhân chỉnh sửa thông tin hồ sơ cá nhân.
+Sự kiện kích hoạt
+Kích &quot;Cập nhật thông tin cá nhân&quot; trong menu hồ sơ.
+Tiền điều kiện
+Tác nhân đã đăng nhập thành công.
+Luồng sự kiện chính
+1. (Tác nhân) Chỉnh sửa các trường thông tin. → (Hệ thống) Kiểm tra tính hợp lệ của dữ liệu.
+2. (Tác nhân) Lưu thay đổi. → (Hệ thống) Cập nhật dữ liệu; thông báo thành công.
+Luồng sự kiện thay thế
+1a. Dữ liệu không hợp lệ → thông báo lỗi theo từng trường.
+Hậu điều kiện
+Thông tin cá nhân được cập nhật.
+Bảng 3.11 – Dữ liệu đầu vào – UC-G04
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Họ tên
+Input text
+Có
+Tối đa 100 ký tự.
+Nguyễn Văn A
+2
+Email
+Input email
+Không
+Đúng định dạng email.
+nva@email.com
+3
+Số điện thoại
+Input text
+Không
+Ký tự số.
+0987324456
+4
+Địa chỉ
+Input text
+Không
+Tối đa 200 ký tự.
+123 Lê Lợi
+
+3.3.2. Use-case Khách hàng
+Bảng 3.12 – Đặc tả UC-C01 – Tìm kiếm sản phẩm
+Mã Use case
+UC-C01
+Tên Use case
+Tìm kiếm sản phẩm
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Tìm sản phẩm theo từ khóa (tên, thương hiệu, mã SKU…).
+Sự kiện kích hoạt
+Nhập từ khóa và kích &quot;Tìm kiếm&quot;.
+Tiền điều kiện
+Hệ thống có dữ liệu sản phẩm.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập từ khóa tìm kiếm. → (Hệ thống) Đối chiếu từ khóa với tên/mô tả/thương hiệu/SKU.
+2. (Tác nhân) Yêu cầu tìm kiếm. → (Hệ thống) Trả về danh sách sản phẩm phù hợp, có phân trang.
+Luồng sự kiện thay thế
+2a. Không có kết quả → thông báo &quot;Không tìm thấy sản phẩm&quot;.
+Hậu điều kiện
+Danh sách kết quả tìm kiếm được hiển thị.
+Bảng 3.13 – Dữ liệu đầu vào – UC-C01
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Từ khóa
+Input text
+Có
+Tối đa 200 ký tự.
+iPhone 15
+
+Bảng 3.14 – Đặc tả UC-C02 – Lọc sản phẩm theo thông số kỹ thuật
+Mã Use case
+UC-C02
+Tên Use case
+Lọc sản phẩm theo thông số kỹ thuật
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Lọc danh sách sản phẩm theo thông số (CPU, RAM, dung lượng…), giá, thương hiệu.
+Sự kiện kích hoạt
+Chọn tiêu chí lọc trên trang danh sách sản phẩm.
+Tiền điều kiện
+Hệ thống có dữ liệu sản phẩm và thông số.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn nhóm sản phẩm và thiết lập tiêu chí lọc. → (Hệ thống) Hiển thị bộ tiêu chí lọc theo nhóm.
+2. (Tác nhân) Áp dụng bộ lọc. → (Hệ thống) Đối chiếu điều kiện và trả về danh sách phù hợp.
+3. (Tác nhân) Xem kết quả. → (Hệ thống) Hiển thị danh sách thỏa điều kiện, có phân trang.
+Luồng sự kiện thay thế
+2a. Không có sản phẩm thỏa điều kiện → thông báo phù hợp.
+Hậu điều kiện
+Danh sách hiển thị theo đúng tiêu chí lọc.
+Bảng 3.15 – Dữ liệu đầu vào – UC-C02
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Nhóm sản phẩm
+Lựa chọn
+Không
+Thuộc danh mục hệ thống.
+Laptop
+2
+Khoảng giá
+Range
+Không
+Min ≤ Max, không âm.
+10–20 triệu
+3
+Thương hiệu
+Lựa chọn
+Không
+Tồn tại trong hệ thống.
+Asus
+4
+Tiêu chí thông số
+Lựa chọn
+Không
+Theo định nghĩa thông số của nhóm.
+RAM 16GB
+
+Bảng 3.16 – Đặc tả UC-C03 – Xem chi tiết và thông số sản phẩm
+Mã Use case
+UC-C03
+Tên Use case
+Xem chi tiết và thông số sản phẩm
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Xem thông tin chi tiết: thông số kỹ thuật, biến thể, hình ảnh, đánh giá.
+Sự kiện kích hoạt
+Kích vào một sản phẩm trong danh sách.
+Tiền điều kiện
+Sản phẩm tồn tại trong hệ thống.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn sản phẩm. → (Hệ thống) Truy xuất chi tiết kèm thông số, biến thể, hình ảnh.
+2. (Tác nhân) Chọn biến thể (nếu có). → (Hệ thống) Cập nhật giá/tồn theo biến thể được chọn.
+Luồng sự kiện thay thế
+1a. Sản phẩm không tồn tại/ngừng kinh doanh → thông báo phù hợp.
+Hậu điều kiện
+Trang chi tiết sản phẩm được hiển thị đầy đủ.
+
+Bảng 3.17 – Đặc tả UC-C04 – So sánh sản phẩm
+Mã Use case
+UC-C04
+Tên Use case
+So sánh sản phẩm
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+So sánh trực quan các thông số kỹ thuật tương đương giữa các model. Hệ thống hỗ trợ so sánh tối thiểu 3 sản phẩm cùng lúc trên một màn hình (theo yêu cầu).
+Sự kiện kích hoạt
+Kích &quot;So sánh&quot; / mở màn hình so sánh.
+Tiền điều kiện
+Đã chọn ít nhất hai sản phẩm để so sánh (hệ thống hỗ trợ tối thiểu 3 sản phẩm cùng lúc).
+Luồng sự kiện chính
+1. (Tác nhân) Thêm sản phẩm vào danh sách so sánh. → (Hệ thống) Ghi nhận sản phẩm vào danh sách so sánh.
+2. (Tác nhân) Mở màn hình so sánh. → (Hệ thống) Hiển thị bảng so sánh thông số tương đương.
+3. (Tác nhân) Đối chiếu thông số. → (Hệ thống) Làm nổi bật điểm khác biệt giữa các sản phẩm.
+Luồng sự kiện thay thế
+1a. Vượt số lượng tối đa cho phép so sánh → thông báo, không thêm.
+Hậu điều kiện
+Bảng so sánh được hiển thị.
+Bảng 3.18 – Dữ liệu đầu vào – UC-C04
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Danh sách sản phẩm so sánh
+Lựa chọn nhiều
+Có
+Từ 2 đến tối thiểu 3 sản phẩm cùng lúc, cùng nhóm.
+iPhone 15, Galaxy S24, Xiaomi 14
+
+Bảng 3.19 – Đặc tả UC-C05 – Xem gợi ý sản phẩm mua kèm
+Mã Use case
+UC-C05
+Tên Use case
+Xem gợi ý sản phẩm mua kèm
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Xem các sản phẩm/phụ kiện tương thích được gợi ý mua kèm (Cross-sell).
+Sự kiện kích hoạt
+Mở trang chi tiết sản phẩm.
+Tiền điều kiện
+Sản phẩm có cấu hình gợi ý hoặc thuộc nhóm có sản phẩm liên quan.
+Luồng sự kiện chính
+1. (Tác nhân) Xem trang chi tiết sản phẩm. → (Hệ thống) Trả về danh sách gợi ý mua kèm (thủ công hoặc tự động theo cùng danh mục).
+2. (Tác nhân) Kích vào sản phẩm gợi ý. → (Hệ thống) Chuyển tới trang chi tiết sản phẩm gợi ý.
+Luồng sự kiện thay thế
+1a. Không có gợi ý phù hợp → ẩn khu vực gợi ý.
+Hậu điều kiện
+Danh sách sản phẩm mua kèm được hiển thị.
+
+Bảng 3.20 – Đặc tả UC-C06 – Quản lý giỏ hàng
+Mã Use case
+UC-C06
+Tên Use case
+Quản lý giỏ hàng
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Thêm, cập nhật số lượng, xóa sản phẩm trong giỏ hàng.
+Sự kiện kích hoạt
+Kích &quot;Thêm vào giỏ&quot; hoặc mở giỏ hàng.
+Tiền điều kiện
+Không bắt buộc đăng nhập.
+Luồng sự kiện chính
+1. (Tác nhân) Thêm sản phẩm/biến thể vào giỏ. → (Hệ thống) Ghi nhận sản phẩm vào giỏ hàng.
+2. (Tác nhân) Cập nhật số lượng hoặc xóa sản phẩm. → (Hệ thống) Cập nhật giỏ và tính lại tạm tính.
+3. (Tác nhân) Xem giỏ hàng. → (Hệ thống) Hiển thị danh sách, số lượng, tạm tính, ưu đãi (nếu có).
+Luồng sự kiện thay thế
+2a. Số lượng vượt tồn kho → cảnh báo và giới hạn số lượng.
+Hậu điều kiện
+Giỏ hàng phản ánh đúng lựa chọn của khách hàng.
+Bảng 3.21 – Dữ liệu đầu vào – UC-C06
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Sản phẩm/Biến thể
+Lựa chọn
+Có
+Tồn tại trong hệ thống.
+iPhone 15 128GB
+2
+Số lượng
+Input number
+Có
+Số nguyên dương, ≤ tồn kho.
+1
+
+Bảng 3.22 – Đặc tả UC-C07 – Đặt hàng
+Mã Use case
+UC-C07
+Tên Use case
+Đặt hàng
+Tác nhân
+Khách hàng
+Mô tả
+Tạo và xác nhận đơn hàng, chọn hình thức giao nhận, áp mã giảm giá (nếu có).
+Sự kiện kích hoạt
+Kích &quot;Đặt hàng&quot;/&quot;Thanh toán&quot; tại giỏ hàng.
+Tiền điều kiện
+Giỏ hàng có ít nhất một sản phẩm; khách hàng đã đăng nhập.
+Luồng sự kiện chính
+1. (Tác nhân) Xác nhận sản phẩm và số lượng. → (Hệ thống) Kiểm tra tính sẵn có và tồn kho.
+2. (Tác nhân) Chọn hình thức giao nhận và nhập thông tin. → (Hệ thống) Tính phí vận chuyển; chuẩn hóa địa chỉ.
+3. (Tác nhân) Áp mã giảm giá (nếu có). → (Hệ thống) Kiểm tra hiệu lực và tính lại tổng tiền.
+4. (Tác nhân) Xác nhận đặt hàng. → (Hệ thống) Khóa tồn kho, tạo đơn trong giao dịch nhất quán, ghi dòng thời gian đơn.
+Luồng sự kiện thay thế
+1a. Hết hàng/không đủ tồn → yêu cầu điều chỉnh giỏ.
+3a. Mã giảm giá không hợp lệ/hết hạn → bỏ áp dụng.
+Hậu điều kiện
+Đơn hàng được tạo ở trạng thái chờ thanh toán/xử lý; tồn kho cập nhật.
+Bảng 3.23 – Dữ liệu đầu vào – UC-C07
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Họ tên người nhận
+Input text
+Có
+Tối đa 100 ký tự.
+Nguyễn Văn A
+2
+Số điện thoại
+Input text
+Có
+Đúng định dạng SĐT.
+0987324456
+3
+Hình thức giao nhận
+Lựa chọn
+Có
+Giao tận nơi / Nhận tại cửa hàng.
+Giao tận nơi
+4
+Địa chỉ giao hàng
+Input text
+Có (khi giao tận nơi)
+Tỉnh/Thành, Phường/Xã, địa chỉ chi tiết.
+123 Lê Lợi
+5
+Mã giảm giá
+Input text
+Không
+Mã còn hiệu lực.
+SALE10
+
+Bảng 3.24 – Đặc tả UC-C08 – Tính và chọn trả góp (lộ trình)
+Mã Use case
+UC-C08
+Tên Use case
+Tính và chọn trả góp (lộ trình)
+Tác nhân
+Khách hàng, Đơn vị tài chính (tác nhân ngoài)
+Mô tả
+Khách hàng lựa chọn gói trả góp; hệ thống tính số tiền trả trước và khoản trả hàng tháng theo lãi suất của đơn vị tài chính. (Dự kiến triển khai ở phiên bản kế tiếp.)
+Sự kiện kích hoạt
+Chọn &quot;Trả góp&quot; tại bước thanh toán.
+Tiền điều kiện
+Sản phẩm/đơn hàng đủ điều kiện trả góp.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn đơn vị tài chính và kỳ hạn (3/6/12 tháng). → (Hệ thống) Hiển thị các gói trả góp khả dụng.
+2. (Tác nhân) Nhập số tiền trả trước (nếu có). → (Hệ thống) Tính khoản trả hàng tháng theo lãi suất kỳ hạn.
+3. (Tác nhân) Xác nhận gói trả góp. → (Hệ thống) Gắn thông tin trả góp vào đơn hàng.
+Luồng sự kiện thay thế
+1a. Đơn hàng không đủ điều kiện trả góp → ẩn lựa chọn.
+3a. Hồ sơ trả góp bị từ chối → thông báo và đề xuất phương thức khác.
+Hậu điều kiện
+Gói trả góp được gắn với đơn hàng (khi triển khai).
+Bảng 3.25 – Dữ liệu đầu vào – UC-C08
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Đơn vị tài chính
+Lựa chọn
+Có
+Đối tác hỗ trợ trả góp.
+Home Credit
+2
+Kỳ hạn
+Lựa chọn
+Có
+3 / 6 / 12 tháng.
+6 tháng
+3
+Số tiền trả trước
+Input number
+Không
+Không âm, ≤ giá trị đơn.
+5.000.000
+
+Bảng 3.26 – Đặc tả UC-C09 – Thanh toán đơn hàng
+Mã Use case
+UC-C09
+Tên Use case
+Thanh toán đơn hàng
+Tác nhân
+Khách hàng, Cổng thanh toán / Ngân hàng (tác nhân ngoài)
+Mô tả
+Thanh toán đơn hàng bằng chuyển khoản qua mã QR hoặc thanh toán tại cửa hàng.
+Sự kiện kích hoạt
+Chọn phương thức thanh toán và xác nhận.
+Tiền điều kiện
+Đơn hàng đã được tạo và đang chờ thanh toán.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn phương thức thanh toán. → (Hệ thống) Hiển thị thông tin thanh toán tương ứng.
+2. (Tác nhân) (QR) Quét mã và chuyển khoản. → (Hệ thống) Khởi tạo phiên thanh toán có thời hạn, chờ xác nhận.
+3. → (Hệ thống) Khi giao dịch xác nhận → cập nhật trạng thái &quot;Đã thanh toán&quot;.
+Luồng sự kiện thay thế
+2a. Phiên thanh toán hết hạn → hủy phiên, cho phép tạo lại.
+1a. (Tại cửa hàng) Ghi nhận đơn chờ; thanh toán khi nhận hàng.
+Hậu điều kiện
+Trạng thái thanh toán của đơn hàng được cập nhật chính xác.
+
+Bảng 3.27 – Dữ liệu đầu vào – UC-C09
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Phương thức thanh toán
+Lựa chọn
+Có
+Chuyển khoản QR / Tại cửa hàng.
+Chuyển khoản QR
+2
+Ngân hàng
+Lựa chọn
+Có (khi QR)
+Thuộc danh sách hỗ trợ.
+Vietcombank
+
+Bảng 3.28 – Đặc tả UC-C10 – Theo dõi đơn hàng
+Mã Use case
+UC-C10
+Tên Use case
+Theo dõi đơn hàng
+Tác nhân
+Khách hàng
+Mô tả
+Xem trạng thái và lịch sử tiến trình của đơn hàng.
+Sự kiện kích hoạt
+Mở mục &quot;Đơn hàng của tôi&quot; / chi tiết đơn.
+Tiền điều kiện
+Khách hàng đã đăng nhập và có đơn hàng.
+Luồng sự kiện chính
+1. (Tác nhân) Mở danh sách đơn hàng. → (Hệ thống) Hiển thị các đơn kèm trạng thái.
+2. (Tác nhân) Chọn một đơn hàng. → (Hệ thống) Hiển thị chi tiết và dòng thời gian tiến trình đơn.
+Luồng sự kiện thay thế
+1a. Chưa có đơn hàng → hiển thị danh sách trống.
+Hậu điều kiện
+Thông tin trạng thái đơn hàng được hiển thị.
+
+Bảng 3.29 – Đặc tả UC-C11 – Tra cứu bảo hành điện tử
+Mã Use case
+UC-C11
+Tên Use case
+Tra cứu bảo hành điện tử
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Tra cứu thời hạn bảo hành còn lại của thiết bị qua Serial/IMEI.
+Sự kiện kích hoạt
+Nhập Serial/IMEI và kích &quot;Tra cứu&quot;.
+Tiền điều kiện
+Thiết bị có hồ sơ bảo hành trong hệ thống.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập Serial/IMEI (hoặc mã đơn/SĐT). → (Hệ thống) Đối chiếu với hồ sơ bảo hành.
+2. (Tác nhân) Yêu cầu tra cứu. → (Hệ thống) Trả về thông tin thiết bị và thời hạn bảo hành còn lại.
+Luồng sự kiện thay thế
+1a. Không tìm thấy hồ sơ → thông báo không có dữ liệu.
+2a. Đủ điều kiện kích hoạt → tự động kích hoạt bảo hành theo chính sách.
+Hậu điều kiện
+Thông tin bảo hành được hiển thị.
+Bảng 3.30 – Dữ liệu đầu vào – UC-C11
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Số Serial/IMEI
+Input text
+Có (hoặc thay bằng mã đơn/SĐT)
+Đúng định dạng; IMEI gồm 15 chữ số.
+356938035643809
+2
+Mã đơn hàng
+Input text
+Không
+Mã đơn hợp lệ.
+DH00123
+3
+Số điện thoại
+Input text
+Không
+Ký tự số.
+0987324456
+
+Bảng 3.31 – Đặc tả UC-C12 – Gửi yêu cầu hỗ trợ (Ticket)
+Mã Use case
+UC-C12
+Tên Use case
+Gửi yêu cầu hỗ trợ (Ticket)
+Tác nhân
+Khách hàng, Khách vãng lai
+Mô tả
+Gửi yêu cầu hỗ trợ kỹ thuật/báo lỗi kèm thông tin thiết bị và mô tả sự cố.
+Sự kiện kích hoạt
+Kích &quot;Gửi yêu cầu hỗ trợ&quot;.
+Tiền điều kiện
+Cho phép gửi ẩn danh hoặc đã đăng nhập.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn loại yêu cầu, nhập mô tả và thông tin sản phẩm/Serial. → (Hệ thống) Hiển thị biểu mẫu nhập liệu.
+2. (Tác nhân) Đính kèm tệp (tùy chọn). → (Hệ thống) Kiểm tra định dạng và dung lượng tệp.
+3. (Tác nhân) Gửi yêu cầu. → (Hệ thống) Tạo phiếu hỗ trợ trạng thái &quot;Mở&quot;, sinh mã phiếu.
+Luồng sự kiện thay thế
+3a. Mô tả quá ngắn (dưới mức tối thiểu) → yêu cầu bổ sung.
+Hậu điều kiện
+Phiếu hỗ trợ được tạo, sẵn sàng cho kỹ thuật viên tiếp nhận.
+
+Bảng 3.32 – Dữ liệu đầu vào – UC-C12
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Loại yêu cầu
+Lựa chọn
+Có
+Theo danh mục phân loại.
+Lỗi phần cứng
+2
+Sản phẩm liên quan
+Lựa chọn
+Không
+Tồn tại trong hệ thống.
+iPhone 15
+3
+Số Serial/IMEI
+Input text
+Không
+Đúng định dạng.
+356938035643809
+4
+Mô tả sự cố
+Textarea
+Có
+Tối thiểu 10 ký tự.
+Máy không lên nguồn
+5
+Tệp đính kèm
+File upload
+Không
+Định dạng &amp; dung lượng cho phép.
+loi.jpg
+
+Bảng 3.33 – Đặc tả UC-C13 – Theo dõi ticket hỗ trợ
+Mã Use case
+UC-C13
+Tên Use case
+Theo dõi ticket hỗ trợ
+Tác nhân
+Khách hàng
+Mô tả
+Theo dõi trạng thái và trao đổi trong các phiếu hỗ trợ đã gửi.
+Sự kiện kích hoạt
+Mở mục &quot;Phiếu hỗ trợ của tôi&quot;.
+Tiền điều kiện
+Khách hàng đã đăng nhập và có phiếu hỗ trợ.
+Luồng sự kiện chính
+1. (Tác nhân) Mở danh sách phiếu hỗ trợ. → (Hệ thống) Hiển thị các phiếu kèm trạng thái.
+2. (Tác nhân) Chọn một phiếu. → (Hệ thống) Hiển thị nội dung trao đổi và cập nhật theo thời gian thực.
+3. (Tác nhân) Gửi phản hồi (nếu cần). → (Hệ thống) Ghi nhận phản hồi vào phiếu.
+Luồng sự kiện thay thế
+1a. Chưa có phiếu → hiển thị danh sách trống.
+Hậu điều kiện
+Trạng thái và nội dung trao đổi của phiếu được hiển thị.
+Bảng 3.34 – Dữ liệu đầu vào – UC-C13
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Nội dung phản hồi
+Textarea
+Không
+Không vượt giới hạn ký tự.
+Đã thử khởi động lại
+
+Bảng 3.35 – Đặc tả UC-C14 – Gửi yêu cầu bảo hành
+Mã Use case
+UC-C14
+Tên Use case
+Gửi yêu cầu bảo hành
+Tác nhân
+Khách hàng (Khách vãng lai có thể gửi kèm thông tin định danh)
+Mô tả
+Khách hàng tạo yêu cầu bảo hành cho thiết bị đã mua (gắn Serial/IMEI). Khác với UC-C12, đây là phiếu bảo hành gắn trực tiếp với hồ sơ bảo hành của thiết bị.
+Sự kiện kích hoạt
+Kích &quot;Yêu cầu bảo hành&quot; từ kết quả tra cứu bảo hành hoặc lịch sử mua hàng.
+Tiền điều kiện
+Thiết bị có hồ sơ bảo hành và còn trong thời hạn bảo hành.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn thiết bị (Serial/IMEI) và nhập mô tả lỗi. → (Hệ thống) Kiểm tra điều kiện và thời hạn bảo hành.
+2. (Tác nhân) Gửi yêu cầu. → (Hệ thống) Tạo phiếu bảo hành trạng thái &quot;Tiếp nhận&quot;, sinh mã phiếu.
+3. → (Hệ thống) Thông báo tới bộ phận kỹ thuật/bảo hành.
+Luồng sự kiện thay thế
+1a. Thiết bị hết hạn/không đủ điều kiện → thông báo và đề xuất gửi phiếu hỗ trợ chung (UC-C12).
+Hậu điều kiện
+Phiếu bảo hành được tạo và sẵn sàng cho kỹ thuật viên tiếp nhận (UC-T01).
+Bảng 3.36 – Dữ liệu đầu vào – UC-C14
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Số Serial/IMEI
+Input text
+Có
+Đúng định dạng, tồn tại hồ sơ bảo hành.
+356938035643809
+2
+Mô tả lỗi
+Textarea
+Có
+Tối thiểu 10 ký tự.
+Pin chai nhanh
+3
+Tệp đính kèm
+File upload
+Không
+Định dạng &amp; dung lượng cho phép.
+loi_pin.jpg
+
+3.3.3. Use-case Kỹ thuật viên
+Bảng 3.37 – Đặc tả UC-T01 – Tiếp nhận yêu cầu bảo hành
+Mã Use case
+UC-T01
+Tên Use case
+Tiếp nhận yêu cầu bảo hành
+Tác nhân
+Kỹ thuật viên
+Mô tả
+Tiếp nhận thiết bị/yêu cầu bảo hành và lập hồ sơ sửa chữa gắn với thiết bị cụ thể.
+Sự kiện kích hoạt
+Kích &quot;Tiếp nhận bảo hành&quot;.
+Tiền điều kiện
+Đã đăng nhập với vai trò Kỹ thuật viên.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập nguồn yêu cầu (phiếu bảo hành/ticket/Serial-IMEI). → (Hệ thống) Truy xuất thông tin thiết bị tương ứng.
+2. (Tác nhân) Xác nhận thông tin khách hàng và mô tả lỗi. → (Hệ thống) Tạo hồ sơ sửa chữa trạng thái &quot;Tiếp nhận&quot;, sinh mã hồ sơ.
+3. → (Hệ thống) Gửi thông báo tiếp nhận tới khách hàng.
+Luồng sự kiện thay thế
+1a. Không tìm thấy thiết bị → yêu cầu nhập lại hoặc tạo mới.
+Hậu điều kiện
+Hồ sơ sửa chữa được tạo và liên kết thiết bị/phiếu liên quan.
+Bảng 3.38 – Dữ liệu đầu vào – UC-T01
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Nguồn tiếp nhận
+Lựa chọn
+Có
+Phiếu bảo hành / Ticket / Serial-IMEI.
+Serial-IMEI
+2
+Serial/IMEI
+Input text
+Có (nếu chọn Serial)
+Đúng định dạng.
+356938035643809
+3
+Tên khách hàng
+Input text
+Có
+Tối đa 100 ký tự.
+Nguyễn Văn A
+4
+Số điện thoại
+Input text
+Có
+Ký tự số.
+0987324456
+5
+Mô tả lỗi
+Textarea
+Có
+Tối thiểu 10 ký tự.
+Màn hình bị sọc
+
+Bảng 3.39 – Đặc tả UC-T02 – Cập nhật tình trạng sửa chữa
+Mã Use case
+UC-T02
+Tên Use case
+Cập nhật tình trạng sửa chữa
+Tác nhân
+Kỹ thuật viên
+Mô tả
+Cập nhật tiến độ/trạng thái sửa chữa của thiết bị theo từng giai đoạn.
+Sự kiện kích hoạt
+Kích &quot;Cập nhật trạng thái&quot; trên hồ sơ sửa chữa.
+Tiền điều kiện
+Hồ sơ sửa chữa tồn tại và do kỹ thuật viên phụ trách.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn trạng thái mới và ghi chú. → (Hệ thống) Kiểm tra tính hợp lệ chuyển trạng thái.
+2. (Tác nhân) Lưu cập nhật. → (Hệ thống) Ghi lịch sử; đồng bộ trạng thái sang phiếu bảo hành, ticket, thiết bị trong kho.
+3. → (Hệ thống) Gửi thông báo tiến độ tới khách hàng.
+Luồng sự kiện thay thế
+1a. Chuyển trạng thái không hợp lệ → thông báo, giữ nguyên trạng thái.
+Hậu điều kiện
+Trạng thái sửa chữa được cập nhật và đồng bộ.
+Bảng 3.40 – Dữ liệu đầu vào – UC-T02
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Trạng thái
+Lựa chọn
+Có
+Chẩn đoán/Chờ linh kiện/Sửa chữa/Kiểm thử/Hoàn tất…
+Sửa chữa
+2
+Ghi chú
+Textarea
+Không
+Tối đa giới hạn ký tự.
+Đã thay màn hình
+
+Bảng 3.41 – Đặc tả UC-T03 – Xử lý ticket hỗ trợ kỹ thuật
+Mã Use case
+UC-T03
+Tên Use case
+Xử lý ticket hỗ trợ kỹ thuật
+Tác nhân
+Kỹ thuật viên
+Mô tả
+Tiếp nhận, phản hồi, phân công và thay đổi trạng thái phiếu hỗ trợ.
+Sự kiện kích hoạt
+Mở phiếu hỗ trợ trong hàng đợi.
+Tiền điều kiện
+Đã đăng nhập với vai trò Kỹ thuật viên.
+Luồng sự kiện chính
+1. (Tác nhân) Mở phiếu và xem nội dung. → (Hệ thống) Hiển thị chi tiết phiếu và lịch sử trao đổi.
+2. (Tác nhân) Phản hồi khách hàng hoặc ghi chú nội bộ. → (Hệ thống) Lưu cập nhật; gửi nội dung công khai tới khách theo thời gian thực.
+3. (Tác nhân) Thay đổi trạng thái/phân công phiếu. → (Hệ thống) Cập nhật trạng thái/người phụ trách phiếu.
+Luồng sự kiện thay thế
+2a. Người dùng không đủ quyền ghi chú nội bộ → từ chối thao tác.
+Hậu điều kiện
+Phiếu hỗ trợ được cập nhật nội dung/trạng thái/phân công.
+Bảng 3.42 – Dữ liệu đầu vào – UC-T03
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Nội dung phản hồi
+Textarea
+Không
+Trong giới hạn ký tự.
+Vui lòng mang máy đến
+2
+Ghi chú nội bộ
+Checkbox + Textarea
+Không
+Chỉ vai trò kỹ thuật.
+(nội bộ)
+3
+Trạng thái phiếu
+Lựa chọn
+Không
+Mở/Đang xử lý/Chờ khách/Đã xử lý/Đóng.
+Đang xử lý
+
+Bảng 3.43 – Đặc tả UC-T04 – Tư vấn kỹ thuật trực tuyến
+Mã Use case
+UC-T04
+Tên Use case
+Tư vấn kỹ thuật trực tuyến
+Tác nhân
+Kỹ thuật viên, Khách hàng
+Mô tả
+Trao đổi, tư vấn kỹ thuật với khách hàng theo thời gian thực trong phạm vi phiếu hỗ trợ. Đây là luồng mở rộng (&lt;&lt;extend&gt;&gt;) của UC-T03, không phải kênh tư vấn độc lập.
+Sự kiện kích hoạt
+Mở phiên trao đổi của phiếu hỗ trợ.
+Tiền điều kiện
+Tồn tại phiếu hỗ trợ đang trao đổi.
+Luồng sự kiện chính
+1. (Tác nhân) Tham gia phòng trao đổi của phiếu. → (Hệ thống) Thiết lập kênh trao đổi thời gian thực.
+2. (Tác nhân) Gửi nội dung tư vấn. → (Hệ thống) Chuyển tiếp tin nhắn tới khách hàng và lưu vào lịch sử phiếu.
+Luồng sự kiện thay thế
+1a. Không đủ quyền truy cập phiếu → từ chối tham gia.
+Hậu điều kiện
+Nội dung tư vấn được ghi nhận trong phiếu hỗ trợ.
+Bảng 3.44 – Dữ liệu đầu vào – UC-T04
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Nội dung tin nhắn
+Input text
+Có
+Không rỗng, trong giới hạn ký tự.
+Anh thử sạc 15 phút
+
+3.3.4. Use-case Quản trị viên kho
+Bảng 3.45 – Đặc tả UC-W01 – Nhập hàng theo lô
+Mã Use case
+UC-W01
+Tên Use case
+Nhập hàng theo lô
+Tác nhân
+Quản trị viên kho
+Mô tả
+Tạo phiếu nhập hàng theo lô với nhà cung cấp, kho nhận và danh sách hàng hóa, bao gồm gán Serial/IMEI cho các đơn vị tại thời điểm nhập.
+Sự kiện kích hoạt
+Kích &quot;Tạo phiếu nhập kho&quot;.
+Tiền điều kiện
+Đã đăng nhập với vai trò Quản trị viên kho.
+Luồng sự kiện chính
+1. (Tác nhân) Khai báo nhà cung cấp, kho nhận, danh sách hàng nhập. → (Hệ thống) Kiểm tra dữ liệu hợp lệ.
+2. (Tác nhân) (SP theo serial) Nhập/định danh Serial/IMEI cho từng đơn vị. → (Hệ thống) Kiểm tra hợp lệ (IMEI 15 chữ số, đạt Luhn); sinh đơn vị tồn kho.
+3. (Tác nhân) Xác nhận phiếu nhập. → (Hệ thống) Lưu phiếu, tính lại tồn kho, ghi nhận biến động kho.
+Luồng sự kiện thay thế
+2a. Serial/IMEI không hợp lệ/trùng → báo lỗi, không tạo đơn vị.
+2b. SP không quản lý theo serial → cập nhật số lượng tồn thông thường.
+Hậu điều kiện
+Hàng hóa được nhập kho; tồn kho và Serial/IMEI từng thiết bị được cập nhật.
+Bảng 3.46 – Dữ liệu đầu vào – UC-W01
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Nhà cung cấp
+Dropdown
+Có
+Tồn tại trong hệ thống.
+Công ty ABC
+2
+Kho nhận
+Dropdown
+Có
+Tồn tại trong hệ thống.
+Kho Hà Nội
+3
+Sản phẩm
+Tìm kiếm/Dropdown
+Có
+Tồn tại trong hệ thống.
+iPhone 15
+4
+Số lượng
+Input number
+Có
+Số nguyên dương.
+10
+5
+Serial/IMEI
+Input text
+Có (với SP theo serial)
+Hợp lệ, không trùng; IMEI 15 chữ số.
+356938035643809
+6
+Giá nhập
+Input number
+Có
+Số không âm.
+18000000
+
+Bảng 3.47 – Đặc tả UC-W02 – Quản lý IMEI/Serial
+Mã Use case
+UC-W02
+Tên Use case
+Quản lý IMEI/Serial
+Tác nhân
+Quản trị viên kho
+Mô tả
+Quản lý vòng đời của các đơn vị thiết bị đã tồn tại trong kho: tra cứu, đổi trạng thái, phân loại Serial/IMEI. Mỗi thiết bị tương ứng một đơn vị tồn kho.
+Sự kiện kích hoạt
+Tra cứu đơn vị thiết bị hoặc cập nhật trạng thái.
+Tiền điều kiện
+Đơn vị thiết bị đã tồn tại trong kho.
+Luồng sự kiện chính
+1. (Tác nhân) Tra cứu đơn vị theo Serial/IMEI. → (Hệ thống) Hiển thị thông tin và trạng thái thiết bị.
+2. (Tác nhân) Cập nhật trạng thái/định danh đơn vị. → (Hệ thống) Kiểm tra hợp lệ và lưu thay đổi.
+Luồng sự kiện thay thế
+1a. Không tìm thấy đơn vị → thông báo không có dữ liệu.
+2a. Định danh không hợp lệ/trùng → báo lỗi.
+Hậu điều kiện
+Mỗi thiết bị được định danh và truy vết theo Serial/IMEI.
+Bảng 3.48 – Dữ liệu đầu vào – UC-W02
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+IMEI
+Input text
+Không (*)
+15 chữ số, đạt kiểm tra Luhn.
+356938035643809
+2
+Serial Number
+Input text
+Không (*)
+Hợp lệ, không trùng.
+SN-AB12CD34
+3
+Trạng thái
+Lựa chọn
+Không
+Tồn kho/Đã bán/Bảo hành/Lỗi…
+Tồn kho
+
+Bảng 3.49 – Đặc tả UC-W03 – Theo dõi tồn kho
+Mã Use case
+UC-W03
+Tên Use case
+Theo dõi tồn kho
+Tác nhân
+Quản trị viên kho
+Mô tả
+Theo dõi tồn kho theo từng đơn vị thiết bị và lịch sử biến động kho.
+Sự kiện kích hoạt
+Mở màn hình tồn kho/đơn vị thiết bị.
+Tiền điều kiện
+Đã đăng nhập với vai trò Quản trị viên kho.
+Luồng sự kiện chính
+1. (Tác nhân) Thiết lập tiêu chí lọc (từ khóa, sản phẩm, trạng thái, kho, thời gian). → (Hệ thống) Truy vấn đơn vị tồn kho theo tiêu chí.
+2. (Tác nhân) Xem danh sách và lịch sử biến động. → (Hệ thống) Hiển thị danh sách đơn vị, trạng thái và lịch sử biến động kho.
+Luồng sự kiện thay thế
+1a. Không có dữ liệu phù hợp → thông báo danh sách trống.
+Hậu điều kiện
+Thông tin tồn kho được hiển thị.
+Bảng 3.50 – Dữ liệu đầu vào – UC-W03
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Từ khóa/Serial
+Input text
+Không
+Trong giới hạn ký tự.
+35693803
+2
+Trạng thái
+Lựa chọn
+Không
+Theo danh mục trạng thái.
+Tồn kho
+3
+Kho
+Lựa chọn
+Không
+Tồn tại trong hệ thống.
+Kho Hà Nội
+
+Bảng 3.51 – Đặc tả UC-W04 – Xử lý hàng đổi trả
+Mã Use case
+UC-W04
+Tên Use case
+Xử lý hàng đổi trả
+Tác nhân
+Quản trị viên kho
+Mô tả
+Tiếp nhận, xét duyệt và nhập lại kho hàng đổi trả theo từng thiết bị.
+Sự kiện kích hoạt
+Kích &quot;Tạo phiếu đổi trả&quot;/tiếp nhận yêu cầu.
+Tiền điều kiện
+Tồn tại đơn hàng/thiết bị liên quan.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập thông tin đổi trả (Serial/IMEI, lý do, tình trạng). → (Hệ thống) Truy xuất đơn hàng/thiết bị; tạo phiếu &quot;Chờ duyệt&quot;.
+2. (Tác nhân) Xét duyệt phiếu. → (Hệ thống) Cập nhật Duyệt/Từ chối.
+3. (Tác nhân) Nhập lại kho. → (Hệ thống) Nhập lại tồn (InStock) hoặc đánh dấu lỗi (Damaged); ghi biến động kho.
+Luồng sự kiện thay thế
+2a. Phiếu bị từ chối → kết thúc, không thay đổi tồn kho.
+Hậu điều kiện
+Phiếu đổi trả được xử lý; trạng thái thiết bị và tồn kho cập nhật.
+Bảng 3.52 – Dữ liệu đầu vào – UC-W04
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Serial/IMEI
+Input text
+Có
+Tồn tại trong hệ thống.
+356938035643809
+2
+Lý do đổi trả
+Textarea
+Có
+Tối thiểu 10 ký tự.
+Lỗi nhà sản xuất
+3
+Tình trạng hàng
+Lựa chọn
+Có
+Đã dùng/Hỏng/Mất/Bảo hành…
+Hỏng
+4
+Số tiền hoàn
+Input number
+Không
+Không âm.
+18000000
+
+3.3.5. Use-case Quản trị viên hệ thống
+Bảng 3.53 – Đặc tả UC-A01 – Quản lý danh mục kỹ thuật
+Mã Use case
+UC-A01
+Tên Use case
+Quản lý danh mục kỹ thuật
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Thêm, sửa, xóa danh mục sản phẩm.
+Sự kiện kích hoạt
+Mở mục &quot;Quản lý danh mục&quot;.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn thao tác (thêm/sửa/xóa) danh mục. → (Hệ thống) Hiển thị biểu mẫu tương ứng.
+2. (Tác nhân) Nhập thông tin và lưu. → (Hệ thống) Kiểm tra hợp lệ và lưu danh mục.
+Luồng sự kiện thay thế
+2a. Xóa danh mục đang chứa sản phẩm → cảnh báo/chặn theo ràng buộc.
+Hậu điều kiện
+Danh mục được cập nhật.
+Bảng 3.54 – Dữ liệu đầu vào – UC-A01
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Tên danh mục
+Input text
+Có
+Không trùng, tối đa 100 ký tự.
+Laptop
+2
+Mô tả
+Textarea
+Không
+Tối đa giới hạn ký tự.
+Máy tính xách tay
+
+Bảng 3.55 – Đặc tả UC-A02 – Cấu hình bộ thông số động
+Mã Use case
+UC-A02
+Tên Use case
+Cấu hình bộ thông số động
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Định nghĩa bộ thông số kỹ thuật riêng theo nhóm sản phẩm cùng các giá trị tùy chọn.
+Sự kiện kích hoạt
+Kích &quot;Cấu hình thông số&quot; trong quản lý danh mục.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Thêm/sửa định nghĩa thông số (tên, mã, kiểu dữ liệu, dùng để so sánh/làm trục biến thể). → (Hệ thống) Kiểm tra hợp lệ và lưu định nghĩa.
+2. (Tác nhân) Thêm/sửa giá trị tùy chọn (nếu có). → (Hệ thống) Lưu danh sách giá trị tùy chọn.
+3. (Tác nhân) Lưu cấu hình. → (Hệ thống) Áp dụng bộ thông số cho nhóm sản phẩm.
+Luồng sự kiện thay thế
+1a. Xóa thông số đang được sử dụng → vô hiệu hóa mềm thay vì xóa cứng.
+Hậu điều kiện
+Bộ thông số động của nhóm sản phẩm được cập nhật.
+Bảng 3.56 – Dữ liệu đầu vào – UC-A02
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Tên thông số
+Input text
+Có
+Không trùng trong nhóm.
+Số khe RAM
+2
+Mã thông số
+Input text
+Có
+Duy nhất, không dấu cách.
+ram_slots
+3
+Kiểu dữ liệu
+Lựa chọn
+Có
+Text/Number/Bool.
+Number
+4
+Dùng để so sánh
+Checkbox
+Không
+true/false.
+true
+5
+Giá trị tùy chọn
+Danh sách
+Không
+Theo kiểu dữ liệu.
+2, 4
+
+Bảng 3.57 – Đặc tả UC-A03 – Quản lý sản phẩm
+Mã Use case
+UC-A03
+Tên Use case
+Quản lý sản phẩm
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Thêm/sửa/xóa sản phẩm kèm hình ảnh, biến thể, thông số và danh mục.
+Sự kiện kích hoạt
+Mở mục &quot;Quản lý sản phẩm&quot;.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn thao tác và nhập thông tin sản phẩm. → (Hệ thống) Hiển thị biểu mẫu; kiểm tra hợp lệ.
+2. (Tác nhân) Thêm hình ảnh, biến thể, gán thông số. → (Hệ thống) Lưu các thành phần liên quan.
+3. (Tác nhân) Lưu sản phẩm. → (Hệ thống) Sinh SKU/Slug; lưu sản phẩm và quan hệ.
+Luồng sự kiện thay thế
+1a. Thiếu trường bắt buộc → highlight và chặn lưu.
+Hậu điều kiện
+Sản phẩm được tạo/cập nhật cùng các thành phần liên quan.
+Bảng 3.58 – Dữ liệu đầu vào – UC-A03
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Tên sản phẩm
+Input text
+Có
+Tối đa 200 ký tự.
+iPhone 15
+2
+Danh mục
+Dropdown
+Có
+Tồn tại trong hệ thống.
+Điện thoại
+3
+Giá bán
+Input number
+Có
+Số không âm.
+22990000
+4
+Hình ảnh
+File upload
+Không
+Định dạng ảnh hợp lệ.
+iphone15.jpg
+5
+Biến thể
+Danh sách
+Không
+Theo trục biến thể đã định nghĩa.
+128GB/256GB
+
+Bảng 3.59 – Đặc tả UC-A04 – Thiết lập giá bán
+Mã Use case
+UC-A04
+Tên Use case
+Thiết lập giá bán
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Cập nhật giá bán sản phẩm (giá gốc, giá bán, giá min/max).
+Sự kiện kích hoạt
+Kích &quot;Cập nhật giá&quot; trên sản phẩm.
+Tiền điều kiện
+Sản phẩm tồn tại; đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Nhập giá bán và các mức giá liên quan. → (Hệ thống) Kiểm tra ràng buộc giá hợp lệ.
+2. (Tác nhân) Lưu. → (Hệ thống) Cập nhật giá sản phẩm; thông báo thành công.
+Luồng sự kiện thay thế
+1a. Giá min &gt; giá max hoặc giá âm → thông báo lỗi.
+Hậu điều kiện
+Giá bán sản phẩm được cập nhật.
+Bảng 3.60 – Dữ liệu đầu vào – UC-A04
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Giá bán
+Input number
+Có
+Số không âm.
+22990000
+2
+Giá gốc
+Input number
+Không
+≥ giá bán.
+24990000
+3
+Giá min/max
+Input number
+Không
+min ≤ max, không âm.
+21–25 triệu
+
+Bảng 3.61 – Đặc tả UC-A05 – Quản lý đối tác vận chuyển (lộ trình)
+Mã Use case
+UC-A05
+Tên Use case
+Quản lý đối tác vận chuyển (lộ trình)
+Tác nhân
+Quản trị viên hệ thống, Đối tác vận chuyển (tác nhân ngoài)
+Mô tả
+Quản lý danh sách đối tác vận chuyển, biểu phí và phạm vi giao nhận. (Dự kiến triển khai ở phiên bản kế tiếp.)
+Sự kiện kích hoạt
+Mở mục &quot;Quản lý đối tác vận chuyển&quot;.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Thêm/sửa/xóa đối tác vận chuyển. → (Hệ thống) Hiển thị biểu mẫu; kiểm tra hợp lệ.
+2. (Tác nhân) Thiết lập biểu phí/phạm vi giao nhận. → (Hệ thống) Lưu cấu hình đối tác.
+Luồng sự kiện thay thế
+1a. Xóa đối tác đang gắn với đơn hàng → cảnh báo/chặn.
+Hậu điều kiện
+Danh sách đối tác vận chuyển được cập nhật (khi triển khai).
+Bảng 3.62 – Dữ liệu đầu vào – UC-A05
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Tên đối tác
+Input text
+Có
+Không trùng.
+GHN
+2
+Biểu phí
+Input number/Bảng
+Có
+Số không âm.
+30000
+3
+Phạm vi giao nhận
+Lựa chọn
+Không
+Theo khu vực hỗ trợ.
+Toàn quốc
+
+Bảng 3.63 – Đặc tả UC-A06 – Quản lý cảnh báo hàng tồn kho lâu ngày
+Mã Use case
+UC-A06
+Tên Use case
+Quản lý cảnh báo hàng tồn kho lâu ngày
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Thống kê các mặt hàng tồn kho vượt ngưỡng thời gian để có phương án xử lý.
+Sự kiện kích hoạt
+Mở báo cáo &quot;Hàng tồn lâu ngày&quot; và đặt ngưỡng số ngày.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Đặt ngưỡng số ngày và tiêu chí lọc (danh mục/NCC/kho). → (Hệ thống) Truy vấn đơn vị tồn kho vượt ngưỡng.
+2. (Tác nhân) Xem kết quả. → (Hệ thống) Hiển thị danh sách kèm số ngày tồn, giá vốn, giá trị tồn ước tính.
+Luồng sự kiện thay thế
+1a. Không có hàng tồn vượt ngưỡng → thông báo không có dữ liệu.
+Hậu điều kiện
+Danh sách hàng tồn kho lâu ngày được hiển thị.
+Bảng 3.64 – Dữ liệu đầu vào – UC-A06
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Ngưỡng số ngày
+Input number
+Có
+Số nguyên ≥ 0 (mặc định 30).
+90
+2
+Danh mục
+Lựa chọn
+Không
+Tồn tại trong hệ thống.
+Laptop
+3
+Nhà cung cấp/Kho
+Lựa chọn
+Không
+Tồn tại trong hệ thống.
+Kho Hà Nội
+
+Bảng 3.65 – Đặc tả UC-A07 – Quản lý tài khoản người dùng
+Mã Use case
+UC-A07
+Tên Use case
+Quản lý tài khoản người dùng
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Tạo mới, chỉnh sửa, khóa/mở khóa và phân quyền tài khoản người dùng.
+Sự kiện kích hoạt
+Mở mục &quot;Quản lý người dùng&quot;.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Mở danh sách người dùng. → (Hệ thống) Hiển thị tài khoản kèm tên, email, vai trò, trạng thái.
+2a. (Tác nhân) Tạo tài khoản mới, chọn vai trò. → (Hệ thống) Kiểm tra dữ liệu, tạo tài khoản.
+2b. (Tác nhân) Khóa/Mở khóa tài khoản. → (Hệ thống) Cập nhật trạng thái và ghi nhật ký.
+2c. (Tác nhân) Thay đổi vai trò. → (Hệ thống) Cập nhật phân quyền tức thì.
+Luồng sự kiện thay thế
+2a.1. Email đã tồn tại → thông báo lỗi.
+2b.1. Không cho khóa tài khoản Admin cuối cùng.
+Hậu điều kiện
+Tài khoản được tạo/cập nhật/khóa; thay đổi có hiệu lực tức thì.
+
+Bảng 3.66 – Dữ liệu đầu vào – UC-A07
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Họ tên
+Input text
+Có
+Tối đa 100 ký tự.
+Nguyễn Văn A
+2
+Email
+Input email
+Có
+Đúng định dạng, chưa tồn tại.
+nva@email.com
+3
+Vai trò
+Dropdown
+Có
+Khách hàng/Kỹ thuật viên/QTV kho/Admin.
+Kỹ thuật viên
+
+Bảng 3.67 – Đặc tả UC-A08 – Xem báo cáo tài chính / kinh doanh
+Mã Use case
+UC-A08
+Tên Use case
+Xem báo cáo tài chính / kinh doanh
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Xem bảng điều khiển với các chỉ số vận hành (doanh thu, đơn hàng, tồn kho, sản phẩm bán chạy).
+Sự kiện kích hoạt
+Mở bảng điều khiển (Dashboard).
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Mở bảng điều khiển. → (Hệ thống) Tổng hợp và hiển thị các chỉ số vận hành.
+2. (Tác nhân) Xem chi tiết theo nhóm chỉ số. → (Hệ thống) Hiển thị chi tiết tương ứng (đơn theo trạng thái, top sản phẩm, hàng sắp hết…).
+Luồng sự kiện thay thế
+1a. Không có dữ liệu trong kỳ → hiển thị chỉ số bằng 0.
+Hậu điều kiện
+Thông tin báo cáo được hiển thị phục vụ ra quyết định.
+Bảng 3.68 – Dữ liệu đầu vào – UC-A08
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Khoảng thời gian
+Lựa chọn
+Không
+Khoảng ngày hợp lệ.
+Tháng này
+
+Bảng 3.69 – Đặc tả UC-A09 – Quản lý gợi ý sản phẩm mua kèm (Cross-sell)
+Mã Use case
+UC-A09
+Tên Use case
+Quản lý gợi ý sản phẩm mua kèm (Cross-sell)
+Tác nhân
+Quản trị viên hệ thống
+Mô tả
+Cấu hình danh sách sản phẩm mua kèm cho từng sản phẩm chính — đáp ứng yêu cầu &quot;Quản lý linh kiện đi kèm&quot;. Là phần quản trị tương ứng với UC-C05.
+Sự kiện kích hoạt
+Mở mục &quot;Quản lý gợi ý mua kèm&quot; trên một sản phẩm.
+Tiền điều kiện
+Đã đăng nhập với quyền Admin.
+Luồng sự kiện chính
+1. (Tác nhân) Chọn sản phẩm chính. → (Hệ thống) Hiển thị danh sách sản phẩm gợi ý hiện có.
+2. (Tác nhân) Thêm/xóa sản phẩm gợi ý kèm loại quan hệ. → (Hệ thống) Kiểm tra hợp lệ.
+3. (Tác nhân) Lưu. → (Hệ thống) Cập nhật cấu hình gợi ý.
+Luồng sự kiện thay thế
+2a. Thêm chính sản phẩm vào danh sách gợi ý của nó → từ chối.
+2b. Sản phẩm gợi ý không tồn tại/ngừng kinh doanh → cảnh báo, không thêm.
+Hậu điều kiện
+Danh sách sản phẩm mua kèm của sản phẩm chính được cập nhật.
+Bảng 3.70 – Dữ liệu đầu vào – UC-A09
+STT
+Trường dữ liệu
+Mô tả
+Bắt buộc
+Điều kiện hợp lệ
+Ví dụ
+1
+Sản phẩm chính
+Lựa chọn
+Có
+Tồn tại trong hệ thống.
+iPhone 15
+2
+Sản phẩm gợi ý
+Lựa chọn nhiều
+Có
+Tồn tại, khác sản phẩm chính.
+Ốp lưng, Sạc nhanh
+3
+Loại quan hệ
+Lựa chọn
+Có
+Cross-sell (mua kèm).
+Cross-sell
+
+IV. THIẾT KẾ GIAO DIỆN NGƯỜI DÙNG
+Phần này minh họa các giao diện chính của hệ thống Tech Gadget &amp; Electronics Store theo từng nhóm người dùng. Mỗi giao diện được trình bày bằng một ảnh chụp màn hình (wireframe/mockup) kèm chú thích. Các vị trí ảnh được bố trí sẵn dưới dạng khung chèn; ảnh thực tế được lấy từ giao diện của hệ thống.
+4.1. Giao diện chung
+Giao diện đăng nhập dùng chung cho mọi tác nhân; nhập tài khoản, mật khẩu và đăng nhập theo vai trò.
+
+Hình 4.1 – Màn hình đăng nhập
+Trang chủ hiển thị danh mục sản phẩm, banner, thanh tìm kiếm và các sản phẩm nổi bật.
+
+Hình 4.2 – Trang chủ
+4.2. Giao diện Khách hàng
+Trang danh sách sản phẩm kèm bộ lọc theo thông số kỹ thuật, giá, thương hiệu (UC-C01, UC-C02).
+
+Hình 4.3 – Tìm kiếm và lọc sản phẩm
+Trang chi tiết hiển thị thông số kỹ thuật, biến thể, hình ảnh và gợi ý mua kèm (UC-C03, UC-C05).
+
+Hình 4.4 – Chi tiết và thông số sản phẩm
+Bảng so sánh các thông số kỹ thuật tương đương giữa các sản phẩm được chọn (UC-C04).
+
+Hình 4.5 – So sánh sản phẩm
+Màn hình giỏ hàng: danh sách sản phẩm, số lượng, tạm tính và ưu đãi (UC-C06).
+
+Hình 4.6 – Giỏ hàng
+Màn hình đặt hàng, chọn hình thức giao nhận và thanh toán chuyển khoản qua mã QR (UC-C07, UC-C09).
+
+Hình 4.7 – Đặt hàng và thanh toán (QR)
+Màn hình theo dõi trạng thái và dòng thời gian đơn hàng (UC-C10).
+
+Hình 4.8 – Theo dõi đơn hàng
+Màn hình nhập Serial/IMEI để tra cứu thời hạn bảo hành (UC-C11).
+
+Hình 4.9 – Tra cứu bảo hành điện tử
+Màn hình tạo phiếu hỗ trợ/bảo hành và theo dõi trao đổi (UC-C12, UC-C13, UC-C14).
+
+Hình 4.10 – Gửi và theo dõi yêu cầu hỗ trợ / bảo hành
+4.3. Giao diện Kỹ thuật viên
+Màn hình tiếp nhận thiết bị và lập hồ sơ sửa chữa (UC-T01).
+
+Hình 4.11 – Tiếp nhận yêu cầu bảo hành
+Màn hình cập nhật trạng thái/tiến độ sửa chữa theo từng giai đoạn (UC-T02).
+
+Hình 4.12 – Cập nhật tình trạng sửa chữa
+Màn hình xử lý phiếu hỗ trợ: phản hồi, ghi chú nội bộ, đổi trạng thái (UC-T03, UC-T04).
+
+Hình 4.13 – Xử lý ticket hỗ trợ kỹ thuật
+4.4. Giao diện Quản trị viên kho
+Màn hình tạo phiếu nhập lô, khai báo nhà cung cấp, kho nhận và định danh Serial/IMEI (UC-W01, UC-W02).
+
+Hình 4.14 – Nhập hàng theo lô và gán Serial/IMEI
+Màn hình theo dõi tồn kho theo từng đơn vị thiết bị và lịch sử biến động (UC-W03).
+
+Hình 4.15 – Theo dõi tồn kho
+Màn hình tiếp nhận, xét duyệt và nhập lại kho hàng đổi trả (UC-W04).
+
+Hình 4.16 – Xử lý hàng đổi trả
+4.5. Giao diện Quản trị viên hệ thống
+Dashboard hiển thị các chỉ số vận hành: doanh thu, đơn hàng, tồn kho, sản phẩm bán chạy (UC-A08).
+
+Hình 4.17 – Bảng điều khiển / Báo cáo
+Màn hình quản lý danh mục và định nghĩa bộ thông số kỹ thuật theo nhóm sản phẩm (UC-A01, UC-A02).
+
+Hình 4.18 – Quản lý danh mục và cấu hình thông số động
+Màn hình thêm/sửa sản phẩm kèm hình ảnh, biến thể, thông số và thiết lập giá (UC-A03, UC-A04, UC-A09).
+
+Hình 4.19 – Quản lý sản phẩm và giá bán
+Màn hình thống kê hàng tồn vượt ngưỡng thời gian theo danh mục/kho (UC-A06).
+
+Hình 4.20 – Cảnh báo hàng tồn kho lâu ngày
+Màn hình quản lý tài khoản: tạo, khóa/mở khóa, phân quyền (UC-A07).
+
+Hình 4.21 – Quản lý tài khoản người dùng
+V. YÊU CẦU PHI CHỨC NĂNG
+Bên cạnh các yêu cầu chức năng đã đặc tả ở Chương III, hệ thống phải thỏa mãn một tập các yêu cầu phi chức năng nhằm bảo đảm chất lượng vận hành, trải nghiệm người dùng và tính bền vững của hệ thống. Mỗi yêu cầu được kèm theo tiêu chí đánh giá làm cơ sở cho kiểm thử và nghiệm thu.
+5.1. Yêu cầu về độ chính xác dữ liệu (Accuracy)
+Thông tin cấu hình, thông số kỹ thuật của sản phẩm phải chính xác, nhất quán giữa trang danh sách, trang chi tiết và công cụ so sánh.
+Dữ liệu định danh thiết bị (Serial/IMEI) phải là duy nhất; số IMEI phải đúng định dạng 15 chữ số và đạt kiểm tra Luhn trước khi ghi nhận.
+Số liệu tồn kho, giá bán, giá trị đơn hàng và các phép tính (tạm tính, giảm giá, phí vận chuyển, tổng tiền) phải chính xác tuyệt đối.
+Tiêu chí đánh giá: Dữ liệu thông số hiển thị trùng khớp 100% với dữ liệu lưu trữ; không tồn tại Serial/IMEI trùng lặp; các phép tính tài chính chính xác trong mọi trường hợp kiểm thử.
+5.2. Yêu cầu về bảo mật (Security)
+Bảo vệ tuyệt đối thông tin giao dịch và dữ liệu cá nhân của khách hàng, đặc biệt là số điện thoại và địa chỉ.
+Mật khẩu người dùng phải được lưu trữ dưới dạng băm (hash), không lưu dạng văn bản thuần.
+Áp dụng xác thực và phân quyền dựa trên vai trò (RBAC) thông qua mã thông báo phiên (JWT).
+Tạm khóa tài khoản 5 phút sau 5 lần đăng nhập sai liên tiếp.
+Các phiên thanh toán phải có thời hạn hiệu lực và được xác thực bằng mã bí mật (token).
+Tiêu chí đánh giá: Người dùng không thể truy cập chức năng/dữ liệu ngoài quyền hạn; mật khẩu không đọc được từ dữ liệu lưu trữ; cơ chế khóa tài khoản và hết hạn phiên thanh toán hoạt động đúng thiết kế.
+5.3. Yêu cầu về hiệu năng (Performance)
+Công cụ tìm kiếm và lọc dữ liệu phải tối ưu để hoạt động hiệu quả trên kho dữ liệu hàng nghìn sản phẩm.
+Thời gian phản hồi cho các thao tác phổ biến cần duy trì ở mức thấp trong điều kiện vận hành bình thường.
+Danh sách sản phẩm, đơn hàng, tồn kho cần áp dụng cơ chế phân trang.
+Hệ thống duy trì ổn định khi nhiều người dùng thao tác đồng thời, đặc biệt trong các đợt khuyến mãi.
+Tiêu chí đánh giá: Thời gian phản hồi truy vấn tìm kiếm/lọc trên tập dữ liệu lớn nằm trong ngưỡng cho phép; hệ thống ổn định dưới tải đồng thời theo kịch bản kiểm thử hiệu năng.
+5.4. Yêu cầu về tính tin cậy (Reliability)
+Tồn kho phải đồng bộ tức thời nhằm tránh tình trạng 'vừa đặt xong thì báo hết hàng'.
+Quy trình tạo đơn hàng thực hiện trong một giao dịch nhất quán; trừ tồn kho áp dụng khóa lạc quan (optimistic locking).
+Trạng thái thiết bị (Serial/IMEI) đồng bộ nhất quán giữa các phân hệ kho, bảo hành và sửa chữa.
+Mọi biến động kho và thay đổi trạng thái quan trọng được ghi nhận lịch sử phục vụ truy vết.
+Tiêu chí đánh giá: Không xảy ra bán vượt tồn kho trong kịch bản đặt hàng đồng thời; dữ liệu tồn kho và trạng thái thiết bị nhất quán sau mọi nghiệp vụ; lịch sử biến động được ghi nhận đầy đủ.
+5.5. Yêu cầu về tính tương thích (Compatibility)
+Giao diện hiển thị tốt các bảng thông số và bảng so sánh phức tạp trên màn hình điện thoại nhỏ (responsive).
+Hệ thống hoạt động ổn định trên các trình duyệt phổ biến (Chrome, Firefox, Edge, Safari) phiên bản hiện hành.
+Bố cục và thao tác thân thiện trên cả thiết bị di động và máy tính để bàn.
+Tiêu chí đánh giá: Giao diện hiển thị đúng và sử dụng được trên các kích thước màn hình tiêu biểu; bảng thông số/so sánh không vỡ bố cục trên màn hình nhỏ.
+5.6. Một số yêu cầu phi chức năng bổ trợ
+Bảng 5.1 – Các yêu cầu phi chức năng bổ trợ
+Yêu cầu
+Mô tả
+Tiêu chí định hướng
+Tính khả dụng (Usability)
+Giao diện trực quan, luồng thao tác ngắn gọn, thông báo lỗi rõ ràng.
+Người dùng mới hoàn thành thao tác cơ bản không cần hướng dẫn chi tiết.
+Tính bảo trì (Maintainability)
+Phân tách thành các phân hệ rõ ràng, thuận lợi sửa lỗi và nâng cấp.
+Thay đổi một phân hệ không ảnh hưởng dây chuyền tới phân hệ khác.
+Tính mở rộng (Scalability)
+Cho phép bổ sung chức năng lộ trình (trả góp, vận chuyển, cổng thẻ/ví) mà không phá vỡ thiết kế.
+Bổ sung chức năng mới chủ yếu qua mở rộng, hạn chế sửa phần lõi.
+Khả năng triển khai (Deployability)
+Hỗ trợ triển khai trên nền tảng điện toán đám mây phổ biến.
+Triển khai được trên môi trường cloud thông dụng theo cấu hình tiêu chuẩn.
+— HẾT —
+
